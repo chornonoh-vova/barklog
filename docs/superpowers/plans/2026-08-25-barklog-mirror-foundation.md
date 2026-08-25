@@ -3705,7 +3705,7 @@ container:
   CJS and its default export is not constructable from ESM. Use
   `import { Valkey } from "iovalkey"`.
 - `lazyConnect: true` combined with `enableOfflineQueue: false` makes the very
-  first command race the connection and lose, so the *healthy* client fails open
+  first command race the connection and lose, so the _healthy_ client fails open
   exactly like a dead one. Connect eagerly and let `retryStrategy: () => null`
   handle the unreachable case.
 
@@ -3717,7 +3717,7 @@ become a runtime dependency of `@repo/db`. Only `truncateAll` moved to
 **Task 8 — the idempotency snapshot must exclude `synced_at`.** It records when
 the sync last touched the row, so it legitimately advances on replay and a
 byte-identical snapshot is impossible by design. The guarantee is about mirrored
-*data*, so the snapshot drops that column and a separate test asserts
+_data_, so the snapshot drops that column and a separate test asserts
 `synced_at` does advance.
 
 **Task 9 — a short page terminates the run.** The planned fixture served two
@@ -3749,3 +3749,40 @@ with "No test files found". Use a separate `vitest.contract.config.ts` with an
 explicit `include`. Separately, the deprecated-field assertions moved to
 `test/games-query.test.ts` so they run offline on every PR — leaving them in the
 contract file meant the guard only ran nightly.
+
+---
+
+## Seed results (2026-08-25)
+
+Task 10 Step 6 and Task 11's live run, executed against real IGDB.
+
+|                                |                                                |
+| ------------------------------ | ---------------------------------------------- |
+| Games                          | 373,590 across 748 pages                       |
+| Duration                       | 16 min 20 s (terminated on a short page of 90) |
+| Database                       | 418 MB                                         |
+| Incremental run straight after | 10 games, 1 page, 6.9 s                        |
+
+**Two plan estimates were wrong.** The seed takes ~16 minutes rather than ~3:
+748 requests at 4 req/s is only ~3 minutes of _network_ time, but per-page
+database work — 1.67 M screenshot rows, 616 k genre links — dominates. And the
+database is 418 MB, roughly 6× smaller than the 2–4 GB guessed.
+
+**Search ranking verified on real data** (spec §9), which is why the plan put
+seeding before search work:
+
+- `zeld` → _Breath of the Wild_, _Ocarina of Time_, _A Link to the Past_. This
+  is the case that justified `word_similarity` over plain `similarity`, which
+  would have scored these near zero against a long title.
+- `mario` → _Super Mario 64_, _World_, _Odyssey_. The popularity term doing its
+  job — no obscure ROM hacks.
+- `dark soules` (misspelled) → _Dark Souls III_, _Dark Souls_, _Dark Souls II_.
+- `EXPLAIN ANALYZE` confirms **Bitmap Index Scan on `games_name_trgm_idx`**,
+  2.7 ms over 373 k rows — the GIN index is used, not a sequential scan.
+
+**The IGDB contract test passes against live IGDB**, settling spec §7: no
+deprecated fields, `game_type` correct, live payloads validate against the zod
+schema.
+
+**`.env` could not be sourced.** `SYNC_CRON=0 0 * * *` unquoted makes a shell
+execute `0 * * *`. Quoted in `.env.example`.

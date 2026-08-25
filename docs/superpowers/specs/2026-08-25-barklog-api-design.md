@@ -35,7 +35,7 @@ play-time tracking, Android, and any admin UI. Deferred items are listed in
 | ------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Identity      | Clerk (hosted)                              | First-class Expo SDK; API verifies JWTs against JWKS, so no per-request call to Clerk.                           |
 | Auth coverage | Entire API                                  | Only `/healthz` and `/readyz` are public.                                                                        |
-| Mirror scope  | Full mirror, incremental after seed         | ~350k games is only ~700 IGDB requests. A full mirror costs little and removes every runtime dependency on IGDB. |
+| Mirror scope  | Full mirror, incremental after seed         | 374k games is only 748 IGDB requests. A full mirror costs little and removes every runtime dependency on IGDB.   |
 | DB access     | Drizzle ORM                                 | TypeScript-first, thin over SQL, bulk upsert via `onConflictDoUpdate`, clean raw-SQL escape hatch for `pg_trgm`. |
 | Search        | `pg_trgm` GIN + popularity ranking          | No extra container; typo- and prefix-tolerant.                                                                   |
 | Sync runner   | Separate worker process                     | A long IGDB pull never competes with request handling.                                                           |
@@ -301,9 +301,24 @@ to write because there is no partial state to repair.
 
 ### Seed
 
-~350k games at 500 per page is ~700 requests, about three minutes at IGDB's
-rate ceiling. Expect roughly 2–4 GB of Postgres including indexes; this is an
-estimate to be confirmed after the first seed.
+**Measured on 2026-08-25**, not estimated:
+
+|                                   |                                                           |
+| --------------------------------- | --------------------------------------------------------- |
+| Games mirrored                    | 373,590 across 748 pages of 500                           |
+| Seed duration                     | 16 min 20 s                                               |
+| Database size                     | 418 MB including indexes                                  |
+| Reference rows                    | 23 genres, 217 platforms, 59,670 companies, 15 game types |
+| Child rows                        | 1.67 M screenshots, 616 k game↔genre, 277 k game↔company  |
+| Incremental run immediately after | 10 games, 1 page, **6.9 s**                               |
+
+Two earlier estimates were wrong and are corrected here. The seed takes ~16
+minutes, not the ~3 minutes that 748 requests at 4 req/s would suggest —
+per-page database work dominates, not the IGDB rate limit. And the database is
+418 MB, not the 2–4 GB guessed; roughly 6× smaller.
+
+The 6.9-second incremental run is the number that matters for the nightly job:
+the steady state is seconds.
 
 ## 7. Non-deprecated IGDB fields
 
@@ -320,17 +335,19 @@ The mirror uses only currently recommended fields:
   `first_release_date`, `updated_at`.
 
 IGDB has been retiring `category`-style fields across endpoints on a rolling
-basis, so this list is treated as unverified until checked against live docs
-during implementation. The durable guardrail is a **contract test that requests
+basis, so this list was treated as unverified until checked. **It has now been
+verified against live IGDB** (2026-08-25): every field above is accepted, and
+real payloads validate against our zod schema. The durable guardrail is a **contract test that requests
 our exact field list against `/games` with `limit 1` and fails on any field
 IGDB rejects** (§15). That converts "did we use a deprecated field?" from
 something a person has to remember into a build failure, and catches removals
 on the day they land.
 
-The searchable game-type ids (§9) must likewise be read from `/game_types`
-during implementation rather than transcribed from the legacy enum. The
-expected set is main game, standalone expansion, remake, remaster and expanded
-game.
+The searchable game-type ids (§9) were likewise read from the live
+`/game_types` data rather than transcribed from the legacy enum. Confirmed:
+`{0 Main Game, 4 Standalone Expansion, 8 Remake, 9 Remaster, 10 Expanded Game}`
+— 316,525 of 373,590 mirrored games. The ids match the legacy enum; two names
+differ (`1` is "DLC", `13` is "Pack / Addon").
 
 ## 8. API surface
 
@@ -737,4 +754,4 @@ while the shape is still moving, then closed before anything ships.
 | Seed exhausts the rate limit or dies midway               | Keyset pagination plus an unadvanced watermark makes a re-run resume correctly (§6) |
 | Search ranking feels wrong on real data                   | Weights are configuration; ranking fixtures pin the regressions (§9, §15)           |
 | Strict `/readyz` pulls healthy instances on a Valkey blip | Accepted trade, recorded in §12; reverting is one branch                            |
-| Postgres growth from the full mirror                      | ~2–4 GB estimated; confirm after the first seed (§6)                                |
+| Postgres growth from the full mirror                      | Measured at 418 MB for 373,590 games (§6)                                           |
