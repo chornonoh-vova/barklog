@@ -9,3 +9,8 @@ nodeLinker: hoisted
 allowBuilds:
   esbuild: true
   unrs-resolver: true
+  # Optional native bindings pulled in by testcontainers -> dockerode -> ssh2.
+  # Declined so installs need no C++ toolchain; the pure-JS fallbacks are used.
+  cpu-features: false
+  ssh2: false
+  protobufjs: false
