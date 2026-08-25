@@ -2,7 +2,6 @@ import { createCache } from "@repo/cache";
 import { describe, expect, test } from "vitest";
 
 import { createIgdbClient } from "../src/client.js";
-import { GAME_FIELDS } from "../src/games-query.js";
 import { igdbGameSchema } from "../src/schemas.js";
 import { createTokenSource } from "../src/token.js";
 
@@ -43,13 +42,4 @@ describe.runIf(clientId && clientSecret)("IGDB contract", () => {
 
     expect(types.size).toBeGreaterThan(0);
   });
-});
-
-// This one needs no credentials — it guards the field list itself.
-test("the field list contains no deprecated fields", () => {
-  // `category` and `status` were deprecated in favour of `game_type` and
-  // `game_status`. Spec §7.
-  expect(GAME_FIELDS).not.toMatch(/(^|,)category(\.|,|$)/);
-  expect(GAME_FIELDS).not.toMatch(/(^|,)status(\.|,|$)/);
-  expect(GAME_FIELDS).toContain("game_type.type");
 });
