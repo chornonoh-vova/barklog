@@ -3647,3 +3647,52 @@ populates the mirror, and `pnpm --filter worker dev` schedules the nightly job.
 
 Plan 2 (the HTTP API) starts from a populated database, which is what makes
 tuning the search ranking in spec §9 possible against real data.
+
+---
+
+## Execution deviations
+
+Recorded as they were hit, so a re-run of this plan does not rediscover them.
+
+**Task 1 — pnpm blocks on unapproved build scripts.** `pnpm install` exits
+non-zero until `cpu-features`, `ssh2`, and `protobufjs` are explicitly approved
+or declined. They arrive via `testcontainers → dockerode → ssh2` and are
+optional native accelerations. All three are declined in `pnpm-workspace.yaml`
+so installs need no C++ toolchain:
+
+```yaml
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
+  cpu-features: false
+  ssh2: false
+  protobufjs: false
+```
+
+**Task 2 — test files must not run in parallel.** One Postgres container is
+shared by the whole suite, so `backlog-constraints`' `beforeEach` truncate wiped
+rows `mirror-schema` had just inserted. Fixed two ways: `fileParallelism: false`
+in `packages/db/vitest.config.ts`, and every test file that touches tables
+truncates in its own `beforeEach` rather than assuming a clean database. Apply
+the same `fileParallelism: false` to `apps/worker`'s Vitest config.
+
+**Task 3 — Drizzle wraps driver errors.** `.rejects.toThrow(/duplicate key/)`
+fails even when the constraint fires: Drizzle 0.45 raises `Failed query: ...`
+and hangs the real Postgres error off `.cause`. Asserting on `.message` alone
+would also pass for *any* failure, which would make these constraint tests
+worthless. `packages/db/test/helpers.ts` gains `expectRejectedBy(promise,
+pattern)`, which flattens the whole `cause` chain before matching.
+
+**Task 4 — `turbo.json` env declarations are needed earlier than Task 10.**
+`drizzle.config.ts` reads `DATABASE_URL`, so `turbo/no-undeclared-env-vars`
+fails lint as soon as `packages/db` is linted. The full `turbo.json` update
+described in Task 10 Step 4 was applied at Task 4 instead, including the new
+`test` task and `dev` gaining `dependsOn: ["^build"]`.
+
+**Task 4 — `WATERMARK_OVERLAP_MS` is exported immediately.** The plan had Task 4
+use a private `OVERLAP_MS` and Task 8 rename it. It is exported from
+`packages/db/src/queries/sync-runs.ts` from the start instead, avoiding a
+pointless rename.
+
+**Interactive `rm`.** The dev shell aliases `rm` to `rm -i`; a bare `rm` in a
+scripted step hangs waiting for confirmation. Use `command rm -f`.
