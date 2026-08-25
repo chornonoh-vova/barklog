@@ -3696,3 +3696,56 @@ pointless rename.
 
 **Interactive `rm`.** The dev shell aliases `rm` to `rm -i`; a bare `rm` in a
 scripted step hangs waiting for confirmation. Use `command rm -f`.
+
+**Task 5 — `iovalkey` needs a named import and an eager connection.** Two
+separate problems, both invisible to Vitest and only caught by `tsc` and a real
+container:
+
+- `import Valkey from "iovalkey"` fails to build under NodeNext — the package is
+  CJS and its default export is not constructable from ESM. Use
+  `import { Valkey } from "iovalkey"`.
+- `lazyConnect: true` combined with `enableOfflineQueue: false` makes the very
+  first command race the connection and lose, so the *healthy* client fails open
+  exactly like a dead one. Connect eagerly and let `retryStrategy: () => null`
+  handle the unreachable case.
+
+**Task 8 — `test/helpers.ts` survives, holding only `expectRejectedBy`.** The
+plan had it deleted entirely, but that helper imports `vitest`, which must not
+become a runtime dependency of `@repo/db`. Only `truncateAll` moved to
+`src/testing.ts`, alongside the new `startPostgres`.
+
+**Task 8 — the idempotency snapshot must exclude `synced_at`.** It records when
+the sync last touched the row, so it legitimately advances on replay and a
+byte-identical snapshot is impossible by design. The guarantee is about mirrored
+*data*, so the snapshot drops that column and a separate test asserts
+`synced_at` does advance.
+
+**Task 9 — a short page terminates the run.** The planned fixture served two
+short pages and expected both to be fetched, but fewer than `PAGE_SIZE` rows
+means IGDB has nothing more to give, so a second request would be wasted. There
+are two termination paths and each now has its own test: a short page, and a
+full page followed by an empty one.
+
+**Task 10 — Postgres 18 changed its Docker volume convention.** Mounting
+`pgdata:/var/lib/postgresql/data` makes the image refuse to start: 18+ expects a
+single mount at `/var/lib/postgresql` and stores data in a major-version
+subdirectory so `pg_upgrade --link` works without crossing a mount boundary.
+Testcontainers was unaffected because it mounts no volume.
+
+**Task 10 — `drizzle-kit migrate` is not sufficient for local development.** It
+does not run `CREATE EXTENSION pg_trgm`, so the trigram index migration fails on
+a fresh database. Added `packages/db/src/migrate-cli.ts` and the
+`pnpm --filter @repo/db db:migrate` script, which reuses the same
+`runMigrations` the test harness calls. Local dev and tests now take an
+identical path.
+
+**Task 10 — the root `package.json` had no `test` script.** `turbo.json` gained
+the task at Task 4, but `pnpm test` silently did nothing until
+`"test": "turbo run test"` was added at the root.
+
+**Task 11 — `--exclude ''` does not override a config's exclude list.** Vitest
+appends the CLI value, so the contract file stayed excluded and the run failed
+with "No test files found". Use a separate `vitest.contract.config.ts` with an
+explicit `include`. Separately, the deprecated-field assertions moved to
+`test/games-query.test.ts` so they run offline on every PR — leaving them in the
+contract file meant the guard only ran nightly.
