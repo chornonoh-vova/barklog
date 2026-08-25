@@ -11,6 +11,10 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 | ---------------------------- | ------------------------------------------------------------------ |
 | `apps/mobile`                | Expo (SDK 57) app — expo-router, native tabs, SwiftUI via @expo/ui |
 | `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`              |
+| `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)        |
+| `packages/db`                | Drizzle schema, migrations, connection factory                     |
+| `packages/cache`             | Fail-open Valkey wrapper                                           |
+| `packages/igdb`              | Typed IGDB client — token, rate limiting, keyset paging            |
 | `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                |
 | `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)      |
 
@@ -64,18 +68,68 @@ pnpm --filter api dev        # tsx watch → http://localhost:3000
 When running the app on a physical device, point `EXPO_PUBLIC_API_URL` at your
 machine's LAN IP rather than `localhost`.
 
+## Local infrastructure
+
+Postgres and Valkey run in Docker; the API and worker run on the host so
+reloads stay fast.
+
+```sh
+docker compose up -d
+cp .env.example .env          # then fill in the IGDB credentials
+set -a && . ./.env && set +a  # export them into your shell
+pnpm --filter @repo/db db:migrate
+```
+
+Use `pnpm --filter @repo/db db:migrate` rather than `drizzle-kit migrate`. It
+also runs `CREATE EXTENSION pg_trgm`, which drizzle-kit does not generate and
+which the trigram search index depends on.
+
+> Postgres 18+ stores data under a major-version subdirectory, so the compose
+> volume mounts `/var/lib/postgresql`, **not** `/var/lib/postgresql/data`. The
+> older path makes the image refuse to start.
+
+### Seeding the games mirror
+
+The API never calls IGDB. Everything is served from our own Postgres, populated
+by the worker. Create a Twitch application at
+<https://dev.twitch.tv/console/apps> to get `IGDB_CLIENT_ID` and
+`IGDB_CLIENT_SECRET`, then:
+
+```sh
+pnpm --filter worker sync --full   # full seed: ~700 requests, a few minutes
+pnpm --filter worker sync          # incremental: only what changed
+pnpm --filter worker dev           # schedule the nightly run (SYNC_CRON)
+```
+
+A failed run does not advance the watermark, so the next run simply re-fetches
+the same range. Every write is an upsert, which makes replaying a range safe.
+
+## Testing
+
+```sh
+pnpm test
+```
+
+Tests start their own Postgres and Valkey via **Testcontainers** — they do not
+use the docker-compose stack, so all they need is a running Docker daemon. The
+compose stack is purely a development convenience.
+
 ## Tasks
 
-| Command                           | Does                                 |
-| --------------------------------- | ------------------------------------ |
-| `pnpm dev`                        | Every dev server (Expo + API)        |
-| `pnpm build`                      | Compile the API to `apps/api/dist`   |
-| `pnpm lint`                       | ESLint across all workspaces         |
-| `pnpm check-types`                | `tsc --noEmit` across all workspaces |
-| `pnpm format`                     | Prettier write                       |
-| `pnpm --filter mobile ios`        | Dev build on the simulator           |
-| `pnpm --filter mobile ios:device` | Dev build on a connected device      |
-| `pnpm --filter mobile prebuild`   | Regenerate the native `ios/` project |
+| Command                              | Does                                 |
+| ------------------------------------ | ------------------------------------ |
+| `pnpm dev`                           | Every dev server (Expo + API)        |
+| `pnpm build`                         | Compile the API to `apps/api/dist`   |
+| `pnpm lint`                          | ESLint across all workspaces         |
+| `pnpm check-types`                   | `tsc --noEmit` across all workspaces |
+| `pnpm test`                          | Vitest across all workspaces         |
+| `pnpm --filter @repo/db db:generate` | Generate a migration from the schema |
+| `pnpm --filter @repo/db db:migrate`  | Apply migrations (+ `pg_trgm`)       |
+| `pnpm --filter worker sync --full`   | Seed the games mirror from IGDB      |
+| `pnpm format`                        | Prettier write                       |
+| `pnpm --filter mobile ios`           | Dev build on the simulator           |
+| `pnpm --filter mobile ios:device`    | Dev build on a connected device      |
+| `pnpm --filter mobile prebuild`      | Regenerate the native `ios/` project |
 
 ## apps/mobile
 
@@ -131,3 +185,19 @@ src/
 ```
 
 `pnpm --filter api build` emits `dist/`; `pnpm --filter api start` runs it.
+
+## apps/worker
+
+```
+src/
+  env.ts      zod-validated environment, parsed once at boot
+  context.ts  wires db + cache + IGDB client into SyncDeps
+  persist.ts  writes one IGDB page in a single transaction
+  sync.ts     syncAll() — advisory lock, watermark, page loop, bookkeeping
+  cli.ts      one-shot run: `pnpm --filter worker sync [--full]`
+  index.ts    node-cron scheduler (SYNC_CRON, SYNC_TZ)
+```
+
+The worker holds a Postgres advisory lock for the duration of a run, so a
+manual `sync` colliding with the nightly cron is skipped rather than run twice.
+Progress is recorded in the `sync_runs` table.

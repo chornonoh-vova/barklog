@@ -3679,7 +3679,7 @@ the same `fileParallelism: false` to `apps/worker`'s Vitest config.
 **Task 3 — Drizzle wraps driver errors.** `.rejects.toThrow(/duplicate key/)`
 fails even when the constraint fires: Drizzle 0.45 raises `Failed query: ...`
 and hangs the real Postgres error off `.cause`. Asserting on `.message` alone
-would also pass for *any* failure, which would make these constraint tests
+would also pass for _any_ failure, which would make these constraint tests
 worthless. `packages/db/test/helpers.ts` gains `expectRejectedBy(promise,
 pattern)`, which flattens the whole `cause` chain before matching.
 

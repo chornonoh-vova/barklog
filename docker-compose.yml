@@ -1,0 +1,41 @@
+name: barklog
+
+# Postgres and Valkey only. The API and worker run on the host under `tsx
+# watch`; containerising them locally would cost fast reloads and buy nothing.
+# Tests do NOT use this stack — they start their own via Testcontainers.
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: barklog
+      POSTGRES_PASSWORD: barklog
+      POSTGRES_DB: barklog
+    ports:
+      - "5432:5432"
+    volumes:
+      # Postgres 18+ expects ONE mount at /var/lib/postgresql and stores data in
+      # a major-version subdirectory beneath it. Mounting /var/lib/postgresql/data
+      # (the pre-18 convention) makes the image refuse to start.
+      # https://github.com/docker-library/postgres/pull/1259
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U barklog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    # Persistence off: this holds a cache and rate-limit counters, all of which
+    # are reconstructible.
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
