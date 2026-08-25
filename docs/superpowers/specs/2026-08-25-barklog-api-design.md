@@ -31,18 +31,18 @@ play-time tracking, Android, and any admin UI. Deferred items are listed in
 
 ## 2. Decisions
 
-| Decision | Choice | Why |
-| --- | --- | --- |
-| Identity | Clerk (hosted) | First-class Expo SDK; API verifies JWTs against JWKS, so no per-request call to Clerk. |
-| Auth coverage | Entire API | Only `/healthz` and `/readyz` are public. |
-| Mirror scope | Full mirror, incremental after seed | ~350k games is only ~700 IGDB requests. A full mirror costs little and removes every runtime dependency on IGDB. |
-| DB access | Drizzle ORM | TypeScript-first, thin over SQL, bulk upsert via `onConflictDoUpdate`, clean raw-SQL escape hatch for `pg_trgm`. |
-| Search | `pg_trgm` GIN + popularity ranking | No extra container; typo- and prefix-tolerant. |
-| Sync runner | Separate worker process | A long IGDB pull never competes with request handling. |
-| Cache | Valkey: IGDB token + search/popular results | Chosen deliberately over caching game details — see §10. |
-| Rating scale | 1–10 integer | Matches how players talk about scores; `smallint` + `CHECK`. |
-| Errors | RFC 9457 Problem Details, always | One error shape for the whole service. |
-| Tests | Testcontainers | The suite owns its infrastructure; CI needs only a Docker socket. |
+| Decision      | Choice                                      | Why                                                                                                              |
+| ------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Identity      | Clerk (hosted)                              | First-class Expo SDK; API verifies JWTs against JWKS, so no per-request call to Clerk.                           |
+| Auth coverage | Entire API                                  | Only `/healthz` and `/readyz` are public.                                                                        |
+| Mirror scope  | Full mirror, incremental after seed         | ~350k games is only ~700 IGDB requests. A full mirror costs little and removes every runtime dependency on IGDB. |
+| DB access     | Drizzle ORM                                 | TypeScript-first, thin over SQL, bulk upsert via `onConflictDoUpdate`, clean raw-SQL escape hatch for `pg_trgm`. |
+| Search        | `pg_trgm` GIN + popularity ranking          | No extra container; typo- and prefix-tolerant.                                                                   |
+| Sync runner   | Separate worker process                     | A long IGDB pull never competes with request handling.                                                           |
+| Cache         | Valkey: IGDB token + search/popular results | Chosen deliberately over caching game details — see §10.                                                         |
+| Rating scale  | 1–10 integer                                | Matches how players talk about scores; `smallint` + `CHECK`.                                                     |
+| Errors        | RFC 9457 Problem Details, always            | One error shape for the whole service.                                                                           |
+| Tests         | Testcontainers                              | The suite owns its infrastructure; CI needs only a Docker socket.                                                |
 
 ## 3. Topology
 
@@ -58,14 +58,14 @@ regress into a live proxy without someone adding a dependency on purpose.
 
 ### Workspaces
 
-| Package | Purpose |
-| --- | --- |
-| `apps/api` | Hono HTTP API (exists; grows routes) |
-| `apps/worker` | **new** — `node-cron` scheduler + sync CLI |
-| `apps/mobile` | Expo app (exists) |
-| `packages/db` | **new** — Drizzle schema, migrations, pool factory |
-| `packages/igdb` | **new** — typed IGDB client |
-| `packages/cache` | **new** — Valkey wrapper, fail-open |
+| Package              | Purpose                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `apps/api`           | Hono HTTP API (exists; grows routes)                        |
+| `apps/worker`        | **new** — `node-cron` scheduler + sync CLI                  |
+| `apps/mobile`        | Expo app (exists)                                           |
+| `packages/db`        | **new** — Drizzle schema, migrations, pool factory          |
+| `packages/igdb`      | **new** — typed IGDB client                                 |
+| `packages/cache`     | **new** — Valkey wrapper, fail-open                         |
 | `packages/contracts` | **new** — zod schemas + `BacklogStatus`, shared with mobile |
 
 `packages/contracts` carries zod and nothing else, so the mobile bundle never
@@ -261,7 +261,7 @@ initial seed and manual runs.
 4. Page through `/games` by keyset until a page returns fewer than 500 rows.
 5. For each page, in one transaction:
    a. upsert `game_types`, `genres`, `platforms`, `companies` from the inline
-      expansion data;
+   expansion data;
    b. upsert `games`;
    c. delete and reinsert the join and screenshot rows for that page's game ids.
 6. `INCR search:ver` in Valkey (§10).
@@ -340,11 +340,11 @@ path — not by prefix, so no future `/health-debug` is public by accident.
 
 ### Games (read-only, served from the mirror)
 
-| Route | Notes |
-| --- | --- |
+| Route                                     | Notes                                                    |
+| ----------------------------------------- | -------------------------------------------------------- |
 | `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars; `limit` ≤ 50 (default 20); `offset` ≤ 200 |
-| `GET /api/games/:id` | full details **plus the caller's backlog entry** |
-| `GET /api/games/popular?limit=` | `limit` ≤ 50 (default 20) |
+| `GET /api/games/:id`                      | full details **plus the caller's backlog entry**         |
+| `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                                |
 
 `GET /api/games/:id` returns the game with its cover, screenshots, genres,
 platforms, developers and publishers, and a `backlogEntry` field that is the
@@ -360,12 +360,12 @@ user-specific part out first.
 
 ### Backlog — the CRUD core
 
-| Route | Notes |
-| --- | --- |
-| `GET /api/backlog?status=&sort=` | the caller's **full** list, joined to game summaries |
-| `GET /api/backlog/stats` | counts per status plus average rating |
-| `PUT /api/backlog/:gameId` | `{status, rating?}` — upsert; `201` on create, `200` on update |
-| `DELETE /api/backlog/:gameId` | `204`; `404` if absent |
+| Route                            | Notes                                                          |
+| -------------------------------- | -------------------------------------------------------------- |
+| `GET /api/backlog?status=&sort=` | the caller's **full** list, joined to game summaries           |
+| `GET /api/backlog/stats`         | counts per status plus average rating                          |
+| `PUT /api/backlog/:gameId`       | `{status, rating?}` — upsert; `201` on create, `200` on update |
+| `DELETE /api/backlog/:gameId`    | `204`; `404` if absent                                         |
 
 `sort` accepts `updated_at` (default), `added_at`, `rating`, `name`, each
 descending except `name`.
@@ -393,10 +393,10 @@ backlog entry for an unknown game cannot satisfy the foreign key.
 
 ### Operations
 
-| Route | Auth | Notes |
-| --- | --- | --- |
-| `GET /healthz` | public | §12 |
-| `GET /readyz` | public | §12 |
+| Route                  | Auth     | Notes                                |
+| ---------------------- | -------- | ------------------------------------ |
+| `GET /healthz`         | public   | §12                                  |
+| `GET /readyz`          | public   | §12                                  |
 | `GET /api/sync/status` | required | last run: status, timestamps, counts |
 
 `GET /api/hello` is removed.
@@ -435,7 +435,7 @@ best-matching span of words inside the name, so `zeld` matches `Zelda`
 strongly. The `<%` operator uses the same `gin_trgm_ops` index.
 
 The popularity term is what stops `mario` returning an obscure ROM hack ahead
-of *Super Mario Odyssey*. `id ASC` gives a stable tie-break so pagination
+of _Super Mario Odyssey_. `id ASC` gives a stable tie-break so pagination
 cannot repeat or skip a row.
 
 Weights and the 0.3 threshold are starting points. They are tuned against the
@@ -444,13 +444,13 @@ order (§16).
 
 ## 10. Cache (`packages/cache`)
 
-| Key | Contents | TTL |
-| --- | --- | --- |
-| `igdb:token` | Twitch app token | `expires_in - 3600` |
-| `search:ver` | version counter | none |
-| `search:v{ver}:{sha1(q\|limit\|offset)}` | search results | 600 s; 60 s if empty |
-| `popular:v{ver}:{limit}` | popular feed | 3600 s |
-| `rl:{scope}:{sub}:{window}` | rate-limit counter | 120 s |
+| Key                                      | Contents           | TTL                  |
+| ---------------------------------------- | ------------------ | -------------------- |
+| `igdb:token`                             | Twitch app token   | `expires_in - 3600`  |
+| `search:ver`                             | version counter    | none                 |
+| `search:v{ver}:{sha1(q\|limit\|offset)}` | search results     | 600 s; 60 s if empty |
+| `popular:v{ver}:{limit}`                 | popular feed       | 3600 s               |
+| `rl:{scope}:{sub}:{window}`              | rate-limit counter | 120 s                |
 
 Queries are normalised before hashing: trimmed, lowercased, internal whitespace
 collapsed. Empty results are cached too, at the shorter TTL, which absorbs the
@@ -480,9 +480,7 @@ second error shape anywhere in the service.
   "detail": "Query parameter 'q' must be at least 2 characters.",
   "instance": "/api/games/search",
   "traceId": "01JQ8F3K2M9X7YB4NDVWZP6HRC",
-  "errors": [
-    { "pointer": "/q", "detail": "String must contain at least 2 character(s)" }
-  ]
+  "errors": [{ "pointer": "/q", "detail": "String must contain at least 2 character(s)" }]
 }
 ```
 
@@ -490,17 +488,17 @@ second error shape anywhere in the service.
 `traceId` is the request id, echoed in `X-Request-Id` and in every log line for
 the request.
 
-| `type` slug | Status | Raised by |
-| --- | --- | --- |
-| `bad-request` | 400 | malformed JSON |
-| `unauthorized` | 401 | missing or invalid Clerk token |
-| `not-found` | 404 | unknown game, entry, or route |
-| `unsupported-media-type` | 415 | non-JSON body |
-| `payload-too-large` | 413 | body over the limit |
-| `validation-failed` | 422 | zod |
-| `rate-limited` | 429 | limiter |
-| `internal-error` | 500 | anything unhandled |
-| `service-unavailable` | 503 | dependency down |
+| `type` slug              | Status | Raised by                      |
+| ------------------------ | ------ | ------------------------------ |
+| `bad-request`            | 400    | malformed JSON                 |
+| `unauthorized`           | 401    | missing or invalid Clerk token |
+| `not-found`              | 404    | unknown game, entry, or route  |
+| `unsupported-media-type` | 415    | non-JSON body                  |
+| `payload-too-large`      | 413    | body over the limit            |
+| `validation-failed`      | 422    | zod                            |
+| `rate-limited`           | 429    | limiter                        |
+| `internal-error`         | 500    | anything unhandled             |
+| `service-unavailable`    | 503    | dependency down                |
 
 `type` URIs are stable identifiers; they need not resolve.
 
@@ -518,10 +516,10 @@ lives.
 
 ## 12. Health and readiness
 
-| Route | Behaviour |
-| --- | --- |
-| `GET /healthz` | Liveness. No I/O, no dependency checks. `200 {"status":"ok"}` whenever the event loop turns. |
-| `GET /readyz` | Readiness. `SELECT 1` on Postgres and `PING` on Valkey, each behind a 1 s timeout. Both up → `200`. **Either down → `503`**, rendered as a problem document so even the probe honours §11. |
+| Route          | Behaviour                                                                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /healthz` | Liveness. No I/O, no dependency checks. `200 {"status":"ok"}` whenever the event loop turns.                                                                                               |
+| `GET /readyz`  | Readiness. `SELECT 1` on Postgres and `PING` on Valkey, each behind a 1 s timeout. Both up → `200`. **Either down → `503`**, rendered as a problem document so even the probe honours §11. |
 
 The distinction is operational: an orchestrator restarts a container on a
 failed liveness probe but merely stops routing traffic on a failed readiness
@@ -565,17 +563,17 @@ Clerk.
 
 ### Headers
 
-| Header | Value | Rationale |
-| --- | --- | --- |
-| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | production only; meaningless over plain HTTP |
-| `X-Content-Type-Options` | `nosniff` | stops `application/problem+json` being sniffed as something executable |
-| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` | the API returns zero HTML, so the correct policy is "nothing at all" |
-| `X-Frame-Options` | `DENY` | belt and braces with `frame-ancestors` |
-| `Referrer-Policy` | `no-referrer` | |
-| `Cross-Origin-Resource-Policy` | `same-origin` | blocks other origins embedding responses |
-| `Cross-Origin-Opener-Policy` | `same-origin` | |
-| `X-Permitted-Cross-Domain-Policies` | `none` | |
-| `X-Powered-By`, `Server` | **removed** | version disclosure |
+| Header                              | Value                                                                             | Rationale                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `Strict-Transport-Security`         | `max-age=63072000; includeSubDomains; preload`                                    | production only; meaningless over plain HTTP                           |
+| `X-Content-Type-Options`            | `nosniff`                                                                         | stops `application/problem+json` being sniffed as something executable |
+| `Content-Security-Policy`           | `default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` | the API returns zero HTML, so the correct policy is "nothing at all"   |
+| `X-Frame-Options`                   | `DENY`                                                                            | belt and braces with `frame-ancestors`                                 |
+| `Referrer-Policy`                   | `no-referrer`                                                                     |                                                                        |
+| `Cross-Origin-Resource-Policy`      | `same-origin`                                                                     | blocks other origins embedding responses                               |
+| `Cross-Origin-Opener-Policy`        | `same-origin`                                                                     |                                                                        |
+| `X-Permitted-Cross-Domain-Policies` | `none`                                                                            |                                                                        |
+| `X-Powered-By`, `Server`            | **removed**                                                                       | version disclosure                                                     |
 
 A test asserts the full header set is present on a 200, on a 404 problem
 document, and on `/healthz`.
@@ -585,12 +583,12 @@ document, and on `/healthz`.
 Because the whole API is authenticated, the default is `Cache-Control: no-store`
 and every route states its own value explicitly:
 
-| Route | Value |
-| --- | --- |
-| `GET /api/backlog` | `private, no-cache` (ETag revalidation) |
-| `GET /api/games/:id`, `/api/games/popular` | `private, max-age=300` |
-| `GET /api/games/search` | `private, max-age=60` |
-| everything else | `no-store` |
+| Route                                      | Value                                   |
+| ------------------------------------------ | --------------------------------------- |
+| `GET /api/backlog`                         | `private, no-cache` (ETag revalidation) |
+| `GET /api/games/:id`, `/api/games/popular` | `private, max-age=300`                  |
+| `GET /api/games/search`                    | `private, max-age=60`                   |
+| everything else                            | `no-store`                              |
 
 `private` is what keeps an intermediary from ever holding an authenticated
 response.
@@ -600,11 +598,11 @@ response.
 Fixed-window counters in Valkey keyed on the Clerk `sub`: `INCR` plus `EXPIRE`,
 atomic and cheap.
 
-| Scope | Limit |
-| --- | --- |
-| search | 30 / min |
-| writes (`PUT`, `DELETE`) | 60 / min |
-| overall | 300 / min |
+| Scope                    | Limit     |
+| ------------------------ | --------- |
+| search                   | 30 / min  |
+| writes (`PUT`, `DELETE`) | 60 / min  |
+| overall                  | 300 / min |
 
 Responses carry `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`;
 a 429 also carries `Retry-After` alongside the problem document. The limiter
@@ -623,11 +621,11 @@ consistent with the cache.
 
 ## 14. Configuration
 
-| Process | Variables |
-| --- | --- |
-| `apps/api` | `PORT`, `DATABASE_URL`, `VALKEY_URL`, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `NODE_ENV`, `LOG_LEVEL` |
-| `apps/worker` | `DATABASE_URL`, `VALKEY_URL`, `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`, `SYNC_CRON`, `SYNC_TZ`, `LOG_LEVEL` |
-| `apps/mobile` | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` |
+| Process       | Variables                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `apps/api`    | `PORT`, `DATABASE_URL`, `VALKEY_URL`, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `NODE_ENV`, `LOG_LEVEL` |
+| `apps/worker` | `DATABASE_URL`, `VALKEY_URL`, `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`, `SYNC_CRON`, `SYNC_TZ`, `LOG_LEVEL`  |
+| `apps/mobile` | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`                                                 |
 
 Every new variable must also be declared in `turbo.json` under the relevant
 task's `env` array, or `turbo/no-undeclared-env-vars` will flag it.
@@ -680,12 +678,12 @@ infrastructure and depends on nothing but a Docker socket.
 Clerk verification is faked through the interface in §13, so the authenticated
 suite needs no network.
 
-| Layer | Coverage |
-| --- | --- |
-| Unit | IGDB response mapping (including omitted optional fields), rate-limit windows, ETag derivation, problem-document construction |
-| Integration | backlog CRUD against real Postgres; search ranking against a seeded fixture set; cache hit/miss and version-bump invalidation; fail-open behaviour with Valkey stopped |
-| Contract | our field list against live IGDB (§7) |
-| Invariant | every non-2xx response is `application/problem+json` (§11); the secure-header set is present on 200, 404 and `/healthz` (§13); `AppType` still exposes a known route (§8) |
+| Layer       | Coverage                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | IGDB response mapping (including omitted optional fields), rate-limit windows, ETag derivation, problem-document construction                                             |
+| Integration | backlog CRUD against real Postgres; search ranking against a seeded fixture set; cache hit/miss and version-bump invalidation; fail-open behaviour with Valkey stopped    |
+| Contract    | our field list against live IGDB (§7)                                                                                                                                     |
+| Invariant   | every non-2xx response is `application/problem+json` (§11); the secure-header set is present on 200, 404 and `/healthz` (§13); `AppType` still exposes a known route (§8) |
 
 Two tests carry more weight than the rest:
 
@@ -733,10 +731,10 @@ while the shape is still moving, then closed before anything ships.
 
 ## 18. Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| IGDB deprecates a field we mirror | Nightly contract test fails the build (§7) |
-| Seed exhausts the rate limit or dies midway | Keyset pagination plus an unadvanced watermark makes a re-run resume correctly (§6) |
-| Search ranking feels wrong on real data | Weights are configuration; ranking fixtures pin the regressions (§9, §15) |
-| Strict `/readyz` pulls healthy instances on a Valkey blip | Accepted trade, recorded in §12; reverting is one branch |
-| Postgres growth from the full mirror | ~2–4 GB estimated; confirm after the first seed (§6) |
+| Risk                                                      | Mitigation                                                                          |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| IGDB deprecates a field we mirror                         | Nightly contract test fails the build (§7)                                          |
+| Seed exhausts the rate limit or dies midway               | Keyset pagination plus an unadvanced watermark makes a re-run resume correctly (§6) |
+| Search ranking feels wrong on real data                   | Weights are configuration; ranking fixtures pin the regressions (§9, §15)           |
+| Strict `/readyz` pulls healthy instances on a Valkey blip | Accepted trade, recorded in §12; reverting is one branch                            |
+| Postgres growth from the full mirror                      | ~2–4 GB estimated; confirm after the first seed (§6)                                |

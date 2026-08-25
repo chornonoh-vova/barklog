@@ -28,52 +28,52 @@
 
 ### `packages/db` — schema, migrations, connection
 
-| File | Responsibility |
-| --- | --- |
-| `src/client.ts` | `createDb(url)` → pool + Drizzle instance + `close()` |
-| `src/migrate.ts` | `runMigrations(db)` — creates `pg_trgm`, then applies Drizzle migrations |
-| `src/schema/mirror.ts` | IGDB mirror tables (games, reference, join) |
-| `src/schema/backlog.ts` | `users`, `backlog_status` enum, `backlog_entries` |
-| `src/schema/sync.ts` | `sync_run_status` enum, `sync_runs` |
-| `src/schema/index.ts` | re-export barrel used by Drizzle and consumers |
-| `src/queries/sync-runs.ts` | watermark read + run lifecycle writes |
-| `src/index.ts` | package barrel |
-| `test/setup/containers.ts` | Vitest `globalSetup` — one Postgres container for the suite |
-| `test/helpers.ts` | `freshDb()`, `truncateAll()` |
+| File                       | Responsibility                                                           |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `src/client.ts`            | `createDb(url)` → pool + Drizzle instance + `close()`                    |
+| `src/migrate.ts`           | `runMigrations(db)` — creates `pg_trgm`, then applies Drizzle migrations |
+| `src/schema/mirror.ts`     | IGDB mirror tables (games, reference, join)                              |
+| `src/schema/backlog.ts`    | `users`, `backlog_status` enum, `backlog_entries`                        |
+| `src/schema/sync.ts`       | `sync_run_status` enum, `sync_runs`                                      |
+| `src/schema/index.ts`      | re-export barrel used by Drizzle and consumers                           |
+| `src/queries/sync-runs.ts` | watermark read + run lifecycle writes                                    |
+| `src/index.ts`             | package barrel                                                           |
+| `test/setup/containers.ts` | Vitest `globalSetup` — one Postgres container for the suite              |
+| `test/helpers.ts`          | `freshDb()`, `truncateAll()`                                             |
 
 `pg_trgm` lives in `migrate.ts` rather than a migration file because drizzle-kit will not generate `CREATE EXTENSION`, and the trigram index in the generated SQL cannot be created until the extension exists.
 
 ### `packages/cache` — Valkey wrapper
 
-| File | Responsibility |
-| --- | --- |
-| `src/client.ts` | `createCache(url)` → `get/set/incr/withCache/close`, fail-open |
-| `src/index.ts` | barrel |
-| `test/setup/containers.ts` | Vitest `globalSetup` — one Valkey container |
+| File                       | Responsibility                                                 |
+| -------------------------- | -------------------------------------------------------------- |
+| `src/client.ts`            | `createCache(url)` → `get/set/incr/withCache/close`, fail-open |
+| `src/index.ts`             | barrel                                                         |
+| `test/setup/containers.ts` | Vitest `globalSetup` — one Valkey container                    |
 
 ### `packages/igdb` — IGDB client
 
-| File | Responsibility |
-| --- | --- |
-| `src/token.ts` | Twitch client-credentials token, cached in Valkey |
-| `src/throttle.ts` | 4 req/s + concurrency limiter |
-| `src/client.ts` | `createIgdbClient()` — request, retry, keyset pagination |
-| `src/games-query.ts` | the APIcalypse field list, in one place |
-| `src/schemas.ts` | zod schemas for IGDB responses |
-| `src/map.ts` | IGDB payload → database row shapes |
-| `src/index.ts` | barrel |
+| File                 | Responsibility                                           |
+| -------------------- | -------------------------------------------------------- |
+| `src/token.ts`       | Twitch client-credentials token, cached in Valkey        |
+| `src/throttle.ts`    | 4 req/s + concurrency limiter                            |
+| `src/client.ts`      | `createIgdbClient()` — request, retry, keyset pagination |
+| `src/games-query.ts` | the APIcalypse field list, in one place                  |
+| `src/schemas.ts`     | zod schemas for IGDB responses                           |
+| `src/map.ts`         | IGDB payload → database row shapes                       |
+| `src/index.ts`       | barrel                                                   |
 
 `schemas.ts` and `map.ts` are separate because the mapper is pure and heavily unit-tested, while the schemas track IGDB's wire format.
 
 ### `apps/worker` — the sync
 
-| File | Responsibility |
-| --- | --- |
-| `src/env.ts` | zod-validated environment, read once at boot |
-| `src/persist.ts` | write one page of mapped rows in one transaction |
-| `src/sync.ts` | `syncAll()` — lock, watermark, page loop, bookkeeping |
-| `src/cli.ts` | `pnpm --filter worker sync [--full]` |
-| `src/index.ts` | cron scheduler entrypoint |
+| File             | Responsibility                                        |
+| ---------------- | ----------------------------------------------------- |
+| `src/env.ts`     | zod-validated environment, read once at boot          |
+| `src/persist.ts` | write one page of mapped rows in one transaction      |
+| `src/sync.ts`    | `syncAll()` — lock, watermark, page loop, bookkeeping |
+| `src/cli.ts`     | `pnpm --filter worker sync [--full]`                  |
+| `src/index.ts`   | cron scheduler entrypoint                             |
 
 `persist.ts` is split from `sync.ts` because page persistence is the one piece carrying the idempotency guarantee, and it is tested against a real database independently of any IGDB interaction.
 
@@ -82,11 +82,13 @@
 ## Task 1: `@repo/db` scaffold + Testcontainers harness + `pg_trgm`
 
 **Files:**
+
 - Create: `packages/db/package.json`, `packages/db/tsconfig.json`, `packages/db/eslint.config.js`, `packages/db/vitest.config.ts`, `packages/db/drizzle.config.ts`
 - Create: `packages/db/src/client.ts`, `packages/db/src/migrate.ts`, `packages/db/src/schema/index.ts`, `packages/db/src/index.ts`
 - Test: `packages/db/test/setup/containers.ts`, `packages/db/test/extension.test.ts`
 
 **Interfaces:**
+
 - Produces: `createDb(url: string): { db: NodePgDatabase<typeof schema>; pool: Pool; close(): Promise<void> }`; `runMigrations(db: NodePgDatabase<typeof schema>): Promise<void>`; Vitest injected value `databaseUrl: string`.
 
 - [ ] **Step 1: Create the package scaffold**
@@ -351,12 +353,14 @@ git commit -m "feat(db): add @repo/db with testcontainers harness and pg_trgm"
 ## Task 2: Mirror schema
 
 **Files:**
+
 - Create: `packages/db/src/schema/mirror.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/drizzle/0000_*.sql` (generated)
 - Test: `packages/db/test/mirror-schema.test.ts`
 
 **Interfaces:**
+
 - Produces: table objects `gameTypes`, `genres`, `platforms`, `companies`, `games`, `gameScreenshots`, `gameGenres`, `gamePlatforms`, `gameCompanies`, all exported from `@repo/db/schema`.
 
 - [ ] **Step 1: Write the failing test**
@@ -413,7 +417,10 @@ test("parent_game_id is a soft reference with no foreign key", async () => {
     igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
   });
 
-  const rows = await db.select().from(games).where(sql`${games.id} = 9999`);
+  const rows = await db
+    .select()
+    .from(games)
+    .where(sql`${games.id} = 9999`);
   expect(rows[0]!.parentGameId).toBe(424242);
 });
 ```
@@ -585,12 +592,14 @@ git commit -m "feat(db): add IGDB mirror schema"
 ## Task 3: Backlog schema, with the constraints proven
 
 **Files:**
+
 - Create: `packages/db/src/schema/backlog.ts`, `packages/db/test/helpers.ts`
 - Modify: `packages/db/src/schema/index.ts`
 - Create: `packages/db/drizzle/0001_*.sql` (generated)
 - Test: `packages/db/test/backlog-constraints.test.ts`
 
 **Interfaces:**
+
 - Produces: `users`, `backlogEntries`, `backlogStatus` (pgEnum), and the type `BacklogStatusValue = "waiting" | "playing" | "completed" | "abandoned"`; test helper `truncateAll(db): Promise<void>`.
 
 These tests are the point of the task. §4 of the spec claims the database
@@ -803,12 +812,14 @@ git commit -m "feat(db): add backlog schema with enforced status and rating cons
 ## Task 4: `sync_runs` and the watermark
 
 **Files:**
+
 - Create: `packages/db/src/schema/sync.ts`, `packages/db/src/queries/sync-runs.ts`
 - Modify: `packages/db/src/schema/index.ts`, `packages/db/src/index.ts`, `packages/db/test/helpers.ts`
 - Create: `packages/db/drizzle/0002_*.sql` (generated)
 - Test: `packages/db/test/sync-runs.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `syncRuns`, `syncRunStatus`
   - `startRun(db): Promise<string>` — returns the new run id
@@ -1017,10 +1028,7 @@ export { createDb, type Database } from "./client.js";
 export { runMigrations } from "./migrate.js";
 export * from "./queries/sync-runs.js";
 export * as schema from "./schema/index.js";
-export {
-  BACKLOG_STATUSES,
-  type BacklogStatusValue,
-} from "./schema/backlog.js";
+export { BACKLOG_STATUSES, type BacklogStatusValue } from "./schema/backlog.js";
 ```
 
 - [ ] **Step 4: Generate the migration and run the full suite**
@@ -1055,11 +1063,13 @@ git commit -m "feat(db): add sync_runs and watermark queries"
 ## Task 5: `@repo/cache` — a Valkey wrapper that fails open
 
 **Files:**
+
 - Create: `packages/cache/package.json`, `packages/cache/tsconfig.json`, `packages/cache/eslint.config.js`, `packages/cache/vitest.config.ts`
 - Create: `packages/cache/src/client.ts`, `packages/cache/src/index.ts`
 - Test: `packages/cache/test/setup/containers.ts`, `packages/cache/test/cache.test.ts`
 
 **Interfaces:**
+
 - Produces:
   ```ts
   interface Cache {
@@ -1317,17 +1327,23 @@ git commit -m "feat(cache): add fail-open Valkey wrapper"
 ## Task 6: `@repo/igdb` — throttle and token
 
 **Files:**
+
 - Create: `packages/igdb/package.json`, `packages/igdb/tsconfig.json`, `packages/igdb/eslint.config.js`, `packages/igdb/vitest.config.ts`
 - Create: `packages/igdb/src/throttle.ts`, `packages/igdb/src/token.ts`, `packages/igdb/src/index.ts`
 - Test: `packages/igdb/test/throttle.test.ts`, `packages/igdb/test/token.test.ts`
 
 **Interfaces:**
+
 - Produces:
   ```ts
-  function createThrottle(opts: { concurrency: number; minIntervalMs: number }):
-    <T>(fn: () => Promise<T>) => Promise<T>;
+  function createThrottle(opts: {
+    concurrency: number;
+    minIntervalMs: number;
+  }): <T>(fn: () => Promise<T>) => Promise<T>;
 
-  interface TokenSource { get(): Promise<string> }
+  interface TokenSource {
+    get(): Promise<string>;
+  }
   function createTokenSource(opts: {
     clientId: string;
     clientSecret: string;
@@ -1690,40 +1706,59 @@ git commit -m "feat(igdb): add rate-limit throttle and cached Twitch token sourc
 ## Task 7: `@repo/igdb` — response schemas, mapping, and the paging client
 
 **Files:**
+
 - Create: `packages/igdb/src/schemas.ts`, `packages/igdb/src/games-query.ts`, `packages/igdb/src/map.ts`, `packages/igdb/src/client.ts`
 - Modify: `packages/igdb/src/index.ts`
 - Test: `packages/igdb/test/map.test.ts`, `packages/igdb/test/client.test.ts`
 
 **Interfaces:**
+
 - Produces:
   ```ts
-  const GAME_FIELDS: string;                       // the APIcalypse field list
+  const GAME_FIELDS: string; // the APIcalypse field list
   function gamesPageQuery(o: { since: Date | null; afterId: number; limit: number }): string;
 
   type IgdbGame = z.infer<typeof igdbGameSchema>;
 
   interface MappedPage {
-    gameTypes:      { id: number; name: string }[];
-    genres:         { id: number; name: string; slug: string }[];
-    platforms:      { id: number; name: string; abbreviation: string | null; slug: string }[];
-    companies:      { id: number; name: string; slug: string }[];
-    games:          { id: number; name: string; slug: string; summary: string | null;
-                      firstReleaseDate: Date | null; gameTypeId: number | null;
-                      parentGameId: number | null; totalRating: number | null;
-                      totalRatingCount: number; coverImageId: string | null;
-                      igdbUpdatedAt: Date }[];
-    screenshots:    { gameId: number; imageId: string }[];
-    gameGenres:     { gameId: number; genreId: number }[];
-    gamePlatforms:  { gameId: number; platformId: number }[];
-    gameCompanies:  { gameId: number; companyId: number;
-                      isDeveloper: boolean; isPublisher: boolean }[];
+    gameTypes: { id: number; name: string }[];
+    genres: { id: number; name: string; slug: string }[];
+    platforms: { id: number; name: string; abbreviation: string | null; slug: string }[];
+    companies: { id: number; name: string; slug: string }[];
+    games: {
+      id: number;
+      name: string;
+      slug: string;
+      summary: string | null;
+      firstReleaseDate: Date | null;
+      gameTypeId: number | null;
+      parentGameId: number | null;
+      totalRating: number | null;
+      totalRatingCount: number;
+      coverImageId: string | null;
+      igdbUpdatedAt: Date;
+    }[];
+    screenshots: { gameId: number; imageId: string }[];
+    gameGenres: { gameId: number; genreId: number }[];
+    gamePlatforms: { gameId: number; platformId: number }[];
+    gameCompanies: {
+      gameId: number;
+      companyId: number;
+      isDeveloper: boolean;
+      isPublisher: boolean;
+    }[];
   }
   function mapGames(raw: unknown[]): MappedPage;
 
-  interface IgdbClient { gamesPage(o: { since: Date | null; afterId: number }): Promise<unknown[]> }
+  interface IgdbClient {
+    gamesPage(o: { since: Date | null; afterId: number }): Promise<unknown[]>;
+  }
   function createIgdbClient(o: {
-    clientId: string; tokens: TokenSource; fetchImpl?: typeof fetch;
-    throttle?: ReturnType<typeof createThrottle>; retryBaseMs?: number;
+    clientId: string;
+    tokens: TokenSource;
+    fetchImpl?: typeof fetch;
+    throttle?: ReturnType<typeof createThrottle>;
+    retryBaseMs?: number;
   }): IgdbClient;
   ```
 
@@ -1731,8 +1766,8 @@ Two mapping hazards drive this task's tests, and both are real `ON CONFLICT`
 failures rather than hypotheticals:
 
 1. Two games in one page share a genre. Inserting the genre twice in a single
-   statement raises *"ON CONFLICT DO UPDATE command cannot affect row a second
-   time"*. Reference rows must be deduplicated by id **before** the upsert.
+   statement raises _"ON CONFLICT DO UPDATE command cannot affect row a second
+   time"_. Reference rows must be deduplicated by id **before** the upsert.
 2. IGDB lists a company twice for one game — once as developer, once as
    publisher. Those two rows collide on the `(game_id, company_id)` primary key,
    so the flags must be merged into one row.
@@ -1761,8 +1796,16 @@ const FULL_GAME = {
   genres: [{ id: 12, name: "Role-playing (RPG)", slug: "role-playing-rpg" }],
   platforms: [{ id: 6, name: "PC (Microsoft Windows)", abbreviation: "PC", slug: "win" }],
   involved_companies: [
-    { id: 1, company: { id: 908, name: "CD Projekt RED", slug: "cd-projekt-red" }, developer: true },
-    { id: 2, company: { id: 908, name: "CD Projekt RED", slug: "cd-projekt-red" }, publisher: true },
+    {
+      id: 1,
+      company: { id: 908, name: "CD Projekt RED", slug: "cd-projekt-red" },
+      developer: true,
+    },
+    {
+      id: 2,
+      company: { id: 908, name: "CD Projekt RED", slug: "cd-projekt-red" },
+      publisher: true,
+    },
   ],
 };
 
@@ -2314,6 +2357,7 @@ git commit -m "feat(igdb): add response schemas, page mapping, and keyset paging
 ## Task 8: Page persistence and the idempotency guarantee
 
 **Files:**
+
 - Create: `packages/db/src/testing.ts`
 - Modify: `packages/db/package.json` (add `./testing` export), `packages/db/src/queries/sync-runs.ts` (export the overlap constant)
 - Delete: `packages/db/test/helpers.ts` (its `truncateAll` moves to `src/testing.ts`)
@@ -2323,6 +2367,7 @@ git commit -m "feat(igdb): add response schemas, page mapping, and keyset paging
 - Test: `apps/worker/test/setup/containers.ts`, `apps/worker/test/persist.test.ts`
 
 **Interfaces:**
+
 - Consumes: `mapGames`, `MappedPage` (Task 7); `createDb`, `runMigrations`, schema tables (Tasks 1–4)
 - Produces:
   ```ts
@@ -2461,9 +2506,7 @@ test("a company that develops and publishes becomes one row", async () => {
   await persistPage(db, mapGames(PAGE));
 
   const rows = await db.select().from(schema.gameCompanies);
-  expect(rows).toEqual([
-    { gameId: 1942, companyId: 908, isDeveloper: true, isPublisher: true },
-  ]);
+  expect(rows).toEqual([{ gameId: 1942, companyId: 908, isDeveloper: true, isPublisher: true }]);
 });
 
 test("an updated game overwrites its previous values", async () => {
@@ -2743,15 +2786,23 @@ git commit -m "feat(worker): add idempotent page persistence"
 ## Task 9: `syncAll()` — lock, watermark, page loop, bookkeeping
 
 **Files:**
+
 - Create: `apps/worker/src/sync.ts`
 - Test: `apps/worker/test/sync.test.ts`
 
 **Interfaces:**
+
 - Consumes: `persistPage` (Task 8); `startRun`/`finishRun`/`failRun`/`getWatermark`/`WATERMARK_OVERLAP_MS` (Task 4); `IgdbClient`, `mapGames`, `PAGE_SIZE` (Task 7); `Cache` (Task 5)
 - Produces:
+
   ```ts
-  interface SyncDeps { db: Db; pool: pg.Pool; cache: Cache; igdb: IgdbClient;
-                       log?: (message: string) => void }
+  interface SyncDeps {
+    db: Db;
+    pool: pg.Pool;
+    cache: Cache;
+    igdb: IgdbClient;
+    log?: (message: string) => void;
+  }
   type SyncResult =
     | { status: "skipped" }
     | { status: "success"; counts: Record<string, number>; watermark: Date }
@@ -3030,8 +3081,7 @@ export async function syncAll(
     // value minus the overlap, so adding it back recovers the original exactly;
     // writing `since` itself would drift the watermark backwards every run.
     const watermark =
-      newestUpdatedAt ??
-      (since ? new Date(since.getTime() + WATERMARK_OVERLAP_MS) : new Date(0));
+      newestUpdatedAt ?? (since ? new Date(since.getTime() + WATERMARK_OVERLAP_MS) : new Date(0));
 
     await finishRun(deps.db, runId, { watermark, counts });
 
@@ -3074,19 +3124,27 @@ git commit -m "feat(worker): add syncAll with advisory lock and watermark bookke
 ## Task 10: Environment, CLI, cron entrypoint, and docker-compose
 
 **Files:**
+
 - Create: `apps/worker/src/env.ts`, `apps/worker/src/context.ts`, `apps/worker/src/cli.ts`, `apps/worker/src/index.ts`
 - Create: `docker-compose.yml`, `.env.example`
 - Modify: `turbo.json`, `README.md`, `.gitignore`
 - Test: `apps/worker/test/env.test.ts`
 
 **Interfaces:**
+
 - Consumes: `syncAll` (Task 9), `createDb` (Task 1), `createCache` (Task 5), `createTokenSource`/`createIgdbClient` (Tasks 6–7)
 - Produces:
+
   ```ts
-  function parseEnv(source: NodeJS.ProcessEnv): WorkerEnv;   // throws on invalid
-  interface WorkerEnv { DATABASE_URL: string; VALKEY_URL: string;
-                        IGDB_CLIENT_ID: string; IGDB_CLIENT_SECRET: string;
-                        SYNC_CRON: string; SYNC_TZ: string }
+  function parseEnv(source: NodeJS.ProcessEnv): WorkerEnv; // throws on invalid
+  interface WorkerEnv {
+    DATABASE_URL: string;
+    VALKEY_URL: string;
+    IGDB_CLIENT_ID: string;
+    IGDB_CLIENT_SECRET: string;
+    SYNC_CRON: string;
+    SYNC_TZ: string;
+  }
   function createContext(env: WorkerEnv): { deps: SyncDeps; close(): Promise<void> };
   ```
 
@@ -3115,9 +3173,7 @@ test("applies defaults for the schedule", () => {
 
 test("a missing secret fails at boot rather than on first use", () => {
   // The process must refuse to start, not fail at midnight.
-  expect(() => parseEnv({ ...VALID, IGDB_CLIENT_SECRET: undefined })).toThrow(
-    /IGDB_CLIENT_SECRET/,
-  );
+  expect(() => parseEnv({ ...VALID, IGDB_CLIENT_SECRET: undefined })).toThrow(/IGDB_CLIENT_SECRET/);
 });
 
 test("an empty string counts as missing", () => {
@@ -3417,11 +3473,13 @@ git commit -m "feat(worker): add cron entrypoint, sync CLI, and local infrastruc
 ## Task 11: IGDB field contract test
 
 **Files:**
+
 - Create: `packages/igdb/test/contract.test.ts`
 - Modify: `packages/igdb/vitest.config.ts`, `packages/igdb/package.json`
 - Create: `.github/workflows/igdb-contract.yml`
 
 **Interfaces:**
+
 - Consumes: `GAME_FIELDS`, `createIgdbClient`, `createTokenSource` (Tasks 6–7)
 
 Spec §7 commits to using only non-deprecated IGDB fields. That commitment is
