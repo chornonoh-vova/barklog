@@ -2,7 +2,8 @@ import { afterAll, beforeEach, describe, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import { backlogEntries, games, users } from "../src/schema/index.js";
-import { expectRejectedBy, truncateAll } from "./helpers.js";
+import { truncateAll } from "../src/testing.js";
+import { expectRejectedBy } from "./helpers.js";
 
 const { db, close } = createDb(inject("databaseUrl"));
 

@@ -3,7 +3,7 @@ import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import { gameGenres, games, genres } from "../src/schema/index.js";
-import { truncateAll } from "./helpers.js";
+import { truncateAll } from "../src/testing.js";
 
 const { db, close } = createDb(inject("databaseUrl"));
 

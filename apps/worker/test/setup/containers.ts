@@ -1,6 +1,5 @@
+import { startPostgres } from "@repo/db/testing";
 import type { TestProject } from "vitest/node";
-
-import { startPostgres } from "../../src/testing.js";
 
 declare module "vitest" {
   interface ProvidedContext {
