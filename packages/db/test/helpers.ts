@@ -7,6 +7,7 @@ import type * as schema from "../src/schema/index.js";
 export async function truncateAll(db: NodePgDatabase<typeof schema>): Promise<void> {
   await db.execute(sql`
     TRUNCATE TABLE
+      sync_runs,
       backlog_entries, users,
       game_companies, game_platforms, game_genres, game_screenshots,
       games, companies, platforms, genres, game_types

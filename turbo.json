@@ -7,7 +7,15 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**"],
-      "env": ["EXPO_PUBLIC_API_URL"]
+      "env": [
+        "EXPO_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "VALKEY_URL",
+        "IGDB_CLIENT_ID",
+        "IGDB_CLIENT_SECRET",
+        "SYNC_CRON",
+        "SYNC_TZ"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -15,16 +23,46 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": [
+        "DATABASE_URL",
+        "VALKEY_URL",
+        "IGDB_CLIENT_ID",
+        "IGDB_CLIENT_SECRET",
+        "SYNC_CRON",
+        "SYNC_TZ"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": ["PORT", "EXPO_PUBLIC_API_URL"]
+      "dependsOn": ["^build"],
+      "env": [
+        "PORT",
+        "EXPO_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "VALKEY_URL",
+        "IGDB_CLIENT_ID",
+        "IGDB_CLIENT_SECRET",
+        "SYNC_CRON",
+        "SYNC_TZ"
+      ]
     },
     "start": {
       "dependsOn": ["build"],
       "cache": false,
       "persistent": true,
-      "env": ["PORT"]
+      "env": [
+        "PORT",
+        "DATABASE_URL",
+        "VALKEY_URL",
+        "IGDB_CLIENT_ID",
+        "IGDB_CLIENT_SECRET",
+        "SYNC_CRON",
+        "SYNC_TZ"
+      ]
     },
     "prebuild": {
       "cache": false
