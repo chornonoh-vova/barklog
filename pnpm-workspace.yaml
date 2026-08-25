@@ -1,3 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# React Native / Expo does not support pnpm's isolated node_modules layout.
+# https://docs.expo.dev/guides/monorepos/
+nodeLinker: hoisted
+
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

@@ -36,3 +36,12 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Expo
+.expo/
+expo-env.d.ts
+/apps/mobile/ios
+/apps/mobile/android
+
+# Metro
+.metro-health-check*

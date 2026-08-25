@@ -1,159 +1,133 @@
-# Turborepo starter
+# Barklog
 
-This Turborepo starter is maintained by the Turborepo core team.
+Track your gaming backlog — the games you own, the ones you're playing, and the
+ones you keep meaning to finish — with a cute dog companion keeping score.
 
-## Using this example
+Turborepo monorepo for the Barklog iOS app and its backend.
 
-Run the following command:
+## What's inside
 
-```sh
-npx create-turbo@latest
-```
+| Workspace                    | What it is                                                         |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `apps/mobile`                | Expo (SDK 57) app — expo-router, native tabs, SwiftUI via @expo/ui |
+| `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`              |
+| `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                |
+| `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)      |
 
-## What's inside?
+Everything is TypeScript. The app is **iOS-only for now** (`platforms: ["ios"]`
+in `app.json`) because the UI is built with `@expo/ui`'s SwiftUI components.
 
-This Turborepo includes the following packages/apps:
+- App identifier: `gg.barklog.app`
+- URL scheme: `barklog://`
+- Associated domain: `barklog.gg`
 
-### Apps and Packages
+There is **no auth yet** — every screen is reachable. See
+[Adding auth](#adding-auth) for what to wire up when you get to it.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Requirements
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- Node `>=24` (see `.nvmrc`)
+- pnpm 11 (`corepack enable`)
+- Xcode
 
-### Utilities
+`pnpm-workspace.yaml` sets `nodeLinker: hoisted` because React Native does not
+support pnpm's isolated `node_modules` layout.
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Getting started
 
 ```sh
-cd my-turborepo
-turbo build
+pnpm install
+cp apps/mobile/.env.example apps/mobile/.env.local
 ```
 
-Without global `turbo`, use your package manager:
+The app needs a **development build** — `@expo/ui` is a native module and is not
+available in Expo Go.
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+# Build and install onto a connected iPhone, then start the dev server
+pnpm --filter mobile ios:device
+
+# Subsequent runs only need the dev server; the dev client picks it up
+pnpm --filter mobile dev
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Prefer a cloud build? `pnpm --filter mobile build:dev` runs
+`eas build --profile development --platform ios`. Run `npx eas-cli login` and
+`npx eas-cli init` once first to attach an EAS project id.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Backend:
 
 ```sh
-turbo build --filter=docs
+pnpm --filter api dev        # tsx watch → http://localhost:3000
 ```
 
-Without global `turbo`:
+When running the app on a physical device, point `EXPO_PUBLIC_API_URL` at your
+machine's LAN IP rather than `localhost`.
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+## Tasks
+
+| Command                           | Does                                 |
+| --------------------------------- | ------------------------------------ |
+| `pnpm dev`                        | Every dev server (Expo + API)        |
+| `pnpm build`                      | Compile the API to `apps/api/dist`   |
+| `pnpm lint`                       | ESLint across all workspaces         |
+| `pnpm check-types`                | `tsc --noEmit` across all workspaces |
+| `pnpm format`                     | Prettier write                       |
+| `pnpm --filter mobile ios`        | Dev build on the simulator           |
+| `pnpm --filter mobile ios:device` | Dev build on a connected device      |
+| `pnpm --filter mobile prebuild`   | Regenerate the native `ios/` project |
+
+## apps/mobile
+
+```
+src/
+  app/
+    _layout.tsx        root Stack + theme
+    (tabs)/
+      _layout.tsx      NativeTabs: Home · Explore · Profile, plus Search
+      index.tsx        Home — your backlog
+      explore.tsx
+      profile.tsx
+      search.tsx       declared with role="search"
+  components/
+    placeholder-screen.tsx
+  theme.ts             brand tint, fed to SwiftUI via <Host seedColor>
 ```
 
-### Develop
+**Tabs.** Expo Router's native tabs (`expo-router/unstable-native-tabs`) render
+a real `UITabBarController`. Home, Explore and Profile form the main group;
+Search uses `role="search"`, which on iOS 26+ pulls it out of the group and
+turns it into the native search field. Icons are SF Symbols (`sf`) with
+Material Symbols (`md`) kept in place for whenever Android lands.
 
-To develop all apps and packages, run the following command:
+**UI.** Screens are SwiftUI, rendered through `@expo/ui/swift-ui` inside a
+`<Host>`. Styling uses SwiftUI modifiers from `@expo/ui/swift-ui/modifiers`
+rather than React Native stylesheets.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Adding auth
 
-```sh
-cd my-turborepo
-turbo dev
+The skeleton is deliberately unauthenticated. When you add a provider, the
+pieces that need to land are:
+
+- A provider at the root of `src/app/_layout.tsx`, wrapping the `Stack`.
+- Session persistence in the keychain (`expo-secure-store`).
+- A `src/app/sign-in.tsx` route, gated with `Stack.Protected guard={...}` so a
+  signed-out user can only reach it.
+- Hold the splash screen (`expo-splash-screen`) until the session has been
+  restored, so an already-signed-in user never sees the sign-in screen flash.
+- For native Sign in with Apple: `expo-apple-authentication` in `dependencies`
+  **and** in `app.json` `plugins` — the config plugin is what adds the
+  `com.apple.developer.applesignin` entitlement. Needs a paid Apple Developer
+  team.
+- Declare any new `EXPO_PUBLIC_*` keys in `turbo.json` under the `dev` and
+  `build` task `env` arrays, or `turbo/no-undeclared-env-vars` will flag them.
+
+## apps/api
+
+```
+src/
+  app.ts      Hono app + routes, exports `AppType` for Hono's typed RPC client
+  index.ts    Node server bootstrap (PORT, default 3000)
 ```
 
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+`pnpm --filter api build` emits `dist/`; `pnpm --filter api start` runs it.
