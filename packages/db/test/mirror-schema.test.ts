@@ -1,10 +1,15 @@
 import { sql } from "drizzle-orm";
-import { afterAll, expect, inject, test } from "vitest";
+import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import { gameGenres, games, genres } from "../src/schema/index.js";
+import { truncateAll } from "./helpers.js";
 
 const { db, close } = createDb(inject("databaseUrl"));
+
+beforeEach(async () => {
+  await truncateAll(db);
+});
 
 afterAll(async () => {
   await close();
