@@ -14,6 +14,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "test:contract": "vitest run test/contract.test.ts --exclude ''",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
