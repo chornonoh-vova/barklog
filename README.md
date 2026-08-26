@@ -7,16 +7,23 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 
 ## What's inside
 
-| Workspace                    | What it is                                                         |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `apps/mobile`                | Expo (SDK 57) app — expo-router, native tabs, SwiftUI via @expo/ui |
-| `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`              |
-| `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)        |
-| `packages/db`                | Drizzle schema, migrations, connection factory                     |
-| `packages/cache`             | Fail-open Valkey wrapper                                           |
-| `packages/igdb`              | Typed IGDB client — token, rate limiting, keyset paging            |
-| `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                |
-| `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)      |
+| Workspace                    | What it is                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------- |
+| `apps/mobile`                | Expo (SDK 57) app — expo-router, native tabs, SwiftUI via @expo/ui            |
+| `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`                         |
+| `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)                   |
+| `packages/db`                | Drizzle schema, migrations, connection factory                                |
+| `packages/cache`             | Fail-open Valkey wrapper                                                      |
+| `packages/contracts`         | shared valibot request schemas and the backlog status union                   |
+| `packages/logging`           | one LogTape configuration — JSON lines, with a per-request or per-run context |
+| `packages/igdb`              | Typed IGDB client — token, rate limiting, keyset paging                       |
+| `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                           |
+| `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)                 |
+
+Validation is **valibot throughout, behind Standard Schema** — one library, not
+two. `apps/api`'s validator, its `hono-problem-details` hook, `packages/igdb`'s
+IGDB response schema and `apps/worker`'s environment schema all meet at that one
+interface.
 
 Everything is TypeScript. The app is **iOS-only for now** (`platforms: ["ios"]`
 in `app.json`) because the UI is built with `@expo/ui`'s SwiftUI components.
@@ -74,7 +81,7 @@ Postgres and Valkey run in Docker; the API and worker run on the host so
 reloads stay fast.
 
 ```sh
-docker compose up -d
+pnpm deps:up
 cp .env.example .env          # then fill in the IGDB credentials
 set -a && . ./.env && set +a  # export them into your shell
 pnpm --filter @repo/db db:migrate
@@ -111,8 +118,24 @@ pnpm test
 ```
 
 Tests start their own Postgres and Valkey via **Testcontainers** — they do not
-use the docker-compose stack, so all they need is a running Docker daemon. The
-compose stack is purely a development convenience.
+use the `deps.compose.yaml` stack, so all they need is a running Docker
+daemon. The compose stack is purely a development convenience.
+
+## Logs
+
+Both processes write JSON lines to stdout, one object per record, filtered by
+`LOG_LEVEL` (`trace`, `debug`, `info`, `warning`, `error`, `fatal` — LogTape's
+levels, so there is no `warn`).
+
+Every record written while handling an HTTP request carries the `traceId` that
+the client got back in `X-Request-Id` and that any problem document repeats, and
+every record written during a sync carries that run's `runId`. Neither is passed
+as an argument anywhere: they come from LogTape's implicit context.
+
+```bash
+pnpm --filter api dev | jq 'select(.traceId == "…")'
+pnpm --filter worker sync | jq -r '[.level, .message] | @tsv'
+```
 
 ## Tasks
 
@@ -160,7 +183,8 @@ rather than React Native stylesheets.
 
 ## Adding auth
 
-The skeleton is deliberately unauthenticated. When you add a provider, the
+`apps/api` is done: every route requires a valid Clerk session token, and only
+`/healthz` and `/readyz` are public. What remains is `apps/mobile`, where the
 pieces that need to land are:
 
 - A provider at the root of `src/app/_layout.tsx`, wrapping the `Stack`.
@@ -180,17 +204,51 @@ pieces that need to land are:
 
 ```
 src/
-  app.ts      Hono app + routes, exports `AppType` for Hono's typed RPC client
-  index.ts    Node server bootstrap (PORT, default 3000)
+  env.ts          valibot-validated environment, parsed once at boot
+  problems.ts     the problem-type registry and the one error renderer
+  types.ts        Db, AppEnv, AppDeps, PROBE_PATHS
+  rate-limits.ts  the three scopes and their limits, as data
+  cache-keys.ts   query normalisation, sha1, key builders, TTLs
+  serialize.ts    row -> wire mappers (dates become ISO strings)
+  clerk.ts        the production authenticator; the only Clerk import
+  middleware/     finalize, auth, media type, rate limiting, validation
+  routes/         probes, games, backlog, sync status
+  app.ts          createApp(deps) — the middleware chain, exports AppType
+  index.ts        Node bootstrap
 ```
 
+Every route needs a valid Clerk session token. The only public routes are
+`/healthz` and `/readyz`, allowlisted by exact path.
+
+| Route                                     | Notes                                             |
+| ----------------------------------------- | ------------------------------------------------- |
+| `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars, `limit` ≤ 50, `offset` ≤ 200       |
+| `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                         |
+| `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`     |
+| `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`            |
+| `GET /api/backlog/stats`                  | counts per status plus average rating             |
+| `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated |
+| `DELETE /api/backlog/:gameId`             | `204`, or `404` if absent                         |
+| `GET /api/sync/status`                    | the last sync run                                 |
+| `GET /healthz`                            | liveness, public, no I/O                          |
+| `GET /readyz`                             | readiness, public, strict on Postgres and Valkey  |
+
+Every non-2xx response is `application/problem+json` (RFC 9457). Type slugs and
+titles come from `hono-problem-details`, so a 413 is `content-too-large` and a
+429 is `too-many-requests`. Every response carries `X-Request-Id`, and every
+problem body repeats it as `traceId` — except a 422, which is rendered by the
+library's validation hook and correlates by header alone. No 5xx ever carries an
+exception message; that goes to the log under the same id.
+
 `pnpm --filter api build` emits `dist/`; `pnpm --filter api start` runs it.
+`pnpm --filter api test` starts its own Postgres and Valkey via Testcontainers;
+Clerk is faked, so the suite needs no network.
 
 ## apps/worker
 
 ```
 src/
-  env.ts      zod-validated environment, parsed once at boot
+  env.ts      valibot-validated environment, parsed once at boot
   context.ts  wires db + cache + IGDB client into SyncDeps
   persist.ts  writes one IGDB page in a single transaction
   sync.ts     syncAll() — advisory lock, watermark, page loop, bookkeeping

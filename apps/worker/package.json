@@ -14,13 +14,15 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@logtape/logtape": "^2.3.2",
     "@repo/cache": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/igdb": "workspace:*",
+    "@repo/logging": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "node-cron": "^4.6.0",
     "pg": "^8.23.0",
-    "zod": "^4.4.3"
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

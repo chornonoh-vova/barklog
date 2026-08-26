@@ -1,4 +1,5 @@
 import { createCache } from "@repo/cache";
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
 import { createIgdbClient } from "../src/client.js";
@@ -26,7 +27,7 @@ describe.runIf(clientId && clientSecret)("IGDB contract", () => {
     const rows = await client.gamesPage({ since: null, afterId: 0 });
 
     for (const row of rows.slice(0, 50)) {
-      expect(() => igdbGameSchema.parse(row)).not.toThrow();
+      expect(() => v.parse(igdbGameSchema, row)).not.toThrow();
     }
   });
 

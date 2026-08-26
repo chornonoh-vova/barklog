@@ -1,49 +1,55 @@
-import { z } from "zod";
+import * as v from "valibot";
+
+const int = v.pipe(v.number(), v.integer());
 
 /**
  * IGDB omits absent fields rather than sending null, so every optional field is
- * `.optional()` and the mapper is responsible for turning that into null.
+ * `v.optional()` and the mapper is responsible for turning that into null.
+ *
+ * `v.object` strips unknown keys, which is deliberate: IGDB returns what the
+ * field list asks for, and anything else — a deprecated `category`, a `checksum`
+ * — must not reach a database row.
  */
-const referenceSchema = z.object({
-  id: z.number().int(),
-  name: z.string(),
-  slug: z.string(),
+const referenceSchema = v.object({
+  id: int,
+  name: v.string(),
+  slug: v.string(),
 });
 
-export const igdbGameSchema = z.object({
-  id: z.number().int(),
-  name: z.string(),
-  slug: z.string(),
-  summary: z.string().optional(),
-  first_release_date: z.number().int().optional(),
-  updated_at: z.number().int(),
-  total_rating: z.number().optional(),
-  total_rating_count: z.number().int().optional(),
-  parent_game: z.number().int().optional(),
-  game_type: z.object({ id: z.number().int(), type: z.string() }).optional(),
-  cover: z.object({ id: z.number().int(), image_id: z.string() }).optional(),
-  screenshots: z.array(z.object({ id: z.number().int(), image_id: z.string() })).optional(),
-  genres: z.array(referenceSchema).optional(),
-  platforms: z
-    .array(
-      z.object({
-        id: z.number().int(),
-        name: z.string(),
-        abbreviation: z.string().optional(),
-        slug: z.string(),
+export const igdbGameSchema = v.object({
+  id: int,
+  name: v.string(),
+  slug: v.string(),
+  summary: v.optional(v.string()),
+  first_release_date: v.optional(int),
+  updated_at: int,
+  total_rating: v.optional(v.number()),
+  total_rating_count: v.optional(int),
+  parent_game: v.optional(int),
+  game_type: v.optional(v.object({ id: int, type: v.string() })),
+  cover: v.optional(v.object({ id: int, image_id: v.string() })),
+  screenshots: v.optional(v.array(v.object({ id: int, image_id: v.string() }))),
+  genres: v.optional(v.array(referenceSchema)),
+  platforms: v.optional(
+    v.array(
+      v.object({
+        id: int,
+        name: v.string(),
+        abbreviation: v.optional(v.string()),
+        slug: v.string(),
       }),
-    )
-    .optional(),
-  involved_companies: z
-    .array(
-      z.object({
-        id: z.number().int(),
+    ),
+  ),
+  involved_companies: v.optional(
+    v.array(
+      v.object({
+        id: int,
         company: referenceSchema,
-        developer: z.boolean().optional(),
-        publisher: z.boolean().optional(),
+        developer: v.optional(v.boolean()),
+        publisher: v.optional(v.boolean()),
       }),
-    )
-    .optional(),
+    ),
+  ),
 });
 
-export type IgdbGame = z.infer<typeof igdbGameSchema>;
+export type IgdbGame = v.InferOutput<typeof igdbGameSchema>;

@@ -8,7 +8,9 @@
     "test": "turbo run test",
     "check-types": "turbo run check-types",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "deps:up": "docker compose -f deps.compose.yaml up -d",
+    "deps:down": "docker compose -f deps.compose.yaml down"
   },
   "devDependencies": {
     "prettier": "^3.9.6",

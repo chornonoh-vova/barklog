@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@repo/cache": "workspace:*",
-    "zod": "^4.4.3"
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -8,12 +8,25 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "vitest run",
     "lint": "eslint . --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
+    "@hono/clerk-auth": "^3.1.1",
     "@hono/node-server": "^2.1.1",
-    "hono": "^4.13.3"
+    "@hono/standard-validator": "^0.2.3",
+    "@logtape/hono": "^2.3.2",
+    "@logtape/logtape": "^2.3.2",
+    "@repo/cache": "workspace:*",
+    "@repo/contracts": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/logging": "workspace:*",
+    "@standard-schema/spec": "^1.1.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.3",
+    "hono-problem-details": "^0.11.0",
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -21,6 +34,7 @@
     "@types/node": "^26.2.0",
     "eslint": "^9.39.5",
     "tsx": "^4.23.12",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

@@ -649,7 +649,7 @@ task's `env` array, or `turbo/no-undeclared-env-vars` will flag it.
 
 ### Local development
 
-`docker-compose.yml` provides **Postgres and Valkey only**:
+`deps.compose.yaml` provides **Postgres and Valkey only**:
 
 ```yaml
 services:
@@ -718,19 +718,67 @@ nightly in CI rather than on every pull request.
 
 Each step ends somewhere you can stop.
 
-1. `docker-compose.yml` + `packages/db` + first migration (`CREATE EXTENSION pg_trgm`).
-2. `packages/igdb` + `apps/worker` + run the seed — **get real data in**.
-3. `packages/cache`, problem-details middleware, secure headers, `/healthz`,
+1. **Done** — `deps.compose.yaml` + `packages/db` + first migration (`CREATE EXTENSION pg_trgm`).
+2. **Done** — `packages/igdb` + `apps/worker` + run the seed — **get real data in**.
+3. **Done** — `packages/cache`, problem-details middleware, secure headers, `/healthz`,
    `/readyz`.
-4. Games routes: search, details, popular — verifiable with `curl`.
-5. Clerk middleware, `users` provisioning, rate limiting; lock the API down.
-6. Backlog CRUD, stats, ETag.
-7. Wire the mobile app.
+4. **Done** — Games routes: search, details, popular — verifiable with `curl`.
+5. **Done** — Clerk middleware, `users` provisioning, rate limiting; lock the API down.
+6. **Done** — Backlog CRUD, stats, ETag.
+7. **Remaining** — Wire the mobile app.
 
 Seeding precedes search work because tuning ranking weights against 350k real
 titles is a fundamentally different exercise than tuning them against fixtures.
 Steps 3 and 5 are separated so the games routes can be exercised without tokens
 while the shape is still moving, then closed before anything ships.
+
+### Status
+
+Steps 1–2 were delivered by
+`docs/superpowers/plans/2026-08-25-barklog-mirror-foundation.md`; steps 3–6 by
+`docs/superpowers/plans/2026-08-25-barklog-http-api.md`. The API serves the full
+surface of §8 against a mirror of 373,715 games, with 206 tests across seven
+packages.
+
+Two packages arrived that this document does not describe, both introduced by the
+HTTP API plan: **`@repo/contracts`** (valibot request schemas and the backlog
+status union, shared with the Expo app) and **`@repo/logging`** (one LogTape
+configuration for both processes, giving the API a per-request `traceId` and the
+worker a per-run `runId`).
+
+**This section is the only part of the spec updated for delivery.** Four things
+below now contradict the code and should be reconciled before step 7 argues from
+them:
+
+- **§11's problem-type table.** Slugs and titles come from
+  `hono-problem-details`' status tables, so 413 is `content-too-large`, 422
+  `unprocessable-content`, 429 `too-many-requests`, 500 `internal-server-error`.
+- **§11's `errors[]` shape.** Validation failures are rendered by the library's
+  own hook: `{field, message}` with a dot-joined path, not `{pointer, detail}`.
+  A 422 also carries `type: "about:blank"` with no `instance` or `traceId` in the
+  body; the `X-Request-Id` header carries the correlation.
+- **§13's caching directive for `GET /api/games/:id`.** It is now
+  `private, no-cache`, not `max-age=300`. §13 contradicted §8: the response
+  embeds the caller's `backlogEntry` so the game screen shows the right button
+  state, and a five-minute `max-age` — which `NSURLSession` honours — let a
+  client show the pre-add state after adding a game.
+- **zod is gone.** §3, §11 and §13 still name it; validation is valibot behind
+  Standard Schema throughout.
+
+And two findings worth folding in, both measured rather than reasoned:
+
+- **§9's search cost.** The "2.7 ms" figure omitted the ranking `ORDER BY`. On
+  the real mirror the production query shape costs ~42 ms (`zeld`, 2,017 rows
+  scored), ~240 ms (`mario`, 19,114) and ~222 ms (`the`, 40,903) — always via a
+  Bitmap Index Scan, never a sequential scan. The design holds; the 600 s cache
+  is load-bearing rather than a nicety, and §9's own sanctioned weight tuning is
+  now warranted.
+- **A deployment constraint §14 does not state.** PlanetScale's PgBouncer runs
+  transaction pooling only, which makes session-level advisory locks
+  unavailable — and `apps/worker`'s "a second sync exits cleanly" guarantee is
+  `pg_try_advisory_lock`. The worker and the migration runner must use a direct
+  connection (port 5432); only the API should use the pooler (6432). `pg_trgm`
+  itself is supported and needs no dashboard enablement.
 
 ## 17. Deferred
 

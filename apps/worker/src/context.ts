@@ -17,7 +17,7 @@ export function createContext(env: WorkerEnv): { deps: SyncDeps; close(): Promis
   const igdb = createIgdbClient({ clientId: env.IGDB_CLIENT_ID, tokens });
 
   return {
-    deps: { db, pool, cache, igdb, log: (message) => console.log(`[sync] ${message}`) },
+    deps: { db, pool, cache, igdb },
     close: async () => {
       await closeDb();
       await cache.close();

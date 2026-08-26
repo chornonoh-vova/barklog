@@ -59,3 +59,23 @@ export async function getWatermark(db: Db): Promise<Date | null> {
 
   return new Date(row.watermark.getTime() - WATERMARK_OVERLAP_MS);
 }
+
+export interface SyncRunSummary {
+  id: string;
+  status: "running" | "success" | "failed";
+  startedAt: Date;
+  finishedAt: Date | null;
+  watermark: Date | null;
+  counts: Record<string, number>;
+  error: string | null;
+}
+
+/**
+ * The most recently *started* run, not the most recently finished, so a run in
+ * progress is what `GET /api/sync/status` reports.
+ */
+export async function getLastRun(db: Db): Promise<SyncRunSummary | null> {
+  const rows = await db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(1);
+
+  return rows[0] ?? null;
+}
