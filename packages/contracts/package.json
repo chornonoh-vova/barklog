@@ -1,5 +1,5 @@
 {
-  "name": "@repo/db",
+  "name": "@repo/contracts",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,38 +9,21 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./schema": {
-      "types": "./dist/schema/index.d.ts",
-      "default": "./dist/schema/index.js"
-    },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "default": "./dist/testing.js"
     }
   },
   "scripts": {
     "build": "tsc",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/migrate-cli.ts",
     "test": "vitest run",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@testcontainers/postgresql": "^12.1.0",
-    "drizzle-orm": "^0.45.2",
-    "pg": "^8.23.0"
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
-    "@repo/contracts": "workspace:*",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^26.2.0",
-    "@types/pg": "^8.23.1",
-    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.5",
-    "tsx": "^4.23.12",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   }
