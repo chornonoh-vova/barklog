@@ -1,6 +1,14 @@
+import { getLogger } from "@logtape/logtape";
 // Named import, not default: iovalkey is CJS, and under NodeNext its default
 // export is not constructable from an ESM module.
 import { Valkey } from "iovalkey";
+
+// Depends on @logtape/logtape directly, not @repo/logging: configuration is
+// per-process and belongs to the app, not to a library, so this package must
+// only ever obtain a logger, never configure one. An unconfigured LogTape
+// drops records rather than throwing, so this is safe in any consumer that
+// has not configured logging.
+const log = getLogger(["cache"]);
 
 export interface Cache {
   get<T>(key: string): Promise<T | null>;
@@ -36,14 +44,14 @@ export function createCache(url: string): Cache {
 
   // Without a listener, ioredis-style clients throw on unhandled 'error' events.
   client.on("error", (error: Error) => {
-    console.warn(`[cache] ${error.message}`);
+    log.warning("{message}", { message: error.message });
   });
 
   async function failOpen<T>(operation: () => Promise<T>, fallback: T): Promise<T> {
     try {
       return await operation();
     } catch (error) {
-      console.warn(`[cache] degraded: ${(error as Error).message}`);
+      log.warning("degraded: {message}", { message: (error as Error).message });
       return fallback;
     }
   }

@@ -1,4 +1,5 @@
 import { getLogger, withContext } from "@logtape/logtape";
+import { SEARCH_VERSION_KEY } from "@repo/cache";
 import {
   failRun,
   finishRun,
@@ -93,7 +94,7 @@ export async function syncAll(
 
       // Only after a successful run: every search cached under the old
       // version becomes unreachable at once.
-      await deps.cache.incr("search:ver");
+      await deps.cache.incr(SEARCH_VERSION_KEY);
 
       log.info("Sync complete: {games} games across {pages} pages.", {
         games: counts.games,

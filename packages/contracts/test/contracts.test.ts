@@ -5,6 +5,7 @@ import {
   backlogListQuerySchema,
   backlogUpsertSchema,
   gameIdParamSchema,
+  MAX_GAME_ID,
   popularQuerySchema,
   searchQuerySchema,
 } from "../src/index.js";
@@ -86,4 +87,11 @@ test("a path id coerces from its string form and rejects nonsense", () => {
   expect(accepts(gameIdParamSchema, { id: "abc" })).toBe(false);
   expect(accepts(gameIdParamSchema, { id: "0" })).toBe(false);
   expect(accepts(gameIdParamSchema, { id: "-3" })).toBe(false);
+});
+
+test("a path id above int4 range is rejected; the int4 max is accepted", () => {
+  // games.id / backlog_entries.game_id are Postgres `integer` (int4) columns.
+  // Anything above this must be a 422 from validation, not a 500 from Postgres.
+  expect(accepts(gameIdParamSchema, { id: String(MAX_GAME_ID + 1) })).toBe(false);
+  expect(parse(gameIdParamSchema, { id: String(MAX_GAME_ID) })).toEqual({ id: MAX_GAME_ID });
 });

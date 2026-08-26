@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { SEARCH_VERSION_KEY } from "../src/cache-keys.js";
-import { callApi, createTestApp, seedGame, TEST_USER } from "./helpers.js";
+import { callApi, createTestApp, OTHER_USER, seedGame, TEST_USER } from "./helpers.js";
 
 const harness = createTestApp();
 
@@ -156,7 +156,9 @@ test("details carry the child collections and the caller's own backlog entry", a
   };
 
   expect(response.status).toBe(200);
-  expect(response.headers.get("cache-control")).toBe("private, max-age=300");
+  // Never max-age: the response is user-varying (embeds the caller's
+  // backlogEntry), so it must be revalidated rather than reused (spec §8).
+  expect(response.headers.get("cache-control")).toBe("private, no-cache");
   expect(body.id).toBe(1942);
   expect(body.genres).toEqual([]);
   expect(body.screenshots).toEqual([]);
@@ -176,7 +178,41 @@ test("another user's entry never appears in the caller's game details", async ()
   expect(body.backlogEntry).toBeNull();
 });
 
+test("game details must never enter a shared cache: two users, same request, no flush between", async () => {
+  // Regression guard for spec §8/§17: wrapping this route in withCache with a
+  // key that is not user-scoped would let this test pass every OTHER
+  // assertion in the suite (each test gets a fresh cache flush in
+  // beforeEach) while still leaking TEST_USER's backlogEntry to OTHER_USER
+  // within a single request sequence. Two calls in one test, no flush
+  // between, is what actually exercises that.
+  await seedGame(harness.db, { id: 1942, name: "The Witcher 3: Wild Hunt", count: 4021 });
+  await harness.db.insert(schema.users).values({ id: TEST_USER });
+  await harness.db
+    .insert(schema.backlogEntries)
+    .values({ userId: TEST_USER, gameId: 1942, status: "playing", rating: 9 });
+
+  const asOwner = await callApi(harness.app, "/api/games/1942", { user: TEST_USER });
+  const ownerBody = (await asOwner.json()) as { backlogEntry: { status: string } | null };
+
+  const asOther = await callApi(harness.app, "/api/games/1942", { user: OTHER_USER });
+  const otherBody = (await asOther.json()) as { backlogEntry: unknown };
+
+  expect(ownerBody.backlogEntry).toMatchObject({ status: "playing" });
+  expect(otherBody.backlogEntry).toBeNull();
+});
+
 test("an unmirrored id is 404 and a non-numeric id is 422", async () => {
   expect((await callApi(harness.app, "/api/games/999999")).status).toBe(404);
   expect((await callApi(harness.app, "/api/games/abc")).status).toBe(422);
+});
+
+test("an id above int4 range is 422, not a 500 from Postgres", async () => {
+  // games.id is a Postgres `integer` column; 2147483648 overflows it. Without
+  // the MAX_GAME_ID bound in the contract this reaches the query layer and
+  // Postgres rejects it, which surfaces as a 500 with a stack trace.
+  const response = await callApi(harness.app, "/api/games/2147483648");
+  const body = (await response.json()) as { errors: { field: string }[] };
+
+  expect(response.status).toBe(422);
+  expect(body.errors[0]?.field).toBe("id");
 });

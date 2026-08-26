@@ -8,7 +8,18 @@ export const SEARCH_LIMIT_MAX = 50;
 export const SEARCH_OFFSET_MAX = 200;
 export const SEARCH_LIMIT_DEFAULT = 20;
 
-const gameId = integerFrom(1, Number.MAX_SAFE_INTEGER);
+/**
+ * `games.id` and `backlog_entries.game_id` are Postgres `integer` (int4) columns
+ * (see `packages/db/src/schema/mirror.ts`), not `bigint`. Without this bound, an
+ * id above int4 range reaches the query layer and Postgres rejects it, which
+ * surfaces as a 500 with a stack trace rather than a 422 — and, worse, is a
+ * cost a client can trigger at will on the `error` log level that 4xx handling
+ * was deliberately kept off of. A change to either the column type or this
+ * constant must change the other.
+ */
+export const MAX_GAME_ID = 2_147_483_647;
+
+const gameId = integerFrom(1, MAX_GAME_ID);
 
 export const searchQuerySchema = v.object({
   q: v.pipe(v.string(), v.trim(), v.minLength(SEARCH_QUERY_MIN), v.maxLength(SEARCH_QUERY_MAX)),

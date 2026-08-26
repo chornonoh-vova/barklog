@@ -1,11 +1,9 @@
 import { createHash } from "node:crypto";
 
-/**
- * A counter, not a key list. The sync runs `INCR` on it, and every key from the
- * previous version becomes unreachable at once and expires on its own — no key
- * scanning, and no way to miss an invalidation.
- */
-export const SEARCH_VERSION_KEY = "search:ver";
+// Re-exported from @repo/cache, which both this process and apps/worker
+// depend on, so there is exactly one declaration shared by both — not a
+// literal duplicated across processes that a typo could silently diverge.
+export { SEARCH_VERSION_KEY } from "@repo/cache";
 
 export const SEARCH_TTL_SECONDS = 600;
 /** Shorter, because this is what absorbs the typo storm search-as-you-type makes. */

@@ -66,7 +66,13 @@ export function gamesRoutes(deps: AppDeps) {
         // which is why it must never enter a shared cache (spec §8).
         const entry = await getBacklogEntry(deps.db, c.get("userId"), id);
 
-        c.header("Cache-Control", "private, max-age=300");
+        // `no-cache`, not `max-age`: the response embeds the caller's own
+        // backlogEntry, so it must be revalidated on every use rather than
+        // reused from the client's cache. A `max-age` here would let the
+        // client's own cache show the pre-add button state after the user
+        // adds the game and reopens the screen within the window — defeating
+        // the reason the entry is embedded in the first place (spec §8).
+        c.header("Cache-Control", "private, no-cache");
         return c.json({
           ...toGameDetail(game),
           backlogEntry: entry === null ? null : toBacklogEntry(entry),

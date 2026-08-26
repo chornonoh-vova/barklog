@@ -106,6 +106,11 @@ export async function searchGames(
   const { query, limit, offset } = options;
 
   return db.transaction(async (tx) => {
+    // The repo's only raw-SQL interpolation. `SET LOCAL` cannot take a bind
+    // parameter, so this is a string-built statement — safe only because
+    // WORD_SIMILARITY_THRESHOLD is a fixed module constant above, never
+    // caller-supplied. A future edit that makes this value come from a
+    // request must not reuse `sql.raw` here without addressing that.
     await tx.execute(
       sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${WORD_SIMILARITY_THRESHOLD}`),
     );

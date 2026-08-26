@@ -57,7 +57,7 @@ test("every error the API can produce is a problem document", async () => {
     path: string;
     init?: RequestInit & { user?: string | null };
     /**
-     * The 422 is rendered by the library's `zodProblemHook`, which builds its
+     * The 422 is rendered by the library's `standardSchemaProblemHook`, which builds its
      * response without the context: `about:blank`, no `instance`, no `traceId`
      * (Task 5, Step 7). It is the one documented exception, so it is spelled out
      * here rather than silently passing a weaker assertion.
