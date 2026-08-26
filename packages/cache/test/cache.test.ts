@@ -46,3 +46,20 @@ test("a dead Valkey fails open rather than throwing", async () => {
 
   await dead.close();
 });
+
+test("incrAndExpire counts and puts a TTL on the key in one round trip", async () => {
+  // The rate limiter needs both, atomically: a counter with no TTL would leak
+  // one key per user per window for ever.
+  expect(await cache.incrAndExpire("rl:search:user_1:9000", 120)).toBe(1);
+  expect(await cache.incrAndExpire("rl:search:user_1:9000", 120)).toBe(2);
+
+  const ttl = await cache.ttlSeconds("rl:search:user_1:9000");
+  expect(ttl).toBeGreaterThan(0);
+  expect(ttl).toBeLessThanOrEqual(120);
+});
+
+test("incrAndExpire fails open, so a Valkey outage cannot reject requests", async () => {
+  const dead = createCache("redis://127.0.0.1:1");
+  expect(await dead.incrAndExpire("rl:search:user_1:9000", 120)).toBeNull();
+  await dead.close();
+});

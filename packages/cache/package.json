@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "scripts": {
@@ -18,12 +22,12 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@testcontainers/redis": "^12.1.0",
     "iovalkey": "^0.4.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@testcontainers/redis": "^12.1.0",
     "@types/node": "^26.2.0",
     "eslint": "^9.39.5",
     "typescript": "~6.0.3",

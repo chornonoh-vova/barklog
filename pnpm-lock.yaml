@@ -167,6 +167,9 @@ importers:
 
   packages/cache:
     dependencies:
+      '@testcontainers/redis':
+        specifier: ^12.1.0
+        version: 12.1.0(supports-color@8.1.1)
       iovalkey:
         specifier: ^0.4.0
         version: 0.4.0(supports-color@8.1.1)
@@ -177,9 +180,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
-      '@testcontainers/redis':
-        specifier: ^12.1.0
-        version: 12.1.0(supports-color@8.1.1)
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0

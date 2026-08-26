@@ -6,6 +6,13 @@ export interface Cache {
   get<T>(key: string): Promise<T | null>;
   set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
   incr(key: string): Promise<number | null>;
+  /**
+   * `INCR` plus `EXPIRE` in one transaction. Returns the new count, or `null`
+   * when Valkey is unreachable — which the rate limiter reads as "fail open".
+   */
+  incrAndExpire(key: string, ttlSeconds: number): Promise<number | null>;
+  /** Remaining TTL in seconds, or `null` if the key is missing or Valkey is down. */
+  ttlSeconds(key: string): Promise<number | null>;
   ping(): Promise<boolean>;
   close(): Promise<void>;
 }
@@ -55,6 +62,26 @@ export function createCache(url: string): Cache {
       }, undefined),
 
     incr: (key) => failOpen<number | null>(() => client.incr(key), null),
+
+    incrAndExpire: (key, ttlSeconds) =>
+      failOpen<number | null>(async () => {
+        // The window number is part of the key, so re-arming the TTL on every
+        // hit cannot slide the window — it only keeps a dead key from leaking.
+        const results = await client.multi().incr(key).expire(key, ttlSeconds).exec();
+        const first = results?.[0];
+        if (!first) return null;
+
+        const [error, value] = first;
+        if (error) throw error;
+
+        return Number(value);
+      }, null),
+
+    ttlSeconds: (key) =>
+      failOpen<number | null>(async () => {
+        const ttl = await client.ttl(key);
+        return ttl < 0 ? null : ttl;
+      }, null),
 
     ping: () => failOpen(async () => (await client.ping()) === "PONG", false),
 

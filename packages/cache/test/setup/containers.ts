@@ -1,5 +1,6 @@
-import { RedisContainer, type StartedRedisContainer } from "@testcontainers/redis";
 import type { TestProject } from "vitest/node";
+
+import { startValkey } from "../../src/testing.js";
 
 declare module "vitest" {
   interface ProvidedContext {
@@ -7,15 +8,14 @@ declare module "vitest" {
   }
 }
 
-let container: StartedRedisContainer | undefined;
+let stop: (() => Promise<void>) | undefined;
 
-// The Redis testcontainers module drives Valkey unchanged — Valkey is
-// wire-compatible — so we point it at the same image docker-compose uses.
 export async function setup(project: TestProject) {
-  container = await new RedisContainer("valkey/valkey:9-alpine").start();
-  project.provide("valkeyUrl", container.getConnectionUrl());
+  const valkey = await startValkey();
+  stop = valkey.stop;
+  project.provide("valkeyUrl", valkey.url);
 }
 
 export async function teardown() {
-  await container?.stop();
+  await stop?.();
 }
