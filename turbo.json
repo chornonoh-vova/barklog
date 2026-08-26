@@ -14,7 +14,11 @@
         "IGDB_CLIENT_ID",
         "IGDB_CLIENT_SECRET",
         "SYNC_CRON",
-        "SYNC_TZ"
+        "SYNC_TZ",
+        "PORT",
+        "CLERK_SECRET_KEY",
+        "CLERK_PUBLISHABLE_KEY",
+        "LOG_LEVEL"
       ]
     },
     "lint": {
@@ -32,7 +36,11 @@
         "IGDB_CLIENT_ID",
         "IGDB_CLIENT_SECRET",
         "SYNC_CRON",
-        "SYNC_TZ"
+        "SYNC_TZ",
+        "PORT",
+        "CLERK_SECRET_KEY",
+        "CLERK_PUBLISHABLE_KEY",
+        "LOG_LEVEL"
       ]
     },
     "dev": {
@@ -47,7 +55,10 @@
         "IGDB_CLIENT_ID",
         "IGDB_CLIENT_SECRET",
         "SYNC_CRON",
-        "SYNC_TZ"
+        "SYNC_TZ",
+        "CLERK_SECRET_KEY",
+        "CLERK_PUBLISHABLE_KEY",
+        "LOG_LEVEL"
       ]
     },
     "start": {
@@ -61,7 +72,10 @@
         "IGDB_CLIENT_ID",
         "IGDB_CLIENT_SECRET",
         "SYNC_CRON",
-        "SYNC_TZ"
+        "SYNC_TZ",
+        "CLERK_SECRET_KEY",
+        "CLERK_PUBLISHABLE_KEY",
+        "LOG_LEVEL"
       ]
     },
     "prebuild": {

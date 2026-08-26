@@ -14,3 +14,5 @@ allowBuilds:
   cpu-features: false
   ssh2: false
   protobufjs: false
+  # Postinstall only writes a one-time local telemetry notice; no native build.
+  '@clerk/shared': true
