@@ -1,6 +1,8 @@
 import { createDb, schema } from "@repo/db";
 import { truncateAll } from "@repo/db/testing";
 import { PAGE_SIZE } from "@repo/igdb";
+import { configureLogging, resetLogging } from "@repo/logging";
+import { recordingSink } from "@repo/logging/testing";
 import { afterAll, beforeEach, expect, inject, test, vi } from "vitest";
 
 import { syncAll } from "../src/sync.js";
@@ -176,4 +178,27 @@ test("an empty page ends the run", async () => {
   expect(result).toMatchObject({ status: "success" });
   expect(igdb.calls).toHaveLength(2);
   expect(await db.select().from(schema.games)).toHaveLength(PAGE_SIZE);
+});
+
+test("every line written during a run carries that run's id", async () => {
+  const logs = recordingSink();
+  await configureLogging({ service: "worker", level: "debug", sink: logs.sink });
+
+  const deps = {
+    db,
+    pool,
+    cache: stubCache(),
+    igdb: stubIgdb([[game(1, 1700000000), game(2, 1700000100)]]),
+  };
+  const result = await syncAll(deps);
+
+  expect(result.status).toBe("success");
+
+  const runIds = new Set(logs.records.map((record) => record.properties.runId));
+  // One run, one id, on every record — nobody threaded it through a signature.
+  expect(runIds.size).toBe(1);
+  expect([...runIds][0]).toBeTruthy();
+  expect(logs.records.length).toBeGreaterThan(0);
+
+  await resetLogging();
 });

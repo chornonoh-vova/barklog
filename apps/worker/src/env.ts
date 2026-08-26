@@ -1,3 +1,4 @@
+import { LOG_LEVELS } from "@repo/logging";
 import { z } from "zod";
 
 const required = z.string().min(1);
@@ -9,6 +10,7 @@ const envSchema = z.object({
   IGDB_CLIENT_SECRET: required,
   SYNC_CRON: z.string().min(1).default("0 0 * * *"),
   SYNC_TZ: z.string().min(1).default("UTC"),
+  LOG_LEVEL: z.enum(LOG_LEVELS).default("info"),
 });
 
 export type WorkerEnv = z.infer<typeof envSchema>;

@@ -157,6 +157,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@logtape/logtape':
+        specifier: ^2.3.2
+        version: 2.3.2
       '@repo/cache':
         specifier: workspace:*
         version: link:../../packages/cache
@@ -166,6 +169,9 @@ importers:
       '@repo/igdb':
         specifier: workspace:*
         version: link:../../packages/igdb
+      '@repo/logging':
+        specifier: workspace:*
+        version: link:../../packages/logging
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)

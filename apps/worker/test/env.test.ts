@@ -31,3 +31,9 @@ test("overrides are respected", () => {
   expect(env.SYNC_CRON).toBe("30 3 * * *");
   expect(env.SYNC_TZ).toBe("Europe/Kyiv");
 });
+
+test("LOG_LEVEL defaults to info and rejects a non-LogTape level", () => {
+  expect(parseEnv(VALID).LOG_LEVEL).toBe("info");
+  expect(parseEnv({ ...VALID, LOG_LEVEL: "debug" }).LOG_LEVEL).toBe("debug");
+  expect(() => parseEnv({ ...VALID, LOG_LEVEL: "warn" })).toThrow(/LOG_LEVEL/);
+});
