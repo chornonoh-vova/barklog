@@ -7,7 +7,9 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { ensureUserMiddleware, requireAuth } from "./middleware/auth.js";
 import { finalize } from "./middleware/finalize.js";
+import { rateLimit } from "./middleware/rate-limit.js";
 import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./problems.js";
+import { DEFAULT_RATE_LIMITS } from "./rate-limits.js";
 import { probeRoutes } from "./routes/probes.js";
 import { PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
 
@@ -45,6 +47,8 @@ export function secureHeaderOptions(production: boolean): Parameters<typeof secu
 }
 
 export function createApp(deps: AppDeps) {
+  const limits = { ...DEFAULT_RATE_LIMITS, ...deps.rateLimits };
+
   const app = new Hono<AppEnv>()
     // First, so it also covers error responses and the probes.
     .use("*", secureHeaders(secureHeaderOptions(deps.production ?? false)))
@@ -84,6 +88,11 @@ export function createApp(deps: AppDeps) {
     )
     .use("*", deps.auth.middleware ?? passthrough)
     .use("*", requireAuth(deps.auth.authenticate))
+    // The limiter needs the Clerk sub, so it follows auth. Most specific scope
+    // first.
+    .use("/api/games/search", rateLimit(deps.cache, "search", limits.search))
+    .on(["PUT", "DELETE"], "/api/backlog/*", rateLimit(deps.cache, "write", limits.write))
+    .use("/api/*", rateLimit(deps.cache, "overall", limits.overall))
     // Mutating requests only, and after auth, because it needs the Clerk sub.
     .on(["PUT", "POST", "PATCH", "DELETE"], "/api/*", ensureUserMiddleware(deps.db))
     .route("/", probeRoutes(deps));

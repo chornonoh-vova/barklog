@@ -2,6 +2,7 @@ import type { Cache } from "@repo/cache";
 import type { Database } from "@repo/db";
 
 import type { AuthProvider } from "./middleware/auth.js";
+import type { RateLimits } from "./rate-limits.js";
 
 export type Db = Database["db"];
 
@@ -29,4 +30,6 @@ export interface AppDeps {
   auth: AuthProvider;
   /** Gates HSTS. Defaults to false. */
   production?: boolean;
+  /** Merged over `DEFAULT_RATE_LIMITS`. Tests use it to shrink a window. */
+  rateLimits?: Partial<RateLimits>;
 }
