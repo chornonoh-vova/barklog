@@ -84,11 +84,20 @@ export function probeRoutes(deps: AppDeps) {
   async function getReadiness(): Promise<ReadinessVerdict> {
     if (cached && Date.now() < cached.expiresAt) return cached.verdict;
 
-    inFlight ??= evaluateReadiness().then((verdict) => {
-      cached = { verdict, expiresAt: Date.now() + READINESS_CACHE_MS };
-      inFlight = null;
-      return verdict;
-    });
+    // The reset lives in `finally`, not in the `then`, so it runs on both
+    // outcomes: a rejected evaluation must not become permanent. Without
+    // this, a single rejection would leave `inFlight` holding a
+    // permanently-rejected promise forever, and `??=` would never reassign
+    // it — every subsequent /readyz request would reject forever, which is
+    // the opposite of what a readiness check is for.
+    inFlight ??= evaluateReadiness()
+      .then((verdict) => {
+        cached = { verdict, expiresAt: Date.now() + READINESS_CACHE_MS };
+        return verdict;
+      })
+      .finally(() => {
+        inFlight = null;
+      });
 
     return inFlight;
   }
