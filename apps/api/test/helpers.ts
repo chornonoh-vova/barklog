@@ -1,6 +1,6 @@
 import { createCache, type Cache } from "@repo/cache";
 import { flushAll } from "@repo/cache/testing";
-import { createDb } from "@repo/db";
+import { createDb, schema } from "@repo/db";
 import { truncateAll } from "@repo/db/testing";
 import { configureLogging } from "@repo/logging";
 import { recordingSink } from "@repo/logging/testing";
@@ -101,4 +101,36 @@ export async function callApi(
   }
 
   return response;
+}
+
+/** Enough of a mirror row for a route test. Defaults are searchable and popular. */
+export async function seedGame(
+  db: Db,
+  game: {
+    id: number;
+    name: string;
+    count?: number;
+    rating?: number | null;
+    typeId?: number;
+    firstReleaseDate?: Date | null;
+  },
+): Promise<void> {
+  await db
+    .insert(schema.gameTypes)
+    .values({ id: game.typeId ?? 0, name: "Main Game" })
+    .onConflictDoNothing();
+
+  await db.insert(schema.games).values({
+    id: game.id,
+    name: game.name,
+    slug: game.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, ""),
+    gameTypeId: game.typeId ?? 0,
+    totalRating: game.rating === undefined ? 85 : game.rating,
+    totalRatingCount: game.count ?? 100,
+    firstReleaseDate: game.firstReleaseDate ?? null,
+    igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
+  });
 }

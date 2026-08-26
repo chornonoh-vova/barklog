@@ -10,6 +10,7 @@ import { finalize } from "./middleware/finalize.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./problems.js";
 import { DEFAULT_RATE_LIMITS } from "./rate-limits.js";
+import { gamesRoutes } from "./routes/games.js";
 import { probeRoutes } from "./routes/probes.js";
 import { PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
 
@@ -95,6 +96,7 @@ export function createApp(deps: AppDeps) {
     .use("/api/*", rateLimit(deps.cache, "overall", limits.overall))
     // Mutating requests only, and after auth, because it needs the Clerk sub.
     .on(["PUT", "POST", "PATCH", "DELETE"], "/api/*", ensureUserMiddleware(deps.db))
+    .route("/api/games", gamesRoutes(deps))
     .route("/", probeRoutes(deps));
 
   app.notFound(notFoundHandler);
