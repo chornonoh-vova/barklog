@@ -1,13 +1,18 @@
 import { honoLogger } from "@logtape/hono";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import type { MiddlewareHandler } from "hono";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
+import { ensureUserMiddleware, requireAuth } from "./middleware/auth.js";
 import { finalize } from "./middleware/finalize.js";
 import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./problems.js";
 import { probeRoutes } from "./routes/probes.js";
 import { PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
+
+/** Stands in for `clerkMiddleware()` when a test supplies its own authenticator. */
+const passthrough: MiddlewareHandler = (_c, next) => next();
 
 /** The largest legitimate body in the whole API is `{status, rating}`. */
 export const BODY_LIMIT_BYTES = 16 * 1024;
@@ -77,6 +82,10 @@ export function createApp(deps: AppDeps) {
           ),
       }),
     )
+    .use("*", deps.auth.middleware ?? passthrough)
+    .use("*", requireAuth(deps.auth.authenticate))
+    // Mutating requests only, and after auth, because it needs the Clerk sub.
+    .on(["PUT", "POST", "PATCH", "DELETE"], "/api/*", ensureUserMiddleware(deps.db))
     .route("/", probeRoutes(deps));
 
   app.notFound(notFoundHandler);

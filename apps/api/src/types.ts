@@ -1,6 +1,8 @@
 import type { Cache } from "@repo/cache";
 import type { Database } from "@repo/db";
 
+import type { AuthProvider } from "./middleware/auth.js";
+
 export type Db = Database["db"];
 
 /** The two public routes, allowlisted by exact path — never by prefix. */
@@ -24,6 +26,7 @@ export interface AppEnv {
 export interface AppDeps {
   db: Db;
   cache: Cache;
+  auth: AuthProvider;
   /** Gates HSTS. Defaults to false. */
   production?: boolean;
 }

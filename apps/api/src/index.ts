@@ -5,6 +5,7 @@ import { createDb } from "@repo/db";
 import { configureLogging } from "@repo/logging";
 
 import { createApp } from "./app.js";
+import { clerkAuthProvider } from "./clerk.js";
 import { parseEnv } from "./env.js";
 
 const env = parseEnv(process.env);
@@ -16,7 +17,12 @@ const log = getLogger(["api"]);
 const { db, close: closeDb } = createDb(env.DATABASE_URL);
 const cache = createCache(env.VALKEY_URL);
 
-const app = createApp({ db, cache, production: env.NODE_ENV === "production" });
+const app = createApp({
+  db,
+  cache,
+  auth: clerkAuthProvider(env),
+  production: env.NODE_ENV === "production",
+});
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   log.info("Listening on http://localhost:{port}", { port: info.port });

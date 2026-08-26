@@ -7,10 +7,20 @@ import { recordingSink } from "@repo/logging/testing";
 import { expect, inject } from "vitest";
 
 import { createApp } from "../src/app.js";
+import type { AuthProvider } from "../src/middleware/auth.js";
 import type { AppDeps, Db } from "../src/types.js";
 
 export const TEST_USER = "user_2testAAA";
 export const OTHER_USER = "user_2testBBB";
+
+/**
+ * Stands in for Clerk. The suite is about what the API does with an identity,
+ * not about how the identity was proven, and every alternative — a real Clerk
+ * instance, a hand-signed JWT and a stub JWKS — buys nothing for it.
+ */
+export const fakeAuthProvider: AuthProvider = {
+  authenticate: (c) => c.req.header("X-Test-User") ?? null,
+};
 
 /**
  * Logging is configured here, at import time, rather than in `globalSetup`:
@@ -38,6 +48,7 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
   const app = createApp({
     db,
     cache,
+    auth: fakeAuthProvider,
     // Production, so the header suite sees the full set including HSTS.
     production: true,
     ...overrides,
