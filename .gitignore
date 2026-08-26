@@ -45,3 +45,6 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
+
+# Subagent-driven-development scratch workspace (ledger, briefs, review packages)
+.superpowers/
