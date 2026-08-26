@@ -98,6 +98,8 @@ export async function syncAll(
       log.info("Sync complete: {games} games across {pages} pages.", {
         games: counts.games,
         pages: counts.pages,
+        counts,
+        watermark,
       });
       return { status: "success", counts, watermark };
     } catch (error) {
