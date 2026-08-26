@@ -34,9 +34,9 @@ test("the allowlist is by exact path, so no future /health-debug is public", asy
 });
 
 test("an authenticated request gets past auth and on to routing", async () => {
-  // No /api/backlog route exists yet, so reaching a 404 is the proof that the
-  // 401 gate opened.
-  expect((await callApi(harness.app, "/api/backlog")).status).toBe(404);
+  // Reaching the route's own 200 (an empty list, nothing seeded) is the proof
+  // that the 401 gate opened.
+  expect((await callApi(harness.app, "/api/backlog")).status).toBe(200);
 });
 
 test("a mutating request provisions the user row just in time", async () => {

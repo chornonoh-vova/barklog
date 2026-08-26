@@ -7,9 +7,11 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { ensureUserMiddleware, requireAuth } from "./middleware/auth.js";
 import { finalize } from "./middleware/finalize.js";
+import { requireJson } from "./middleware/json.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./problems.js";
 import { DEFAULT_RATE_LIMITS } from "./rate-limits.js";
+import { backlogRoutes } from "./routes/backlog.js";
 import { gamesRoutes } from "./routes/games.js";
 import { probeRoutes } from "./routes/probes.js";
 import { MUTATING_METHODS, PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
@@ -94,9 +96,16 @@ export function createApp(deps: AppDeps) {
     .use("/api/games/search", rateLimit(deps.cache, "search", limits.search))
     .on([...MUTATING_METHODS], "/api/backlog/*", rateLimit(deps.cache, "write", limits.write))
     .use("/api/*", rateLimit(deps.cache, "overall", limits.overall))
+    // Deliberately not `MUTATING_METHODS`: a `DELETE` carries no body and no
+    // `Content-Type`, so including it here would turn every
+    // `DELETE /api/backlog/:gameId` into a 415 instead of a 204. Placed before
+    // `ensureUserMiddleware` so a wrong media type is refused before anything
+    // touches the database.
+    .on(["PUT", "POST", "PATCH"], "/api/*", requireJson())
     // Mutating requests only, and after auth, because it needs the Clerk sub.
     .on([...MUTATING_METHODS], "/api/*", ensureUserMiddleware(deps.db))
     .route("/api/games", gamesRoutes(deps))
+    .route("/api/backlog", backlogRoutes(deps))
     .route("/", probeRoutes(deps));
 
   app.notFound(notFoundHandler);
