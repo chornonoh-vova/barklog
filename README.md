@@ -82,10 +82,21 @@ reloads stay fast.
 
 ```sh
 pnpm deps:up
-cp .env.example .env          # then fill in the IGDB credentials
-set -a && . ./.env && set +a  # export them into your shell
+cp .env.example .env                        # then fill in the IGDB credentials
+cp apps/api/.env.example apps/api/.env      # Clerk keys go here
+cp apps/worker/.env.example apps/worker/.env
 pnpm --filter @repo/db db:migrate
 ```
+
+Nothing has to be exported into your shell. Each app loads its own `.env`
+through `node --env-file`, so `apps/api/.env` and `apps/worker/.env` are what
+`pnpm dev` reads, and `@repo/db` loads the root `.env` itself — `db:migrate`
+via `--env-file-if-exists`, `drizzle-kit` from `drizzle.config.ts`, which has
+no flag to pass. Both defer to variables that are already set, so a
+`DATABASE_URL` from CI or a deploy environment still wins.
+
+Values that appear in more than one file (`DATABASE_URL`, `VALKEY_URL`,
+`LOG_LEVEL`) have to be kept in step by hand.
 
 Use `pnpm --filter @repo/db db:migrate` rather than `drizzle-kit migrate`. It
 also runs `CREATE EXTENSION pg_trgm`, which drizzle-kit does not generate and
