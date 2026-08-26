@@ -1,7 +1,8 @@
-import { createCache } from "@repo/cache";
+import { createCache, type Cache } from "@repo/cache";
 import { createDb } from "@repo/db";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, inject, test } from "vitest";
 
+import { READINESS_CACHE_MS } from "../src/routes/probes.js";
 import { callApi, createTestApp } from "./helpers.js";
 
 const harness = createTestApp();
@@ -72,3 +73,63 @@ test("liveness stays up when readiness is down", async () => {
 
   await harnessWithDeadCache.close();
 });
+
+/**
+ * Wraps a real cache so `ping` counts how many times it is actually called,
+ * proving whether `/readyz` reused a memoised verdict or ran a fresh check.
+ * `createTestApp` closes its own internally-created cache, not an override
+ * passed in, so the wrapped cache is closed by the caller directly.
+ */
+function countingPingCache(): {
+  cache: Cache;
+  pingCount: () => number;
+  close: () => Promise<void>;
+} {
+  const real = createCache(inject("valkeyUrl"));
+  let count = 0;
+
+  return {
+    cache: {
+      ...real,
+      ping: () => {
+        count += 1;
+        return real.ping();
+      },
+    },
+    pingCount: () => count,
+    close: () => real.close(),
+  };
+}
+
+test("two rapid /readyz calls perform the dependency checks once", async () => {
+  const { cache, pingCount, close } = countingPingCache();
+  const memoHarness = createTestApp({ cache });
+
+  const [first, second] = await Promise.all([
+    callApi(memoHarness.app, "/readyz"),
+    callApi(memoHarness.app, "/readyz"),
+  ]);
+
+  expect(first.status).toBe(200);
+  expect(second.status).toBe(200);
+  expect(pingCount()).toBe(1);
+
+  await memoHarness.close();
+  await close();
+});
+
+test("a call after the memo expires checks the dependencies again", async () => {
+  const { cache, pingCount, close } = countingPingCache();
+  const memoHarness = createTestApp({ cache });
+
+  expect((await callApi(memoHarness.app, "/readyz")).status).toBe(200);
+  expect(pingCount()).toBe(1);
+
+  await new Promise((resolve) => setTimeout(resolve, READINESS_CACHE_MS + 200));
+
+  expect((await callApi(memoHarness.app, "/readyz")).status).toBe(200);
+  expect(pingCount()).toBe(2);
+
+  await memoHarness.close();
+  await close();
+}, 10_000);

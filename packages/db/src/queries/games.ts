@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { alias } from "drizzle-orm/pg-core";
 
@@ -36,6 +36,17 @@ export const POPULARITY_CEILING = 500;
 
 /** The explore feed only shows games people have actually rated well. */
 export const POPULAR_RATING_FLOOR = 70;
+
+/**
+ * Must equal the predicate on `games_popular_idx` (a partial index on
+ * `total_rating_count DESC WHERE total_rating_count > 50`, see
+ * `schema/mirror.ts`). `popularGames`'s rating floor alone does not imply
+ * that predicate, so without repeating it here Postgres cannot use the
+ * index and falls back to a sequential scan: measured on the real mirror,
+ * 45ms seq scan versus 0.36ms index scan. A future change to either the
+ * index or this constant must change the other.
+ */
+export const POPULAR_RATING_COUNT_FLOOR = 50;
 
 export interface GameSummary {
   id: number;
@@ -135,6 +146,7 @@ export async function popularGames(db: Db, options: { limit: number }): Promise<
     .where(
       and(
         gte(games.totalRating, POPULAR_RATING_FLOOR),
+        gt(games.totalRatingCount, POPULAR_RATING_COUNT_FLOOR),
         inArray(games.gameTypeId, [...SEARCHABLE_GAME_TYPE_IDS]),
       ),
     )

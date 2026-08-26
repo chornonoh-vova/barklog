@@ -9,6 +9,17 @@ export type Db = Database["db"];
 /** The two public routes, allowlisted by exact path — never by prefix. */
 export const PROBE_PATHS: ReadonlySet<string> = new Set(["/healthz", "/readyz"]);
 
+/**
+ * The HTTP methods that mutate state. Spec §8 makes `PUT` the only write verb
+ * today — no `POST`, no `PATCH` — but `app.ts` uses this single list for both
+ * the "write" rate-limit scope and `ensureUserMiddleware`. Sharing it is what
+ * keeps the limiter and the provisioner from disagreeing if a new mutating
+ * route ever appears: without it, a route added to one list and not the
+ * other would silently escape the 60/min write limit while still being
+ * counted by the much looser 300/min "overall" scope.
+ */
+export const MUTATING_METHODS = ["PUT", "POST", "PATCH", "DELETE"] as const;
+
 export interface AppVariables {
   /** The Clerk `sub`, set by `requireAuth`. Absent only on the public probes. */
   userId: string;

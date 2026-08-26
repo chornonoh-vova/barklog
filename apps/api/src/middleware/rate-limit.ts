@@ -2,14 +2,10 @@ import type { Cache } from "@repo/cache";
 import type { MiddlewareHandler } from "hono";
 
 import { problems, renderProblem } from "../problems.js";
-import {
-  RATE_LIMIT_KEY_TTL_SECONDS,
-  type RateLimitRule,
-  type RateLimitScope,
-} from "../rate-limits.js";
+import type { RateLimitRule, RateLimitScope } from "../rate-limits.js";
 import type { AppEnv } from "../types.js";
 
-export function rateLimitKey(scope: RateLimitScope, userId: string, window: number): string {
+function rateLimitKey(scope: RateLimitScope, userId: string, window: number): string {
   return `rl:${scope}:${userId}:${window}`;
 }
 
@@ -32,10 +28,17 @@ export function rateLimit(
     const window = Math.floor(nowSeconds / rule.windowSeconds);
     const resetSeconds = (window + 1) * rule.windowSeconds - nowSeconds;
 
-    const count = await cache.incrAndExpire(
-      rateLimitKey(scope, userId, window),
-      RATE_LIMIT_KEY_TTL_SECONDS,
-    );
+    // Derived from this rule, not a shared constant: `windowSeconds` is
+    // caller-configurable (tests shrink it; a future config could lengthen
+    // it), and the TTL must exceed whatever window it is timing so the
+    // counter always outlives the window it counts — a shorter TTL would
+    // expire the key mid-window, silently resetting the count and disabling
+    // enforcement for the rest of it. Doubling the window is arbitrary but
+    // ample, and the key still expires on its own, so nothing needs cleaning
+    // up. For the real 60s windows this is 120s, same as before.
+    const keyTtlSeconds = rule.windowSeconds * 2;
+
+    const count = await cache.incrAndExpire(rateLimitKey(scope, userId, window), keyTtlSeconds);
 
     // Fail open. A counter we cannot read is not a reason to refuse service.
     if (count === null) return next();

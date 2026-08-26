@@ -13,9 +13,3 @@ export const DEFAULT_RATE_LIMITS: RateLimits = {
   write: { limit: 60, windowSeconds: 60 },
   overall: { limit: 300, windowSeconds: 60 },
 };
-
-/**
- * Longer than any window, so a counter always outlives the window it counts and
- * the key still expires on its own.
- */
-export const RATE_LIMIT_KEY_TTL_SECONDS = 120;

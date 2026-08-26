@@ -6,6 +6,14 @@ import type { Cache } from "./client.js";
  *
  * Because the cache fails open, a Valkey outage degrades this to a direct call
  * to `load` — never to an error.
+ *
+ * No negative caching: `hit !== null` cannot tell "this key holds a cached
+ * `null`" apart from "this key is absent", so a `load` that legitimately
+ * resolves to `null` is re-run and re-stored on every call and never actually
+ * gets cached. Nothing in this repo hits that today — game details are
+ * deliberately uncached (spec §8, §10) and the two cached loaders both return
+ * arrays — but a future caller needing to cache a `null` result must wrap the
+ * value (e.g. `{ value: T | null }`) rather than relying on this helper.
  */
 export async function withCache<T>(
   cache: Cache,

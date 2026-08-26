@@ -12,7 +12,7 @@ import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./pro
 import { DEFAULT_RATE_LIMITS } from "./rate-limits.js";
 import { gamesRoutes } from "./routes/games.js";
 import { probeRoutes } from "./routes/probes.js";
-import { PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
+import { MUTATING_METHODS, PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
 
 /** Stands in for `clerkMiddleware()` when a test supplies its own authenticator. */
 const passthrough: MiddlewareHandler = (_c, next) => next();
@@ -92,10 +92,10 @@ export function createApp(deps: AppDeps) {
     // The limiter needs the Clerk sub, so it follows auth. Most specific scope
     // first.
     .use("/api/games/search", rateLimit(deps.cache, "search", limits.search))
-    .on(["PUT", "DELETE"], "/api/backlog/*", rateLimit(deps.cache, "write", limits.write))
+    .on([...MUTATING_METHODS], "/api/backlog/*", rateLimit(deps.cache, "write", limits.write))
     .use("/api/*", rateLimit(deps.cache, "overall", limits.overall))
     // Mutating requests only, and after auth, because it needs the Clerk sub.
-    .on(["PUT", "POST", "PATCH", "DELETE"], "/api/*", ensureUserMiddleware(deps.db))
+    .on([...MUTATING_METHODS], "/api/*", ensureUserMiddleware(deps.db))
     .route("/api/games", gamesRoutes(deps))
     .route("/", probeRoutes(deps));
 

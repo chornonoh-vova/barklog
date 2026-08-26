@@ -153,6 +153,20 @@ test("popular ranks by rating count behind a rating floor and searchable types",
   expect(names).not.toContain("Dark Souls: Artorias of the Abyss");
 });
 
+test("popular excludes a well-rated game that has not been rated enough times", async () => {
+  // Rating is high enough to clear POPULAR_RATING_FLOOR, but the count sits
+  // right at POPULAR_RATING_COUNT_FLOOR (50, matching games_popular_idx's
+  // partial predicate of `> 50`), which is not enough to qualify.
+  await seed([
+    ...RANKING_FIXTURES,
+    { id: 10, name: "Hidden Gem With Few Ratings", count: 50, rating: 95 },
+  ]);
+
+  const names = (await popularGames(db, { limit: 10 })).map((row) => row.name);
+
+  expect(names).not.toContain("Hidden Gem With Few Ratings");
+});
+
 test("game details gather every child collection and split the companies", async () => {
   await seed([{ id: 1942, name: "The Witcher 3: Wild Hunt", count: 4021 }]);
 
