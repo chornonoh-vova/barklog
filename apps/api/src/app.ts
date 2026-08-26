@@ -6,6 +6,7 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { finalize } from "./middleware/finalize.js";
 import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./problems.js";
+import { probeRoutes } from "./routes/probes.js";
 import { PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
 
 /** The largest legitimate body in the whole API is `{status, rating}`. */
@@ -76,9 +77,7 @@ export function createApp(deps: AppDeps) {
           ),
       }),
     )
-    // Liveness: no I/O, no dependency checks. An orchestrator restarts the
-    // container when this fails, so it must not depend on Postgres.
-    .get("/healthz", (c) => c.json({ status: "ok" } as const));
+    .route("/", probeRoutes(deps));
 
   app.notFound(notFoundHandler);
   app.onError(apiErrorHandler);
