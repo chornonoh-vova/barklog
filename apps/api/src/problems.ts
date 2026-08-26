@@ -35,11 +35,10 @@ function definition(status: number) {
  *
  * - `400 bad-request` and `500 internal-server-error`, from the library's own
  *   handling of an `HTTPException` and of an unhandled bug;
- * - `422 unprocessable-content`, from `zodProblemHook` (Task 9).
+ * - `422 unprocessable-content`, from `standardSchemaProblemHook` (Task 9).
  *
  * The first two still land under `PROBLEM_BASE`, because `typePrefix` derives
- * their URI from the same `statusToSlug` this file uses. The 422 does not — see
- * the note at the end of this step.
+ * their URI from the same `statusToSlug` this file uses. The 422 does not.
  */
 export const problems = createProblemTypeRegistry({
   UNAUTHORIZED: definition(401),
@@ -96,14 +95,25 @@ export async function renderProblem(c: Context, problem: ProblemDetailsError): P
  * deliberately, an `HTTPException` from Hono, and a genuine bug. Only the last
  * two are worth a log line — a thrown problem is a documented outcome, and it is
  * already in the request log with its status.
+ *
+ * Severity follows status, not exception type: a 5xx is `error` because it is
+ * always a server bug or an upstream failure worth paging on. A 4xx — most
+ * often Hono's own `HTTPException(400)` for a malformed body — is `warning`,
+ * because it is client-triggerable and never a defect here; logging it at
+ * `error` would let a caller spamming bad requests inflate error-level volume
+ * at will and would make client mistakes indistinguishable from server bugs.
  */
 export const apiErrorHandler: ErrorHandler = (error, c) => {
   if (!(error instanceof ProblemDetailsError)) {
-    getLogger(["api", "error"]).error("Unhandled error: {message}", {
-      status: error instanceof HTTPException ? error.status : 500,
-      message: error.message,
-      stack: error.stack,
-    });
+    const status = error instanceof HTTPException ? error.status : 500;
+    const log = getLogger(["api", "error"]);
+    const properties = { status, message: error.message, stack: error.stack };
+
+    if (status >= 500) {
+      log.error("Unhandled error: {message}", properties);
+    } else {
+      log.warn("Unhandled error: {message}", properties);
+    }
   }
 
   return render(error, c);

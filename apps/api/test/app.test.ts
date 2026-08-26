@@ -22,6 +22,19 @@ test("healthz is 200 with no dependency checks at all", async () => {
   expect(response.headers.get("cache-control")).toBe("no-store");
 });
 
+test("finalize does not overwrite a Cache-Control a route set for itself", async () => {
+  const custom = createTestApp();
+  custom.app.get("/cacheable", (c) =>
+    c.json({ ok: true }, 200, { "Cache-Control": "public, max-age=60" }),
+  );
+
+  const response = await callApi(custom.app, "/cacheable");
+
+  expect(response.headers.get("cache-control")).toBe("public, max-age=60");
+
+  await custom.close();
+});
+
 test("an unknown route is a problem document, not Hono's default text", async () => {
   const response = await callApi(harness.app, "/nope");
 
