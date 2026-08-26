@@ -87,6 +87,23 @@ test("the overall scope counts every /api request", async () => {
   await scoped.close();
 });
 
+test("a broader scope's block reports its own headers, not a narrower passing scope's", async () => {
+  // Search stays at its default (30/min) and is not what blocks here; overall
+  // is shrunk so it is the one that exceeds its limit on the same request.
+  const scoped = createTestApp({
+    rateLimits: { overall: { limit: 1, windowSeconds: 60 } },
+  });
+
+  await callApi(scoped.app, "/api/games/search?q=zelda");
+  const blocked = await callApi(scoped.app, "/api/games/search?q=zelda");
+
+  expect(blocked.status).toBe(429);
+  expect(blocked.headers.get("ratelimit-limit")).toBe("1");
+  expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThan(0);
+
+  await scoped.close();
+});
+
 test("the probes are never rate limited", async () => {
   const scoped = createTestApp({
     rateLimits: { overall: { limit: 1, windowSeconds: 60 } },

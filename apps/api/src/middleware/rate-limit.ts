@@ -68,22 +68,33 @@ export function rateLimit(
       return response;
     }
 
-    // A single request can pass through more than one scope — every /api/*
-    // request also matches "overall". Reading `c.res.headers` here (a) forces
-    // Hono to realize `c.res` now, so these headers survive a handler that
-    // builds its own bespoke `Response` rather than going through `c.json()`
-    // (every request in this suite ends at `notFoundHandler`, which does
-    // exactly that via `renderProblem` — see `finalize.ts`, which re-stamps
-    // `X-Request-Id` for the same reason), and (b) tells us whether a more
-    // specific, earlier-registered scope already reported its headers. If so,
-    // that scope's numbers are the ones that matter to the client and are left
-    // alone; a broader scope still counts and can still block, just silently.
-    if (!c.res.headers.has("RateLimit-Limit")) {
+    await next();
+
+    // Written after `next()` resolves, not before. A single request can match
+    // more than one scope — every /api/* request also matches "overall" — and
+    // writing pre-`next()` realizes `c.res` early: Hono's `set res()` then
+    // merges that already-realized response's headers onto whatever the
+    // nested chain eventually returns, including a *different*, more specific
+    // scope's 429 further down, clobbering its correct blocking numbers with
+    // this scope's stale, passing ones. Firing the write after `next()`
+    // sidesteps that, because nothing realizes `c.res` ahead of the nested
+    // dispatch, so that merge path is never entered — which also fixes the
+    // original bug where these headers were dropped entirely on a 404 (see
+    // `finalize.ts`, which re-stamps `X-Request-Id` post-`next()` for the same
+    // reason).
+    //
+    // Each middleware's `await next()` unwinds innermost-first, so on an
+    // all-pass request "overall" stamps first and the more specific "search"
+    // or "write" stamps last, overwriting it — the most specific scope's
+    // numbers are what the client sees, which is the semantics the brief
+    // wants. If *this* scope blocked, it already returned its own response
+    // above and never reaches here. If a *different* scope blocked further
+    // down the chain, `c.res.status` is 429 here and is left alone — the
+    // blocking scope's headers, including `Retry-After`, stay intact.
+    if (c.res.status !== 429) {
       for (const [name, value] of Object.entries(headers)) {
         c.header(name, value);
       }
     }
-
-    await next();
   };
 }
