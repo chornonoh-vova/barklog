@@ -556,7 +556,7 @@ hostnames, no driver error strings; these are unauthenticated endpoints.
 
 ### Authentication
 
-`clerkMiddleware()` from `@hono/clerk-auth` verifies the session JWT against
+`clerkMiddleware()` from `@clerk/hono` verifies the session JWT against
 Clerk's JWKS. Verification is stateless with a cached key set, so there is no
 Clerk round trip per request. `requireAuth` mounts on `*` with an exact-path
 allowlist for the two probes, and sets `c.set('userId', auth.userId)`.
