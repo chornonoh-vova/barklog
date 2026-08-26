@@ -1,7 +1,13 @@
 import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
-import { failRun, finishRun, getWatermark, startRun } from "../src/queries/sync-runs.js";
+import {
+  failRun,
+  finishRun,
+  getLastRun,
+  getWatermark,
+  startRun,
+} from "../src/queries/sync-runs.js";
 import { truncateAll } from "../src/testing.js";
 
 const { db, close } = createDb(inject("databaseUrl"));
@@ -65,4 +71,36 @@ test("failRun records the error and marks the run failed", async () => {
   expect(rows[0]!.status).toBe("failed");
   expect(rows[0]!.error).toBe("boom");
   expect(rows[0]!.finishedAt).not.toBeNull();
+});
+
+test("getLastRun returns the most recently started run, whatever its status", async () => {
+  const first = await startRun(db);
+  await finishRun(db, first, { watermark: new Date("2026-08-01T00:00:00Z"), counts: { games: 5 } });
+
+  const second = await startRun(db);
+
+  const last = await getLastRun(db);
+  expect(last?.id).toBe(second);
+  expect(last?.status).toBe("running");
+  expect(last?.finishedAt).toBeNull();
+});
+
+test("getLastRun reports the counts and watermark of a finished run", async () => {
+  const id = await startRun(db);
+  await finishRun(db, id, {
+    watermark: new Date("2026-08-25T00:00:00Z"),
+    counts: { games: 373_590, pages: 748 },
+  });
+
+  const last = await getLastRun(db);
+  expect(last).toMatchObject({
+    id,
+    status: "success",
+    counts: { games: 373_590, pages: 748 },
+  });
+  expect(last?.watermark?.toISOString()).toBe("2026-08-25T00:00:00.000Z");
+});
+
+test("getLastRun is null before the worker has ever run", async () => {
+  expect(await getLastRun(db)).toBeNull();
 });

@@ -14,6 +14,7 @@ import { DEFAULT_RATE_LIMITS } from "./rate-limits.js";
 import { backlogRoutes } from "./routes/backlog.js";
 import { gamesRoutes } from "./routes/games.js";
 import { probeRoutes } from "./routes/probes.js";
+import { syncRoutes } from "./routes/sync.js";
 import { MUTATING_METHODS, PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
 
 /** Stands in for `clerkMiddleware()` when a test supplies its own authenticator. */
@@ -106,6 +107,7 @@ export function createApp(deps: AppDeps) {
     .on([...MUTATING_METHODS], "/api/*", ensureUserMiddleware(deps.db))
     .route("/api/games", gamesRoutes(deps))
     .route("/api/backlog", backlogRoutes(deps))
+    .route("/api/sync", syncRoutes(deps))
     .route("/", probeRoutes(deps));
 
   app.notFound(notFoundHandler);
