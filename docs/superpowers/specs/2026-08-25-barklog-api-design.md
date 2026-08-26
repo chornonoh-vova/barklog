@@ -649,7 +649,7 @@ task's `env` array, or `turbo/no-undeclared-env-vars` will flag it.
 
 ### Local development
 
-`docker-compose.yml` provides **Postgres and Valkey only**:
+`deps.compose.yaml` provides **Postgres and Valkey only**:
 
 ```yaml
 services:
@@ -718,7 +718,7 @@ nightly in CI rather than on every pull request.
 
 Each step ends somewhere you can stop.
 
-1. `docker-compose.yml` + `packages/db` + first migration (`CREATE EXTENSION pg_trgm`).
+1. `deps.compose.yaml` + `packages/db` + first migration (`CREATE EXTENSION pg_trgm`).
 2. `packages/igdb` + `apps/worker` + run the seed — **get real data in**.
 3. `packages/cache`, problem-details middleware, secure headers, `/healthz`,
    `/readyz`.

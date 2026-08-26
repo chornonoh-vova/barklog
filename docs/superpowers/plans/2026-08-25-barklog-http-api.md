@@ -6114,3 +6114,9 @@ the probe reports dependency state as of at most a second ago.
 that disagrees with the number of `test(...)` cases in their own code block
 (Task 3 said 11 for 10, Task 4 said 12 for 11 across two files, Task 5 said
 15 for 14). The code blocks are authoritative.
+
+**The local compose file is `deps.compose.yaml`.** It was renamed from
+`docker-compose.yml` so that `compose.yaml` stays free for a production
+stack. `docker compose` does not auto-discover the new name, so local
+commands need `-f deps.compose.yaml` — or the root `pnpm deps:up` /
+`pnpm deps:down` scripts.

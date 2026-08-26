@@ -81,7 +81,7 @@ Postgres and Valkey run in Docker; the API and worker run on the host so
 reloads stay fast.
 
 ```sh
-docker compose up -d
+pnpm deps:up
 cp .env.example .env          # then fill in the IGDB credentials
 set -a && . ./.env && set +a  # export them into your shell
 pnpm --filter @repo/db db:migrate
@@ -118,8 +118,8 @@ pnpm test
 ```
 
 Tests start their own Postgres and Valkey via **Testcontainers** — they do not
-use the docker-compose stack, so all they need is a running Docker daemon. The
-compose stack is purely a development convenience.
+use the `deps.compose.yaml` stack, so all they need is a running Docker
+daemon. The compose stack is purely a development convenience.
 
 ## Logs
 

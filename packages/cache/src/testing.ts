@@ -2,7 +2,7 @@ import { RedisContainer } from "@testcontainers/redis";
 import { Valkey } from "iovalkey";
 
 // The Redis testcontainers module drives Valkey unchanged — Valkey is
-// wire-compatible — so we point it at the same image docker-compose uses.
+// wire-compatible — so we point it at the same image deps.compose.yaml uses.
 export const VALKEY_IMAGE = "valkey/valkey:9-alpine";
 
 /** Starts a Valkey for a test suite. Never used outside tests. */
