@@ -6059,3 +6059,58 @@ only thing that proves 373,590 rows still parse.
 
 Record them here as they are hit, so a re-run of this plan does not rediscover
 them.
+
+**Per-package test commands need a build first.** `pnpm --filter <pkg> test`
+bypasses turbo's `test → ^build` dependency, so a package importing a
+sibling's `dist` fails with module-not-found. Use `pnpm build` first, or
+`pnpm turbo run test --filter=<pkg>`. Hit as soon as `packages/db`'s parity
+test imported `@repo/contracts`.
+
+**pnpm blocks `@clerk/shared`'s postinstall.** Adding `@hono/clerk-auth`
+makes `pnpm install` refuse to proceed until the script is explicitly
+allowed or declined. It only prints a telemetry notice and writes a marker
+into the user's OS config directory, producing no build artifact — so it is
+**declined** (`false`) in `pnpm-workspace.yaml`, matching the existing
+`cpu-features`/`ssh2`/`protobufjs` entries rather than the
+`esbuild`/`unrs-resolver` ones, which are `true` only because their
+postinstall produces the working package.
+
+**4xx are logged at `warning`, not `error`.** The plan's `apiErrorHandler`
+logged every non-`ProblemDetailsError` at `error` with a stack, which
+includes a client's malformed JSON body (Hono raises `HTTPException(400)`).
+That made client mistakes indistinguishable from server bugs and was
+client-triggerable. It now branches on status: `error` for 5xx, `warning`
+below.
+
+**Rate-limit headers are stamped after `next()`, not before.** The plan's
+pre-`next()` `c.header()` calls silently lost every `RateLimit-*` header
+whenever a request ended in a problem document, because the renderer builds
+a bespoke `Response` and Hono's `set res` only merges prepared headers when
+`c.res` was already realized — the same defect `finalize.ts` exists to fix
+for `X-Request-Id`. Writing after `next()`, gated on `c.res.status !== 429`,
+fixes it and also makes the most-specific scope's numbers win on a pass
+while leaving a blocking scope's own headers intact.
+
+**The rate-limit key TTL is derived from the rule.** A hard 120s constant
+expires the counter mid-window for any configured window longer than that,
+silently disabling enforcement. It is now `rule.windowSeconds * 2`.
+
+**`popularGames` must repeat the partial index's predicate.**
+`games_popular_idx` is partial on `total_rating_count > 50`; filtering only
+on the rating floor leaves the predicate unimplied, so Postgres cannot use
+the index. Measured on the real mirror: 45ms seq scan versus 0.36ms index
+scan.
+
+**Test files are type-checked, so `response.json()` needs narrowing.**
+`Response.json()` is `Promise<unknown>` under this repo's Node-only types,
+so test code reading fields off it needs a narrow `as {...}` cast even
+though vitest would run it untyped.
+
+**`/readyz` memoises its verdict for ~1s** (user decision), so an
+unauthenticated flood cannot starve the connection pool. The trade is that
+the probe reports dependency state as of at most a second ago.
+
+**Test-count prose in the plan is unreliable.** Several tasks state a count
+that disagrees with the number of `test(...)` cases in their own code block
+(Task 3 said 11 for 10, Task 4 said 12 for 11 across two files, Task 5 said
+15 for 14). The code blocks are authoritative.
