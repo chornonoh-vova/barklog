@@ -181,9 +181,9 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+      valibot:
+        specifier: ^1.4.2
+        version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -335,9 +335,9 @@ importers:
       '@repo/cache':
         specifier: workspace:*
         version: link:../cache
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+      valibot:
+        specifier: ^1.4.2
+        version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

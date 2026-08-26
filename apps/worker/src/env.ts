@@ -1,33 +1,37 @@
 import { LOG_LEVELS } from "@repo/logging";
-import { z } from "zod";
+import * as v from "valibot";
 
-const required = z.string().min(1);
+const required = v.pipe(v.string(), v.minLength(1));
 
-const envSchema = z.object({
+const envSchema = v.object({
   DATABASE_URL: required,
   VALKEY_URL: required,
   IGDB_CLIENT_ID: required,
   IGDB_CLIENT_SECRET: required,
-  SYNC_CRON: z.string().min(1).default("0 0 * * *"),
-  SYNC_TZ: z.string().min(1).default("UTC"),
-  LOG_LEVEL: z.enum(LOG_LEVELS).default("info"),
+  SYNC_CRON: v.optional(required, "0 0 * * *"),
+  SYNC_TZ: v.optional(required, "UTC"),
+  LOG_LEVEL: v.optional(v.picklist(LOG_LEVELS), "info"),
 });
 
-export type WorkerEnv = z.infer<typeof envSchema>;
+export type WorkerEnv = v.InferOutput<typeof envSchema>;
 
 /**
  * Parsed once at boot so a missing secret stops the process immediately rather
  * than surfacing at midnight when the sync fires.
+ *
+ * `v.getDotPath` is what names the offending variable — without it a missing
+ * `IGDB_CLIENT_SECRET` reads as an anonymous "Invalid key", and the tests below
+ * match on the name.
  */
 export function parseEnv(source: Record<string, string | undefined>): WorkerEnv {
-  const result = envSchema.safeParse(source);
+  const result = v.safeParse(envSchema, source);
 
   if (!result.success) {
-    const detail = result.error.issues
-      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+    const detail = result.issues
+      .map((issue) => `${v.getDotPath(issue) ?? "(root)"}: ${issue.message}`)
       .join("; ");
     throw new Error(`Invalid worker environment — ${detail}`);
   }
 
-  return result.data;
+  return result.output;
 }

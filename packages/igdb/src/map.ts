@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { igdbGameSchema } from "./schemas.js";
 
 export interface MappedPage {
@@ -32,7 +34,7 @@ export interface MappedPage {
 const seconds = (value: number) => new Date(value * 1000);
 
 export function mapGames(raw: unknown[]): MappedPage {
-  const games = raw.map((row) => igdbGameSchema.parse(row));
+  const games = raw.map((row) => v.parse(igdbGameSchema, row));
 
   // Reference rows are deduplicated by id: two games in one page routinely
   // share a genre, and inserting it twice in one statement raises

@@ -20,6 +20,11 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 | `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                           |
 | `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)                 |
 
+Validation is **valibot throughout, behind Standard Schema** — one library, not
+two. `apps/api`'s validator, its `hono-problem-details` hook, `packages/igdb`'s
+IGDB response schema and `apps/worker`'s environment schema all meet at that one
+interface.
+
 Everything is TypeScript. The app is **iOS-only for now** (`platforms: ["ios"]`
 in `app.json`) because the UI is built with `@expo/ui`'s SwiftUI components.
 
@@ -243,7 +248,7 @@ Clerk is faked, so the suite needs no network.
 
 ```
 src/
-  env.ts      zod-validated environment, parsed once at boot
+  env.ts      valibot-validated environment, parsed once at boot
   context.ts  wires db + cache + IGDB client into SyncDeps
   persist.ts  writes one IGDB page in a single transaction
   sync.ts     syncAll() — advisory lock, watermark, page loop, bookkeeping
