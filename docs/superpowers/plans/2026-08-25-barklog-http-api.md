@@ -6120,3 +6120,34 @@ that disagrees with the number of `test(...)` cases in their own code block
 stack. `docker compose` does not auto-discover the new name, so local
 commands need `-f deps.compose.yaml` — or the root `pnpm deps:up` /
 `pnpm deps:down` scripts.
+
+**The 2.7ms search figure in Task 3, Step 5 omitted the ranking `ORDER BY`.**
+That number came from a bare `WHERE ... <% ... LIMIT 20`, which lets
+Postgres stop scanning as soon as it has 20 matching rows. The production
+query shape also orders by the similarity/popularity blend, which requires
+scoring every row the trigram index returns before it can pick the top 20.
+Two independent measurements against the real 373,715-row mirror, on the
+exact production query shape:
+
+| query   | rows scored | measured     |
+| ------- | ----------- | ------------ |
+| `zeld`  | 2,017       | ~42 ms       |
+| `mario` | 19,114      | ~240 ms warm |
+| `the`   | 40,903      | ~222 ms      |
+
+The design is still sound — `EXPLAIN ANALYZE` shows a **Bitmap Index Scan on
+`games_name_trgm_idx`** in every case, never a sequential scan — but the cost
+is two orders of magnitude above the documented 2.7ms figure. This makes the
+600s search cache (spec §10) load-bearing rather than a nicety: an
+invalidation storm or a cold cache under load hits these latencies directly.
+Spec §9 already sanctions tuning `WORD_SIMILARITY_THRESHOLD` and the ranking
+weights against the real mirror as follow-up work; not done now, because
+raising the threshold above 0.3 would break the four-character `zeld` recall
+case the threshold exists to serve, and the ranking fixture tests pin the
+current weights.
+
+**Clerk's SDKs collect telemetry from development instances.** This is why
+`@clerk/shared`'s postinstall is declined (`false`) in `pnpm-workspace.yaml`
+rather than allowed: the postinstall's telemetry notice is opt-out, at
+`clerk.com/docs/telemetry`, and declining it produces no build artifact this
+repo needs (see the `@clerk/shared` entry above).
