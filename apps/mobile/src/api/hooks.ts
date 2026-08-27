@@ -16,9 +16,22 @@ import {
   type GameDetailResponse,
   type GameListResponse,
 } from "@repo/contracts";
+import { Alert } from "react-native";
 
+import { errorCopy } from "./error-copy";
 import { keys } from "./keys";
 import { useApi } from "./provider";
+
+/**
+ * Reads have a full error path via `QueryBoundary`; writes have none — an
+ * optimistic patch rolls back silently on failure with nothing telling the
+ * user why. Same status-keyed copy as the read path, surfaced with a native
+ * alert since a mutation has no screen real estate of its own to render into.
+ */
+function alertOnMutationError(error: unknown): void {
+  const { title, description } = errorCopy(error);
+  Alert.alert(title, description);
+}
 
 export function useBacklog(
   status: BacklogStatus | undefined,
@@ -104,10 +117,11 @@ export function useUpsertBacklogEntry(gameId: number) {
       return { previous };
     },
 
-    onError: (_error, _input, context) => {
+    onError: (error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(keys.games.detail(gameId), context.previous);
       }
+      alertOnMutationError(error);
     },
 
     onSettled: () => {
@@ -136,10 +150,11 @@ export function useDeleteBacklogEntry(gameId: number) {
       return { previous };
     },
 
-    onError: (_error, _input, context) => {
+    onError: (error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(keys.games.detail(gameId), context.previous);
       }
+      alertOnMutationError(error);
     },
 
     onSettled: () => {

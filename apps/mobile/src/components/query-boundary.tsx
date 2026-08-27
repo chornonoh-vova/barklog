@@ -3,40 +3,9 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { StyleSheet } from "react-native";
 
-import { isApiError } from "@/api/errors";
+import { errorCopy } from "@/api/error-copy";
 import { NativeState } from "@/components/native-state";
 import { Brand } from "@/theme";
-
-/**
- * Error copy is keyed off status rather than shown verbatim, because a 5xx
- * problem document carries no `detail` by design — the API strips exception
- * messages so they cannot leak schema names and file paths.
- */
-function errorState(error: unknown): { title: string; description: string } {
-  if (!isApiError(error)) {
-    return { title: "Something went wrong", description: "Please try again." };
-  }
-
-  if (error.status === 0) {
-    return { title: "You're offline", description: error.detail ?? "Check your connection." };
-  }
-
-  if (error.status === 429) {
-    return {
-      title: "Slow down a moment",
-      description: "You've made a lot of requests. Try again shortly.",
-    };
-  }
-
-  if (error.status >= 500) {
-    return {
-      title: "Barklog is having trouble",
-      description: "The server couldn't answer. Try again in a moment.",
-    };
-  }
-
-  return { title: error.title, description: error.detail ?? "Please try again." };
-}
 
 export function QueryBoundary<T>({
   query,
@@ -71,7 +40,7 @@ export function QueryBoundary<T>({
   }
 
   // Errored with nothing to fall back on.
-  const { title, description } = errorState(query.error);
+  const { title, description } = errorCopy(query.error);
 
   return (
     <NativeState

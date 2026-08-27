@@ -3,13 +3,16 @@ import { describe, expect, it } from "vitest";
 import { keys } from "@/api/keys";
 
 describe("query keys", () => {
-  it("namespaces games and backlog separately", () => {
-    expect(keys.games.all).toEqual(["games"]);
+  it("namespaces the backlog under its own root", () => {
     expect(keys.backlog.all).toEqual(["backlog"]);
   });
 
   it("keys a search by its full argument set", () => {
     expect(keys.games.search("zelda", 20, 0)).toEqual(["games", "search", "zelda", 20, 0]);
+  });
+
+  it("keys the popular list by its limit", () => {
+    expect(keys.games.popular(50)).toEqual(["games", "popular", 50]);
   });
 
   it("distinguishes searches that differ only by page", () => {

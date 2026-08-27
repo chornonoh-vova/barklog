@@ -13,7 +13,6 @@ import type { BacklogSort, BacklogStatus } from "@repo/contracts";
  */
 export const keys = {
   games: {
-    all: ["games"] as const,
     search: (q: string, limit: number, offset: number) =>
       ["games", "search", q, limit, offset] as const,
     popular: (limit: number) => ["games", "popular", limit] as const,
