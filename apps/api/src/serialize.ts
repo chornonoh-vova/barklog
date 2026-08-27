@@ -1,45 +1,17 @@
 import type {
-  BacklogEntry,
-  BacklogListItem,
-  BacklogStatusValue,
-  GameDetail,
-  GameSummary,
-  NamedRef,
-  PlatformRef,
-} from "@repo/db";
+  BacklogEntryWire,
+  BacklogListItemWire,
+  GameDetailWire,
+  GameSummaryWire,
+} from "@repo/contracts";
+import type { BacklogEntry, BacklogListItem, GameDetail, GameSummary } from "@repo/db";
 
-export interface GameSummaryWire {
-  id: number;
-  name: string;
-  slug: string;
-  coverImageId: string | null;
-  firstReleaseDate: string | null;
-  totalRating: number | null;
-  totalRatingCount: number;
-}
-
-export interface GameDetailWire extends GameSummaryWire {
-  summary: string | null;
-  gameType: { id: number; name: string } | null;
-  parentGame: { id: number; name: string } | null;
-  screenshots: string[];
-  genres: NamedRef[];
-  platforms: PlatformRef[];
-  developers: NamedRef[];
-  publishers: NamedRef[];
-}
-
-export interface BacklogEntryWire {
-  gameId: number;
-  status: BacklogStatusValue;
-  rating: number | null;
-  addedAt: string;
-  updatedAt: string;
-}
-
-export interface BacklogListItemWire extends BacklogEntryWire {
-  game: GameSummaryWire;
-}
+export type {
+  BacklogEntryWire,
+  BacklogListItemWire,
+  GameDetailWire,
+  GameSummaryWire,
+} from "@repo/contracts";
 
 /**
  * Rows become wire shapes before anything is cached or hashed. `JSON.stringify`
