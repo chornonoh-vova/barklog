@@ -455,16 +455,19 @@ Each tab root declares its own header inline:
 ```tsx
 <Stack.Title large>Home</Stack.Title>
 <Stack.Toolbar placement="right">
-  <Stack.Toolbar.View asChild>
+  <Stack.Toolbar.View>
     <UserButton />
   </Stack.Toolbar.View>
 </Stack.Toolbar>
 ```
 
-`Stack.Toolbar.View asChild` is the slot that accepts an arbitrary React
-component, and it must be nested inside a `Stack.Toolbar` carrying the
-`placement`. `Stack.Toolbar.Button` takes only an SF Symbol and so cannot host
-`UserButton`.
+`Stack.Toolbar.View` is the slot that accepts an arbitrary React component, and
+it must be nested inside a `Stack.Toolbar` carrying the `placement`.
+`StackToolbarViewProps` carries neither `asChild` nor `placement` — `asChild` is
+a prop of `Stack.Toolbar` itself, and is unnecessary here.
+`Stack.Toolbar.Button` takes only an SF Symbol and so cannot host `UserButton`.
+`placement="right"` also forces `headerShown: true`, which is what brings the
+large title with it.
 
 `UserButton` opens `UserProfileView` natively on tap. There is no `onPress`, no
 modal state and no route — the requirement is satisfied by the component.
