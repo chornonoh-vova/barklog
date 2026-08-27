@@ -9,12 +9,12 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 
 | Workspace                    | What it is                                                                    |
 | ---------------------------- | ----------------------------------------------------------------------------- |
-| `apps/mobile`                | Expo (SDK 57) app — expo-router, native tabs, SwiftUI via @expo/ui            |
+| `apps/mobile`                | Expo (SDK 57) app — expo-router native tabs, React Native lists with @expo/ui SwiftUI controls |
 | `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`                         |
 | `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)                   |
 | `packages/db`                | Drizzle schema, migrations, connection factory                                |
 | `packages/cache`             | Fail-open Valkey wrapper                                                      |
-| `packages/contracts`         | shared valibot request schemas and the backlog status union                   |
+| `packages/contracts`         | shared valibot request schemas, the backlog status union, and the shared HTTP wire contract |
 | `packages/logging`           | one LogTape configuration — JSON lines, with a per-request or per-run context |
 | `packages/igdb`              | Typed IGDB client — token, rate limiting, keyset paging                       |
 | `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                           |
@@ -26,7 +26,8 @@ IGDB response schema and `apps/worker`'s environment schema all meet at that one
 interface.
 
 Everything is TypeScript. The app is **iOS-only for now** (`platforms: ["ios"]`
-in `app.json`) because the UI is built with `@expo/ui`'s SwiftUI components.
+in `app.json`) because a development build is needed: `@clerk/expo`'s native
+components and `@expo/ui` are native modules.
 
 - App identifier: `gg.barklog.app`
 - URL scheme: `barklog://`
@@ -48,23 +49,10 @@ support pnpm's isolated `node_modules` layout.
 
 ```sh
 pnpm install
-cp apps/mobile/.env.example apps/mobile/.env.local
 ```
 
-The app needs a **development build** — `@expo/ui` is a native module and is not
-available in Expo Go.
-
-```sh
-# Build and install onto a connected iPhone, then start the dev server
-pnpm --filter mobile ios:device
-
-# Subsequent runs only need the dev server; the dev client picks it up
-pnpm --filter mobile dev
-```
-
-Prefer a cloud build? `pnpm --filter mobile build:dev` runs
-`eas build --profile development --platform ios`. Run `npx eas-cli login` and
-`npx eas-cli init` once first to attach an EAS project id.
+For the mobile app's env file, dev-build requirement, and run commands, see
+[Mobile](#mobile) below.
 
 Backend:
 
@@ -100,7 +88,11 @@ pnpm --filter mobile ios
 ```
 
 On a physical device set `EXPO_PUBLIC_API_URL` to the host machine's LAN IP —
-`localhost` resolves to the phone.
+`localhost` resolves to the phone. Building onto a connected iPhone instead of
+the simulator: `pnpm --filter mobile ios:device`. Prefer a cloud build?
+`pnpm --filter mobile build:dev` runs `eas build --profile development
+--platform ios`; run `npx eas-cli login` and `npx eas-cli init` once first to
+attach an EAS project id.
 
 ## Local infrastructure
 
@@ -188,6 +180,7 @@ pnpm --filter worker sync | jq -r '[.level, .message] | @tsv'
 | `pnpm --filter @repo/db db:migrate`  | Apply migrations (+ `pg_trgm`)       |
 | `pnpm --filter worker sync --full`   | Seed the games mirror from IGDB      |
 | `pnpm format`                        | Prettier write                       |
+| `pnpm format:check`                  | Prettier check (no write)            |
 | `pnpm --filter mobile ios`           | Dev build on the simulator           |
 | `pnpm --filter mobile ios:device`    | Dev build on a connected device      |
 | `pnpm --filter mobile prebuild`      | Regenerate the native `ios/` project |
