@@ -68,14 +68,18 @@ export function createRequest(deps: ApiClientDeps): Request {
         ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
         ...(reload ? { cache: "reload" as RequestCache } : {}),
       });
-    } catch {
+    } catch (cause) {
       // A DNS failure, a dropped connection, ATS refusing plain HTTP. Wrapped
-      // so every caller catches exactly one error type.
+      // so every caller catches exactly one error type, but the original is
+      // threaded through as `cause` rather than discarded — it is often the
+      // only signal that explains why, and the generic message above collapses
+      // all of those causes into one otherwise.
       throw new ApiError({
         status: 0,
         type: "about:blank",
         title: "Network unavailable",
         detail: "Barklog could not reach the server. Check your connection.",
+        cause,
       });
     }
   }

@@ -148,6 +148,14 @@ describe("createRequest — errors", () => {
     expect(isApiError(error) && error.retryAfter).toBe(42);
   });
 
+  it("leaves retryAfter undefined, not NaN, for a non-numeric Retry-After", async () => {
+    const error = await client([
+      problem(429, { title: "Too Many Requests", status: 429 }, { "Retry-After": "soon" }),
+    ])("/api/games/search").catch((e: unknown) => e);
+
+    expect(isApiError(error) && error.retryAfter).toBeUndefined();
+  });
+
   it("survives an error body that is not JSON", async () => {
     const error = await client([
       new Response("<html>502</html>", { status: 502, statusText: "Bad Gateway" }),

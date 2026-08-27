@@ -25,11 +25,20 @@ export class ApiError extends Error {
     traceId?: string;
     errors?: { field: string; message: string }[];
     retryAfter?: number;
+    /**
+     * The original error `fetch` threw (DNS failure, ATS blocking plain
+     * HTTP, connection refused, …), when this `ApiError` wraps one. Threaded
+     * through via ES2022's `Error` cause chain rather than discarded, since
+     * it is often the only signal that explains *why* a request failed the
+     * first time someone points a device build at a LAN IP.
+     */
+    cause?: unknown;
   }) {
     super(
       fields.detail === undefined
         ? `${fields.status} ${fields.title}`
         : `${fields.status} ${fields.title}: ${fields.detail}`,
+      fields.cause === undefined ? undefined : { cause: fields.cause },
     );
 
     this.name = "ApiError";

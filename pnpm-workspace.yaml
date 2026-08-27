@@ -24,4 +24,6 @@ allowBuilds:
   utf-8-validate: false
 
 minimumReleaseAgeExclude:
+  # expo-secure-store@57.0.2 was published within pnpm 11's default cooling-off
+  # window, and it is the SDK-57-recommended version.
   - expo-secure-store@57.0.2
