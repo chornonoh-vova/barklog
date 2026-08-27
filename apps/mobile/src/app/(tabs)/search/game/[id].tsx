@@ -1,7 +1,1 @@
-import { Stack, useLocalSearchParams } from "expo-router";
-
-export default function GameRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-
-  return <Stack.Title>{`Game ${id}`}</Stack.Title>;
-}
+export { GameDetailScreen as default } from "@/features/game/game-detail-screen";
