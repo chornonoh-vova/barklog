@@ -8,6 +8,9 @@
  * user's backlog rendered from cache before the first refetch lands. A pure
  * function is testable; an inline comparison in a `useEffect` is not.
  */
-export function shouldClearCache(previous: boolean | undefined, next: boolean): boolean {
+export function shouldClearCache(
+  previous: boolean | undefined,
+  next: boolean | undefined,
+): boolean {
   return previous === true && next === false;
 }

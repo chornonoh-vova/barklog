@@ -25,4 +25,11 @@ describe("shouldClearCache", () => {
     expect(shouldClearCache(true, true)).toBe(false);
     expect(shouldClearCache(false, false)).toBe(false);
   });
+
+  it("does not clear while the session is still loading", () => {
+    // `isSignedIn` is `boolean | undefined` while Clerk re-establishes a
+    // session (e.g. a token refresh in flight). `undefined` must never be
+    // read as a sign-out.
+    expect(shouldClearCache(true, undefined)).toBe(false);
+  });
 });
