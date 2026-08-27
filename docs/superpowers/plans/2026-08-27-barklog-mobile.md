@@ -3816,7 +3816,7 @@ that would be a 422."
 import type { GameDetailResponse } from "@repo/contracts";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { PlatformColor, StyleSheet, Text, View } from "react-native";
+import { PlatformColor, StyleSheet, Text, useColorScheme, View } from "react-native";
 
 import { Cover } from "@/components/cover";
 import { coverUrl } from "@/igdb-image";
@@ -3837,6 +3837,18 @@ const COVER_WIDTH = 132;
  * no blur layer at all rather than a grey smear.
  */
 export function Hero({ game }: { game: GameDetailResponse }) {
+  /**
+   * The one place in the app that cannot use `PlatformColor`.
+   * `PlatformColor("systemBackground")` returns an opaque `{semantic: [...]}`
+   * descriptor that the native layer resolves at render time;
+   * `expo-linear-gradient` needs actual colour *strings*, and stringifying the
+   * descriptor yields "[object Object]". So the page colour is resolved here
+   * from the colour scheme, matching what `systemBackground` resolves to on
+   * iOS: white in light, black in dark.
+   */
+  const scheme = useColorScheme();
+  const pageColor = scheme === "dark" ? "#000000" : "#FFFFFF";
+
   const backdrop = coverUrl(game.coverImageId, "big");
   const meta = metaLine({ firstReleaseDate: game.firstReleaseDate, genres: game.genres });
   const rating = ratingLine(game);
@@ -3861,7 +3873,7 @@ export function Hero({ game }: { game: GameDetailResponse }) {
             style={StyleSheet.absoluteFill}
           />
           <LinearGradient
-            colors={["transparent", String(PlatformColor("systemBackground"))]}
+            colors={["transparent", pageColor]}
             locations={[0.55, 1]}
             style={StyleSheet.absoluteFill}
           />
@@ -3894,12 +3906,6 @@ const styles = StyleSheet.create({
   meta: { ...Type.subheadline, color: PlatformColor("secondaryLabel") },
 });
 ```
-
-If `String(PlatformColor(...))` does not yield a usable colour for the gradient,
-substitute the two literal values `"#FFFFFF"` / `"#000000"` selected by
-`useColorScheme()` in this one place, and note it in a comment. This is the only
-place in the app where a dynamic colour must be flattened to a string, because
-`expo-linear-gradient` takes colour strings rather than a `ColorValue`.
 
 - [ ] **Step 2: Create the action trio**
 
