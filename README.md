@@ -7,18 +7,18 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 
 ## What's inside
 
-| Workspace                    | What it is                                                                    |
-| ---------------------------- | ----------------------------------------------------------------------------- |
+| Workspace                    | What it is                                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
 | `apps/mobile`                | Expo (SDK 57) app — expo-router native tabs, React Native lists with @expo/ui SwiftUI controls |
-| `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`                         |
-| `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)                   |
-| `packages/db`                | Drizzle schema, migrations, connection factory                                |
-| `packages/cache`             | Fail-open Valkey wrapper                                                      |
-| `packages/contracts`         | shared valibot request schemas, the backlog status union, and the shared HTTP wire contract |
-| `packages/logging`           | one LogTape configuration — JSON lines, with a per-request or per-run context |
-| `packages/igdb`              | Typed IGDB client — token, rate limiting, keyset paging                       |
-| `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                           |
-| `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)                 |
+| `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`                                          |
+| `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)                                    |
+| `packages/db`                | Drizzle schema, migrations, connection factory                                                 |
+| `packages/cache`             | Fail-open Valkey wrapper                                                                       |
+| `packages/contracts`         | shared valibot request schemas, the backlog status union, and the shared HTTP wire contract    |
+| `packages/logging`           | one LogTape configuration — JSON lines, with a per-request or per-run context                  |
+| `packages/igdb`              | Typed IGDB client — token, rate limiting, keyset paging                                        |
+| `packages/eslint-config`     | Shared flat ESLint configs (`base`, `expo`, `node`)                                            |
+| `packages/typescript-config` | Shared tsconfig bases (`base.json`, `expo.json`, `node.json`)                                  |
 
 Validation is **valibot throughout, behind Standard Schema** — one library, not
 two. `apps/api`'s validator, its `hono-problem-details` hook, `packages/igdb`'s
