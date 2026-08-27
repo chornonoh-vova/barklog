@@ -199,7 +199,7 @@ src/
       search/    _layout.tsx  index.tsx  game/[id].tsx
   api/         errors, client, endpoints, keys, provider, hooks
   auth/        auth-gate, should-clear-cache
-  components/  profile-toolbar, cover, game-row, query-boundary, native-state
+  components/  profile-toolbar, cover, game-row, query-boundary, empty-state
   features/    backlog/ explore/ search/ game/
   hooks/       use-debounced
   ui/          glass, platform-glass
@@ -217,9 +217,11 @@ Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
 whenever Android lands.
 
 **UI.** React Native renders lists, rows, images and text content; `@expo/ui/swift-ui`
-inside a `Host` renders controls, plus `ContentUnavailableView` and
-`ProgressView` for empty and loading states. `PlatformColor` is used
-throughout so both halves resolve the same iOS dynamic system colours. This
+inside a `Host` renders controls, plus `ProgressView` for loading and a
+hand-laid-out symbol/title/description stack for empty and error states —
+`ContentUnavailableView` fills its container and centres inside it, which
+pushes a sibling call to action to the bottom of the screen. `PlatformColor`
+is used throughout so both halves resolve the same iOS dynamic system colours. This
 split is forced, not stylistic: `@expo/ui`'s SwiftUI `Image` accepts only an
 SF Symbol, an asset-catalog name, or a local file URI — it has no remote-URL
 prop, and every list in Barklog is IGDB cover art.

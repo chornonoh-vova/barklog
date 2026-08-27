@@ -1,7 +1,7 @@
 import { Host, ProgressView } from "@expo/ui/swift-ui";
 
 import { errorCopy } from "@/api/error-copy";
-import { NativeState } from "@/components/native-state";
+import { EmptyState } from "@/components/empty-state";
 
 /**
  * The two states every read screen shares, as plain siblings rather than a
@@ -24,7 +24,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry: () => 
   const { title, description } = errorCopy(error);
 
   return (
-    <NativeState
+    <EmptyState
       title={title}
       systemImage="exclamationmark.triangle"
       description={description}

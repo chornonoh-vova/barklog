@@ -5,7 +5,7 @@ import { FlatList, PlatformColor, RefreshControl, StyleSheet } from "react-nativ
 
 import { usePopularGames } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
-import { NativeState } from "@/components/native-state";
+import { EmptyState } from "@/components/empty-state";
 import { ErrorState, LoadingState } from "@/components/query-states";
 import { metaLine } from "@/features/game/format";
 
@@ -49,11 +49,12 @@ export function ExploreScreen() {
   return (
     <FlatList
       style={styles.list}
+      contentContainerStyle={styles.listContent}
       data={popular.data.items}
       keyExtractor={(item) => String(item.id)}
       renderItem={renderItem}
       ListEmptyComponent={
-        <NativeState
+        <EmptyState
           title="Nothing to sniff out yet"
           systemImage="safari"
           description="The catalogue is still syncing. Check back shortly."
@@ -72,4 +73,7 @@ export function ExploreScreen() {
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  // Lets the empty state fill the list instead of collapsing — see
+  // `BacklogScreen` for why `ListEmptyComponent` needs it.
+  listContent: { flexGrow: 1 },
 });

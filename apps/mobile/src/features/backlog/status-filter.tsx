@@ -1,5 +1,5 @@
 import { Host, HStack, Menu, Picker, Spacer, Text } from "@expo/ui/swift-ui";
-import { buttonStyle, clipShape, controlSize, pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
+import { buttonStyle, clipShape, pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
 import type { BacklogStatus } from "@repo/contracts";
 import { StyleSheet } from "react-native";
 
@@ -33,11 +33,7 @@ export function StatusFilter({
         <Menu
           label={value ? statusLabel(value) : "All"}
           systemImage="line.3.horizontal.decrease"
-          modifiers={[
-            buttonStyle(GLASS_PROMINENT_STYLE),
-            controlSize("large"),
-            clipShape("capsule"),
-          ]}
+          modifiers={[buttonStyle(GLASS_PROMINENT_STYLE), clipShape("capsule")]}
         >
           <Picker
             selection={value ?? ALL}

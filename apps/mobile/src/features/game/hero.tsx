@@ -1,5 +1,5 @@
 import type { GameDetailResponse } from "@repo/contracts";
-import { PlatformColor, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Cover } from "@/components/cover";
 import { metaLine, ratingLine } from "@/features/game/format";

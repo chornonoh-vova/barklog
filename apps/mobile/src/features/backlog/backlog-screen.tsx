@@ -5,7 +5,7 @@ import { PlatformColor, RefreshControl, SectionList, StyleSheet, Text, View } fr
 
 import { useBacklog, useBacklogStats } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
-import { NativeState } from "@/components/native-state";
+import { EmptyState } from "@/components/empty-state";
 import { ErrorState, LoadingState } from "@/components/query-states";
 import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toSections } from "@/features/backlog/sections";
@@ -35,7 +35,7 @@ export function BacklogScreen() {
 
   if (filter === undefined && stats.data?.total === 0) {
     return (
-      <NativeState
+      <EmptyState
         title={EMPTY_BACKLOG.title}
         systemImage={EMPTY_BACKLOG.systemImage}
         description={EMPTY_BACKLOG.description}
@@ -50,6 +50,7 @@ export function BacklogScreen() {
     content = (
       <SectionList
         style={styles.list}
+        contentContainerStyle={styles.listContent}
         sections={toSections(backlog.data.items, filter)}
         keyExtractor={(item) => String(item.gameId)}
         renderItem={renderItem}
@@ -65,7 +66,7 @@ export function BacklogScreen() {
         }
         ListEmptyComponent={
           filter === undefined ? null : (
-            <NativeState
+            <EmptyState
               title={EMPTY_FILTER[filter].title}
               systemImage={EMPTY_FILTER[filter].systemImage}
               description={EMPTY_FILTER[filter].description}
@@ -110,6 +111,10 @@ export function BacklogScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
   list: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  // `ListEmptyComponent` is cloned straight into the content container, with no
+  // wrapper of its own, so without this the empty state has no height to fill
+  // and its SwiftUI content gets clipped.
+  listContent: { flexGrow: 1 },
   header: { paddingTop: 8, gap: 4 },
   stats: {
     ...Type.footnote,

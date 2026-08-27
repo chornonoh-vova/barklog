@@ -5,7 +5,7 @@ import { FlatList, PlatformColor, StyleSheet } from "react-native";
 
 import { useSearchGames } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
-import { NativeState } from "@/components/native-state";
+import { EmptyState } from "@/components/empty-state";
 import { QueryBoundary } from "@/components/query-boundary";
 import { metaLine } from "@/features/game/format";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -33,7 +33,7 @@ export function SearchScreen({ query }: { query: string }) {
   // for it rather than the query firing and failing.
   if (debounced.length < SEARCH_QUERY_MIN) {
     return (
-      <NativeState
+      <EmptyState
         title="Fetch a game"
         systemImage="magnifyingglass"
         description="Search the whole catalogue by title. Two characters is enough to start."
@@ -45,7 +45,7 @@ export function SearchScreen({ query }: { query: string }) {
     <QueryBoundary query={search}>
       {(data) =>
         data.items.length === 0 ? (
-          <NativeState
+          <EmptyState
             title="No games found"
             systemImage="magnifyingglass"
             description={`Nothing in the catalogue matches "${debounced}".`}
