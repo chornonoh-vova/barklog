@@ -1,12 +1,16 @@
-import { Host, ProgressView } from "@expo/ui/swift-ui";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { StyleSheet } from "react-native";
 
-import { errorCopy } from "@/api/error-copy";
-import { NativeState } from "@/components/native-state";
-import { Brand } from "@/theme";
+import { ErrorState, LoadingState } from "@/components/query-states";
 
+/**
+ * The wrapper form of `LoadingState` / `ErrorState`, still used by the screens
+ * that have no chrome above their content.
+ *
+ * Home and Explore branch on the query themselves instead: anything that has
+ * to render above the loaded content — Home's status filter — cannot live
+ * inside a render prop that only runs in the success branch.
+ */
 export function QueryBoundary<T>({
   query,
   children,
@@ -31,27 +35,8 @@ export function QueryBoundary<T>({
    */
   if (query.data !== undefined) return children(query.data);
 
-  if (query.isPending) {
-    return (
-      <Host style={styles.host} seedColor={Brand.tint} useViewportSizeMeasurement>
-        <ProgressView />
-      </Host>
-    );
-  }
+  if (query.isPending) return <LoadingState />;
 
   // Errored with nothing to fall back on.
-  const { title, description } = errorCopy(query.error);
-
-  return (
-    <NativeState
-      title={title}
-      systemImage="exclamationmark.triangle"
-      description={description}
-      action={{ label: "Try Again", onPress: () => void query.refetch() }}
-    />
-  );
+  return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
 }
-
-const styles = StyleSheet.create({
-  host: { flex: 1 },
-});

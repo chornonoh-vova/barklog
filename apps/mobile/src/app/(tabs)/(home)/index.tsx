@@ -6,7 +6,7 @@ import { BacklogScreen } from "@/features/backlog/backlog-screen";
 export default function HomeRoute() {
   return (
     <>
-      <Stack.Title large>Home</Stack.Title>
+      <Stack.Title>Home</Stack.Title>
       <ProfileToolbar />
       <BacklogScreen />
     </>

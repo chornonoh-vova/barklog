@@ -1,7 +1,7 @@
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { useColorScheme } from "react-native";
@@ -23,9 +23,13 @@ export default function RootLayout() {
         <ApiProvider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <AuthGate>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-              </Stack>
+              {/*
+                `Slot`, not `Stack`: (tabs) is the only root route, so a Stack
+                here would wrap the tab controller in a UINavigationController
+                for nothing. `Slot` is pure JS — it renders the focused child
+                with no native container of its own.
+              */}
+              <Slot />
             </AuthGate>
             <StatusBar style="auto" />
           </ThemeProvider>

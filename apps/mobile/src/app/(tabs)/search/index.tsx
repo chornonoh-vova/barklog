@@ -9,7 +9,7 @@ export default function SearchRoute() {
 
   return (
     <>
-      <Stack.Title large>Search</Stack.Title>
+      <Stack.Title>Search</Stack.Title>
       <ProfileToolbar />
       <Stack.SearchBar
         placement="automatic"

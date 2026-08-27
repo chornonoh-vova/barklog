@@ -6,7 +6,7 @@ import { FlatList, PlatformColor, RefreshControl, StyleSheet } from "react-nativ
 import { usePopularGames } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
 import { NativeState } from "@/components/native-state";
-import { QueryBoundary } from "@/components/query-boundary";
+import { ErrorState, LoadingState } from "@/components/query-states";
 import { metaLine } from "@/features/game/format";
 
 const POPULAR_LIMIT = 50;
@@ -35,31 +35,38 @@ export function ExploreScreen() {
     [router],
   );
 
+  // Data we already hold wins over an error: a failed background refetch must
+  // not replace a list the user is reading. See `BacklogScreen` for the full
+  // reasoning behind this ordering.
+  if (popular.data === undefined) {
+    return popular.isPending ? (
+      <LoadingState />
+    ) : (
+      <ErrorState error={popular.error} onRetry={() => void popular.refetch()} />
+    );
+  }
+
   return (
-    <QueryBoundary query={popular}>
-      {(data) => (
-        <FlatList
-          style={styles.list}
-          data={data.items}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderItem}
-          ListEmptyComponent={
-            <NativeState
-              title="Nothing to sniff out yet"
-              systemImage="safari"
-              description="The catalogue is still syncing. Check back shortly."
-            />
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={popular.isRefetching}
-              onRefresh={() => void popular.refetch()}
-            />
-          }
-          contentInsetAdjustmentBehavior="automatic"
+    <FlatList
+      style={styles.list}
+      data={popular.data.items}
+      keyExtractor={(item) => String(item.id)}
+      renderItem={renderItem}
+      ListEmptyComponent={
+        <NativeState
+          title="Nothing to sniff out yet"
+          systemImage="safari"
+          description="The catalogue is still syncing. Check back shortly."
         />
-      )}
-    </QueryBoundary>
+      }
+      refreshControl={
+        <RefreshControl
+          refreshing={popular.isRefetching}
+          onRefresh={() => void popular.refetch()}
+        />
+      }
+      contentInsetAdjustmentBehavior="automatic"
+    />
   );
 }
 

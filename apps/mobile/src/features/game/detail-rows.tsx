@@ -36,7 +36,7 @@ export function DetailRows({ game }: { game: GameDetailResponse }) {
 
 const styles = StyleSheet.create({
   group: {
-    marginHorizontal: 16,
+    marginHorizontal: 8,
     marginBottom: 32,
     borderRadius: 10,
     overflow: "hidden",

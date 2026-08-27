@@ -10,7 +10,7 @@ const { Icon, Label } = Trigger;
  *
  * `(home)` is a route group, not a directory named `index`: a group adds no
  * path segment, so `(tabs)/(home)/index.tsx` still resolves to `/` while being
- * able to carry its own Stack for the large title and the profile avatar.
+ * able to carry its own Stack for the title and the profile avatar.
  */
 export default function TabsLayout() {
   return (
@@ -25,8 +25,9 @@ export default function TabsLayout() {
         <Icon sf={{ default: "safari", selected: "safari.fill" }} md="explore" />
       </Trigger>
 
-      <Trigger name="search" role="search">
+      <Trigger name="search">
         <Label>Search</Label>
+        <Icon sf="magnifyingglass" />
       </Trigger>
     </NativeTabs>
   );

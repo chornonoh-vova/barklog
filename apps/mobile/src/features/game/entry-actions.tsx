@@ -13,6 +13,7 @@ import { StyleSheet } from "react-native";
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { ratingButtonLabel, statusButtonLabel, statusLabel } from "@/features/game/format";
 import { Brand } from "@/theme";
+import { useMeasuredHostHeight } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE, GLASS_STYLE } from "@/ui/platform-glass";
 
 const NO_RATING = 0;
@@ -40,10 +41,16 @@ export function EntryActions({
 }) {
   const status = entry?.status ?? null;
   const rating = entry?.rating ?? null;
+  const measured = useMeasuredHostHeight();
 
   return (
-    <Host style={styles.host} matchContents={{ vertical: true }} seedColor={Brand.tint}>
-      <HStack spacing={12}>
+    <Host
+      style={[styles.host, { minHeight: measured.minHeight }]}
+      matchContents={{ vertical: true }}
+      seedColor={Brand.tint}
+      onLayoutContent={measured.onLayoutContent}
+    >
+      <HStack>
         <Menu
           label={`★ ${ratingButtonLabel(rating)}`.trim()}
           modifiers={[
@@ -100,7 +107,7 @@ export function EntryActions({
 
         {status === null ? null : (
           <Menu
-            label=""
+            label="More"
             systemImage="ellipsis"
             modifiers={[buttonStyle(GLASS_STYLE), controlSize("large"), clipShape("capsule")]}
           >
@@ -113,5 +120,5 @@ export function EntryActions({
 }
 
 const styles = StyleSheet.create({
-  host: { paddingHorizontal: 16, paddingBottom: 16, alignItems: "center" },
+  host: { margin: 8 },
 });

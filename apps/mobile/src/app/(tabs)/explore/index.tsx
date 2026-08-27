@@ -6,7 +6,7 @@ import { ExploreScreen } from "@/features/explore/explore-screen";
 export default function ExploreRoute() {
   return (
     <>
-      <Stack.Title large>Explore</Stack.Title>
+      <Stack.Title>Explore</Stack.Title>
       <ProfileToolbar />
       <ExploreScreen />
     </>

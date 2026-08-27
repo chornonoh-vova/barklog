@@ -23,7 +23,7 @@ export function NativeState({
   action?: { label: string; onPress: () => void };
 }) {
   return (
-    <Host style={styles.host} seedColor={Brand.tint} useViewportSizeMeasurement>
+    <Host style={styles.host} seedColor={Brand.tint}>
       <VStack spacing={16}>
         <ContentUnavailableView title={title} systemImage={systemImage} description={description} />
         {action ? (

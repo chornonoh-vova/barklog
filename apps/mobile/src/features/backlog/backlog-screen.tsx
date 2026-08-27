@@ -1,12 +1,12 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { PlatformColor, RefreshControl, SectionList, StyleSheet, Text, View } from "react-native";
 
 import { useBacklog, useBacklogStats } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
 import { NativeState } from "@/components/native-state";
-import { QueryBoundary } from "@/components/query-boundary";
+import { ErrorState, LoadingState } from "@/components/query-states";
 import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toSections } from "@/features/backlog/sections";
 import { StatusFilter } from "@/features/backlog/status-filter";
@@ -31,80 +31,84 @@ export function BacklogScreen() {
     [router],
   );
 
-  return (
-    <QueryBoundary query={backlog}>
-      {(data) => {
-        const sections = toSections(data.items, filter);
+  if (stats.isPending) return <LoadingState />;
 
-        // The onboarding state: nothing tracked at all. The filter and the
-        // stats line are hidden here on purpose — a filter over nothing is
-        // noise, and the only useful thing to offer is a way to find a game.
-        if (filter === undefined && data.items.length === 0) {
-          return (
-            <NativeState
-              title={EMPTY_BACKLOG.title}
-              systemImage={EMPTY_BACKLOG.systemImage}
-              description={EMPTY_BACKLOG.description}
-              action={{ label: "Find a Game", onPress: () => router.navigate("/search") }}
-            />
-          );
+  if (filter === undefined && stats.data?.total === 0) {
+    return (
+      <NativeState
+        title={EMPTY_BACKLOG.title}
+        systemImage={EMPTY_BACKLOG.systemImage}
+        description={EMPTY_BACKLOG.description}
+        action={{ label: "Find a Game", onPress: () => router.navigate("/search") }}
+      />
+    );
+  }
+
+  let content: ReactNode;
+
+  if (backlog.data !== undefined) {
+    content = (
+      <SectionList
+        style={styles.list}
+        sections={toSections(backlog.data.items, filter)}
+        keyExtractor={(item) => String(item.gameId)}
+        renderItem={renderItem}
+        renderSectionHeader={({ section }) =>
+          // Null title means a single status is filtered, so there is
+          // nothing worth a header.
+          section.title === null ? null : (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+              <Text style={styles.sectionCount}>{section.count}</Text>
+            </View>
+          )
         }
-
-        return (
-          <SectionList
-            style={styles.list}
-            sections={sections}
-            keyExtractor={(item) => String(item.gameId)}
-            renderItem={renderItem}
-            ListHeaderComponent={
-              <View style={styles.header}>
-                <StatusFilter value={filter} onChange={setFilter} />
-                {stats.data ? (
-                  <Text style={styles.stats}>
-                    {`${stats.data.total} ${stats.data.total === 1 ? "game" : "games"}`}
-                    {stats.data.averageRating === null ? "" : ` · avg ★${stats.data.averageRating}`}
-                  </Text>
-                ) : null}
-              </View>
-            }
-            renderSectionHeader={({ section }) =>
-              // Null title means a single status is filtered, so there is
-              // nothing worth a header.
-              section.title === null ? null : (
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
-                  <Text style={styles.sectionCount}>{section.count}</Text>
-                </View>
-              )
-            }
-            ListEmptyComponent={
-              filter === undefined ? null : (
-                <NativeState
-                  title={EMPTY_FILTER[filter].title}
-                  systemImage={EMPTY_FILTER[filter].systemImage}
-                  description={EMPTY_FILTER[filter].description}
-                />
-              )
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={backlog.isRefetching}
-                onRefresh={() => {
-                  void backlog.refetch();
-                  void stats.refetch();
-                }}
-              />
-            }
-            contentInsetAdjustmentBehavior="automatic"
-            stickySectionHeadersEnabled
+        ListEmptyComponent={
+          filter === undefined ? null : (
+            <NativeState
+              title={EMPTY_FILTER[filter].title}
+              systemImage={EMPTY_FILTER[filter].systemImage}
+              description={EMPTY_FILTER[filter].description}
+            />
+          )
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={backlog.isRefetching}
+            onRefresh={() => {
+              void backlog.refetch();
+              void stats.refetch();
+            }}
           />
-        );
-      }}
-    </QueryBoundary>
+        }
+        contentInsetAdjustmentBehavior="automatic"
+        stickySectionHeadersEnabled
+      />
+    );
+  } else if (backlog.isPending) {
+    content = <LoadingState />;
+  } else {
+    content = <ErrorState error={backlog.error} onRetry={() => void backlog.refetch()} />;
+  }
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <StatusFilter value={filter} onChange={setFilter} />
+        {stats.data ? (
+          <Text style={styles.stats}>
+            {`${stats.data.total} ${stats.data.total === 1 ? "game" : "games"}`}
+            {stats.data.averageRating === null ? "" : ` · avg ★${stats.data.averageRating}`}
+          </Text>
+        ) : null}
+      </View>
+      {content}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
   list: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
   header: { paddingTop: 8, gap: 4 },
   stats: {
