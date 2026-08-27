@@ -1791,7 +1791,7 @@ export function useApi(): Endpoints {
 
 ```tsx
 import { useAuth } from "@clerk/expo";
-import { AuthView } from "@clerk/expo/native";
+import { AuthView, useAuthViewState } from "@clerk/expo/native";
 import { useQueryClient } from "@tanstack/react-query";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -1805,13 +1805,26 @@ void SplashScreen.preventAutoHideAsync();
  * so there is no anonymous state worth designing. `isDismissible={false}` is
  * what makes this a guard rather than a modal.
  *
- * `treatPendingAsSignedOut: false` stops a session mid-establishment being
- * misread as signed-out, and the three cases below are siblings at the same
- * level, which is Clerk's documented arrangement for keeping `AuthView` mounted
- * while sign-in completes.
+ * **Two hooks, deliberately.**
+ *
+ * `useAuthViewState()` decides what to RENDER. It is the hook Clerk ships for
+ * precisely this shape — its own docstring says "use this hook when
+ * biometric-credential enrollment prompts are enabled and a non-dismissible
+ * root `AuthView` must remain mounted until the prompt finishes", which is
+ * exactly what this component is. `isSignedIn` alone flips true as soon as the
+ * session exists, which is *before* a native biometric-enrollment prompt has
+ * finished — swapping on it would unmount `AuthView` mid-prompt and cut the
+ * enrollment off. Where the native module does not expose auth-flow state the
+ * hook falls back to `isLoaded && isSignedIn`, i.e. the naive behaviour, so
+ * using it is never worse.
+ *
+ * `useAuth({ treatPendingAsSignedOut: false })` supplies the sign-out EDGE,
+ * which `useAuthViewState` does not expose. The flag stops a session
+ * mid-establishment being misread as signed-out.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
+  const { isLoaded, isAuthFlowComplete } = useAuthViewState();
+  const { isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const queryClient = useQueryClient();
   const previous = useRef<boolean | undefined>(undefined);
 
@@ -1830,7 +1843,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!isLoaded) return null;
 
-  if (!isSignedIn) return <AuthView isDismissible={false} />;
+  if (!isAuthFlowComplete) return <AuthView isDismissible={false} />;
 
   return children;
 }
