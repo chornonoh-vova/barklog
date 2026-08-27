@@ -32,18 +32,18 @@ push notifications, and anything in §16 Deferred.
 
 ## 2. Decisions
 
-| Decision | Choice | Why |
-| --- | --- | --- |
-| Identity UI | Clerk native components | Native SwiftUI sign-in, profile and avatar for the cost of three imports. `UserButton` opens `UserProfileView` itself — no wiring. |
-| Auth guard | Root-level, non-dismissible `AuthView` | The whole API is authenticated, so there is no anonymous state worth designing. |
-| Data layer | TanStack Query + plain `fetch` | Chosen over Hono's `hc()` RPC client; see §6 for how types are preserved without it. |
-| Wire types | Lifted into `@repo/contracts` | One declaration. A drifting serializer breaks the API's own typecheck. |
-| Lists and content | React Native | `@expo/ui`'s SwiftUI `Image` cannot load a remote URL, and every list in this app is cover art. |
-| Controls | `@expo/ui/swift-ui` | Real UIKit/SwiftUI controls: segmented pickers, glass buttons, native menus. |
-| Colours | `PlatformColor` | The RN half resolves the same iOS dynamic colours the SwiftUI half uses, in both appearances, with no branching. |
-| Backlog ordering | Client-side, pure function | The collection arrives unpaginated in one response; the order is UI-specific. |
-| Detail screen writes | Autosave on every change | `PUT` is idempotent and total, which is what makes a Save button unnecessary. |
-| Tests | Vitest, pure layer only | `@expo/ui` renders native views; asserting on them in jsdom tests the mock. |
+| Decision             | Choice                                 | Why                                                                                                                                |
+| -------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Identity UI          | Clerk native components                | Native SwiftUI sign-in, profile and avatar for the cost of three imports. `UserButton` opens `UserProfileView` itself — no wiring. |
+| Auth guard           | Root-level, non-dismissible `AuthView` | The whole API is authenticated, so there is no anonymous state worth designing.                                                    |
+| Data layer           | TanStack Query + plain `fetch`         | Chosen over Hono's `hc()` RPC client; see §6 for how types are preserved without it.                                               |
+| Wire types           | Lifted into `@repo/contracts`          | One declaration. A drifting serializer breaks the API's own typecheck.                                                             |
+| Lists and content    | React Native                           | `@expo/ui`'s SwiftUI `Image` cannot load a remote URL, and every list in this app is cover art.                                    |
+| Controls             | `@expo/ui/swift-ui`                    | Real UIKit/SwiftUI controls: segmented pickers, glass buttons, native menus.                                                       |
+| Colours              | `PlatformColor`                        | The RN half resolves the same iOS dynamic colours the SwiftUI half uses, in both appearances, with no branching.                   |
+| Backlog ordering     | Client-side, pure function             | The collection arrives unpaginated in one response; the order is UI-specific.                                                      |
+| Detail screen writes | Autosave on every change               | `PUT` is idempotent and total, which is what makes a Save button unnecessary.                                                      |
+| Tests                | Vitest, pure layer only                | `@expo/ui` renders native views; asserting on them in jsdom tests the mock.                                                        |
 
 ## 3. UI composition rule
 
@@ -51,15 +51,15 @@ This rule governs every screen. It exists because one library constraint forces
 the split, and drawing the line once is cheaper than re-litigating it per
 component.
 
-| Concern | Built with |
-| --- | --- |
+| Concern                                              | Built with                                                                        |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
 | Lists, rows, scroll containers, images, text content | React Native — `SectionList`, `FlatList`, `ScrollView`, `Pressable`, `expo-image` |
-| Controls | `@expo/ui/swift-ui` inside a `Host` — `Button`, `Menu`, `Picker` |
-| Native state views | `ContentUnavailableView`, `ProgressView` |
-| SF Symbols on the RN side | `expo-symbols` `SymbolView` |
+| Controls                                             | `@expo/ui/swift-ui` inside a `Host` — `Button`, `Menu`, `Picker`                  |
+| Native state views                                   | `ContentUnavailableView`, `ProgressView`                                          |
+| SF Symbols on the RN side                            | `expo-symbols` `SymbolView`                                                       |
 
 **The forcing constraint.** `@expo/ui`'s `Image` accepts an SF Symbol name, an
-asset-catalog name, or a *local* file URI (`uiImage`, documented as a
+asset-catalog name, or a _local_ file URI (`uiImage`, documented as a
 synchronous main-thread read). It has no remote-URL prop. Every list in Barklog
 is cover art from `images.igdb.com`, so a SwiftUI list would need an
 `RNHostView` bridge view per visible row. React Native lists remove the bridge
@@ -87,14 +87,14 @@ unit-tested.
 
 ### Packages
 
-| Package | Purpose |
-| --- | --- |
-| `@clerk/expo` | `ClerkProvider`, `useAuth`, and `./native` components |
-| `expo-secure-store` | Backing store for `tokenCache` |
-| `@tanstack/react-query` | Query cache, mutations, invalidation |
-| `expo-image` | Remote covers and screenshots, with a disk cache |
-| `expo-linear-gradient` | Hero backdrop fade (§11.4) |
-| `vitest` (dev) | §13 |
+| Package                 | Purpose                                               |
+| ----------------------- | ----------------------------------------------------- |
+| `@clerk/expo`           | `ClerkProvider`, `useAuth`, and `./native` components |
+| `expo-secure-store`     | Backing store for `tokenCache`                        |
+| `@tanstack/react-query` | Query cache, mutations, invalidation                  |
+| `expo-image`            | Remote covers and screenshots, with a disk cache      |
+| `expo-linear-gradient`  | Hero backdrop fade (§11.4)                            |
+| `vitest` (dev)          | §13                                                   |
 
 Installed with `npx expo install` so SDK 57-compatible versions are resolved.
 
@@ -139,11 +139,11 @@ capability, so these come before the first native build:
 
 ## 5. Environment
 
-| File | Adds |
-| --- | --- |
-| `apps/mobile/.env.example` | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=` |
-| `apps/mobile/.env` (gitignored, created by hand) | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` |
-| `turbo.json` | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in the `build` and `dev` `env` arrays |
+| File                                             | Adds                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------- |
+| `apps/mobile/.env.example`                       | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=`                                      |
+| `apps/mobile/.env` (gitignored, created by hand) | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`                |
+| `turbo.json`                                     | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in the `build` and `dev` `env` arrays |
 
 The publishable key is the same value already in `apps/api/.env` as
 `CLERK_PUBLISHABLE_KEY`. Same Clerk instance on both sides is precisely what
@@ -164,13 +164,23 @@ New `packages/contracts/src/wire.ts` — interfaces only, no valibot, no runtime
 code, exported from `src/index.ts`.
 
 ```ts
-export interface NamedRef { id: number; name: string; slug: string }
-export interface PlatformRef extends NamedRef { abbreviation: string | null }
+export interface NamedRef {
+  id: number;
+  name: string;
+  slug: string;
+}
+export interface PlatformRef extends NamedRef {
+  abbreviation: string | null;
+}
 
 export interface GameSummaryWire {
-  id: number; name: string; slug: string;
-  coverImageId: string | null; firstReleaseDate: string | null;
-  totalRating: number | null; totalRatingCount: number;
+  id: number;
+  name: string;
+  slug: string;
+  coverImageId: string | null;
+  firstReleaseDate: string | null;
+  totalRating: number | null;
+  totalRatingCount: number;
 }
 
 export interface GameDetailWire extends GameSummaryWire {
@@ -178,28 +188,45 @@ export interface GameDetailWire extends GameSummaryWire {
   gameType: { id: number; name: string } | null;
   parentGame: { id: number; name: string } | null;
   screenshots: string[];
-  genres: NamedRef[]; platforms: PlatformRef[];
-  developers: NamedRef[]; publishers: NamedRef[];
+  genres: NamedRef[];
+  platforms: PlatformRef[];
+  developers: NamedRef[];
+  publishers: NamedRef[];
 }
 
 export interface BacklogEntryWire {
-  gameId: number; status: BacklogStatus; rating: number | null;
-  addedAt: string; updatedAt: string;
+  gameId: number;
+  status: BacklogStatus;
+  rating: number | null;
+  addedAt: string;
+  updatedAt: string;
 }
 
-export interface BacklogListItemWire extends BacklogEntryWire { game: GameSummaryWire }
+export interface BacklogListItemWire extends BacklogEntryWire {
+  game: GameSummaryWire;
+}
 
-export interface GameListResponse { items: GameSummaryWire[] }
-export interface GameDetailResponse extends GameDetailWire { backlogEntry: BacklogEntryWire | null }
-export interface BacklogListResponse { items: BacklogListItemWire[] }
+export interface GameListResponse {
+  items: GameSummaryWire[];
+}
+export interface GameDetailResponse extends GameDetailWire {
+  backlogEntry: BacklogEntryWire | null;
+}
+export interface BacklogListResponse {
+  items: BacklogListItemWire[];
+}
 export interface BacklogStatsWire {
   total: number;
   counts: Record<BacklogStatus, number>;
   averageRating: number | null;
 }
 export interface ProblemDocument {
-  type: string; title: string; status: number;
-  detail?: string; instance?: string; traceId?: string;
+  type: string;
+  title: string;
+  status: number;
+  detail?: string;
+  instance?: string;
+  traceId?: string;
   errors?: { field: string; message: string }[];
 }
 ```
@@ -291,11 +318,11 @@ first request that needs it.
 `useAuth({ treatPendingAsSignedOut: false })` and renders one of three things
 as siblings at the same level:
 
-| State | Renders |
-| --- | --- |
-| `!isLoaded` | Splash held open via `expo-splash-screen` |
-| `!isSignedIn` | `<AuthView isDismissible={false} />` |
-| signed in | `children` |
+| State         | Renders                                   |
+| ------------- | ----------------------------------------- |
+| `!isLoaded`   | Splash held open via `expo-splash-screen` |
+| `!isSignedIn` | `<AuthView isDismissible={false} />`      |
+| signed in     | `children`                                |
 
 `treatPendingAsSignedOut: false` is Clerk's documented flag for not misreading a
 session mid-establishment as signed-out. Rendering the three cases as siblings
@@ -332,7 +359,7 @@ speculatively.
 export function createApiClient(deps: {
   baseUrl: string;
   getToken: (options?: { skipCache?: boolean }) => Promise<string | null>;
-}): ApiClient
+}): ApiClient;
 ```
 
 No React. That is the whole reason this layer is testable without a simulator,
@@ -348,14 +375,17 @@ a body.
 
 ```ts
 export class ApiError extends Error {
-  status: number; type: string; title: string;
-  detail?: string; traceId?: string;
+  status: number;
+  type: string;
+  title: string;
+  detail?: string;
+  traceId?: string;
   errors?: { field: string; message: string }[];
   retryAfter?: number;
 }
 ```
 
-Any non-2xx is read as `application/problem+json`. A response that is *not* a
+Any non-2xx is read as `application/problem+json`. A response that is _not_ a
 problem document — a proxy 502, say — falls back to a synthesised `ApiError`
 from the status alone, so the app never surfaces a JSON parse failure where an
 HTTP error happened. A 429 additionally carries `retryAfter` from the header.
@@ -387,15 +417,15 @@ correctly, and it would couple the transport layer to the cache.
 `src/api/endpoints.ts` — one function per route, each returning a contracts
 envelope type:
 
-| Function | Request |
-| --- | --- |
-| `searchGames({ q, limit, offset })` | `GET /api/games/search` |
-| `popularGames({ limit })` | `GET /api/games/popular` |
-| `getGame(id)` | `GET /api/games/:id` |
-| `listBacklog({ status?, sort? })` | `GET /api/backlog` |
-| `getBacklogStats()` | `GET /api/backlog/stats` |
-| `upsertBacklogEntry(gameId, { status, rating })` | `PUT /api/backlog/:gameId` |
-| `deleteBacklogEntry(gameId)` | `DELETE /api/backlog/:gameId` |
+| Function                                         | Request                       |
+| ------------------------------------------------ | ----------------------------- |
+| `searchGames({ q, limit, offset })`              | `GET /api/games/search`       |
+| `popularGames({ limit })`                        | `GET /api/games/popular`      |
+| `getGame(id)`                                    | `GET /api/games/:id`          |
+| `listBacklog({ status?, sort? })`                | `GET /api/backlog`            |
+| `getBacklogStats()`                              | `GET /api/backlog/stats`      |
+| `upsertBacklogEntry(gameId, { status, rating })` | `PUT /api/backlog/:gameId`    |
+| `deleteBacklogEntry(gameId)`                     | `DELETE /api/backlog/:gameId` |
 
 `src/api/keys.ts` — a key factory, so no cache key is spelled twice.
 
@@ -408,10 +438,10 @@ once from Clerk's `getToken`.
 
 `QueryClient` defaults:
 
-| Option | Value | Reason |
-| --- | --- | --- |
-| `staleTime` | 60 s | Also what keeps repeated search queries off the network |
-| `retry` | `false` for any 4xx `ApiError`, else 2 attempts | A 404 or 422 will never succeed on retry |
+| Option      | Value                                           | Reason                                                  |
+| ----------- | ----------------------------------------------- | ------------------------------------------------------- |
+| `staleTime` | 60 s                                            | Also what keeps repeated search queries off the network |
+| `retry`     | `false` for any 4xx `ApiError`, else 2 attempts | A 404 or 422 will never succeed on retry                |
 
 Mutations optimistically patch `keys.games.detail(id)` and invalidate
 `keys.backlog.*` on settle. Nothing is persisted across launches.
@@ -424,13 +454,17 @@ Each tab root declares its own header inline:
 
 ```tsx
 <Stack.Title large>Home</Stack.Title>
-<Stack.Toolbar.View placement="right">
-  <UserButton />
-</Stack.Toolbar.View>
+<Stack.Toolbar placement="right">
+  <Stack.Toolbar.View asChild>
+    <UserButton />
+  </Stack.Toolbar.View>
+</Stack.Toolbar>
 ```
 
-`Stack.Toolbar.View` is the slot that accepts an arbitrary React component;
-`Stack.Toolbar.Button` takes only an SF Symbol and so cannot host `UserButton`.
+`Stack.Toolbar.View asChild` is the slot that accepts an arbitrary React
+component, and it must be nested inside a `Stack.Toolbar` carrying the
+`placement`. `Stack.Toolbar.Button` takes only an SF Symbol and so cannot host
+`UserButton`.
 
 `UserButton` opens `UserProfileView` natively on tap. There is no `onPress`, no
 modal state and no route — the requirement is satisfied by the component.
@@ -509,12 +543,12 @@ over nothing is noise.
 Lighter, no call to action, and the filter stays visible so the user can get
 back out.
 
-| Status | Symbol |
-| --- | --- |
-| `waiting` | `clock` |
-| `playing` | `gamecontroller` |
+| Status      | Symbol           |
+| ----------- | ---------------- |
+| `waiting`   | `clock`          |
+| `playing`   | `gamecontroller` |
 | `completed` | `checkmark.seal` |
-| `abandoned` | `xmark.bin` |
+| `abandoned` | `xmark.bin`      |
 
 Copy table in `src/features/backlog/empty-states.ts`, pure. Its test is keyed
 off `BACKLOG_STATUSES`, so adding a fifth status to the enum fails the test
@@ -530,7 +564,8 @@ Large title "Explore", `safari` / `safari.fill`.
 Large title "Search", `role="search"` trigger.
 
 `Stack.SearchBar` drives a **400 ms debounce** with a **two-character minimum**,
-which is the API's own floor. `placeholderData: keepPreviousData` stops results
+which is the API's own floor. Its `onChangeText` receives a native event, so the
+text is read as `event.nativeEvent.text` — not as a plain string argument. `placeholderData: keepPreviousData` stops results
 blanking between keystrokes.
 
 Under two characters shows a prompt state; zero results show a
@@ -583,18 +618,18 @@ Because it derives from the artwork, every game screen looks different — the
 property that makes the reference design feel alive.
 
 A pale cover would wash out the title, so the gradient is a two-stop scrim: a
-translucent `systemBackground` layer over the blur *before* the fade. A missing
+translucent `systemBackground` layer over the blur _before_ the fade. A missing
 `coverImageId` falls back to a flat `systemBackground` with no blur layer at
 all. This is the part of the screen expected to need iteration in the simulator,
 verified against a pale cover, a dark cover and a missing cover.
 
 **The action trio** — one `Host`, one `HStack`:
 
-| Control | Style | Behaviour |
-| --- | --- | --- |
-| Rating | circular `glass`, label `★ 8` or `★` | `Menu` containing an inline `Picker`: No rating, 1–10. `disabled` until an entry exists, because `PUT` requires a status. |
-| Status | capsule `glassProminent`, label `▶ Playing` or `+ Add to Backlog` | `Menu` containing a `Picker` of the four statuses. Picking one when untracked *is* the add. |
-| More | circular `glass`, `ellipsis` | One destructive `Button`, "Remove from Backlog". Hidden when untracked. |
+| Control | Style                                                             | Behaviour                                                                                                                 |
+| ------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Rating  | circular `glass`, label `★ 8` or `★`                              | `Menu` containing an inline `Picker`: No rating, 1–10. `disabled` until an entry exists, because `PUT` requires a status. |
+| Status  | capsule `glassProminent`, label `▶ Playing` or `+ Add to Backlog` | `Menu` containing a `Picker` of the four statuses. Picking one when untracked _is_ the add.                               |
+| More    | circular `glass`, `ellipsis`                                      | One destructive `Button`, "Remove from Backlog". Hidden when untracked.                                                   |
 
 Every change fires `PUT` (or `DELETE`) immediately, optimistically patching
 `keys.games.detail(id)` and invalidating `keys.backlog.*`. No Save button: an
@@ -612,15 +647,15 @@ rating button labels.
 
 ## 12. Shared components
 
-| Module | Purpose |
-| --- | --- |
-| `src/components/profile-toolbar.tsx` | `Stack.Toolbar.View` + `UserButton` |
-| `src/components/game-row.tsx` | RN row: cover 44×59, name, subtitle, `SymbolView` chevron, hairline separator, `Pressable` |
-| `src/components/query-boundary.tsx` | Pending → `ProgressView`; error → `ContentUnavailableView` + retry `Button`, copy keyed off `ApiError.status` |
-| `src/components/cover.tsx` | `expo-image` with size variants and a symbol placeholder |
-| `src/igdb-image.ts` | `https://images.igdb.com/igdb/image/upload/t_{size}/{imageId}.jpg` — `t_cover_small` rows, `t_cover_big` hero, `t_screenshot_med` screenshots; `null` id → `null` |
-| `src/ui/glass.ts` | `glassOr()` iOS-26 button-style fallback |
-| `src/query-client.ts` | `QueryClient` with the §10 defaults |
+| Module                               | Purpose                                                                                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/profile-toolbar.tsx` | `Stack.Toolbar.View` + `UserButton`                                                                                                                               |
+| `src/components/game-row.tsx`        | RN row: cover 44×59, name, subtitle, `SymbolView` chevron, hairline separator, `Pressable`                                                                        |
+| `src/components/query-boundary.tsx`  | Pending → `ProgressView`; error → `ContentUnavailableView` + retry `Button`, copy keyed off `ApiError.status`                                                     |
+| `src/components/cover.tsx`           | `expo-image` with size variants and a symbol placeholder                                                                                                          |
+| `src/igdb-image.ts`                  | `https://images.igdb.com/igdb/image/upload/t_{size}/{imageId}.jpg` — `t_cover_small` rows, `t_cover_big` hero, `t_screenshot_med` screenshots; `null` id → `null` |
+| `src/ui/glass.ts`                    | `glassOr()` iOS-26 button-style fallback                                                                                                                          |
+| `src/query-client.ts`                | `QueryClient` with the §10 defaults                                                                                                                               |
 
 `src/components/placeholder-screen.tsx` is **deleted**. Every screen now has a
 real empty, loading and error state, and `query-boundary.tsx` plus the two
@@ -637,16 +672,16 @@ No component rendering. `@expo/ui` components are native views that render to
 nothing meaningful in jsdom, so assertions there would test the mock rather than
 the app.
 
-| File | Covers |
-| --- | --- |
-| `client.test.ts` | URL and query-string construction per endpoint; Bearer header from a stub `getToken`; `Content-Type` present on `PUT` and absent on `GET`/`DELETE`; problem+json → `ApiError` field for field; non-problem error body fallback; `204` → `undefined`; `304` → one `cache: "reload"` refetch; `401` → exactly one `skipCache` retry then throw; `429` → `retryAfter`; network rejection wrapped |
-| `keys.test.ts` | Key structure and stability; different filters yield different keys |
-| `sections.test.ts` | Order is Playing → Waiting → Completed → Abandoned regardless of input order; empty groups omitted; counts correct; a filtered call yields one headerless section; empty input yields zero sections |
-| `empty-states.test.ts` | A copy entry exists for every member of `BACKLOG_STATUSES` |
-| `format.test.ts` | Meta line with and without year, genre, rating; status and rating button labels; untracked labels |
-| `igdb-image.test.ts` | Each size variant; `null` → `null` |
-| `glass.test.ts` | iOS 26 → glass styles; iOS 18 → bordered fallbacks |
-| `auth-gate.test.ts` | `shouldClearCache(previous, next)` — true only on the `true → false` transition, false on first load (`undefined → false`), on sign-in, and on repeat renders |
+| File                   | Covers                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client.test.ts`       | URL and query-string construction per endpoint; Bearer header from a stub `getToken`; `Content-Type` present on `PUT` and absent on `GET`/`DELETE`; problem+json → `ApiError` field for field; non-problem error body fallback; `204` → `undefined`; `304` → one `cache: "reload"` refetch; `401` → exactly one `skipCache` retry then throw; `429` → `retryAfter`; network rejection wrapped |
+| `keys.test.ts`         | Key structure and stability; different filters yield different keys                                                                                                                                                                                                                                                                                                                           |
+| `sections.test.ts`     | Order is Playing → Waiting → Completed → Abandoned regardless of input order; empty groups omitted; counts correct; a filtered call yields one headerless section; empty input yields zero sections                                                                                                                                                                                           |
+| `empty-states.test.ts` | A copy entry exists for every member of `BACKLOG_STATUSES`                                                                                                                                                                                                                                                                                                                                    |
+| `format.test.ts`       | Meta line with and without year, genre, rating; status and rating button labels; untracked labels                                                                                                                                                                                                                                                                                             |
+| `igdb-image.test.ts`   | Each size variant; `null` → `null`                                                                                                                                                                                                                                                                                                                                                            |
+| `glass.test.ts`        | iOS 26 → glass styles; iOS 18 → bordered fallbacks                                                                                                                                                                                                                                                                                                                                            |
+| `auth-gate.test.ts`    | `shouldClearCache(previous, next)` — true only on the `true → false` transition, false on first load (`undefined → false`), on sign-in, and on repeat renders                                                                                                                                                                                                                                 |
 
 `apps/mobile` gains a `test` script, which `turbo run test` picks up
 automatically. Test files import from `vitest` explicitly rather than relying on
@@ -678,16 +713,16 @@ a real token to be exercised at all.
 
 ## 15. Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| RN ↔ SwiftUI visual seam | `PlatformColor` throughout and a shared type scale; the action trio on its RN background is the first thing to check in the simulator |
-| Backdrop legibility across 370k covers | Two-stop scrim; verified against pale, dark and missing covers |
-| iOS < 26 renders style-less buttons | `glassOr()` fallback to `bordered` / `borderedProminent`; the screen is materially plainer there |
-| Search type-ahead exceeds 30 req/min | 400 ms debounce plus 60 s `staleTime` makes repeats free; 429 handled with specific copy. If it bites, raise the limit in `apps/api/src/rate-limits.ts` rather than fighting it on the client |
-| Plain-HTTP API URL blocked on device | `ios.infoPlist.NSAppTransportSecurity` development-only exception if `prebuild` does not already emit one |
-| Stale `.expo/types` after routes move | Regenerate; presents as phantom typecheck errors |
-| Apple entitlement without the App ID capability | §4 prerequisites are step 0 of the build order |
-| Sign-out may not be exposed in `UserProfileView` | Verify on device; fallback is a `Stack.Toolbar.Menu` action |
+| Risk                                             | Mitigation                                                                                                                                                                                    |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RN ↔ SwiftUI visual seam                         | `PlatformColor` throughout and a shared type scale; the action trio on its RN background is the first thing to check in the simulator                                                         |
+| Backdrop legibility across 370k covers           | Two-stop scrim; verified against pale, dark and missing covers                                                                                                                                |
+| iOS < 26 renders style-less buttons              | `glassOr()` fallback to `bordered` / `borderedProminent`; the screen is materially plainer there                                                                                              |
+| Search type-ahead exceeds 30 req/min             | 400 ms debounce plus 60 s `staleTime` makes repeats free; 429 handled with specific copy. If it bites, raise the limit in `apps/api/src/rate-limits.ts` rather than fighting it on the client |
+| Plain-HTTP API URL blocked on device             | `ios.infoPlist.NSAppTransportSecurity` development-only exception if `prebuild` does not already emit one                                                                                     |
+| Stale `.expo/types` after routes move            | Regenerate; presents as phantom typecheck errors                                                                                                                                              |
+| Apple entitlement without the App ID capability  | §4 prerequisites are step 0 of the build order                                                                                                                                                |
+| Sign-out may not be exposed in `UserProfileView` | Verify on device; fallback is a `Stack.Toolbar.Menu` action                                                                                                                                   |
 
 ## 16. Deferred
 
