@@ -3950,7 +3950,10 @@ export function Hero({ game }: { game: GameDetailResponse }) {
 
 const styles = StyleSheet.create({
   container: { paddingTop: 8 },
-  backdrop: { ...StyleSheet.absoluteFillObject },
+  // RN 0.86 types `absoluteFill` as the plain object
+  // {position:'absolute', left:0, right:0, top:0, bottom:0}, so spreading it is
+  // correct. There is no `absoluteFillObject` in these typings.
+  backdrop: { ...StyleSheet.absoluteFill },
   row: { flexDirection: "row", gap: 16, paddingHorizontal: 16, paddingBottom: 16 },
   info: { flex: 1, gap: 4, justifyContent: "flex-end", paddingBottom: 4 },
   name: { ...Type.title2, color: PlatformColor("label") },
