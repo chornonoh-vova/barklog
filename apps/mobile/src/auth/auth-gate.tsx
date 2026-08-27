@@ -40,7 +40,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (!isLoaded) return;
 
     if (shouldClearCache(previous.current, isSignedIn)) queryClient.clear();
-    previous.current = isSignedIn;
+    // `isSignedIn` is `boolean | undefined` and transiently becomes
+    // `undefined` while a session is re-established. `undefined` means "not
+    // yet known", not a state worth recording — recording it would erase the
+    // fact that the user *was* signed in and let a later `false` slip past
+    // `shouldClearCache` without clearing the previous user's cache.
+    if (isSignedIn !== undefined) previous.current = isSignedIn;
   }, [isLoaded, isSignedIn, queryClient]);
 
   useEffect(() => {

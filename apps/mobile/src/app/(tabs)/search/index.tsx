@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useState } from "react";
 
 import { ProfileToolbar } from "@/components/profile-toolbar";
-import { SearchResults } from "@/features/search/search-screen";
+import { SearchScreen } from "@/features/search/search-screen";
 
 export default function SearchRoute() {
   const [query, setQuery] = useState("");
@@ -17,7 +17,7 @@ export default function SearchRoute() {
         // The native search bar hands over an event, not a string.
         onChangeText={(event) => setQuery(event.nativeEvent.text)}
       />
-      <SearchResults query={query} />
+      <SearchScreen query={query} />
     </>
   );
 }

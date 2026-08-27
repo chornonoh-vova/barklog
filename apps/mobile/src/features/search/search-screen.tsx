@@ -12,7 +12,7 @@ import { useDebounced } from "@/hooks/use-debounced";
 
 const DEBOUNCE_MS = 400;
 
-export function SearchResults({ query }: { query: string }) {
+export function SearchScreen({ query }: { query: string }) {
   const debounced = useDebounced(query.trim(), DEBOUNCE_MS);
   const search = useSearchGames(debounced);
   const router = useRouter();
@@ -23,7 +23,7 @@ export function SearchResults({ query }: { query: string }) {
         title={item.name}
         subtitle={metaLine({ firstReleaseDate: item.firstReleaseDate, genres: [] })}
         coverImageId={item.coverImageId}
-        onPress={() => router.push(`/game/${item.id}`)}
+        onPress={() => router.push(`/search/game/${item.id}`)}
       />
     ),
     [router],

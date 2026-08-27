@@ -24,7 +24,12 @@ export function ExploreScreen() {
         title={item.name}
         subtitle={metaLine({ firstReleaseDate: item.firstReleaseDate, genres: [] })}
         coverImageId={item.coverImageId}
-        onPress={() => router.push(`/game/${item.id}`)}
+        // Each tab owns its own detail route (`/explore/game/[id]`,
+        // `/search/game/[id]`, and the unprefixed `/game/[id]` inside the
+        // `(home)` group) so the push stays inside the current tab and the
+        // native tab bar stays visible. A bare `/game/${id}` would resolve to
+        // the `(home)` route specifically and switch the active tab.
+        onPress={() => router.push(`/explore/game/${item.id}`)}
       />
     ),
     [router],
