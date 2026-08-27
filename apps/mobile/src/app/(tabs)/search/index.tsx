@@ -1,16 +1,13 @@
-import { PlaceholderScreen } from "@/components/placeholder-screen";
 import { Stack } from "expo-router";
 
-export default function SearchIndex() {
+import { ProfileToolbar } from "@/components/profile-toolbar";
+
+export default function SearchScreen() {
   return (
     <>
-      <Stack.Title>Search</Stack.Title>
-      <Stack.SearchBar placement="automatic" placeholder="Search" onChangeText={() => {}} />
-      <PlaceholderScreen
-        title="Fetch a game"
-        systemImage="magnifyingglass"
-        description="Search your backlog and the whole game catalogue by title, platform, or genre."
-      />
+      <Stack.Title large>Search</Stack.Title>
+      <ProfileToolbar />
+      <Stack.SearchBar placement="automatic" placeholder="Search games" />
     </>
   );
 }
