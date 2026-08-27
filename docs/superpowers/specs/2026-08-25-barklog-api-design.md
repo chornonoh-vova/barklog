@@ -725,7 +725,7 @@ Each step ends somewhere you can stop.
 4. **Done** — Games routes: search, details, popular — verifiable with `curl`.
 5. **Done** — Clerk middleware, `users` provisioning, rate limiting; lock the API down.
 6. **Done** — Backlog CRUD, stats, ETag.
-7. **Remaining** — Wire the mobile app.
+7. **Done** — Wire the mobile app.
 
 Seeding precedes search work because tuning ranking weights against 350k real
 titles is a fundamentally different exercise than tuning them against fixtures.
@@ -745,6 +745,20 @@ HTTP API plan: **`@repo/contracts`** (valibot request schemas and the backlog
 status union, shared with the Expo app) and **`@repo/logging`** (one LogTape
 configuration for both processes, giving the API a per-request `traceId` and the
 worker a per-run `runId`).
+
+Step 7 was delivered by
+`docs/superpowers/plans/2026-08-27-barklog-mobile.md`, against
+`docs/superpowers/specs/2026-08-27-barklog-mobile-design.md`. The Expo app now
+runs the full surface of §8 behind Clerk's native `AuthView`.
+
+Two things that document does not anticipate:
+
+- **`@repo/contracts` grew the wire contract.** The four `*Wire` interfaces and
+  the response envelopes moved out of `apps/api/src/serialize.ts` so the app
+  could import them without a Node dependency.
+- **§14's mobile variables are now two, not one.** `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+  joins `EXPO_PUBLIC_API_URL`, and it must be the same Clerk instance as the
+  API's `CLERK_SECRET_KEY`.
 
 **This section is the only part of the spec updated for delivery.** Four things
 below now contradict the code and should be reconciled before step 7 argues from

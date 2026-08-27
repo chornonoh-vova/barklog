@@ -32,8 +32,8 @@ in `app.json`) because the UI is built with `@expo/ui`'s SwiftUI components.
 - URL scheme: `barklog://`
 - Associated domain: `barklog.gg`
 
-There is **no auth yet** — every screen is reachable. See
-[Adding auth](#adding-auth) for what to wire up when you get to it.
+Every screen is gated behind Clerk's native `AuthView` — see [Auth](#auth) for
+how the app guards access.
 
 ## Requirements
 
@@ -74,6 +74,33 @@ pnpm --filter api dev        # tsx watch → http://localhost:3000
 
 When running the app on a physical device, point `EXPO_PUBLIC_API_URL` at your
 machine's LAN IP rather than `localhost`.
+
+### Mobile
+
+The app needs a development build — `@clerk/expo`'s native components and
+`@expo/ui` are native modules, so Expo Go cannot run it.
+
+One-time setup:
+
+1. Enable **Sign In with Apple** on the App ID `gg.barklog.app` in the Apple
+   Developer portal.
+2. In the Clerk Dashboard, add the iOS app under **Native Applications** (Apple
+   Team ID + bundle id) and enable **Apple** under SSO connections.
+3. Create `apps/mobile/.env` from `.env.example`. `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   must be the same Clerk instance as the API's `CLERK_SECRET_KEY`, or every
+   request is a 401.
+
+Then:
+
+```bash
+pnpm deps:up                      # Postgres + Valkey
+pnpm --filter api dev             # the API on :3000
+pnpm --filter mobile prebuild     # after any config-plugin change
+pnpm --filter mobile ios
+```
+
+On a physical device set `EXPO_PUBLIC_API_URL` to the host machine's LAN IP —
+`localhost` resolves to the phone.
 
 ## Local infrastructure
 
@@ -170,46 +197,61 @@ pnpm --filter worker sync | jq -r '[.level, .message] | @tsv'
 ```
 src/
   app/
-    _layout.tsx        root Stack + theme
+    _layout.tsx            ClerkProvider -> QueryClientProvider -> ApiProvider -> theme -> AuthGate
     (tabs)/
-      _layout.tsx      NativeTabs: Home · Explore · Profile, plus Search
-      index.tsx        Home — your backlog
-      explore.tsx
-      profile.tsx
-      search.tsx       declared with role="search"
-  components/
-    placeholder-screen.tsx
-  theme.ts             brand tint, fed to SwiftUI via <Host seedColor>
+      _layout.tsx          NativeTabs: Home | Explore | Search (search uses role="search")
+      (home)/              route group, so index.tsx still resolves to "/"
+        _layout.tsx  index.tsx  game/[id].tsx
+      explore/   _layout.tsx  index.tsx  game/[id].tsx
+      search/    _layout.tsx  index.tsx  game/[id].tsx
+  api/         errors, client, endpoints, keys, provider, hooks
+  auth/        auth-gate, should-clear-cache
+  components/  profile-toolbar, cover, game-row, query-boundary, native-state
+  features/    backlog/ explore/ search/ game/
+  hooks/       use-debounced
+  ui/          glass, platform-glass
+  env.ts  igdb-image.ts  query-client.ts  theme.ts
 ```
 
 **Tabs.** Expo Router's native tabs (`expo-router/unstable-native-tabs`) render
-a real `UITabBarController`. Home, Explore and Profile form the main group;
-Search uses `role="search"`, which on iOS 26+ pulls it out of the group and
-turns it into the native search field. Icons are SF Symbols (`sf`) with
-Material Symbols (`md`) kept in place for whenever Android lands.
+a real `UITabBarController`. Home, Explore and Search form the tab bar — there
+is no Profile tab; the avatar in each tab's header opens Clerk's
+`UserProfileView` instead. Search uses `role="search"`, which on iOS 26+ pulls
+it out of the group and turns it into the native search field. Each tab owns
+its own Stack, and `game/[id].tsx` is triplicated — one per tab — so a pushed
+detail screen stays inside its tab with the native tab bar still visible.
+Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
+whenever Android lands.
 
-**UI.** Screens are SwiftUI, rendered through `@expo/ui/swift-ui` inside a
-`<Host>`. Styling uses SwiftUI modifiers from `@expo/ui/swift-ui/modifiers`
-rather than React Native stylesheets.
+**UI.** React Native renders lists, rows, images and text content; `@expo/ui/swift-ui`
+inside a `Host` renders controls, plus `ContentUnavailableView` and
+`ProgressView` for empty and loading states. `PlatformColor` is used
+throughout so both halves resolve the same iOS dynamic system colours. This
+split is forced, not stylistic: `@expo/ui`'s SwiftUI `Image` accepts only an
+SF Symbol, an asset-catalog name, or a local file URI — it has no remote-URL
+prop, and every list in Barklog is IGDB cover art.
 
-## Adding auth
+This branch's UI is committed and statically verified, but not yet exercised
+on a device — [`docs/mobile-device-verification.md`](docs/mobile-device-verification.md)
+is the checklist of what remains.
 
-`apps/api` is done: every route requires a valid Clerk session token, and only
-`/healthz` and `/readyz` are public. What remains is `apps/mobile`, where the
-pieces that need to land are:
+## Auth
 
-- A provider at the root of `src/app/_layout.tsx`, wrapping the `Stack`.
-- Session persistence in the keychain (`expo-secure-store`).
-- A `src/app/sign-in.tsx` route, gated with `Stack.Protected guard={...}` so a
-  signed-out user can only reach it.
-- Hold the splash screen (`expo-splash-screen`) until the session has been
-  restored, so an already-signed-in user never sees the sign-in screen flash.
-- For native Sign in with Apple: `expo-apple-authentication` in `dependencies`
-  **and** in `app.json` `plugins` — the config plugin is what adds the
-  `com.apple.developer.applesignin` entitlement. Needs a paid Apple Developer
-  team.
-- Declare any new `EXPO_PUBLIC_*` keys in `turbo.json` under the `dev` and
-  `build` task `env` arrays, or `turbo/no-undeclared-env-vars` will flag them.
+`ClerkProvider`, with a `tokenCache` from `@clerk/expo/token-cache`, wraps the
+app at the root of `src/app/_layout.tsx`. Below it, `AuthGate` renders Clerk's
+non-dismissible native `AuthView` whenever the auth flow is incomplete, so
+every other screen only ever renders for a signed-in user — there is no
+`sign-in.tsx` route or `Stack.Protected` guard. The splash screen stays up
+until Clerk has read the keychain, so a returning user never sees the sign-in
+screen flash before landing on their backlog. On sign-out, the query cache is
+cleared so the next person to sign in on the same device can't see the
+previous user's backlog.
+
+There is no `expo-apple-authentication` dependency: `<AuthView />` runs the
+Apple flow internally, so nothing else needs to touch the config plugin.
+
+Declare any new `EXPO_PUBLIC_*` keys in `turbo.json` under the `dev` and
+`build` task `env` arrays, or `turbo/no-undeclared-env-vars` will flag them.
 
 ## apps/api
 
