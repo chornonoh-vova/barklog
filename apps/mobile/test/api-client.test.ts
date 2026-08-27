@@ -17,7 +17,9 @@ const problem = (status: number, body: unknown, headers: Record<string, string> 
   });
 
 let calls: { url: string; init: RequestInit }[];
-let getToken: ReturnType<typeof vi.fn<(options?: { skipCache?: boolean }) => Promise<string | null>>>;
+let getToken: ReturnType<
+  typeof vi.fn<(options?: { skipCache?: boolean }) => Promise<string | null>>
+>;
 
 function client(responses: Response[]) {
   const queue = [...responses];
