@@ -1615,7 +1615,11 @@ they share a first element."
 
 **Interfaces:**
 
-- Produces: `shouldClearCache(previous: boolean | undefined, next: boolean): boolean`
+- Produces: `shouldClearCache(previous: boolean | undefined, next: boolean | undefined): boolean`
+
+`next` is `boolean | undefined` because that is what Clerk's `useAuth` actually
+returns — `isSignedIn` is undefined until the session has loaded. The body
+already handles it: only an explicit `true -> false` transition clears.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1649,6 +1653,14 @@ describe("shouldClearCache", () => {
     expect(shouldClearCache(true, true)).toBe(false);
     expect(shouldClearCache(false, false)).toBe(false);
   });
+
+  it("does not clear while the session is still loading", () => {
+    // Clerk's `isSignedIn` is `boolean | undefined` — undefined until loaded.
+    // A signed-in user whose session is momentarily unresolved must not have
+    // their cache dropped.
+    expect(shouldClearCache(true, undefined)).toBe(false);
+    expect(shouldClearCache(undefined, undefined)).toBe(false);
+  });
 });
 ```
 
@@ -1672,7 +1684,10 @@ Expected: FAIL — cannot resolve `@/auth/should-clear-cache`.
  * user's backlog rendered from cache before the first refetch lands. A pure
  * function is testable; an inline comparison in a `useEffect` is not.
  */
-export function shouldClearCache(previous: boolean | undefined, next: boolean): boolean {
+export function shouldClearCache(
+  previous: boolean | undefined,
+  next: boolean | undefined,
+): boolean {
   return previous === true && next === false;
 }
 ```
@@ -1699,13 +1714,48 @@ cache before the first refetch lands."
 
 **Files:**
 
-- Create: `apps/mobile/src/query-client.ts`, `apps/mobile/src/api/provider.tsx`, `apps/mobile/src/auth/auth-gate.tsx`
-- Modify: `apps/mobile/src/app/_layout.tsx`
+- Create: `apps/mobile/src/env.ts`, `apps/mobile/src/query-client.ts`, `apps/mobile/src/api/provider.tsx`, `apps/mobile/src/auth/auth-gate.tsx`
+- Modify: `apps/mobile/src/app/_layout.tsx`, `apps/mobile/src/auth/should-clear-cache.ts` (widen `next` to `boolean | undefined`), `apps/mobile/test/should-clear-cache.test.ts` (one added case)
 
 **Interfaces:**
 
 - Consumes: `createRequest` (Task 6), `createEndpoints` (Task 7), `shouldClearCache` (Task 8), `isApiError` (Task 5)
 - Produces: `createQueryClient(): QueryClient`; `<ApiProvider>`; `useApi(): Endpoints`; `<AuthGate>`
+
+- [ ] **Step 0: Create the validated environment module**
+
+`apps/mobile/src/env.ts`:
+
+```ts
+/**
+ * Mirrors `apps/api/src/env.ts`: a missing variable refuses the app at import
+ * time rather than surfacing as a mystery 401 on the first request.
+ *
+ * This is a *function* rather than an inline `if (!x) throw` at module scope
+ * because TypeScript does not carry that narrowing into the component closures
+ * that consume these values — `const x = process.env.FOO; if (!x) throw;` still
+ * leaves `x` as `string | undefined` when read inside a component, which is a
+ * compile error under this repo's strict config.
+ *
+ * The `process.env.EXPO_PUBLIC_*` reads stay inline and literal: Expo's Babel
+ * transform substitutes them statically at build time and cannot follow a
+ * dynamic lookup.
+ */
+function requireEnv(name: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(`Missing ${name}. Add it to apps/mobile/.env — see .env.example.`);
+  }
+
+  return value;
+}
+
+export const API_URL = requireEnv("EXPO_PUBLIC_API_URL", process.env.EXPO_PUBLIC_API_URL);
+
+export const CLERK_PUBLISHABLE_KEY = requireEnv(
+  "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+);
+```
 
 - [ ] **Step 1: Create the query client factory**
 
@@ -1749,14 +1799,10 @@ export function createQueryClient(): QueryClient {
 import { useAuth } from "@clerk/expo";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 
+import { API_URL } from "@/env";
+
 import { createRequest } from "./client";
 import { createEndpoints, type Endpoints } from "./endpoints";
-
-const baseUrl = process.env.EXPO_PUBLIC_API_URL;
-
-if (!baseUrl) {
-  throw new Error("Add EXPO_PUBLIC_API_URL to apps/mobile/.env");
-}
 
 const ApiContext = createContext<Endpoints | null>(null);
 
@@ -1769,7 +1815,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
   const { getToken } = useAuth();
 
   const endpoints = useMemo(
-    () => createEndpoints(createRequest({ baseUrl, getToken })),
+    () => createEndpoints(createRequest({ baseUrl: API_URL, getToken })),
     [getToken],
   );
 
@@ -1864,15 +1910,8 @@ import { useColorScheme } from "react-native";
 
 import { ApiProvider } from "@/api/provider";
 import { AuthGate } from "@/auth/auth-gate";
+import { CLERK_PUBLISHABLE_KEY } from "@/env";
 import { createQueryClient } from "@/query-client";
-
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-// Matches how apps/api refuses to boot on a missing secret rather than failing
-// on the first request that needs it.
-if (!publishableKey) {
-  throw new Error("Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to apps/mobile/.env");
-}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -1881,7 +1920,7 @@ export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
 
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
         <ApiProvider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
