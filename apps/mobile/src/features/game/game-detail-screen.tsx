@@ -21,10 +21,8 @@ export function GameDetailScreen() {
 
   return (
     <>
-      {/* Transparent so the hero backdrop runs under the nav bar. Only the back
-          button lives here — the ellipsis menu is in the hero trio, and a
-          second one up here would be two menus doing one job. */}
       <Stack.Header transparent />
+      <Stack.Screen.BackButton displayMode="minimal" />
       <Stack.Title>{game.data?.name ?? ""}</Stack.Title>
 
       <QueryBoundary query={game}>

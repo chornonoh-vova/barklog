@@ -70,47 +70,50 @@ export function BacklogScreen() {
     );
   }
 
-  return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <StatusFilter value={filter} onChange={setFilter} />
-        {stats.data ? <Text style={styles.stats}>{statsLine(stats.data)}</Text> : null}
-      </View>
-
-      <QueryBoundary query={backlog}>
-        {() => (
-          <SectionList
-            style={styles.list}
-            contentContainerStyle={styles.listContent}
-            sections={sections}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            renderSectionHeader={renderSectionHeader}
-            // `null` is unreachable: an empty unfiltered list took the
-            // onboarding branch above.
-            ListEmptyComponent={
-              filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={backlog.isRefetching}
-                onRefresh={() => {
-                  void backlog.refetch();
-                  void stats.refetch();
-                }}
-              />
-            }
-            contentInsetAdjustmentBehavior="automatic"
-            stickySectionHeadersEnabled
-          />
-        )}
-      </QueryBoundary>
+  // Passed as an element, not a component, so it lives inside the list's own
+  // scroll view — a sibling above the list leaves the large title with nothing
+  // to collapse against and the header ends up clipped instead of scrolling.
+  const listHeader = (
+    <View style={styles.header}>
+      <StatusFilter value={filter} onChange={setFilter} />
+      {stats.data ? <Text style={styles.stats}>{statsLine(stats.data)}</Text> : null}
     </View>
+  );
+
+  return (
+    <QueryBoundary query={backlog}>
+      {() => (
+        <SectionList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          sections={sections}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
+          ListHeaderComponent={listHeader}
+          // `null` is unreachable: an empty unfiltered list took the
+          // onboarding branch above.
+          ListEmptyComponent={
+            filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={backlog.isRefetching}
+              onRefresh={() => {
+                void backlog.refetch();
+                void stats.refetch();
+              }}
+            />
+          }
+          contentInsetAdjustmentBehavior="automatic"
+          stickySectionHeadersEnabled
+        />
+      )}
+    </QueryBoundary>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: Screen.fill,
   list: Screen.fill,
   listContent: Screen.listContent,
   header: { paddingTop: 8, gap: 4 },
