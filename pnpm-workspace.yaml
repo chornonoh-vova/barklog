@@ -16,3 +16,12 @@ allowBuilds:
   protobufjs: false
   # Postinstall only writes a local telemetry notice; declined — nothing here needs it.
   '@clerk/shared': false
+  # Postinstall only prints a sponsorship/donation banner; declined — no functional impact.
+  browser-tabs-lock: false
+  core-js: false
+  # Native binding used by `ws` for faster UTF-8 validation; declined so installs need
+  # no C++ toolchain. `ws` falls back to its pure-JS validator when unavailable.
+  utf-8-validate: false
+
+minimumReleaseAgeExclude:
+  - expo-secure-store@57.0.2

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "expo start",
     "start": "expo start",
+    "test": "vitest run",
     "ios": "expo run:ios",
     "ios:device": "expo run:ios --device",
     "prebuild": "expo prebuild --platform ios",
@@ -14,12 +15,18 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/expo": "^4.6.0",
     "@expo/ui": "~57.0.12",
+    "@repo/contracts": "workspace:*",
+    "@tanstack/react-query": "^5.102.5",
     "expo": "~57.0.15",
     "expo-constants": "~57.0.13",
     "expo-dev-client": "~57.0.14",
+    "expo-image": "~57.0.3",
+    "expo-linear-gradient": "~57.0.1",
     "expo-linking": "~57.0.7",
     "expo-router": "~57.0.15",
+    "expo-secure-store": "~57.0.2",
     "expo-splash-screen": "~57.0.7",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.2",
@@ -37,6 +44,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

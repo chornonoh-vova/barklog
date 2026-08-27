@@ -9,6 +9,7 @@
       "outputs": ["dist/**"],
       "env": [
         "EXPO_PUBLIC_API_URL",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "DATABASE_URL",
         "VALKEY_URL",
         "IGDB_CLIENT_ID",
@@ -50,6 +51,7 @@
       "env": [
         "PORT",
         "EXPO_PUBLIC_API_URL",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "DATABASE_URL",
         "VALKEY_URL",
         "IGDB_CLIENT_ID",
