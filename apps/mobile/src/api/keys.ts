@@ -1,15 +1,8 @@
 import type { BacklogSort, BacklogStatus } from "@repo/contracts";
 
 /**
- * Every cache key in one place, so none is spelled twice.
- *
- * `stats` sits under the `backlog` namespace deliberately: a mutation
- * invalidates `keys.backlog.all` and that must sweep the list *and* the counts,
- * which only works because they share a first element.
- *
- * The list key uses the literal `"all"` rather than `undefined` for the
- * unfiltered case — an `undefined` inside a key array is legal but reads as an
- * accident, and it makes the two cases indistinguishable in devtools.
+ * `stats` sits under the `backlog` namespace so that invalidating
+ * `keys.backlog.all` sweeps the list and the counts together.
  */
 export const keys = {
   games: {

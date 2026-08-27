@@ -1,17 +1,34 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useRouter } from "expo-router";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PlatformColor, RefreshControl, SectionList, StyleSheet, Text, View } from "react-native";
 
 import { useBacklog, useBacklogStats } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
 import { EmptyState } from "@/components/empty-state";
-import { ErrorState, LoadingState } from "@/components/query-states";
+import { LoadingState } from "@/components/query-states";
+import { QueryBoundary } from "@/components/query-boundary";
 import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
-import { toSections } from "@/features/backlog/sections";
+import { toSections, type BacklogSection } from "@/features/backlog/sections";
 import { StatusFilter } from "@/features/backlog/status-filter";
-import { rowSubtitle } from "@/features/game/format";
-import { Type } from "@/theme";
+import { rowSubtitle, statsLine } from "@/features/game/format";
+import { Screen, Type } from "@/theme";
+
+const keyExtractor = (item: BacklogListItemWire) => String(item.gameId);
+
+// Lowercase, and deliberately not a component: `SectionList` calls this as a
+// plain function rather than rendering it as an element, and React Compiler
+// gives anything that looks like a component a `useMemoCache` call — which would
+// then run outside a render.
+const renderSectionHeader = ({ section }: { section: BacklogSection }) =>
+  // A null title means a single status is filtered, so there is no header worth
+  // drawing.
+  section.title === null ? null : (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+      <Text style={styles.sectionCount}>{section.count}</Text>
+    </View>
+  );
 
 export function BacklogScreen() {
   const [filter, setFilter] = useState<BacklogStatus | undefined>(undefined);
@@ -19,102 +36,83 @@ export function BacklogScreen() {
   const stats = useBacklogStats();
   const router = useRouter();
 
+  const openGame = useCallback((gameId: number) => router.push(`/game/${gameId}`), [router]);
+
   const renderItem = useCallback(
     ({ item }: { item: BacklogListItemWire }) => (
       <GameRow
+        id={item.gameId}
         title={item.game.name}
         subtitle={rowSubtitle(item)}
         coverImageId={item.game.coverImageId}
-        onPress={() => router.push(`/game/${item.gameId}`)}
+        onPress={openGame}
       />
     ),
-    [router],
+    [openGame],
   );
 
-  if (stats.isPending) return <LoadingState />;
+  const sections = useMemo(
+    () => toSections(backlog.data?.items ?? [], filter),
+    [backlog.data, filter],
+  );
 
-  if (filter === undefined && stats.data?.total === 0) {
+  // Both of these read the backlog query, never `stats`. `stats` is a second
+  // request that can fail or lag on its own, and gating on it left an empty
+  // unfiltered list with no empty state at all whenever it did.
+  if (backlog.isPending) return <LoadingState />;
+
+  if (filter === undefined && backlog.data?.items.length === 0) {
     return (
       <EmptyState
-        title={EMPTY_BACKLOG.title}
-        systemImage={EMPTY_BACKLOG.systemImage}
-        description={EMPTY_BACKLOG.description}
+        {...EMPTY_BACKLOG}
         action={{ label: "Find a Game", onPress: () => router.navigate("/search") }}
       />
     );
-  }
-
-  let content: ReactNode;
-
-  if (backlog.data !== undefined) {
-    content = (
-      <SectionList
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        sections={toSections(backlog.data.items, filter)}
-        keyExtractor={(item) => String(item.gameId)}
-        renderItem={renderItem}
-        renderSectionHeader={({ section }) =>
-          // Null title means a single status is filtered, so there is
-          // nothing worth a header.
-          section.title === null ? null : (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
-              <Text style={styles.sectionCount}>{section.count}</Text>
-            </View>
-          )
-        }
-        ListEmptyComponent={
-          filter === undefined ? null : (
-            <EmptyState
-              title={EMPTY_FILTER[filter].title}
-              systemImage={EMPTY_FILTER[filter].systemImage}
-              description={EMPTY_FILTER[filter].description}
-            />
-          )
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={backlog.isRefetching}
-            onRefresh={() => {
-              void backlog.refetch();
-              void stats.refetch();
-            }}
-          />
-        }
-        contentInsetAdjustmentBehavior="automatic"
-        stickySectionHeadersEnabled
-      />
-    );
-  } else if (backlog.isPending) {
-    content = <LoadingState />;
-  } else {
-    content = <ErrorState error={backlog.error} onRetry={() => void backlog.refetch()} />;
   }
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
         <StatusFilter value={filter} onChange={setFilter} />
-        {stats.data ? (
-          <Text style={styles.stats}>
-            {`${stats.data.total} ${stats.data.total === 1 ? "game" : "games"}`}
-            {stats.data.averageRating === null ? "" : ` · avg ★${stats.data.averageRating}`}
-          </Text>
-        ) : null}
+        {stats.data ? <Text style={styles.stats}>{statsLine(stats.data)}</Text> : null}
       </View>
-      {content}
+
+      <QueryBoundary query={backlog}>
+        {() => (
+          <SectionList
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            sections={sections}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            renderSectionHeader={renderSectionHeader}
+            // `null` is unreachable: an empty unfiltered list took the
+            // onboarding branch above.
+            ListEmptyComponent={
+              filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={backlog.isRefetching}
+                onRefresh={() => {
+                  void backlog.refetch();
+                  void stats.refetch();
+                }}
+              />
+            }
+            contentInsetAdjustmentBehavior="automatic"
+            stickySectionHeadersEnabled
+          />
+        )}
+      </QueryBoundary>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
-  list: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
-  // `ListEmptyComponent` is cloned straight into the content container, with no
-  // wrapper of its own, so without this the empty state has no height to fill
-  // and its SwiftUI content gets clipped.
-  listContent: { flexGrow: 1 },
+  screen: Screen.fill,
+  list: Screen.fill,
+  listContent: Screen.listContent,
   header: { paddingTop: 8, gap: 4 },
   stats: {
     ...Type.footnote,

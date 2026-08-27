@@ -1,11 +1,8 @@
 /**
- * IGDB serves images from a Cloudinary-style path where the `t_` segment names
- * a named transform. `_2x` is the retina variant, which is what every iPhone
- * needs — requesting the 1x asset and letting the device upscale is the single
- * most visible way to make cover art look cheap.
- *
- * Sizes are chosen per call site rather than exposed freely, so a list row can
- * never accidentally download a hero-sized image.
+ * `_2x` is the retina variant every iPhone needs; requesting the 1x asset and
+ * letting the device upscale is the most visible way to make cover art look
+ * cheap. Sizes are fixed per call site so a list row cannot download a
+ * hero-sized image.
  */
 const BASE = "https://images.igdb.com/igdb/image/upload";
 

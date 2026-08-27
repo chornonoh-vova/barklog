@@ -6,12 +6,9 @@ import { coverUrl, type CoverSize } from "@/igdb-image";
 import { COVER_ASPECT } from "@/theme";
 
 /**
- * Plain React Native, not `@expo/ui`: SwiftUI's `Image` accepts an SF Symbol, an
- * asset-catalog name or a local file URI — it has no remote-URL prop, and every
- * cover here comes from images.igdb.com.
- *
- * `expo-image` is chosen for its disk cache: a backlog re-opened five times a
- * day should not re-download the same 40 covers.
+ * Plain React Native, not `@expo/ui`: SwiftUI's `Image` has no remote-URL prop.
+ * `expo-image` for its disk cache — a backlog re-opened five times a day should
+ * not re-download the same 40 covers.
  */
 export function Cover({
   imageId,

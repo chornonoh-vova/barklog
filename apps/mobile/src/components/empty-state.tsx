@@ -16,17 +16,19 @@ import { StyleSheet } from "react-native";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { Brand } from "@/theme";
 
+/** Named so the copy modules can be typed by it and spread at a call site. */
+export interface EmptyStateContent {
+  title: string;
+  systemImage: SFSymbol;
+  description: string;
+}
+
 export function EmptyState({
   title,
   systemImage,
   description,
   action,
-}: {
-  title: string;
-  systemImage: SFSymbol;
-  description: string;
-  action?: { label: string; onPress: () => void };
-}) {
+}: EmptyStateContent & { action?: { label: string; onPress: () => void } }) {
   return (
     <Host style={styles.host} seedColor={Brand.tint}>
       <VStack spacing={8} modifiers={[padding({ horizontal: 32 })]}>
@@ -36,7 +38,7 @@ export function EmptyState({
           modifiers={[
             foregroundStyle({ type: "hierarchical", style: "secondary" }),
             padding({ bottom: 4 }),
-            // The symbol restates the title; VoiceOver should read the copy only.
+            // The symbol restates the title; VoiceOver reads the copy only.
             accessibilityHidden(true),
           ]}
         />
@@ -47,8 +49,7 @@ export function EmptyState({
             foregroundStyle({ type: "hierarchical", style: "secondary" }),
             multilineTextAlignment("center"),
             frame({ maxWidth: 320 }),
-            // Wrap to as many lines as the copy needs rather than truncating
-            // when the host is shorter than the ideal height.
+            // Wrap rather than truncate when the host is shorter than ideal.
             fixedSize({ vertical: true }),
           ]}
         >

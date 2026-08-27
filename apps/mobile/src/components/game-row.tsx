@@ -1,4 +1,5 @@
 import { SymbolView } from "expo-symbols";
+import { memo } from "react";
 import { Pressable, PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Cover } from "@/components/cover";
@@ -6,20 +7,28 @@ import { Type } from "@/theme";
 
 const COVER_WIDTH = 44;
 
-export function GameRow({
+/**
+ * Memoized, and taking `id` rather than a prepared closure, because the lists
+ * above it re-render on every pull-to-refresh and every keystroke. A per-item
+ * `onPress={() => push(id)}` would hand each row a fresh function and defeat
+ * the memo; one hoisted `onPress(id)` lets every visible row bail out.
+ */
+export const GameRow = memo(function GameRow({
+  id,
   title,
   subtitle,
   coverImageId,
   onPress,
 }: {
+  id: number;
   title: string;
   subtitle: string | null;
   coverImageId: string | null;
-  onPress: () => void;
+  onPress: (id: number) => void;
 }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => onPress(id)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={subtitle === null ? title : `${title}, ${subtitle}`}
@@ -40,7 +49,7 @@ export function GameRow({
       <SymbolView name="chevron.right" size={13} tintColor={PlatformColor("tertiaryLabel")} />
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

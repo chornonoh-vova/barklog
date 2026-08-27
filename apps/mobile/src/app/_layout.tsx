@@ -23,12 +23,9 @@ export default function RootLayout() {
         <ApiProvider>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <AuthGate>
-              {/*
-                `Slot`, not `Stack`: (tabs) is the only root route, so a Stack
-                here would wrap the tab controller in a UINavigationController
-                for nothing. `Slot` is pure JS — it renders the focused child
-                with no native container of its own.
-              */}
+              {/* `Slot`, not `Stack`: (tabs) is the only root route, so a Stack
+                  would wrap the tab controller in a UINavigationController for
+                  nothing. */}
               <Slot />
             </AuthGate>
             <StatusBar style="auto" />

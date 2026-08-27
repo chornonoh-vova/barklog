@@ -4,13 +4,9 @@ const { Trigger } = NativeTabs;
 const { Icon, Label } = Trigger;
 
 /**
- * iOS native tab bar (UITabBarController). Home and Explore sit in the main
- * group; Search uses the `search` role so iOS 26 renders it apart from the
- * group and morphs it into the native search field.
- *
- * `(home)` is a route group, not a directory named `index`: a group adds no
- * path segment, so `(tabs)/(home)/index.tsx` still resolves to `/` while being
- * able to carry its own Stack for the title and the profile avatar.
+ * `(home)` is a route group, not a directory named `index`: a group adds no path
+ * segment, so `(tabs)/(home)/index.tsx` still resolves to `/` while carrying its
+ * own Stack for the title and the profile avatar.
  */
 export default function TabsLayout() {
   return (
@@ -25,7 +21,7 @@ export default function TabsLayout() {
         <Icon sf={{ default: "safari", selected: "safari.fill" }} md="explore" />
       </Trigger>
 
-      <Trigger name="search">
+      <Trigger name="search" role="search">
         <Label>Search</Label>
         <Icon sf="magnifyingglass" />
       </Trigger>

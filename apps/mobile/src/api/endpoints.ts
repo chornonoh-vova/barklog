@@ -11,7 +11,6 @@ import {
 
 import type { Request } from "./client";
 
-/** One function per route in the API design's §8. */
 export function createEndpoints(request: Request) {
   return {
     searchGames: (input: { q: string; limit?: number; offset?: number }) =>
@@ -32,8 +31,8 @@ export function createEndpoints(request: Request) {
 
     listBacklog: (input: { status?: BacklogStatus; sort?: BacklogSort } = {}) =>
       request<BacklogListResponse>("/api/backlog", {
-        // `undefined` is dropped by the query builder, which is how "All"
-        // becomes an unfiltered request rather than `?status=`.
+        // `undefined` is dropped by the query builder, so "All" sends no
+        // `status` rather than `?status=`.
         query: { status: input.status, sort: input.sort ?? "updated_at" },
       }),
 

@@ -85,33 +85,34 @@ export function useGame(id: number): UseQueryResult<GameDetailResponse> {
 }
 
 /**
- * `PUT` is a full replace of a two-field resource, so the optimistic patch can
- * simply write the new entry — there is no partial state to merge. The whole
- * backlog namespace is invalidated on settle, which sweeps the list and the
- * stats together because they share a first key element.
+ * Both backlog writes are the same optimistic move: patch the cached game
+ * detail, put it back if the request fails, then invalidate the game and the
+ * whole backlog namespace on settle — which sweeps the list and the stats
+ * together because they share a first key element. Only the request itself and
+ * the entry it leaves behind differ, so those are the two parameters.
  */
-export function useUpsertBacklogEntry(gameId: number) {
-  const api = useApi();
+function useBacklogEntryMutation<TInput>(
+  gameId: number,
+  options: {
+    mutationFn: (input: TInput) => Promise<unknown>;
+    entry: (previous: GameDetailResponse, input: TInput) => BacklogEntryWire | null;
+  },
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { status: BacklogStatus; rating: number | null }) =>
-      api.upsertBacklogEntry(gameId, input),
+    mutationFn: options.mutationFn,
 
-    onMutate: async (input) => {
+    onMutate: async (input: TInput) => {
       const key = keys.games.detail(gameId);
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<GameDetailResponse>(key);
 
       if (previous) {
-        const entry: BacklogEntryWire = {
-          gameId,
-          status: input.status,
-          rating: input.rating,
-          addedAt: previous.backlogEntry?.addedAt ?? new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        queryClient.setQueryData<GameDetailResponse>(key, { ...previous, backlogEntry: entry });
+        queryClient.setQueryData<GameDetailResponse>(key, {
+          ...previous,
+          backlogEntry: options.entry(previous, input),
+        });
       }
 
       return { previous };
@@ -131,35 +132,31 @@ export function useUpsertBacklogEntry(gameId: number) {
   });
 }
 
+/**
+ * `PUT` is a full replace of a two-field resource, so the optimistic patch can
+ * simply write the new entry — there is no partial state to merge.
+ */
+export function useUpsertBacklogEntry(gameId: number) {
+  const api = useApi();
+
+  return useBacklogEntryMutation(gameId, {
+    mutationFn: (input: { status: BacklogStatus; rating: number | null }) =>
+      api.upsertBacklogEntry(gameId, input),
+    entry: (previous, input) => ({
+      gameId,
+      status: input.status,
+      rating: input.rating,
+      addedAt: previous.backlogEntry?.addedAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }),
+  });
+}
+
 export function useDeleteBacklogEntry(gameId: number) {
   const api = useApi();
-  const queryClient = useQueryClient();
 
-  return useMutation({
+  return useBacklogEntryMutation<void>(gameId, {
     mutationFn: () => api.deleteBacklogEntry(gameId),
-
-    onMutate: async () => {
-      const key = keys.games.detail(gameId);
-      await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<GameDetailResponse>(key);
-
-      if (previous) {
-        queryClient.setQueryData<GameDetailResponse>(key, { ...previous, backlogEntry: null });
-      }
-
-      return { previous };
-    },
-
-    onError: (error, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(keys.games.detail(gameId), context.previous);
-      }
-      alertOnMutationError(error);
-    },
-
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: keys.games.detail(gameId) });
-      void queryClient.invalidateQueries({ queryKey: keys.backlog.all });
-    },
+    entry: () => null,
   });
 }

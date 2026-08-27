@@ -1,4 +1,4 @@
-import { Button, Host, HStack, Menu, Picker, Text } from "@expo/ui/swift-ui";
+import { Button, HStack, Menu, Picker, Text } from "@expo/ui/swift-ui";
 import {
   buttonStyle,
   clipShape,
@@ -12,23 +12,16 @@ import { StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { ratingButtonLabel, statusButtonLabel, statusLabel } from "@/features/game/format";
-import { Brand } from "@/theme";
-import { useMeasuredHostHeight } from "@/ui/measured-host";
+import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE, GLASS_STYLE } from "@/ui/platform-glass";
 
 const NO_RATING = 0;
 const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RATING_MIN + i);
 
 /**
- * Apple Music's geometry: secondary circular, primary capsule, secondary
- * circular. The status capsule is the one control you cannot miss and it
- * doubles as the add affordance, so an untracked game has an obvious primary
- * action.
- *
  * Every change writes immediately. `PUT` is a full replace of a two-field
- * resource and the client always holds both fields, so a Save button would add
- * a dirty-state concept for nothing — the same reasoning that made `PUT` the
- * only write verb on the API.
+ * resource and the client holds both fields, so a Save button would add a
+ * dirty-state concept for nothing.
  */
 export function EntryActions({
   entry,
@@ -41,15 +34,8 @@ export function EntryActions({
 }) {
   const status = entry?.status ?? null;
   const rating = entry?.rating ?? null;
-  const measured = useMeasuredHostHeight();
-
   return (
-    <Host
-      style={[styles.host, { minHeight: measured.minHeight }]}
-      matchContents={{ vertical: true }}
-      seedColor={Brand.tint}
-      onLayoutContent={measured.onLayoutContent}
-    >
+    <MeasuredHost style={styles.host}>
       <HStack>
         <Menu
           label={`★ ${ratingButtonLabel(rating)}`.trim()}
@@ -115,7 +101,7 @@ export function EntryActions({
           </Menu>
         )}
       </HStack>
-    </Host>
+    </MeasuredHost>
   );
 }
 

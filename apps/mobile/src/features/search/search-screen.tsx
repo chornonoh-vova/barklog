@@ -1,45 +1,51 @@
 import { SEARCH_QUERY_MIN, type GameSummaryWire } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { FlatList, PlatformColor, StyleSheet } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
 
 import { useSearchGames } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
 import { EmptyState } from "@/components/empty-state";
 import { QueryBoundary } from "@/components/query-boundary";
-import { metaLine } from "@/features/game/format";
+import { summarySubtitle } from "@/features/game/format";
 import { useDebounced } from "@/hooks/use-debounced";
+import { Screen } from "@/theme";
 
 const DEBOUNCE_MS = 400;
+
+const keyExtractor = (item: GameSummaryWire) => String(item.id);
+
+const PROMPT = (
+  <EmptyState
+    title="Fetch a game"
+    systemImage="magnifyingglass"
+    description="Type a title. Two characters is enough to start."
+  />
+);
 
 export function SearchScreen({ query }: { query: string }) {
   const debounced = useDebounced(query.trim(), DEBOUNCE_MS);
   const search = useSearchGames(debounced);
   const router = useRouter();
 
+  const openGame = useCallback((id: number) => router.push(`/search/game/${id}`), [router]);
+
   const renderItem = useCallback(
     ({ item }: { item: GameSummaryWire }) => (
       <GameRow
+        id={item.id}
         title={item.name}
-        subtitle={metaLine({ firstReleaseDate: item.firstReleaseDate, genres: [] })}
+        subtitle={summarySubtitle(item)}
         coverImageId={item.coverImageId}
-        onPress={() => router.push(`/search/game/${item.id}`)}
+        onPress={openGame}
       />
     ),
-    [router],
+    [openGame],
   );
 
-  // The API rejects a shorter query with a 422, so the prompt state stands in
-  // for it rather than the query firing and failing.
-  if (debounced.length < SEARCH_QUERY_MIN) {
-    return (
-      <EmptyState
-        title="Fetch a game"
-        systemImage="magnifyingglass"
-        description="Search the whole catalogue by title. Two characters is enough to start."
-      />
-    );
-  }
+  // The API rejects a shorter query with a 422, so the prompt stands in for it
+  // rather than the query firing and failing.
+  if (debounced.length < SEARCH_QUERY_MIN) return PROMPT;
 
   return (
     <QueryBoundary query={search}>
@@ -54,7 +60,7 @@ export function SearchScreen({ query }: { query: string }) {
           <FlatList
             style={styles.list}
             data={data.items}
-            keyExtractor={(item) => String(item.id)}
+            keyExtractor={keyExtractor}
             renderItem={renderItem}
             keyboardDismissMode="on-drag"
             contentInsetAdjustmentBehavior="automatic"
@@ -66,5 +72,5 @@ export function SearchScreen({ query }: { query: string }) {
 }
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  list: Screen.fill,
 });

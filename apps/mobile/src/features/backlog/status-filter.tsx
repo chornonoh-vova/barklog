@@ -1,12 +1,11 @@
-import { Host, HStack, Menu, Picker, Spacer, Text } from "@expo/ui/swift-ui";
+import { HStack, Menu, Picker, Spacer, Text } from "@expo/ui/swift-ui";
 import { buttonStyle, clipShape, pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
 import type { BacklogStatus } from "@repo/contracts";
 import { StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel } from "@/features/game/format";
-import { Brand } from "@/theme";
-import { useMeasuredHostHeight } from "@/ui/measured-host";
+import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 
 const ALL = "all";
@@ -18,17 +17,10 @@ export function StatusFilter({
   value: BacklogStatus | undefined;
   onChange: (status: BacklogStatus | undefined) => void;
 }) {
-  const measured = useMeasuredHostHeight();
-
   return (
-    <Host
-      style={[styles.host, { minHeight: measured.minHeight }]}
-      matchContents={{ vertical: true }}
-      seedColor={Brand.tint}
-      onLayoutContent={measured.onLayoutContent}
-    >
+    <MeasuredHost style={styles.host}>
       <HStack>
-        <Text>View games:</Text>
+        <Text>Show</Text>
         <Spacer />
         <Menu
           label={value ? statusLabel(value) : "All"}
@@ -51,7 +43,7 @@ export function StatusFilter({
           </Picker>
         </Menu>
       </HStack>
-    </Host>
+    </MeasuredHost>
   );
 }
 

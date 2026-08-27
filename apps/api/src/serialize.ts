@@ -14,10 +14,9 @@ export type {
 } from "@repo/contracts";
 
 /**
- * Rows become wire shapes before anything is cached or hashed. `JSON.stringify`
- * would turn a Date into the same string either way, but then a cache hit would
- * hand the route a string where a miss handed it a Date — a type that is a lie
- * half the time, and an ETag that changes for no reason.
+ * Rows become wire shapes before anything is cached or hashed: otherwise a cache
+ * hit hands the route a string where a miss hands it a Date, and the ETag
+ * changes for no reason.
  */
 const iso = (value: Date | null): string | null => (value === null ? null : value.toISOString());
 

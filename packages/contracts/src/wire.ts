@@ -1,13 +1,9 @@
 import type { BacklogStatus } from "./backlog.js";
 
 /**
- * Every HTTP response shape the API returns, declared once and shared with the
- * Expo app. Types only — no valibot, no runtime code, nothing from `@repo/db`.
- * `packages/contracts` must stay free of Node dependencies so the mobile bundle
- * never pulls one in.
- *
- * Dates are ISO strings here, not `Date`: `apps/api/src/serialize.ts` converts
- * them before anything is cached or hashed.
+ * Types only — no valibot, no runtime code, nothing from `@repo/db`, so the
+ * mobile bundle never pulls a Node dependency in. Dates are ISO strings, not
+ * `Date`; `apps/api/src/serialize.ts` converts them.
  */
 
 export interface NamedRef {
@@ -59,9 +55,9 @@ export interface GameListResponse {
 }
 
 /**
- * `GET /api/games/:id`. The embedded `backlogEntry` is what gives the game
- * screen the right button state in one request — and what makes the response
- * user-varying, hence `Cache-Control: private, no-cache` on the API side.
+ * `GET /api/games/:id`. The embedded `backlogEntry` gives the game screen its
+ * button state in one request, and makes the response user-varying — hence
+ * `Cache-Control: private, no-cache` on the API side.
  */
 export interface GameDetailResponse extends GameDetailWire {
   backlogEntry: BacklogEntryWire | null;
@@ -80,14 +76,12 @@ export interface BacklogStatsWire {
 }
 
 /**
- * RFC 9457, as the API actually renders it — which differs from the API design
- * document's §11 in two ways recorded in its own §16: validation issues are
- * `{field, message}` with a dot-joined path, and a 422 carries
- * `type: "about:blank"` with no `instance` or `traceId` in the body (the
- * correlation id travels in the `X-Request-Id` header).
+ * RFC 9457 as the API renders it: validation issues are `{field, message}` with
+ * a dot-joined path, and a 422 carries `type: "about:blank"` with no `instance`
+ * or `traceId` (the correlation id travels in `X-Request-Id`).
  *
- * A 5xx never carries `detail`, deliberately: exception messages leak schema
- * names and file paths. Error copy for 5xx must not depend on one.
+ * A 5xx never carries `detail`, deliberately — exception messages leak schema
+ * names and file paths — so 5xx copy must not depend on one.
  */
 export interface ProblemDocument {
   type: string;

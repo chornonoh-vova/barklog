@@ -1,11 +1,10 @@
 import type { ProblemDocument } from "@repo/contracts";
 
 /**
- * Every non-2xx from the API becomes one of these. The API guarantees
- * `application/problem+json` on every error it produces itself, but a failure
- * upstream of it — a proxy 502, a captive portal — will not be one, so parsing
- * must degrade to the status line rather than throwing a JSON error where an
- * HTTP error happened.
+ * Every non-2xx becomes one of these. A failure upstream of the API — a proxy
+ * 502, a captive portal — is not `application/problem+json`, so parsing degrades
+ * to the status line rather than throwing a JSON error where an HTTP one
+ * happened.
  */
 export class ApiError extends Error {
   readonly status: number;
@@ -25,13 +24,7 @@ export class ApiError extends Error {
     traceId?: string;
     errors?: { field: string; message: string }[];
     retryAfter?: number;
-    /**
-     * The original error `fetch` threw (DNS failure, ATS blocking plain
-     * HTTP, connection refused, …), when this `ApiError` wraps one. Threaded
-     * through via ES2022's `Error` cause chain rather than discarded, since
-     * it is often the only signal that explains *why* a request failed the
-     * first time someone points a device build at a LAN IP.
-     */
+    /** The original `fetch` failure, when this wraps one. */
     cause?: unknown;
   }) {
     super(
@@ -57,21 +50,20 @@ function isProblemDocument(body: unknown): body is Partial<ProblemDocument> {
 }
 
 /**
- * `response.status` always wins over the body's `status` member. A proxy
- * rewriting one must not be able to make the app believe a failure was
- * something else — and the two disagreeing is itself a sign of a body that
- * cannot be trusted.
+ * `response.status` always wins over the body's `status` member: a proxy
+ * rewriting one must not change what the app believes failed.
  */
 export function toApiError(response: Response, body: unknown, retryAfter?: number): ApiError {
   const problem = isProblemDocument(body) ? body : undefined;
+  const str = (value: unknown): string | undefined =>
+    typeof value === "string" ? value : undefined;
 
   return new ApiError({
     status: response.status,
-    type: typeof problem?.type === "string" ? problem.type : "about:blank",
-    title:
-      typeof problem?.title === "string" ? problem.title : response.statusText || "Request failed",
-    detail: typeof problem?.detail === "string" ? problem.detail : undefined,
-    traceId: typeof problem?.traceId === "string" ? problem.traceId : undefined,
+    type: str(problem?.type) ?? "about:blank",
+    title: str(problem?.title) ?? (response.statusText || "Request failed"),
+    detail: str(problem?.detail),
+    traceId: str(problem?.traceId),
     errors: Array.isArray(problem?.errors) ? problem.errors : undefined,
     retryAfter,
   });

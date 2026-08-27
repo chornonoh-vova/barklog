@@ -12,7 +12,6 @@ export interface ApiClientDeps {
   baseUrl: string;
   /** Clerk's `getToken`. `skipCache` forces a refresh. */
   getToken: (options?: { skipCache?: boolean }) => Promise<string | null>;
-  /** Injected in tests. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
 }
 
@@ -29,10 +28,7 @@ function buildUrl(baseUrl: string, path: string, query: RequestOptions["query"])
   return serialised === "" ? url : `${url}?${serialised}`;
 }
 
-/**
- * The transport layer. No React, so its branching is unit-testable in Node —
- * and this is the layer most likely to be wrong.
- */
+/** No React, so the branching here is unit-testable in Node. */
 export function createRequest(deps: ApiClientDeps): Request {
   const doFetch = deps.fetchImpl ?? fetch;
 
@@ -55,8 +51,8 @@ export function createRequest(deps: ApiClientDeps): Request {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     };
-    // Only when there is a body: a DELETE carries none, and sending a
-    // Content-Type on it would make the API's requireJson middleware reject it.
+    // A DELETE carries no body, and a Content-Type on one is rejected by the
+    // API's requireJson middleware.
     if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
     const url = buildUrl(deps.baseUrl, path, options.query);
@@ -69,11 +65,9 @@ export function createRequest(deps: ApiClientDeps): Request {
         ...(reload ? { cache: "reload" as RequestCache } : {}),
       });
     } catch (cause) {
-      // A DNS failure, a dropped connection, ATS refusing plain HTTP. Wrapped
-      // so every caller catches exactly one error type, but the original is
-      // threaded through as `cause` rather than discarded — it is often the
-      // only signal that explains why, and the generic message above collapses
-      // all of those causes into one otherwise.
+      // DNS failure, dropped connection, ATS refusing plain HTTP. Wrapped so
+      // every caller catches one error type; `cause` keeps the reason, which the
+      // generic message below would otherwise collapse.
       throw new ApiError({
         status: 0,
         type: "about:blank",
@@ -105,12 +99,9 @@ export function createRequest(deps: ApiClientDeps): Request {
   return async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     let response = await send(path, options);
 
-    // `GET /api/backlog` is ETag'd, and NSURLSession performs the
-    // If-None-Match revalidation itself, handing us a transparent 200 with the
-    // stored body — a bare 304 normally never arrives here. If one does, ask
-    // for the body rather than parsing an empty one. Deliberately NOT solved by
-    // threading TanStack's cached value in: that would reimplement, in JS,
-    // revalidation the URL loading system already does correctly.
+    // NSURLSession does the If-None-Match revalidation itself and hands back a
+    // transparent 200, so a bare 304 should never arrive. If one does, ask for
+    // the body rather than reimplementing revalidation in JS.
     if (response.status === 304) {
       response = await send(path, options, { reload: true });
 
@@ -124,9 +115,8 @@ export function createRequest(deps: ApiClientDeps): Request {
       }
     }
 
-    // Clerk refreshes proactively, so a 401 here means a revoked session rather
-    // than an expired token. One retry with a forced refresh, then give up —
-    // retrying past that is a loop.
+    // Clerk refreshes proactively, so a 401 means a revoked session rather than
+    // an expired token. One forced refresh, then give up.
     if (response.status === 401) {
       response = await send(path, options, { skipTokenCache: true });
     }

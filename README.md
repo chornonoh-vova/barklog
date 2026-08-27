@@ -192,27 +192,26 @@ src/
   app/
     _layout.tsx            ClerkProvider -> QueryClientProvider -> ApiProvider -> theme -> AuthGate
     (tabs)/
-      _layout.tsx          NativeTabs: Home | Explore | Search (search uses role="search")
+      _layout.tsx          NativeTabs: Home | Explore | Search
       (home)/              route group, so index.tsx still resolves to "/"
         _layout.tsx  index.tsx  game/[id].tsx
       explore/   _layout.tsx  index.tsx  game/[id].tsx
       search/    _layout.tsx  index.tsx  game/[id].tsx
   api/         errors, client, endpoints, keys, provider, hooks
   auth/        auth-gate, should-clear-cache
-  components/  profile-toolbar, cover, game-row, query-boundary, empty-state
+  components/  profile-toolbar, cover, game-row, query-boundary, query-states, empty-state
   features/    backlog/ explore/ search/ game/
   hooks/       use-debounced
-  ui/          glass, platform-glass
+  ui/          glass, platform-glass, measured-host
   env.ts  igdb-image.ts  query-client.ts  theme.ts
 ```
 
 **Tabs.** Expo Router's native tabs (`expo-router/unstable-native-tabs`) render
 a real `UITabBarController`. Home, Explore and Search form the tab bar — there
 is no Profile tab; the avatar in each tab's header opens Clerk's
-`UserProfileView` instead. Search uses `role="search"`, which on iOS 26+ pulls
-it out of the group and turns it into the native search field. Each tab owns
-its own Stack, and `game/[id].tsx` is triplicated — one per tab — so a pushed
-detail screen stays inside its tab with the native tab bar still visible.
+`UserProfileView` instead. Each tab owns its own Stack, and `game/[id].tsx` is
+triplicated — one per tab — so a pushed detail screen stays inside its tab with
+the native tab bar still visible.
 Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
 whenever Android lands.
 

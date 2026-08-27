@@ -1,3 +1,5 @@
+import { PlatformColor } from "react-native";
+
 /**
  * Barklog's brand tint. Passed to `<Host seedColor>` so it propagates through
  * the SwiftUI environment and themes every native control underneath.
@@ -22,3 +24,14 @@ export const Type = {
 
 /** Cover aspect ratio. IGDB covers are 3:4 portrait, never square. */
 export const COVER_ASPECT = 3 / 4;
+
+/**
+ * The frame every list screen shares. `listContent` is what lets a list's
+ * `ListEmptyComponent` fill the screen: it is cloned straight into the content
+ * container with no wrapper of its own, so without a growing container it has
+ * no height and its SwiftUI content gets clipped.
+ */
+export const Screen = {
+  fill: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  listContent: { flexGrow: 1 },
+} as const;

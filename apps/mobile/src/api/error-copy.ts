@@ -1,13 +1,11 @@
 import { isApiError } from "./errors";
 
 /**
- * Error copy is keyed off status rather than shown verbatim, because a 5xx
- * problem document carries no `detail` by design — the API strips exception
- * messages so they cannot leak schema names and file paths.
+ * Keyed off status rather than shown verbatim, because a 5xx problem document
+ * carries no `detail` by design — the API strips exception messages so they
+ * cannot leak schema names and file paths.
  *
- * Pure and framework-free on purpose — importing only from `./errors` (no
- * `react-native`, no `@expo/ui`) is what lets Vitest reach it directly rather
- * than through a `.tsx` that pulls in native modules.
+ * Framework-free so Vitest reaches it without pulling in native modules.
  */
 export function errorCopy(error: unknown): { title: string; description: string } {
   if (!isApiError(error)) {

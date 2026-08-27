@@ -1,11 +1,7 @@
 /**
- * `buttonStyle('glass')` and `'glassProminent'` are iOS 26+ only. Passing them
- * on iOS 18 does not degrade gracefully — the button renders with no style at
- * all — so every call site resolves through here.
- *
- * The version is a parameter rather than read from `Platform.Version` inside
- * this function, so the module stays importable by Vitest (see the Global
- * Constraints: no react-native imports in tested modules).
+ * `buttonStyle('glass')` and `'glassProminent'` are iOS 26+ only, and on iOS 18
+ * they render with no style at all rather than degrading. The version is a
+ * parameter so this module stays importable by Vitest.
  */
 export type ButtonStyleName = "glass" | "glassProminent" | "bordered" | "borderedProminent";
 

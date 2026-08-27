@@ -1,13 +1,12 @@
-import type { BacklogStatus } from "@repo/contracts";
+import type { BacklogStatsWire, BacklogStatus, GameSummaryWire } from "@repo/contracts";
 
 /**
- * Every user-facing string built from API data. Pure, so the copy is pinned by
- * tests rather than discovered in a screenshot — and so a game with no release
- * date, no genres and no ratings cannot produce a line reading " · ".
+ * Every user-facing string built from API data, kept pure so the copy is pinned
+ * by tests and a game with no release date, genres or ratings cannot produce a
+ * line reading " · ".
  *
- * The `en-GB` locale is fixed rather than taken from the device: these are
- * dates in a catalogue, not the user's own data, and a stable format keeps the
- * detail screen's rows from reflowing per locale.
+ * `en-GB` is fixed rather than taken from the device: these are catalogue dates,
+ * not the user's own, and a stable format keeps the detail rows from reflowing.
  */
 
 const STATUS_LABELS: Record<BacklogStatus, string> = {
@@ -17,11 +16,26 @@ const STATUS_LABELS: Record<BacklogStatus, string> = {
   abandoned: "Abandoned",
 };
 
+const SEPARATOR = " · ";
+
 /** Joins only the parts that exist, so an absent field leaves no separator. */
-function joinParts(parts: (string | null)[], separator: string): string | null {
+function joinParts(parts: (string | null)[]): string | null {
   const present = parts.filter((part): part is string => part !== null && part !== "");
 
-  return present.length === 0 ? null : present.join(separator);
+  return present.length === 0 ? null : present.join(SEPARATOR);
+}
+
+export function namesLine(refs: { name: string }[]): string | null {
+  return refs.length === 0 ? null : refs.map((ref) => ref.name).join(", ");
+}
+
+/** Abbreviations where IGDB has one, so "PS5" beats "PlayStation 5" in a row. */
+export function platformNames(
+  platforms: { name: string; abbreviation: string | null }[],
+): string | null {
+  return platforms.length === 0
+    ? null
+    : platforms.map((p) => p.abbreviation ?? p.name).join(", ");
 }
 
 export function releaseYear(iso: string | null): string | null {
@@ -32,9 +46,15 @@ export function metaLine(input: {
   firstReleaseDate: string | null;
   genres: { name: string }[];
 }): string | null {
-  const genres = input.genres.length === 0 ? null : input.genres.map((g) => g.name).join(", ");
+  return joinParts([releaseYear(input.firstReleaseDate), namesLine(input.genres)]);
+}
 
-  return joinParts([releaseYear(input.firstReleaseDate), genres], " · ");
+/**
+ * `GameSummaryWire` carries no genres, so a summary row gets the release year
+ * alone. Its own function so no call site fakes an empty `genres` array.
+ */
+export function summarySubtitle(game: GameSummaryWire): string | null {
+  return releaseYear(game.firstReleaseDate);
 }
 
 export function ratingLine(input: {
@@ -46,7 +66,15 @@ export function ratingLine(input: {
   const count = input.totalRatingCount.toLocaleString("en-GB");
   const noun = input.totalRatingCount === 1 ? "rating" : "ratings";
 
-  return `★ ${Math.round(input.totalRating)} · ${count} ${noun}`;
+  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${count} ${noun}`;
+}
+
+export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
+  const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
+
+  return stats.averageRating === null
+    ? games
+    : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
 }
 
 export function statusLabel(status: BacklogStatus): string {
@@ -65,7 +93,7 @@ export function ratingButtonLabel(rating: number | null): string {
 export function rowSubtitle(entry: { status: BacklogStatus; rating: number | null }): string {
   return entry.rating === null
     ? statusLabel(entry.status)
-    : `${statusLabel(entry.status)} · ★${entry.rating}`;
+    : `${statusLabel(entry.status)}${SEPARATOR}★${entry.rating}`;
 }
 
 export function releaseDateLine(iso: string | null): string {
