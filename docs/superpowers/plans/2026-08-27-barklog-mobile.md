@@ -4341,7 +4341,28 @@ for nothing."
 
 **Files:**
 
-- Modify: `README.md`, `docs/superpowers/specs/2026-08-25-barklog-api-design.md`
+- Create: `docs/mobile-device-verification.md`
+- Modify: `README.md` (three sections — see steps 3-4), `docs/superpowers/specs/2026-08-25-barklog-api-design.md`
+
+Three controller rulings expand this task beyond its original scope, all
+recorded in the ledger:
+
+1. **`README.md`'s `## Adding auth` section is now actively wrong.** It
+   prescribes a `src/app/sign-in.tsx` route gated with `Stack.Protected`, and
+   `expo-apple-authentication` in both `dependencies` and `plugins`. This build
+   uses none of that: the guard is `AuthGate` + Clerk's native `AuthView`, and
+   `expo-apple-authentication` is deliberately absent because `<AuthView />`
+   runs the Apple flow internally. The section describes work that is now done,
+   so it must be replaced rather than amended.
+2. **`README.md`'s `## apps/mobile` section is stale in two ways** — its file
+   tree shows the old four-tab layout (`index.tsx`, `explore.tsx`,
+   `profile.tsx`, `search.tsx`, `placeholder-screen.tsx`), and its "UI"
+   paragraph claims "Screens are SwiftUI, rendered through `@expo/ui/swift-ui`",
+   which contradicts the composition rule this build follows (React Native for
+   lists and content, `@expo/ui` for controls).
+3. **The device-verification steps must outlive the build.** Sixteen checks
+   across seven tasks could not run without Apple/Clerk dashboard setup. A
+   branch that is committed but unverified needs that gap written down.
 
 - [ ] **Step 1: Mark the build order complete**
 
@@ -4403,10 +4424,55 @@ On a physical device set `EXPO_PUBLIC_API_URL` to the host machine's LAN IP —
 `localhost` resolves to the phone.
 ````
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Replace the two stale README sections**
+
+Rewrite `## apps/mobile` so its tree matches the delivered layout:
+
+```
+src/
+  app/
+    _layout.tsx            ClerkProvider -> QueryClientProvider -> ApiProvider -> theme -> AuthGate
+    (tabs)/
+      _layout.tsx          NativeTabs: Home | Explore | Search (search uses role="search")
+      (home)/              route group, so index.tsx still resolves to "/"
+        _layout.tsx  index.tsx  game/[id].tsx
+      explore/   _layout.tsx  index.tsx  game/[id].tsx
+      search/    _layout.tsx  index.tsx  game/[id].tsx
+  api/         errors, client, endpoints, keys, provider, hooks
+  auth/        auth-gate, should-clear-cache
+  components/  profile-toolbar, cover, game-row, query-boundary, native-state
+  features/    backlog/ explore/ search/ game/
+  env.ts  igdb-image.ts  query-client.ts  theme.ts  ui/glass.ts
+```
+
+Replace its "UI" paragraph with the composition rule: React Native for lists,
+rows, images and text content; `@expo/ui/swift-ui` inside a `Host` for controls;
+`PlatformColor` throughout so both halves resolve the same iOS system colours.
+State the forcing reason — `@expo/ui`'s SwiftUI `Image` has no remote-URL prop,
+and every list in Barklog is IGDB cover art.
+
+Then replace the whole `## Adding auth` section with a short `## Auth` section
+describing what now exists: `ClerkProvider` + `tokenCache` at the root, an
+`AuthGate` rendering Clerk's non-dismissible native `AuthView` while the auth
+flow is incomplete, the splash held until Clerk has read the keychain, and no
+`expo-apple-authentication` dependency because `<AuthView />` runs the Apple
+flow itself. Keep the existing note about declaring `EXPO_PUBLIC_*` keys in
+`turbo.json`.
+
+- [ ] **Step 4: Commit the device-verification checklist**
+
+Copy `.superpowers/sdd/2026-08-27-barklog-mobile/device-checklist.md` to
+`docs/mobile-device-verification.md` verbatim, and link it from `README.md`'s
+mobile section with one line: the branch's UI is committed and statically
+verified but not yet exercised on a device, and this is the list of what remains.
+
+The scratch workspace is deleted when this plan finishes, so this copy is the
+only durable record of what was not verified.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add README.md docs/superpowers/specs/2026-08-25-barklog-api-design.md
+git add README.md docs/mobile-device-verification.md docs/superpowers/specs/2026-08-25-barklog-api-design.md
 git commit -m "docs: record step 7 delivered and how to run the app
 
 Notes the two things the API design did not anticipate: @repo/contracts grew
