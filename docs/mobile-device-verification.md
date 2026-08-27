@@ -87,3 +87,12 @@ pnpm --filter mobile ios
       for 30s; the 429 state should not appear. If it does, raise the `search`
       limit in `apps/api/src/rate-limits.ts` rather than shortening the 400ms
       debounce.
+- [ ] **17. The app can reach the API over plain HTTP on a physical device.**
+      `expo prebuild` emits `NSAllowsArbitraryLoads: false` with
+      `NSAllowsLocalNetworking: true`. Whether that covers a bare private-range
+      LAN IP such as `http://192.168.1.5:3000` is unverified. If requests fail
+      with a uniform "You're offline", add a development-only
+      `ios.infoPlist.NSAppTransportSecurity` exception in `app.json` and
+      rebuild. An ATS exception is deliberately NOT pre-applied: loosening
+      transport security should be a deliberate response to an observed
+      failure, not a precaution.
