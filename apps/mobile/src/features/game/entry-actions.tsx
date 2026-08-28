@@ -11,7 +11,12 @@ import { RATING_MAX, RATING_MIN, type BacklogEntryWire, type BacklogStatus } fro
 import { StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
-import { ratingButtonLabel, statusButtonLabel, statusLabel } from "@/features/game/format";
+import {
+  ratingButtonLabel,
+  statusButtonLabel,
+  statusButtonSymbol,
+  statusLabel,
+} from "@/features/game/format";
 import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE, GLASS_STYLE } from "@/ui/platform-glass";
 
@@ -69,7 +74,7 @@ export function EntryActions({
 
         <Menu
           label={statusButtonLabel(status)}
-          systemImage={status === null ? "plus" : "play.fill"}
+          systemImage={statusButtonSymbol(status)}
           modifiers={[
             buttonStyle(GLASS_PROMINENT_STYLE),
             controlSize("large"),

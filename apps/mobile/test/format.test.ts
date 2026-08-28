@@ -9,6 +9,7 @@ import {
   releaseYear,
   rowSubtitle,
   statusButtonLabel,
+  statusButtonSymbol,
   statusLabel,
 } from "@/features/game/format";
 
@@ -83,6 +84,28 @@ describe("statusButtonLabel", () => {
 
   it("shows the current status when tracked", () => {
     expect(statusButtonLabel("playing")).toBe("Playing");
+  });
+});
+
+describe("statusButtonSymbol", () => {
+  it("shows the add affordance when the game is untracked", () => {
+    expect(statusButtonSymbol(null)).toBe("plus");
+  });
+
+  it("pins the symbol for each status", () => {
+    expect(statusButtonSymbol("waiting")).toBe("clock");
+    expect(statusButtonSymbol("playing")).toBe("gamecontroller");
+    expect(statusButtonSymbol("completed")).toBe("checkmark.seal");
+    expect(statusButtonSymbol("abandoned")).toBe("xmark.bin");
+  });
+
+  it("gives every status in the enum its own symbol", () => {
+    // Distinctness is the point: the capsule is the only place the status is
+    // shown as a glyph, so two statuses sharing one would read as the same.
+    const symbols = BACKLOG_STATUSES.map((status) => statusButtonSymbol(status));
+
+    expect(new Set(symbols).size).toBe(symbols.length);
+    expect(symbols).not.toContain("plus");
   });
 });
 

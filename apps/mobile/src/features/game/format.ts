@@ -1,4 +1,5 @@
 import type { BacklogStatsWire, BacklogStatus, GameSummaryWire } from "@repo/contracts";
+import type { SFSymbol } from "sf-symbols-typescript";
 
 /**
  * Every user-facing string built from API data, kept pure so the copy is pinned
@@ -14,6 +15,17 @@ const STATUS_LABELS: Record<BacklogStatus, string> = {
   playing: "Playing",
   completed: "Completed",
   abandoned: "Abandoned",
+};
+
+/**
+ * One symbol per status, shared by every surface that draws a status as a glyph
+ * so the action capsule and an empty list cannot drift apart.
+ */
+const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
+  waiting: "clock",
+  playing: "gamecontroller",
+  completed: "checkmark.seal",
+  abandoned: "xmark.bin",
 };
 
 const SEPARATOR = " · ";
@@ -81,9 +93,18 @@ export function statusLabel(status: BacklogStatus): string {
   return STATUS_LABELS[status];
 }
 
+export function statusSymbol(status: BacklogStatus): SFSymbol {
+  return STATUS_SYMBOLS[status];
+}
+
 /** The prominent capsule doubles as the add affordance when untracked. */
 export function statusButtonLabel(status: BacklogStatus | null): string {
   return status === null ? "Add to Backlog" : statusLabel(status);
+}
+
+/** Pairs with `statusButtonLabel`: `plus` is the add affordance, not a status. */
+export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
+  return status === null ? "plus" : statusSymbol(status);
 }
 
 export function ratingButtonLabel(rating: number | null): string {
