@@ -779,9 +779,12 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
     // session would flip the gate back to "show" and bury the sign-in screen
     // under onboarding, since this gate sits above `AuthGate`. It also makes the
     // effect self-terminating rather than relying on the deps array.
+    //
+    // Chained onto the write, not called directly in the effect body: the bare
+    // synchronous call trips `react-hooks/set-state-in-effect`, and
+    // `markOnboardingSeen` never rejects, so the `.then()` always runs.
     if (hasSeen === false && decision === "complete") {
-      setHasSeen(true);
-      void markOnboardingSeen();
+      void markOnboardingSeen().then(() => setHasSeen(true));
     }
   }, [hasSeen, decision]);
 
