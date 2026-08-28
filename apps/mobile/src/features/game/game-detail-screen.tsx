@@ -8,6 +8,7 @@ import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
+import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { screenshotUrl } from "@/igdb-image";
 
 const SHOT_WIDTH = 280;
@@ -65,6 +66,8 @@ export function GameDetailScreen() {
             )}
 
             <DetailRows game={data} />
+
+            <IgdbAttribution slug={data.slug} />
           </ScrollView>
         )}
       </QueryBoundary>
