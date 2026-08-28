@@ -45,9 +45,7 @@ export function namesLine(refs: { name: string }[]): string | null {
 export function platformNames(
   platforms: { name: string; abbreviation: string | null }[],
 ): string | null {
-  return platforms.length === 0
-    ? null
-    : platforms.map((p) => p.abbreviation ?? p.name).join(", ");
+  return platforms.length === 0 ? null : platforms.map((p) => p.abbreviation ?? p.name).join(", ");
 }
 
 export function releaseYear(iso: string | null): string | null {
@@ -84,9 +82,7 @@ export function ratingLine(input: {
 export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
   const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
 
-  return stats.averageRating === null
-    ? games
-    : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
+  return stats.averageRating === null ? games : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
 }
 
 export function statusLabel(status: BacklogStatus): string {

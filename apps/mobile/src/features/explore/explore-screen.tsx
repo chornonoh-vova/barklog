@@ -1,16 +1,13 @@
-import { SEARCH_LIMIT_MAX, type GameSummaryWire } from "@repo/contracts";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
-import { FlatList, RefreshControl, StyleSheet } from "react-native";
+import { useCallback, useMemo } from "react";
+import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
-import { usePopularGames } from "@/api/hooks";
-import { GameRow } from "@/components/game-row";
+import { useGameFeed } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
-import { QueryBoundary } from "@/components/query-boundary";
-import { summarySubtitle } from "@/features/game/format";
+import { ErrorState, LoadingState } from "@/components/query-states";
+import { GameShelf } from "@/features/explore/game-shelf";
+import { SHELF_LIMIT, toShelves } from "@/features/explore/shelves";
 import { Screen } from "@/theme";
-
-const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
 const EMPTY_CATALOGUE = (
   <EmptyState
@@ -21,54 +18,58 @@ const EMPTY_CATALOGUE = (
 );
 
 export function ExploreScreen() {
-  const popular = usePopularGames(SEARCH_LIMIT_MAX);
+  const popular = useGameFeed("popular", SHELF_LIMIT);
+  const upcoming = useGameFeed("upcoming", SHELF_LIMIT);
+  const recent = useGameFeed("recent", SHELF_LIMIT);
   const router = useRouter();
 
   // Each tab owns its own detail route (`/explore/game/[id]`, `/search/game/[id]`,
   // and the unprefixed `/game/[id]` inside `(home)`) so the push stays inside the
   // current tab. A bare `/game/${id}` resolves to `(home)` and switches tabs.
-  const openGame = useCallback(
-    (id: number) => router.push(`/explore/game/${id}`),
-    [router],
+  const openGame = useCallback((id: number) => router.push(`/explore/game/${id}`), [router]);
+
+  const shelves = useMemo(
+    () => toShelves({ popular: popular.data, upcoming: upcoming.data, recent: recent.data }),
+    [popular.data, upcoming.data, recent.data],
   );
 
-  const renderItem = useCallback(
-    ({ item }: { item: GameSummaryWire }) => (
-      <GameRow
-        id={item.id}
-        title={item.name}
-        subtitle={summarySubtitle(item)}
-        coverImageId={item.coverImageId}
-        onPress={openGame}
-      />
-    ),
-    [openGame],
-  );
+  const feeds = [popular, upcoming, recent];
+  const refetchAll = () => {
+    for (const feed of feeds) void feed.refetch();
+  };
+
+  // Three independent requests, so the screen only takes over when there is
+  // nothing to draw at all: something still coming spins, a failure that left
+  // no shelf behind offers a retry, and only then is the catalogue really
+  // empty. A feed that fails beside two that answered just goes unrendered.
+  if (shelves.length === 0) {
+    if (feeds.some((feed) => feed.isPending)) return <LoadingState />;
+
+    const failed = feeds.find((feed) => feed.isError);
+
+    return failed ? <ErrorState error={failed.error} onRetry={refetchAll} /> : EMPTY_CATALOGUE;
+  }
 
   return (
-    <QueryBoundary query={popular}>
-      {(data) => (
-        <FlatList
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          data={data.items}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          ListEmptyComponent={EMPTY_CATALOGUE}
-          refreshControl={
-            <RefreshControl
-              refreshing={popular.isRefetching}
-              onRefresh={() => void popular.refetch()}
-            />
-          }
-          contentInsetAdjustmentBehavior="automatic"
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={feeds.some((feed) => feed.isRefetching)}
+          onRefresh={refetchAll}
         />
-      )}
-    </QueryBoundary>
+      }
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      {shelves.map((shelf) => (
+        <GameShelf key={shelf.feed} shelf={shelf} onPressGame={openGame} />
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  list: Screen.fill,
-  listContent: Screen.listContent,
+  screen: Screen.fill,
+  content: { paddingBottom: 24 },
 });

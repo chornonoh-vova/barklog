@@ -18,6 +18,7 @@ import {
 } from "@repo/contracts";
 import { Alert } from "react-native";
 
+import type { GameFeed } from "./endpoints";
 import { errorCopy } from "./error-copy";
 import { keys } from "./keys";
 import { useApi } from "./provider";
@@ -51,12 +52,15 @@ export function useBacklogStats(): UseQueryResult<BacklogStatsWire> {
   return useQuery({ queryKey: keys.backlog.stats(), queryFn: () => api.getBacklogStats() });
 }
 
-export function usePopularGames(limit = SEARCH_LIMIT_DEFAULT): UseQueryResult<GameListResponse> {
+export function useGameFeed(
+  feed: GameFeed,
+  limit = SEARCH_LIMIT_DEFAULT,
+): UseQueryResult<GameListResponse> {
   const api = useApi();
 
   return useQuery({
-    queryKey: keys.games.popular(limit),
-    queryFn: () => api.popularGames({ limit }),
+    queryKey: keys.games.feed(feed, limit),
+    queryFn: () => api.gameFeed(feed, { limit }),
   });
 }
 

@@ -11,6 +11,12 @@ import {
 
 import type { Request } from "./client";
 
+/**
+ * The three explore feeds. They take the same query and answer with the same
+ * shape, so they are one call rather than three that could drift apart.
+ */
+export type GameFeed = "popular" | "upcoming" | "recent";
+
 export function createEndpoints(request: Request) {
   return {
     searchGames: (input: { q: string; limit?: number; offset?: number }) =>
@@ -22,8 +28,8 @@ export function createEndpoints(request: Request) {
         },
       }),
 
-    popularGames: (input: { limit?: number } = {}) =>
-      request<GameListResponse>("/api/games/popular", {
+    gameFeed: (feed: GameFeed, input: { limit?: number } = {}) =>
+      request<GameListResponse>(`/api/games/${feed}`, {
         query: { limit: input.limit ?? SEARCH_LIMIT_DEFAULT },
       }),
 

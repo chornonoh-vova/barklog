@@ -11,8 +11,12 @@ describe("query keys", () => {
     expect(keys.games.search("zelda", 20, 0)).toEqual(["games", "search", "zelda", 20, 0]);
   });
 
-  it("keys the popular list by its limit", () => {
-    expect(keys.games.popular(50)).toEqual(["games", "popular", 50]);
+  it("keys a feed by its name and limit", () => {
+    expect(keys.games.feed("popular", 20)).toEqual(["games", "feed", "popular", 20]);
+  });
+
+  it("gives each feed its own cache entry", () => {
+    expect(keys.games.feed("upcoming", 20)).not.toEqual(keys.games.feed("recent", 20));
   });
 
   it("distinguishes searches that differ only by page", () => {
