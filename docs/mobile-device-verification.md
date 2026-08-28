@@ -25,7 +25,10 @@ Then:
 ```bash
 pnpm deps:up                      # Postgres + Valkey
 pnpm --filter api dev             # API on :3000
-pnpm --filter mobile prebuild     # required — config plugins changed
+pnpm --filter mobile prebuild     # required — config plugins changed, and AsyncStorage
+                                   # is a new autolinked native module; skipping this
+                                   # produces a launch crash that looks nothing like a
+                                   # missing dependency
 pnpm --filter mobile ios
 ```
 
@@ -112,9 +115,15 @@ first: it is the one that can regress behaviour that already worked.
       of the sign-in screen, and above all no splash that never goes away. A
       stuck splash means the prevent call is being held by a gate that never
       paints.
-- [ ] **20. A fresh install shows onboarding before the sign-in screen.** Delete
-      the app from the simulator first, since that is what clears AsyncStorage.
-      Four pages, swipeable, dots at the bottom.
+- [ ] **20. A fresh install shows onboarding before the sign-in screen.** Sign
+      out first (or Erase All Content and Settings), then delete the app.
+      Deleting the app alone does not clear the simulator's keychain — Clerk's
+      session lives there (`@clerk/expo` uses `expo-secure-store` with
+      `AFTER_FIRST_UNLOCK`), and keychain items survive an app deletion. A
+      tester still signed in from checks 1-18 who deletes the app without
+      signing out first will correctly see NO onboarding (the reinstall
+      auto-complete branch), which is working as designed, not a failure. Four
+      pages, swipeable, dots at the bottom.
 - [ ] **21. The controls sit inside the safe area.** HIGHEST RISK of the
       cosmetic checks. `Host` is trusted to propagate the SwiftUI safe area, and
       the gate renders outside expo-router's `SafeAreaProvider`, so this is
@@ -122,10 +131,18 @@ first: it is the one that can regress behaviour that already worked.
       indicator, add a `SafeAreaProvider` at the root of `_layout.tsx` and pad
       the `Host` with `useSafeAreaInsets`. Check on a notched device.
 - [ ] **22. Skip works, and stays worked.** Tap Skip on page 1, land on the
-      sign-in screen, force-quit, relaunch: no onboarding. Then the same for
-      swiping to page 4 and tapping Start.
+      sign-in screen with no white or blank flash in between the last
+      onboarding page and it, force-quit, relaunch: no onboarding. Then the
+      same for swiping to page 4 and tapping Start.
 - [ ] **23. The igdb.com link opens the site**, and page 4 shows the
       external-link glyph beside it.
 - [ ] **24. Onboarding renders in both appearances.** Symbols and secondary text
       come from SwiftUI hierarchical styles, so light and dark should both work
       without a `useColorScheme` branch. Confirm rather than assume.
+- [ ] **25. Reinstalling with an existing account skips onboarding, and it
+      stays skipped.** Sign in, delete the app, reinstall: expect NO onboarding
+      and straight to the tabs — the reinstall case the whole decision table in
+      `should-show-onboarding.ts` exists for, and unverified anywhere else on
+      this list. Then force-quit and relaunch: still no onboarding, confirming
+      the flag the auto-complete branch writes was actually persisted rather
+      than the pass relying on the still-live session.
