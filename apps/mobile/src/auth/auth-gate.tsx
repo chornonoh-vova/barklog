@@ -6,8 +6,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import { shouldClearCache } from "./should-clear-cache";
 
-void SplashScreen.preventAutoHideAsync();
-
 /**
  * Two hooks, deliberately. `useAuthViewState()` decides what to render:
  * `isSignedIn` alone flips true as soon as the session exists, which is before a
@@ -35,7 +33,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Held open until Clerk has read the keychain, so a returning user never
-    // sees the sign-in screen flash.
+    // sees the sign-in screen flash. The `preventAutoHideAsync` that holds it
+    // lives in `app/_layout.tsx`, because `OnboardingGate` may paint before
+    // this component ever mounts and it hides the splash itself.
     if (isLoaded) void SplashScreen.hideAsync();
   }, [isLoaded]);
 
