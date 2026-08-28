@@ -772,7 +772,17 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     // The reinstall case: session restored, flag gone. Persist it so the next
     // launch takes the hot path and never waits on Clerk.
-    if (hasSeen === false && decision === "complete") void markOnboardingSeen();
+    //
+    // `setHasSeen(true)` as well as the write, so local state mirrors storage.
+    // Without it `hasSeen` stays `false` for the rest of the session and
+    // `decision` keeps depending on `isSignedIn`: a sign-out later in the same
+    // session would flip the gate back to "show" and bury the sign-in screen
+    // under onboarding, since this gate sits above `AuthGate`. It also makes the
+    // effect self-terminating rather than relying on the deps array.
+    if (hasSeen === false && decision === "complete") {
+      setHasSeen(true);
+      void markOnboardingSeen();
+    }
   }, [hasSeen, decision]);
 
   useEffect(() => {
