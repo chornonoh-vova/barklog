@@ -1,7 +1,7 @@
 import { BACKLOG_STATUSES } from "@repo/contracts";
 import { describe, expect, it } from "vitest";
 
-import { IGDB_PAGE_ID, ONBOARDING_PAGES } from "@/features/onboarding/pages";
+import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES, pageIndex } from "@/features/onboarding/pages";
 
 describe("ONBOARDING_PAGES", () => {
   it("is the four pages, in the agreed order", () => {
@@ -43,5 +43,44 @@ describe("ONBOARDING_PAGES", () => {
     for (const status of BACKLOG_STATUSES) {
       expect(page?.description.toLowerCase()).toContain(status);
     }
+  });
+});
+
+describe("pageIndex", () => {
+  it("finds the first page", () => {
+    expect(pageIndex("welcome")).toBe(0);
+  });
+
+  it("finds a middle page", () => {
+    expect(pageIndex("explore")).toBe(2);
+  });
+
+  it("finds the last page", () => {
+    expect(pageIndex(IGDB_PAGE_ID)).toBe(3);
+  });
+
+  it("resolves an unknown selection to 0 rather than -1", () => {
+    // Undocumented until now: `onboarding-screen.tsx` feeds this straight into
+    // `nextPageId`, so an id the native view reports that we don't have reads
+    // as page 0 — the button below it would say "Continue", not "Start".
+    expect(pageIndex("no-such-page")).toBe(0);
+  });
+});
+
+describe("nextPageId", () => {
+  it("gives the first page's successor", () => {
+    expect(nextPageId("welcome")).toBe("backlog");
+  });
+
+  it("gives a middle page's successor", () => {
+    expect(nextPageId("backlog")).toBe("explore");
+  });
+
+  it("gives undefined past the last page, the signal to complete instead of advance", () => {
+    expect(nextPageId(IGDB_PAGE_ID)).toBeUndefined();
+  });
+
+  it("treats an unknown selection as page 0, so it still returns a next id", () => {
+    expect(nextPageId("no-such-page")).toBe("backlog");
   });
 });

@@ -19,7 +19,7 @@ import { siteUrl } from "@/igdb-url";
 import { Brand } from "@/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 
-import { IGDB_PAGE_ID, ONBOARDING_PAGES } from "./pages";
+import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES } from "./pages";
 
 /**
  * A SwiftUI `TabView` in page style, so the swipe gesture and the dot indicators
@@ -32,21 +32,13 @@ import { IGDB_PAGE_ID, ONBOARDING_PAGES } from "./pages";
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [selection, setSelection] = useState<string>(ONBOARDING_PAGES[0].id);
 
-  // `Math.max(0, …)`: a selection the native view reports for a page we do not
-  // have would otherwise index off the front of the array.
-  const index = Math.max(
-    0,
-    ONBOARDING_PAGES.findIndex((page) => page.id === selection),
-  );
-  const isLast = index === ONBOARDING_PAGES.length - 1;
+  // `nextPageId` returning `undefined` is the whole signal for "last page":
+  // no next page means this one completes rather than advances.
+  const next = nextPageId(selection);
+  const isLast = next === undefined;
 
-  // `noUncheckedIndexedAccess` is on, so a computed index is `| undefined`.
-  // Reading it once and branching on the result is both typesafe and the whole
-  // of the button's behaviour: no next page means this one completes.
   const advance = () => {
-    const next = ONBOARDING_PAGES[index + 1];
-
-    if (next) setSelection(next.id);
+    if (next) setSelection(next);
     else onComplete();
   };
 

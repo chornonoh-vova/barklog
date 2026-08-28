@@ -54,3 +54,34 @@ export const ONBOARDING_PAGES = [
       "Every cover, release date, platform, and summary in Barklog comes from IGDB, a games database its community maintains.",
   },
 ] as const satisfies readonly OnboardingPage[];
+
+/**
+ * The pager's page arithmetic, pulled out of `onboarding-screen.tsx` so it is
+ * testable in Node — same reason `features/explore/shelves.ts` and
+ * `features/backlog/sections.ts` hold their pure logic apart from the
+ * SwiftUI/react-native views that use it.
+ *
+ * `0` for an unknown `selection` rather than `-1`: it is what
+ * `onboarding-screen.tsx` needs to keep indexing safely, and it has a real
+ * consequence worth being explicit about — `nextPageId` then treats the
+ * unknown selection as page 0, so the button below it reads "Continue" rather
+ * than "Start".
+ */
+export function pageIndex(selection: string): number {
+  const index = ONBOARDING_PAGES.findIndex((page) => page.id === selection);
+
+  return index === -1 ? 0 : index;
+}
+
+/**
+ * `undefined` on the last page is the whole signal: it is what tells the
+ * caller to complete instead of advance, so there is no separate `isLast`
+ * needed to drive that decision.
+ */
+export function nextPageId(selection: string): string | undefined {
+  // `noUncheckedIndexedAccess` makes this `OnboardingPage | undefined` already;
+  // no assertion needed to read past the end of the tuple.
+  const next = ONBOARDING_PAGES[pageIndex(selection) + 1];
+
+  return next?.id;
+}
