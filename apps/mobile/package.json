@@ -17,6 +17,7 @@
   "dependencies": {
     "@clerk/expo": "^4.6.0",
     "@expo/ui": "~57.0.12",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@repo/contracts": "workspace:*",
     "@tanstack/react-query": "^5.102.5",
     "expo": "~57.0.15",
