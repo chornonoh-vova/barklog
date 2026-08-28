@@ -71,6 +71,12 @@ Therefore:
 `hideAsync()` is idempotent, so the second call when onboarding finishes and
 `AuthGate` mounts is a no-op.
 
+**Superseded during cleanup.** Shipped as `src/splash.ts`, which holds the
+splash at import and exposes `useReleaseSplash(ready)`; each gate calls it with
+its own readiness. Same behaviour, but the prevent/hide pairing is one mechanism
+rather than a convention repeated per gate, which is what a third gate's author
+would otherwise have had to infer from three separate comments.
+
 ## 4. The decision
 
 `src/onboarding/should-show-onboarding.ts` holds the whole policy:

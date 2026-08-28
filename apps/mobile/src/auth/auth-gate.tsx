@@ -1,8 +1,9 @@
 import { useAuth } from "@clerk/expo";
 import { AuthView, useAuthViewState } from "@clerk/expo/native";
 import { useQueryClient } from "@tanstack/react-query";
-import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, type ReactNode } from "react";
+
+import { useReleaseSplash } from "@/splash";
 
 import { shouldClearCache } from "./should-clear-cache";
 
@@ -31,13 +32,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (userId !== undefined) previous.current = userId;
   }, [isLoaded, userId, queryClient]);
 
-  useEffect(() => {
-    // Held open until Clerk has read the keychain, so a returning user never
-    // sees the sign-in screen flash. The `preventAutoHideAsync` that holds it
-    // lives in `app/_layout.tsx`, because `OnboardingGate` may paint before
-    // this component ever mounts and it hides the splash itself.
-    if (isLoaded) void SplashScreen.hideAsync();
-  }, [isLoaded]);
+  // Held until Clerk has read the keychain, so a returning user never sees the
+  // sign-in screen flash.
+  useReleaseSplash(isLoaded);
 
   if (!isLoaded) return null;
 

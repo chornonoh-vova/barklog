@@ -1,16 +1,11 @@
 /**
- * Pure and named so it is testable: the two cases that matter — a reinstall
- * whose Clerk session outlived its AsyncStorage, and a storage read still in
- * flight — are both awkward to reach in a simulator and easy to get wrong.
- *
- * `undefined` means "not yet known" for both inputs, never "no". `hasSeen` is
- * unknown until AsyncStorage answers; `isSignedIn` is unknown until Clerk has
- * read the keychain.
+ * Pure and testable: the awkward cases — a reinstall whose Clerk session
+ * outlived its AsyncStorage, and a read still in flight — are hard to reach in a
+ * simulator. `undefined` means "not yet known" for both inputs, never "no".
  */
 export type OnboardingDecision =
   /** Render nothing. The splash is still up. */
   | "pending"
-  /** Render the pages. */
   | "show"
   /** Hand off to the auth gate. */
   | "complete";

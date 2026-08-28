@@ -33,8 +33,6 @@ import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES } from "./pages";
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [selection, setSelection] = useState<string>(ONBOARDING_PAGES[0].id);
 
-  // `nextPageId` returning `undefined` is the whole signal for "last page":
-  // no next page means this one completes rather than advances.
   const next = nextPageId(selection);
   const isLast = next === undefined;
 
@@ -62,7 +60,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           onSelectionChange={setSelection}
           modifiers={[
             tabViewStyle({ type: "page", indexDisplayMode: "always" }),
-            indexViewStyle({ backgroundDisplayMode: 'always' }),
+            indexViewStyle({ backgroundDisplayMode: "always" }),
           ]}
         >
           {ONBOARDING_PAGES.map((page) => (

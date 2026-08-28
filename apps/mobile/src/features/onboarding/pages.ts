@@ -21,8 +21,8 @@ export const IGDB_PAGE_ID = "igdb";
  * literal length, which is what lets `onboarding-screen.tsx` index `[0]` for its
  * initial selection without a non-null assertion.
  *
- * Titles are the repo owner's wording. The third page's three items are the
- * three `SHELVES` feeds in `features/explore/shelves.ts`, paraphrased.
+ * The third page's three items paraphrase the `SHELVES` feeds in
+ * `features/explore/shelves.ts`.
  */
 export const ONBOARDING_PAGES = [
   {
@@ -56,16 +56,9 @@ export const ONBOARDING_PAGES = [
 ] as const satisfies readonly OnboardingPage[];
 
 /**
- * The pager's page arithmetic, pulled out of `onboarding-screen.tsx` so it is
- * testable in Node — same reason `features/explore/shelves.ts` and
- * `features/backlog/sections.ts` hold their pure logic apart from the
- * SwiftUI/react-native views that use it.
- *
- * `0` for an unknown `selection` rather than `-1`: it is what
- * `onboarding-screen.tsx` needs to keep indexing safely, and it has a real
- * consequence worth being explicit about — `nextPageId` then treats the
- * unknown selection as page 0, so the button below it reads "Continue" rather
- * than "Start".
+ * `0` for an unknown `selection`, not `-1`: `nextPageId` then treats it as page
+ * 0, so the button reads "Continue" rather than "Start" instead of indexing off
+ * the end of the tuple.
  */
 export function pageIndex(selection: string): number {
   const index = ONBOARDING_PAGES.findIndex((page) => page.id === selection);

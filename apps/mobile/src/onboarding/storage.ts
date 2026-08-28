@@ -1,24 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
- * AsyncStorage, not `expo-secure-store`: this is not a secret, and SecureStore's
- * keychain entries outlive an uninstall. The flag living in the app container is
- * the point — a reinstall shows onboarding again, which is exactly what the Skip
- * button is for.
+ * AsyncStorage, not `expo-secure-store`: the flag must not survive an uninstall,
+ * since a reinstall showing onboarding again is what Skip is for.
  */
 const KEY = "barklog.onboarding.seen";
 
 /**
- * A failed read resolves to `true`, which is the opposite of the obvious
- * default. This is not resolving an ambiguity: a missing key (`null`) and a
- * broken read (throws) are perfectly distinguishable here, so `false` for a
- * throw was always available too. The actual trade is "never see onboarding
- * when storage is broken" against "see a dismissable onboarding on every
- * launch" — and `onboarding-gate.tsx` completes locally as soon as Skip or
- * Start is pressed, regardless of whether this read or the write in
- * `markOnboardingSeen` ever works, so nobody is trapped either way. Repeated
- * onboarding reading as a bug, rather than as a rare and recoverable
- * annoyance, is why `true` won.
+ * A failed read resolves to `true` (seen), the opposite of the obvious default.
+ * A missing key and a broken read are distinguishable here, so this is a choice
+ * rather than an ambiguity: onboarding returning on every launch reads as a bug,
+ * while skipping it once does not. Nobody is trapped either way, because
+ * `onboarding-gate.tsx` completes locally on Skip or Start whether or not
+ * storage works.
  */
 export async function readHasSeenOnboarding(): Promise<boolean> {
   try {
@@ -28,14 +22,11 @@ export async function readHasSeenOnboarding(): Promise<boolean> {
   }
 }
 
-/**
- * Swallows failures. Seeing onboarding once more next launch is an annoyance; an
- * unhandled rejection between the last page and the auth gate is not.
- */
+/** Swallows failures: a rejection here would block entry to the app. */
 export async function markOnboardingSeen(): Promise<void> {
   try {
     await AsyncStorage.setItem(KEY, "1");
   } catch {
-    // Intentionally ignored, per the doc comment.
+    // Ignored, per the doc comment.
   }
 }

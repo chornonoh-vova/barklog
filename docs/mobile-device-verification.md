@@ -110,11 +110,12 @@ Added by `docs/superpowers/plans/2026-08-28-mobile-onboarding.md`. Check 19
 first: it is the one that can regress behaviour that already worked.
 
 - [ ] **19. A returning signed-in user still goes straight to the tabs.** This is
-      check 3 again, re-run because `preventAutoHideAsync()` moved from
-      `src/auth/auth-gate.tsx` to `src/app/_layout.tsx`. No onboarding, no flash
-      of the sign-in screen, and above all no splash that never goes away. A
-      stuck splash means the prevent call is being held by a gate that never
-      paints.
+      check 3 again, re-run because the splash lifecycle moved out of
+      `src/auth/auth-gate.tsx` into `src/splash.ts`, which both gates now drive
+      through `useReleaseSplash`. No onboarding, no flash of the sign-in screen,
+      and above all no splash that never goes away. A stuck splash means no gate
+      ever reported itself ready; a splash that lifts too early means one
+      reported ready before it had anything to paint.
 - [ ] **20. A fresh install shows onboarding before the sign-in screen.** Sign
       out first (or Erase All Content and Settings), then delete the app.
       Deleting the app alone does not clear the simulator's keychain — Clerk's

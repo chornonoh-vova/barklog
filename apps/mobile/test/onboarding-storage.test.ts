@@ -30,9 +30,8 @@ describe("readHasSeenOnboarding", () => {
   });
 
   it("is true when the read throws, the deliberately counterintuitive default", () => {
-    // Prevents: a broken AsyncStorage read trapping the user behind onboarding
-    // on every launch instead of just letting them through once more than
-    // strictly necessary.
+    // Prevents: a broken AsyncStorage read bringing onboarding back on every
+    // launch, which reads as a bug, rather than skipping it once.
     vi.mocked(AsyncStorage.getItem).mockRejectedValueOnce(new Error("boom"));
 
     return expect(readHasSeenOnboarding()).resolves.toBe(true);

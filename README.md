@@ -204,7 +204,7 @@ src/
   hooks/       use-debounced
   onboarding/  onboarding-gate, should-show-onboarding, storage
   ui/          glass, platform-glass, measured-host
-  env.ts  igdb-image.ts  query-client.ts  theme.ts
+  env.ts  igdb-image.ts  query-client.ts  splash.ts  theme.ts
 ```
 
 **Tabs.** Expo Router's native tabs (`expo-router/unstable-native-tabs`) render
@@ -249,10 +249,11 @@ previous user's backlog.
 
 `OnboardingGate` sits above `AuthGate` and is the one exception to "every other
 screen only ever renders for a signed-in user": it renders for a signed-out
-visitor on a first install, before an account exists. The splash is held by
-`app/_layout.tsx` rather than by either gate, and released by whichever gate is
-first to decide what it renders — `OnboardingGate` when it shows the pages,
-`AuthGate` on the ordinary pass-through path.
+visitor on a first install, before an account exists. `splash.ts` owns the
+splash lifecycle for both gates: it holds the splash at import and exposes
+`useReleaseSplash(ready)`, which each gate calls with its own readiness, so
+whichever gate decides first releases it and neither needs to know the other
+exists.
 
 There is no `expo-apple-authentication` dependency: `<AuthView />` runs the
 Apple flow internally, so nothing else needs to touch the config plugin.
