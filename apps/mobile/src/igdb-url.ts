@@ -10,3 +10,11 @@ const BASE = "https://www.igdb.com";
 export function gameUrl(slug: string): string {
   return `${BASE}/games/${slug}`;
 }
+
+/**
+ * The site root, for the onboarding page that credits IGDB as the source of
+ * every field in the app rather than of one game.
+ */
+export function siteUrl(): string {
+  return BASE;
+}
