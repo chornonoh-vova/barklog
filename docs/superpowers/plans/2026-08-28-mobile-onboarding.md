@@ -872,10 +872,12 @@ Expected: all PASS, including the pre-existing `should-clear-cache` and `smoke` 
 - [ ] **Step 5: Confirm exactly one `preventAutoHideAsync` remains**
 
 ```bash
-grep -rn "preventAutoHideAsync\|hideAsync" apps/mobile/src
+grep -rn "SplashScreen\.\(preventAutoHideAsync\|hideAsync\)(" apps/mobile/src
 ```
 
-Expected: one `preventAutoHideAsync` in `src/app/_layout.tsx`, one `hideAsync` in `src/auth/auth-gate.tsx`, one `hideAsync` in `src/onboarding/onboarding-gate.tsx`. Two prevent calls means the edit in Step 2 did not land, and the splash would then be held by a call nobody hides.
+Expected exactly three lines: one `preventAutoHideAsync` in `src/app/_layout.tsx`, one `hideAsync` in `src/auth/auth-gate.tsx`, one `hideAsync` in `src/onboarding/onboarding-gate.tsx`. Two prevent calls means the edit in Step 2 did not land, and the splash would then be held by a call nobody hides.
+
+The pattern is call-shaped (`SplashScreen.` prefix, open paren) on purpose. A bare `grep -rn "preventAutoHideAsync\|hideAsync"` also matches the Step 2 comment, which names `preventAutoHideAsync` in prose, and returns four lines for a correct edit.
 
 - [ ] **Step 6: Commit**
 
