@@ -450,7 +450,7 @@ git commit -m "feat(mobile): onboarding page copy"
   ```
   Task 6 imports both from `./storage`. Neither ever rejects.
 
-No unit test. Both functions are three lines over a native module whose off-device behaviour is meaningless, and mocking AsyncStorage would only assert that the mock was called. The behaviour that matters is on the device checklist (Task 7, checks 19 and 22).
+Unit-tested with a `vi.mock` factory for `@react-native-async-storage/async-storage`, so the real module — which transitively requires react-native — is never loaded. That covers the three read outcomes (missing, present, throws) and the one contract Task 6 depends on, that a write failure resolves rather than rejects; see `apps/mobile/test/onboarding-storage.test.ts`. The device checklist (Task 7, checks 19 and 22) still covers what only the real native module can show.
 
 - [ ] **Step 1: Install the dependency**
 

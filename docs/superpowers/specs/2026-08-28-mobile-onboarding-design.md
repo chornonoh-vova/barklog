@@ -233,10 +233,10 @@ imports. `pages.ts` qualifies: its only import is the `SFSymbol` *type* from
 | `test/onboarding-decision.test.ts` | Every row of §4's table, plus repeat renders in each state. |
 | `test/onboarding-pages.test.ts` | Four pages; unique ids; every title and description non-empty; `igdb` is last; page 2's description contains every `BACKLOG_STATUSES` value. |
 | `test/igdb-url.test.ts` | Extended with `siteUrl()`. |
+| `test/onboarding-storage.test.ts` | The three read outcomes (missing, present, throws) and that a write failure resolves rather than rejects, mocking `@react-native-async-storage/async-storage` with a `vi.mock` factory so the real, react-native-requiring module is never loaded. |
 
-`storage.ts` and the two components are not unit-tested: they are thin native
-wrappers whose behaviour off-device is meaningless. They go on the device
-checklist instead.
+The two components are not unit-tested: they are thin native wrappers whose
+behaviour off-device is meaningless. They go on the device checklist instead.
 
 ## 10. Risks
 
