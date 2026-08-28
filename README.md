@@ -216,12 +216,9 @@ Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
 whenever Android lands.
 
 **Explore.** Three shelves — Most Popular, Upcoming, Recently Released — each a
-two-row grid scrolling sideways over its own feed request. A horizontal
-`FlatList` has no `numColumns`, that prop splitting only a vertical list, so
-`features/explore/shelves.ts` pairs the games into columns and one list item
-draws a column of two. The three queries are independent: a shelf appears when
-it lands, and one that fails or answers empty is simply not drawn, which is what
-keeps a single slow feed from taking the page down with it.
+two-row grid scrolling sideways over its own feed request. The three queries are
+independent: a shelf that fails or answers empty is simply not drawn, so one
+slow feed cannot take the page down with it.
 
 **UI.** React Native renders lists, rows, images and text content; `@expo/ui/swift-ui`
 inside a `Host` renders controls, plus `ProgressView` for loading and a

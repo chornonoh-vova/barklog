@@ -140,11 +140,8 @@ test("popular ranks by rating count behind a rating floor", async () => {
   expect(body.items.map((item) => item.id)).toEqual([1]);
 });
 
-/**
- * The release routes read `new Date()` themselves, so their fixtures are
- * relative to the real clock. Whole days of margin, so a run at any hour lands
- * each fixture on the intended side of the UTC day boundary the feeds split on.
- */
+/** Whole days of margin, so any run hour lands a fixture on its intended side
+ * of the UTC day boundary the routes split on. */
 const daysFromNow = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
 test("upcoming lists what has not shipped yet, soonest first", async () => {
@@ -182,19 +179,6 @@ test("recent lists the games just out, most rated first", async () => {
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("private, max-age=300");
   expect(body.items.map((item) => item.id)).toEqual([2, 1]);
-});
-
-test("a release feed with no cover art shows nothing, however well timed", async () => {
-  await seedGame(harness.db, {
-    id: 1,
-    name: "Placeholder Listing",
-    firstReleaseDate: daysFromNow(2),
-    coverImageId: null,
-  });
-
-  const response = await callApi(harness.app, "/api/games/upcoming");
-
-  expect(((await response.json()) as { items: unknown[] }).items).toEqual([]);
 });
 
 test("the release feeds cache, and a hit is byte-identical to the miss", async () => {

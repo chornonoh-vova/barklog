@@ -1,6 +1,4 @@
-import type { BacklogSort, BacklogStatus } from "@repo/contracts";
-
-import type { GameFeed } from "./endpoints";
+import type { BacklogSort, BacklogStatus, GameFeed } from "@repo/contracts";
 
 /**
  * `stats` sits under the `backlog` namespace so that invalidating

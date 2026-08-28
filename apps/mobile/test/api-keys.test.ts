@@ -15,10 +15,6 @@ describe("query keys", () => {
     expect(keys.games.feed("popular", 20)).toEqual(["games", "feed", "popular", 20]);
   });
 
-  it("gives each feed its own cache entry", () => {
-    expect(keys.games.feed("upcoming", 20)).not.toEqual(keys.games.feed("recent", 20));
-  });
-
   it("distinguishes searches that differ only by page", () => {
     expect(keys.games.search("zelda", 20, 0)).not.toEqual(keys.games.search("zelda", 20, 20));
   });

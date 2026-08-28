@@ -4,9 +4,9 @@ import { expect, test } from "vitest";
 import {
   backlogListQuerySchema,
   backlogUpsertSchema,
+  gameFeedQuerySchema,
   gameIdParamSchema,
   MAX_GAME_ID,
-  gameFeedQuerySchema,
   searchQuerySchema,
 } from "../src/index.js";
 
@@ -43,7 +43,7 @@ test("search rejects the bounds the spec puts on limit and offset", () => {
   expect(accepts(searchQuerySchema, { q: "zelda", limit: "abc" })).toBe(false);
 });
 
-test("popular defaults its limit and caps it at 50", () => {
+test("a game feed defaults its limit and caps it at 50", () => {
   expect(parse(gameFeedQuerySchema, {})).toEqual({ limit: 20 });
   expect(accepts(gameFeedQuerySchema, { limit: 51 })).toBe(false);
 });

@@ -1,6 +1,11 @@
 import { sValidator } from "@hono/standard-validator";
 import { withCache } from "@repo/cache";
-import { gameFeedQuerySchema, gameIdParamSchema, searchQuerySchema } from "@repo/contracts";
+import {
+  gameFeedQuerySchema,
+  gameIdParamSchema,
+  searchQuerySchema,
+  type GameFeed,
+} from "@repo/contracts";
 import {
   getBacklogEntry,
   getGameDetail,
@@ -8,16 +13,15 @@ import {
   recentGames,
   searchGames,
   upcomingGames,
+  type GameSummary,
 } from "@repo/db";
 import { Hono } from "hono";
 
 import {
-  dayBucket,
   EMPTY_SEARCH_TTL_SECONDS,
   FEED_TTL_SECONDS,
+  feedKey,
   normaliseQuery,
-  popularKey,
-  releaseFeedKey,
   SEARCH_TTL_SECONDS,
   SEARCH_VERSION_KEY,
   searchKey,
@@ -26,27 +30,25 @@ import { onInvalid, problems } from "../problems.js";
 import { toBacklogEntry, toGameDetail, toGameSummary, type GameSummaryWire } from "../serialize.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
+const FEED_CACHE_CONTROL = "private, max-age=300";
+
 export function gamesRoutes(deps: AppDeps) {
   const searchVersion = async (): Promise<number> =>
     (await deps.cache.get<number>(SEARCH_VERSION_KEY)) ?? 0;
 
-  /**
-   * `/upcoming` and `/recent` differ only in which query they run, so they
-   * share this: one day-bucketed key shape, one TTL, and one place for the
-   * clock the two feeds partition on to be read.
-   */
-  const releaseFeed = async (
-    feed: "upcoming" | "recent",
-    query: typeof upcomingGames,
+  /** The three feeds differ only in the query they run. */
+  const feed = async (
+    name: GameFeed,
     limit: number,
+    run: (now: Date) => Promise<GameSummary[]>,
   ): Promise<GameSummaryWire[]> => {
     const now = new Date();
 
     return withCache<GameSummaryWire[]>(
       deps.cache,
-      releaseFeedKey(feed, await searchVersion(), limit, dayBucket(now)),
+      feedKey(name, await searchVersion(), limit, now),
       FEED_TTL_SECONDS,
-      async () => (await query(deps.db, { limit, now })).map(toGameSummary),
+      async () => (await run(now)).map(toGameSummary),
     );
   };
 
@@ -69,28 +71,25 @@ export function gamesRoutes(deps: AppDeps) {
       })
       .get("/popular", sValidator("query", gameFeedQuerySchema, onInvalid), async (c) => {
         const { limit } = c.req.valid("query");
-        const version = await searchVersion();
+        const items = await feed("popular", limit, () => popularGames(deps.db, { limit }));
 
-        const items = await withCache<GameSummaryWire[]>(
-          deps.cache,
-          popularKey(version, limit),
-          FEED_TTL_SECONDS,
-          async () => (await popularGames(deps.db, { limit })).map(toGameSummary),
-        );
-
-        c.header("Cache-Control", "private, max-age=300");
+        c.header("Cache-Control", FEED_CACHE_CONTROL);
         return c.json({ items });
       })
       .get("/upcoming", sValidator("query", gameFeedQuerySchema, onInvalid), async (c) => {
-        const items = await releaseFeed("upcoming", upcomingGames, c.req.valid("query").limit);
+        const { limit } = c.req.valid("query");
+        const items = await feed("upcoming", limit, (now) =>
+          upcomingGames(deps.db, { limit, now }),
+        );
 
-        c.header("Cache-Control", "private, max-age=300");
+        c.header("Cache-Control", FEED_CACHE_CONTROL);
         return c.json({ items });
       })
       .get("/recent", sValidator("query", gameFeedQuerySchema, onInvalid), async (c) => {
-        const items = await releaseFeed("recent", recentGames, c.req.valid("query").limit);
+        const { limit } = c.req.valid("query");
+        const items = await feed("recent", limit, (now) => recentGames(deps.db, { limit, now }));
 
-        c.header("Cache-Control", "private, max-age=300");
+        c.header("Cache-Control", FEED_CACHE_CONTROL);
         return c.json({ items });
       })
       // Registered last so the static paths above are never shadowed.

@@ -14,11 +14,11 @@ import {
   type BacklogStatsWire,
   type BacklogStatus,
   type GameDetailResponse,
+  type GameFeed,
   type GameListResponse,
 } from "@repo/contracts";
 import { Alert } from "react-native";
 
-import type { GameFeed } from "./endpoints";
 import { errorCopy } from "./error-copy";
 import { keys } from "./keys";
 import { useApi } from "./provider";

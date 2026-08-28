@@ -31,9 +31,8 @@ interface Fixture {
   /** Defaults to 0 = Main Game, which is searchable. */
   typeId?: number;
   rating?: number | null;
-  /** Defaults to null, which keeps a fixture out of both release feeds. */
+  /** Null keeps a fixture out of both release feeds. */
   releaseDate?: Date | null;
-  /** Defaults to present, since only the release feeds require artwork. */
   cover?: string | null;
 }
 
@@ -180,11 +179,7 @@ test("popular excludes a well-rated game that has not been rated enough times", 
   expect(names).not.toContain("Hidden Gem With Few Ratings");
 });
 
-/**
- * A fixed clock, so the window boundaries below are arithmetic rather than
- * whatever the suite happens to run at. `today` is the start of the UTC day the
- * feeds partition on.
- */
+/** A fixed clock, so the window boundaries below are arithmetic. */
 const NOW = new Date("2026-06-15T12:00:00Z");
 const at = (iso: string): Date => new Date(iso);
 
@@ -214,14 +209,6 @@ test("upcoming lists unreleased games soonest first", async () => {
   const names = (await upcomingGames(db, { limit: 10, now: NOW })).map((row) => row.name);
 
   expect(names).toEqual(["Ships Today", "Ships Next Month", "Ships Next Year"]);
-});
-
-test("upcoming ignores popular's rating floors, which no unreleased game could clear", async () => {
-  // Every upcoming fixture has a zero rating count, so a feed that reused
-  // POPULAR_RATING_COUNT_FLOOR would return nothing at all.
-  await seed(RELEASE_FIXTURES);
-
-  expect(await upcomingGames(db, { limit: 10, now: NOW })).not.toEqual([]);
 });
 
 test("recent covers the ninety days before today, ranked by rating count", async () => {
@@ -265,7 +252,6 @@ test("both release feeds skip non-searchable types and games with no cover art",
       typeId: 1,
       releaseDate: at("2026-06-10T00:00:00Z"),
     },
-    // Artwork is the stand-in for "this listing is a real game".
     {
       id: 42,
       name: "Upcoming Placeholder",

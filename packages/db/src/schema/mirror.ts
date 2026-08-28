@@ -59,10 +59,12 @@ export const games = pgTable(
     index("games_popular_idx")
       .on(sql`${t.totalRatingCount} DESC`)
       .where(sql`${t.totalRatingCount} > 50`),
-    // Serves both release feeds. Not partial the way games_popular_idx is:
-    // a predicate cannot reference now(), and the window both feeds ask for
-    // moves every day.
-    index("games_release_date_idx").on(t.firstReleaseDate),
+    // Serves both release feeds. The moving window cannot go in the predicate
+    // — it would have to reference now() — but the null half is static, and
+    // both feeds' range quals imply it.
+    index("games_release_date_idx")
+      .on(t.firstReleaseDate)
+      .where(sql`${t.firstReleaseDate} is not null`),
   ],
 );
 

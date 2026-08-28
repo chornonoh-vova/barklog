@@ -1,12 +1,12 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
 import { useGameFeed } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState, LoadingState } from "@/components/query-states";
 import { GameShelf } from "@/features/explore/game-shelf";
-import { SHELF_LIMIT, toShelves } from "@/features/explore/shelves";
+import { toShelves } from "@/features/explore/shelves";
 import { Screen } from "@/theme";
 
 const EMPTY_CATALOGUE = (
@@ -18,9 +18,9 @@ const EMPTY_CATALOGUE = (
 );
 
 export function ExploreScreen() {
-  const popular = useGameFeed("popular", SHELF_LIMIT);
-  const upcoming = useGameFeed("upcoming", SHELF_LIMIT);
-  const recent = useGameFeed("recent", SHELF_LIMIT);
+  const popular = useGameFeed("popular");
+  const upcoming = useGameFeed("upcoming");
+  const recent = useGameFeed("recent");
   const router = useRouter();
 
   // Each tab owns its own detail route (`/explore/game/[id]`, `/search/game/[id]`,
@@ -28,20 +28,19 @@ export function ExploreScreen() {
   // current tab. A bare `/game/${id}` resolves to `(home)` and switches tabs.
   const openGame = useCallback((id: number) => router.push(`/explore/game/${id}`), [router]);
 
-  const shelves = useMemo(
-    () => toShelves({ popular: popular.data, upcoming: upcoming.data, recent: recent.data }),
-    [popular.data, upcoming.data, recent.data],
-  );
+  const shelves = toShelves({
+    popular: popular.data,
+    upcoming: upcoming.data,
+    recent: recent.data,
+  });
 
   const feeds = [popular, upcoming, recent];
   const refetchAll = () => {
     for (const feed of feeds) void feed.refetch();
   };
 
-  // Three independent requests, so the screen only takes over when there is
-  // nothing to draw at all: something still coming spins, a failure that left
-  // no shelf behind offers a retry, and only then is the catalogue really
-  // empty. A feed that fails beside two that answered just goes unrendered.
+  // Only take the whole screen over when nothing at all is drawable; a feed
+  // that fails beside two that answered just goes unrendered.
   if (shelves.length === 0) {
     if (feeds.some((feed) => feed.isPending)) return <LoadingState />;
 

@@ -6,16 +6,11 @@ import {
   type BacklogStatsWire,
   type BacklogStatus,
   type GameDetailResponse,
+  type GameFeed,
   type GameListResponse,
 } from "@repo/contracts";
 
 import type { Request } from "./client";
-
-/**
- * The three explore feeds. They take the same query and answer with the same
- * shape, so they are one call rather than three that could drift apart.
- */
-export type GameFeed = "popular" | "upcoming" | "recent";
 
 export function createEndpoints(request: Request) {
   return {

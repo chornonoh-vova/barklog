@@ -28,11 +28,13 @@ export const searchQuerySchema = v.object({
 });
 export type SearchQuery = v.InferOutput<typeof searchQuerySchema>;
 
-/** Shared by `/popular`, `/upcoming` and `/recent` — a limit is all they take. */
+/** The three explore feeds, by URL segment. */
+export type GameFeed = "popular" | "upcoming" | "recent";
+
+/** Shared by `/popular`, `/upcoming` and `/recent`. */
 export const gameFeedQuerySchema = v.object({
   limit: v.optional(integerFrom(1, SEARCH_LIMIT_MAX), SEARCH_LIMIT_DEFAULT),
 });
-export type GameFeedQuery = v.InferOutput<typeof gameFeedQuerySchema>;
 
 /** `GET /api/games/:id` */
 export const gameIdParamSchema = v.object({ id: gameId });

@@ -4,24 +4,12 @@ import { PlatformColor, Pressable, StyleSheet, Text } from "react-native";
 import { Cover } from "@/components/cover";
 import { Type } from "@/theme";
 
-export const TILE_WIDTH = 100;
+const TILE_WIDTH = 100;
 
-/**
- * `big` rather than the `small` a row uses: at 100pt this lands on a 3x screen
- * around 300px, and the small transform's 180px is visibly soft there.
- */
-const COVER_SIZE = "big";
-
-/** Two lines of title and one of subtitle, fixed, so every tile in a shelf is
- * the same height and the two rows of the grid stay aligned. */
+/** Fixed heights, so the two rows of a shelf stay aligned. */
 const TITLE_LINE = 17;
 
-/**
- * The grid counterpart to `GameRow`, memoized for the same reason: a shelf
- * re-renders on every pull-to-refresh, and taking `id` with one hoisted
- * `onPress(id)` — rather than a per-tile closure — lets every visible tile
- * bail out.
- */
+/** Memoized like `GameRow`, taking `id` rather than a per-tile closure. */
 export const GameTile = memo(function GameTile({
   id,
   title,
@@ -42,7 +30,8 @@ export const GameTile = memo(function GameTile({
       accessibilityRole="button"
       accessibilityLabel={subtitle === null ? title : `${title}, ${subtitle}`}
     >
-      <Cover imageId={coverImageId} size={COVER_SIZE} width={TILE_WIDTH} />
+      {/* `big`: at 100pt on a 3x screen the small transform's 180px is visibly soft. */}
+      <Cover imageId={coverImageId} size="big" width={TILE_WIDTH} />
 
       <Text style={styles.title} numberOfLines={2}>
         {title}

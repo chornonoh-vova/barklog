@@ -7,9 +7,7 @@ import { summarySubtitle } from "@/features/game/format";
 import type { Shelf } from "@/features/explore/shelves";
 import { Type } from "@/theme";
 
-// Every column holds a distinct pair, so their ids compose a stable key
-// without the tail column needing a special case.
-const keyExtractor = (column: GameSummaryWire[]) => column.map((game) => game.id).join("-");
+const keyExtractor = (column: GameSummaryWire[]) => String(column[0]?.id);
 
 export function GameShelf({
   shelf,

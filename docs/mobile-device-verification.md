@@ -96,9 +96,7 @@ pnpm --filter mobile ios
       rebuild. An ATS exception is deliberately NOT pre-applied: loosening
       transport security should be a deliberate response to an observed
       failure, not a precaution.
-- [ ] **18. The Explore shelves scroll and stay aligned.** Three sections, each
-      a two-row grid scrolling sideways. Check that the two rows stay aligned
-      across titles of very different lengths — the fixed title and subtitle
-      heights in `game-tile.tsx` are the only thing holding that — and that the
-      horizontal lists nested in the vertical `ScrollView` do not fight it for
-      the gesture.
+- [ ] **18. The Explore shelves scroll and stay aligned.** Check the two rows
+      stay aligned across very different title lengths (the fixed heights in
+      `game-tile.tsx` are all that holds it), and that the horizontal lists do
+      not fight the vertical `ScrollView` for the gesture.

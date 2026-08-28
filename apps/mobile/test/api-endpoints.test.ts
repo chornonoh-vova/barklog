@@ -24,21 +24,20 @@ describe("createEndpoints", () => {
     });
   });
 
-  it("requests a feed with a default limit", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).gameFeed("popular");
-
-    expect(calls[0]).toEqual({ path: "/api/games/popular", options: { query: { limit: 20 } } });
-  });
-
-  it("puts the feed in the path, so all three share one call", async () => {
+  it("puts the feed in the path, with a default limit", async () => {
     const { request, calls } = spy();
     const endpoints = createEndpoints(request);
 
-    await endpoints.gameFeed("upcoming", { limit: 20 });
-    await endpoints.gameFeed("recent", { limit: 20 });
+    await endpoints.gameFeed("popular");
+    await endpoints.gameFeed("upcoming");
+    await endpoints.gameFeed("recent");
 
-    expect(calls.map((call) => call.path)).toEqual(["/api/games/upcoming", "/api/games/recent"]);
+    expect(calls.map((call) => call.path)).toEqual([
+      "/api/games/popular",
+      "/api/games/upcoming",
+      "/api/games/recent",
+    ]);
+    expect(calls[0]?.options).toEqual({ query: { limit: 20 } });
   });
 
   it("fetches one game by id", async () => {

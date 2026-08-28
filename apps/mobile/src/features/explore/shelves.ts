@@ -1,17 +1,7 @@
-import type { GameListResponse, GameSummaryWire } from "@repo/contracts";
+import type { GameFeed, GameListResponse, GameSummaryWire } from "@repo/contracts";
 
-import type { GameFeed } from "@/api/endpoints";
-
-/**
- * Ten columns of two — more than anyone swipes through, and three requests now
- * go out where one used to.
- */
-export const SHELF_LIMIT = 20;
-
-/** Two rows, scrolling sideways. */
 const ROWS = 2;
 
-/** The explore page, in the order it reads. */
 export const SHELVES = [
   { feed: "popular", title: "Most Popular" },
   { feed: "upcoming", title: "Upcoming" },
@@ -26,10 +16,8 @@ export interface Shelf {
 }
 
 /**
- * A horizontal `FlatList` has no `numColumns` — that prop only splits a vertical
- * list — so the two rows come from the data instead: one list item is one
- * column of two games. An odd tail keeps its half-empty column rather than
- * being dropped.
+ * A horizontal `FlatList` has no `numColumns`, so the rows come from the data:
+ * one list item is one column of two. An odd tail keeps its half-empty column.
  */
 export function toColumns(items: GameSummaryWire[]): GameSummaryWire[][] {
   const columns: GameSummaryWire[][] = [];
@@ -42,12 +30,10 @@ export function toColumns(items: GameSummaryWire[]): GameSummaryWire[][] {
 }
 
 /**
- * Three independent requests, one ordered page. A feed still in flight and a
- * feed that answered with nothing are treated alike: no shelf is drawn, and it
- * appears in place when it lands. That is what lets one slow or failed feed
- * leave the other two readable instead of taking the screen down with it.
+ * In flight and empty are treated alike — no shelf — so one slow or failed feed
+ * leaves the other two readable.
  */
-export function toShelves(data: Partial<Record<GameFeed, GameListResponse | undefined>>): Shelf[] {
+export function toShelves(data: Partial<Record<GameFeed, GameListResponse>>): Shelf[] {
   return SHELVES.flatMap(({ feed, title }) => {
     const items = data[feed]?.items ?? [];
 

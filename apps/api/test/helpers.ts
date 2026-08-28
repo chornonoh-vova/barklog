@@ -113,7 +113,6 @@ export async function seedGame(
     rating?: number | null;
     typeId?: number;
     firstReleaseDate?: Date | null;
-    /** Defaults to present, since only the release feeds require artwork. */
     coverImageId?: string | null;
   },
 ): Promise<void> {
