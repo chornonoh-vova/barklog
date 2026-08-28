@@ -523,11 +523,11 @@ AsyncStorage is an autolinked native module, so the existing `ios/` build does n
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/mobile/package.json pnpm-lock.yaml apps/mobile/src/onboarding/storage.ts apps/mobile/ios
+git add apps/mobile/package.json pnpm-lock.yaml apps/mobile/src/onboarding/storage.ts
 git commit -m "feat(mobile): persist the onboarding-seen flag"
 ```
 
-If `apps/mobile/ios` is gitignored in this repo, drop it from the `git add` — check `git status` first rather than forcing it.
+`apps/mobile/ios` is gitignored (`apps/mobile/.gitignore:42`, 0 tracked files), so the regenerated native project is deliberately not committed. Do not stage it, and do not add it to `.gitignore` exceptions.
 
 ---
 
@@ -888,7 +888,7 @@ git commit -m "feat(mobile): onboarding gate ahead of the auth gate"
 
 ## Task 7: Device verification checklist
 
-Nothing in Tasks 1-6 ran the app. Five behaviours can only be confirmed on a device, and one of them is a regression risk in code that already worked.
+Nothing in Tasks 1-6 ran the app. Six behaviours can only be confirmed on a device, and the first of them is a regression risk in code that already worked.
 
 **Files:**
 - Modify: `docs/mobile-device-verification.md`
