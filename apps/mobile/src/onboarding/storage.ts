@@ -10,9 +10,15 @@ const KEY = "barklog.onboarding.seen";
 
 /**
  * A failed read resolves to `true`, which is the opposite of the obvious
- * default. If storage is broken then the write in `markOnboardingSeen` fails
- * too, so a `false` here would show onboarding on every launch with no way to
- * get past it. Missing an optional flow beats being trapped in one.
+ * default. This is not resolving an ambiguity: a missing key (`null`) and a
+ * broken read (throws) are perfectly distinguishable here, so `false` for a
+ * throw was always available too. The actual trade is "never see onboarding
+ * when storage is broken" against "see a dismissable onboarding on every
+ * launch" — and `onboarding-gate.tsx` completes locally as soon as Skip or
+ * Start is pressed, regardless of whether this read or the write in
+ * `markOnboardingSeen` ever works, so nobody is trapped either way. Repeated
+ * onboarding reading as a bug, rather than as a rare and recoverable
+ * annoyance, is why `true` won.
  */
 export async function readHasSeenOnboarding(): Promise<boolean> {
   try {
