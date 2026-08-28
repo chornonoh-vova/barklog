@@ -53,7 +53,7 @@ export function GameShelf({
 }
 
 const styles = StyleSheet.create({
-  shelf: { gap: 8, paddingTop: 16 },
+  shelf: { gap: 8, paddingVertical: 12 },
   title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
   columns: { gap: 12, paddingHorizontal: 16 },
   column: { gap: 12 },
