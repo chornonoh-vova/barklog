@@ -6,7 +6,7 @@ import {
   backlogUpsertSchema,
   gameIdParamSchema,
   MAX_GAME_ID,
-  popularQuerySchema,
+  gameFeedQuerySchema,
   searchQuerySchema,
 } from "../src/index.js";
 
@@ -44,8 +44,8 @@ test("search rejects the bounds the spec puts on limit and offset", () => {
 });
 
 test("popular defaults its limit and caps it at 50", () => {
-  expect(parse(popularQuerySchema, {})).toEqual({ limit: 20 });
-  expect(accepts(popularQuerySchema, { limit: 51 })).toBe(false);
+  expect(parse(gameFeedQuerySchema, {})).toEqual({ limit: 20 });
+  expect(accepts(gameFeedQuerySchema, { limit: 51 })).toBe(false);
 });
 
 test("the backlog list defaults to the most recently updated first", () => {

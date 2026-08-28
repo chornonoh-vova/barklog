@@ -28,10 +28,11 @@ export const searchQuerySchema = v.object({
 });
 export type SearchQuery = v.InferOutput<typeof searchQuerySchema>;
 
-export const popularQuerySchema = v.object({
+/** Shared by `/popular`, `/upcoming` and `/recent` — a limit is all they take. */
+export const gameFeedQuerySchema = v.object({
   limit: v.optional(integerFrom(1, SEARCH_LIMIT_MAX), SEARCH_LIMIT_DEFAULT),
 });
-export type PopularQuery = v.InferOutput<typeof popularQuerySchema>;
+export type GameFeedQuery = v.InferOutput<typeof gameFeedQuerySchema>;
 
 /** `GET /api/games/:id` */
 export const gameIdParamSchema = v.object({ id: gameId });

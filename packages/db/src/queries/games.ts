@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, lt, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { alias } from "drizzle-orm/pg-core";
 
@@ -154,6 +154,65 @@ export async function popularGames(db: Db, options: { limit: number }): Promise<
         gt(games.totalRatingCount, POPULAR_RATING_COUNT_FLOOR),
         inArray(games.gameTypeId, [...SEARCHABLE_GAME_TYPE_IDS]),
       ),
+    )
+    .orderBy(desc(games.totalRatingCount), asc(games.id))
+    .limit(options.limit);
+}
+
+/** How far back "recently released" reaches. */
+export const RECENT_WINDOW_DAYS = 90;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Both release feeds partition on the start of the UTC day rather than on the
+ * instant: `upcoming` is on or after it, `recent` is the window before it. A
+ * day boundary is what stops a game from sitting on both shelves at once, and
+ * it makes the edge something a test can pin — hence `now` being a parameter
+ * rather than `now()` inside the query.
+ */
+export function startOfUtcDay(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+/**
+ * What both release feeds mean by a game worth showing. `popularGames`'s rating
+ * floors cannot serve here — nothing released this month, and certainly nothing
+ * unreleased, has accumulated the ratings they ask for. Cover art is the
+ * stand-in: the cheapest signal in the mirror separating a real listing from
+ * the placeholder rows that fill any given release week.
+ */
+const releaseFeedFilter = and(
+  inArray(games.gameTypeId, [...SEARCHABLE_GAME_TYPE_IDS]),
+  isNotNull(games.coverImageId),
+);
+
+/** A release calendar: what is coming, soonest first. */
+export async function upcomingGames(
+  db: Db,
+  options: { limit: number; now: Date },
+): Promise<GameSummary[]> {
+  return db
+    .select(GAME_SUMMARY_COLUMNS)
+    .from(games)
+    .where(and(gte(games.firstReleaseDate, startOfUtcDay(options.now)), releaseFeedFilter))
+    .orderBy(asc(games.firstReleaseDate), asc(games.id))
+    .limit(options.limit);
+}
+
+/** What just landed, most talked about first. */
+export async function recentGames(
+  db: Db,
+  options: { limit: number; now: Date },
+): Promise<GameSummary[]> {
+  const today = startOfUtcDay(options.now);
+  const from = new Date(today.getTime() - RECENT_WINDOW_DAYS * DAY_MS);
+
+  return db
+    .select(GAME_SUMMARY_COLUMNS)
+    .from(games)
+    .where(
+      and(gte(games.firstReleaseDate, from), lt(games.firstReleaseDate, today), releaseFeedFilter),
     )
     .orderBy(desc(games.totalRatingCount), asc(games.id))
     .limit(options.limit);

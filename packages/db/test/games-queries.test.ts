@@ -2,7 +2,14 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
-import { gameExists, getGameDetail, popularGames, searchGames } from "../src/queries/games.js";
+import {
+  gameExists,
+  getGameDetail,
+  popularGames,
+  recentGames,
+  searchGames,
+  upcomingGames,
+} from "../src/queries/games.js";
 import * as schema from "../src/schema/index.js";
 import { truncateAll } from "../src/testing.js";
 
@@ -24,6 +31,10 @@ interface Fixture {
   /** Defaults to 0 = Main Game, which is searchable. */
   typeId?: number;
   rating?: number | null;
+  /** Defaults to null, which keeps a fixture out of both release feeds. */
+  releaseDate?: Date | null;
+  /** Defaults to present, since only the release feeds require artwork. */
+  cover?: string | null;
 }
 
 /**
@@ -61,6 +72,8 @@ async function seed(fixtures: Fixture[]): Promise<void> {
       gameTypeId: fixture.typeId ?? 0,
       totalRating: fixture.rating === undefined ? 85 : fixture.rating,
       totalRatingCount: fixture.count,
+      firstReleaseDate: fixture.releaseDate ?? null,
+      coverImageId: fixture.cover === undefined ? `co${fixture.id}` : fixture.cover,
       igdbUpdatedAt: UPDATED,
     })),
   );
@@ -165,6 +178,119 @@ test("popular excludes a well-rated game that has not been rated enough times", 
   const names = (await popularGames(db, { limit: 10 })).map((row) => row.name);
 
   expect(names).not.toContain("Hidden Gem With Few Ratings");
+});
+
+/**
+ * A fixed clock, so the window boundaries below are arithmetic rather than
+ * whatever the suite happens to run at. `today` is the start of the UTC day the
+ * feeds partition on.
+ */
+const NOW = new Date("2026-06-15T12:00:00Z");
+const at = (iso: string): Date => new Date(iso);
+
+const RELEASE_FIXTURES: Fixture[] = [
+  // Ahead of today, so upcoming — and deliberately not in date order here.
+  { id: 30, name: "Ships Next Year", count: 0, releaseDate: at("2027-03-01T00:00:00Z") },
+  { id: 31, name: "Ships Next Month", count: 0, releaseDate: at("2026-07-01T00:00:00Z") },
+  // Midnight today: the boundary itself belongs to upcoming, not recent.
+  { id: 32, name: "Ships Today", count: 0, releaseDate: at("2026-06-15T00:00:00Z") },
+  // Inside the 90-day window, so recent. Counts decide their order.
+  {
+    id: 33,
+    name: "Out Last Week, Talked About",
+    count: 900,
+    releaseDate: at("2026-06-08T00:00:00Z"),
+  },
+  { id: 34, name: "Out Last Week, Ignored", count: 4, releaseDate: at("2026-06-09T00:00:00Z") },
+  // One second before today, so the far edge of recent.
+  { id: 35, name: "Out Yesterday", count: 50, releaseDate: at("2026-06-14T23:59:59Z") },
+  // Older than the window.
+  { id: 36, name: "Out Last Year", count: 5000, releaseDate: at("2025-06-15T00:00:00Z") },
+];
+
+test("upcoming lists unreleased games soonest first", async () => {
+  await seed(RELEASE_FIXTURES);
+
+  const names = (await upcomingGames(db, { limit: 10, now: NOW })).map((row) => row.name);
+
+  expect(names).toEqual(["Ships Today", "Ships Next Month", "Ships Next Year"]);
+});
+
+test("upcoming ignores popular's rating floors, which no unreleased game could clear", async () => {
+  // Every upcoming fixture has a zero rating count, so a feed that reused
+  // POPULAR_RATING_COUNT_FLOOR would return nothing at all.
+  await seed(RELEASE_FIXTURES);
+
+  expect(await upcomingGames(db, { limit: 10, now: NOW })).not.toEqual([]);
+});
+
+test("recent covers the ninety days before today, ranked by rating count", async () => {
+  await seed(RELEASE_FIXTURES);
+
+  const names = (await recentGames(db, { limit: 10, now: NOW })).map((row) => row.name);
+
+  expect(names).toEqual(["Out Last Week, Talked About", "Out Yesterday", "Out Last Week, Ignored"]);
+});
+
+test("the two release feeds partition at today, sharing nothing", async () => {
+  await seed(RELEASE_FIXTURES);
+
+  const upcoming = await upcomingGames(db, { limit: 50, now: NOW });
+  const recent = await recentGames(db, { limit: 50, now: NOW });
+  const shared = upcoming.filter((game) => recent.some((other) => other.id === game.id));
+
+  expect(shared).toEqual([]);
+});
+
+test("a game with no release date reaches neither feed", async () => {
+  await seed([...RELEASE_FIXTURES, ...RANKING_FIXTURES]);
+
+  const names = [
+    ...(await upcomingGames(db, { limit: 50, now: NOW })),
+    ...(await recentGames(db, { limit: 50, now: NOW })),
+  ].map((row) => row.name);
+
+  expect(names).not.toContain("Dark Souls III");
+});
+
+test("both release feeds skip non-searchable types and games with no cover art", async () => {
+  await seed([
+    ...RELEASE_FIXTURES,
+    // Type 1 is DLC.
+    { id: 40, name: "Upcoming DLC", count: 0, typeId: 1, releaseDate: at("2026-07-02T00:00:00Z") },
+    {
+      id: 41,
+      name: "Released DLC",
+      count: 800,
+      typeId: 1,
+      releaseDate: at("2026-06-10T00:00:00Z"),
+    },
+    // Artwork is the stand-in for "this listing is a real game".
+    {
+      id: 42,
+      name: "Upcoming Placeholder",
+      count: 0,
+      cover: null,
+      releaseDate: at("2026-07-03T00:00:00Z"),
+    },
+    {
+      id: 43,
+      name: "Released Placeholder",
+      count: 700,
+      cover: null,
+      releaseDate: at("2026-06-11T00:00:00Z"),
+    },
+  ]);
+
+  const names = [
+    ...(await upcomingGames(db, { limit: 50, now: NOW })),
+    ...(await recentGames(db, { limit: 50, now: NOW })),
+  ].map((row) => row.name);
+
+  expect(names).not.toContain("Upcoming DLC");
+  expect(names).not.toContain("Released DLC");
+  expect(names).not.toContain("Upcoming Placeholder");
+  expect(names).not.toContain("Released Placeholder");
 });
 
 test("game details gather every child collection and split the companies", async () => {

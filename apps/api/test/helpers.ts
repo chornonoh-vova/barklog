@@ -113,6 +113,8 @@ export async function seedGame(
     rating?: number | null;
     typeId?: number;
     firstReleaseDate?: Date | null;
+    /** Defaults to present, since only the release feeds require artwork. */
+    coverImageId?: string | null;
   },
 ): Promise<void> {
   await db
@@ -131,6 +133,7 @@ export async function seedGame(
     totalRating: game.rating === undefined ? 85 : game.rating,
     totalRatingCount: game.count ?? 100,
     firstReleaseDate: game.firstReleaseDate ?? null,
+    coverImageId: game.coverImageId === undefined ? `co${game.id}` : game.coverImageId,
     igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
   });
 }

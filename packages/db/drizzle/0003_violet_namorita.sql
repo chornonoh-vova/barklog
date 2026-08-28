@@ -1,0 +1,1 @@
+CREATE INDEX "games_release_date_idx" ON "games" USING btree ("first_release_date");

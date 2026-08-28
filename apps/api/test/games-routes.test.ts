@@ -140,6 +140,74 @@ test("popular ranks by rating count behind a rating floor", async () => {
   expect(body.items.map((item) => item.id)).toEqual([1]);
 });
 
+/**
+ * The release routes read `new Date()` themselves, so their fixtures are
+ * relative to the real clock. Whole days of margin, so a run at any hour lands
+ * each fixture on the intended side of the UTC day boundary the feeds split on.
+ */
+const daysFromNow = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+test("upcoming lists what has not shipped yet, soonest first", async () => {
+  await seedGame(harness.db, { id: 1, name: "Ships Later", firstReleaseDate: daysFromNow(60) });
+  await seedGame(harness.db, { id: 2, name: "Ships Soon", firstReleaseDate: daysFromNow(2) });
+  await seedGame(harness.db, { id: 3, name: "Already Out", firstReleaseDate: daysFromNow(-2) });
+
+  const response = await callApi(harness.app, "/api/games/upcoming");
+  const body = (await response.json()) as { items: { id: number }[] };
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("cache-control")).toBe("private, max-age=300");
+  expect(body.items.map((item) => item.id)).toEqual([2, 1]);
+});
+
+test("recent lists the games just out, most rated first", async () => {
+  await seedGame(harness.db, {
+    id: 1,
+    name: "Out Last Week, Ignored",
+    count: 5,
+    firstReleaseDate: daysFromNow(-7),
+  });
+  await seedGame(harness.db, {
+    id: 2,
+    name: "Out Last Month, Talked About",
+    count: 900,
+    firstReleaseDate: daysFromNow(-30),
+  });
+  await seedGame(harness.db, { id: 3, name: "Out Years Ago", firstReleaseDate: daysFromNow(-800) });
+  await seedGame(harness.db, { id: 4, name: "Not Out Yet", firstReleaseDate: daysFromNow(2) });
+
+  const response = await callApi(harness.app, "/api/games/recent");
+  const body = (await response.json()) as { items: { id: number }[] };
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("cache-control")).toBe("private, max-age=300");
+  expect(body.items.map((item) => item.id)).toEqual([2, 1]);
+});
+
+test("a release feed with no cover art shows nothing, however well timed", async () => {
+  await seedGame(harness.db, {
+    id: 1,
+    name: "Placeholder Listing",
+    firstReleaseDate: daysFromNow(2),
+    coverImageId: null,
+  });
+
+  const response = await callApi(harness.app, "/api/games/upcoming");
+
+  expect(((await response.json()) as { items: unknown[] }).items).toEqual([]);
+});
+
+test("the release feeds cache, and a hit is byte-identical to the miss", async () => {
+  await seedGame(harness.db, { id: 1, name: "Ships Soon", firstReleaseDate: daysFromNow(2) });
+
+  const miss = await (await callApi(harness.app, "/api/games/upcoming")).text();
+  await harness.db.delete(schema.games).where(eq(schema.games.id, 1));
+  const hit = await (await callApi(harness.app, "/api/games/upcoming")).text();
+
+  expect(hit).toBe(miss);
+  expect(JSON.parse(hit).items).toHaveLength(1);
+});
+
 test("details carry the child collections and the caller's own backlog entry", async () => {
   await seedGame(harness.db, { id: 1942, name: "The Witcher 3: Wild Hunt", count: 4021 });
   await harness.db.insert(schema.users).values({ id: TEST_USER });

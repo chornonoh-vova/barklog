@@ -271,6 +271,8 @@ Every route needs a valid Clerk session token. The only public routes are
 | ----------------------------------------- | ------------------------------------------------- |
 | `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars, `limit` ≤ 50, `offset` ≤ 200       |
 | `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                         |
+| `GET /api/games/upcoming?limit=`          | unreleased, soonest first                         |
+| `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first    |
 | `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`     |
 | `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`            |
 | `GET /api/backlog/stats`                  | counts per status plus average rating             |
