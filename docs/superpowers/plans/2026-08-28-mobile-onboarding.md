@@ -41,7 +41,7 @@
 | `apps/mobile/test/igdb-url.test.ts` | **Modify.** `siteUrl()` case. |
 | `apps/mobile/test/onboarding-decision.test.ts` | **Create.** Every row of the policy table. |
 | `apps/mobile/test/onboarding-pages.test.ts` | **Create.** Copy invariants, including that page 2 still names all four backlog statuses. |
-| `docs/mobile-device-verification.md` | **Modify.** Checks 19-23. |
+| `docs/mobile-device-verification.md` | **Modify.** Checks 19-25. |
 
 Gate logic sits beside `src/auth/` and the screen under `src/features/`, which is the split the app already uses (`auth-gate.tsx` + `should-clear-cache.ts` vs `features/explore/`).
 

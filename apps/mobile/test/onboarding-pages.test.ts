@@ -36,12 +36,15 @@ describe("ONBOARDING_PAGES", () => {
   it("names every real backlog status on the backlog page", () => {
     // The point of this test: rename a status in @repo/contracts and this fails,
     // rather than leaving onboarding describing an app that no longer exists.
+    // A word-boundary regex, not `toContain`: a plain substring check would
+    // still pass after renaming "playing" to "play", since "playing" contains
+    // "play" — which defeats the point of the guard.
     const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "backlog");
 
     expect(page).toBeDefined();
 
     for (const status of BACKLOG_STATUSES) {
-      expect(page?.description.toLowerCase()).toContain(status);
+      expect(page?.description.toLowerCase()).toMatch(new RegExp(`\\b${status}\\b`));
     }
   });
 });

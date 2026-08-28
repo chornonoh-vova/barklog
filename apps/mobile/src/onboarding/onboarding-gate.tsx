@@ -24,7 +24,11 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
     let isCurrent = true;
 
     void readHasSeenOnboarding().then((seen) => {
-      // Fast Refresh can unmount this before the read lands.
+      // A post-unmount `setState` is a silent no-op under React 19.2.3 (the
+      // same reason the write callback below needs no guard), so this isn't
+      // preventing a fault. It exists to skip a pointless update on a dead
+      // component and to make the intent explicit: Fast Refresh can unmount
+      // this before the read lands.
       if (isCurrent) setHasSeen(seen);
     });
 
