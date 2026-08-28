@@ -190,7 +190,7 @@ pnpm --filter worker sync | jq -r '[.level, .message] | @tsv'
 ```
 src/
   app/
-    _layout.tsx            ClerkProvider -> QueryClientProvider -> ApiProvider -> theme -> AuthGate
+    _layout.tsx            ClerkProvider -> QueryClientProvider -> ApiProvider -> theme -> OnboardingGate -> AuthGate
     (tabs)/
       _layout.tsx          NativeTabs: Home | Explore | Search
       (home)/              route group, so index.tsx still resolves to "/"
@@ -200,8 +200,9 @@ src/
   api/         errors, client, endpoints, keys, provider, hooks
   auth/        auth-gate, should-clear-cache
   components/  profile-toolbar, cover, game-row, query-boundary, query-states, empty-state
-  features/    backlog/ explore/ search/ game/
+  features/    backlog/ explore/ search/ game/ onboarding/
   hooks/       use-debounced
+  onboarding/  onboarding-gate, should-show-onboarding, storage
   ui/          glass, platform-glass, measured-host
   env.ts  igdb-image.ts  query-client.ts  theme.ts
 ```
@@ -245,6 +246,13 @@ until Clerk has read the keychain, so a returning user never sees the sign-in
 screen flash before landing on their backlog. On sign-out, the query cache is
 cleared so the next person to sign in on the same device can't see the
 previous user's backlog.
+
+`OnboardingGate` sits above `AuthGate` and is the one exception to "every other
+screen only ever renders for a signed-in user": it renders for a signed-out
+visitor on a first install, before an account exists. The splash is held by
+`app/_layout.tsx` rather than by either gate, and released by whichever gate is
+first to decide what it renders — `OnboardingGate` when it shows the pages,
+`AuthGate` on the ordinary pass-through path.
 
 There is no `expo-apple-authentication` dependency: `<AuthView />` runs the
 Apple flow internally, so nothing else needs to touch the config plugin.
