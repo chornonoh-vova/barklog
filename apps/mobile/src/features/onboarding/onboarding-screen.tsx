@@ -8,6 +8,7 @@ import {
   foregroundStyle,
   frame,
   hidden,
+  indexViewStyle,
   multilineTextAlignment,
   padding,
   tabViewStyle,
@@ -59,7 +60,10 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
         <TabView
           selection={selection}
           onSelectionChange={setSelection}
-          modifiers={[tabViewStyle({ type: "page", indexDisplayMode: "always" })]}
+          modifiers={[
+            tabViewStyle({ type: "page", indexDisplayMode: "always" }),
+            indexViewStyle({ backgroundDisplayMode: 'always' }),
+          ]}
         >
           {ONBOARDING_PAGES.map((page) => (
             <TabView.Tab key={page.id} value={page.id}>
