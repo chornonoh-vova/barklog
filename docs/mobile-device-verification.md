@@ -100,3 +100,32 @@ pnpm --filter mobile ios
       stay aligned across very different title lengths (the fixed heights in
       `game-tile.tsx` are all that holds it), and that the horizontal lists do
       not fight the vertical `ScrollView` for the gesture.
+
+## Onboarding checks
+
+Added by `docs/superpowers/plans/2026-08-28-mobile-onboarding.md`. Check 19
+first: it is the one that can regress behaviour that already worked.
+
+- [ ] **19. A returning signed-in user still goes straight to the tabs.** This is
+      check 3 again, re-run because `preventAutoHideAsync()` moved from
+      `src/auth/auth-gate.tsx` to `src/app/_layout.tsx`. No onboarding, no flash
+      of the sign-in screen, and above all no splash that never goes away. A
+      stuck splash means the prevent call is being held by a gate that never
+      paints.
+- [ ] **20. A fresh install shows onboarding before the sign-in screen.** Delete
+      the app from the simulator first, since that is what clears AsyncStorage.
+      Four pages, swipeable, dots at the bottom.
+- [ ] **21. The controls sit inside the safe area.** HIGHEST RISK of the
+      cosmetic checks. `Host` is trusted to propagate the SwiftUI safe area, and
+      the gate renders outside expo-router's `SafeAreaProvider`, so this is
+      untested. If Skip is under the notch or the button under the home
+      indicator, add a `SafeAreaProvider` at the root of `_layout.tsx` and pad
+      the `Host` with `useSafeAreaInsets`. Check on a notched device.
+- [ ] **22. Skip works, and stays worked.** Tap Skip on page 1, land on the
+      sign-in screen, force-quit, relaunch: no onboarding. Then the same for
+      swiping to page 4 and tapping Start.
+- [ ] **23. The igdb.com link opens the site**, and page 4 shows the
+      external-link glyph beside it.
+- [ ] **24. Onboarding renders in both appearances.** Symbols and secondary text
+      come from SwiftUI hierarchical styles, so light and dark should both work
+      without a `useColorScheme` branch. Confirm rather than assume.
