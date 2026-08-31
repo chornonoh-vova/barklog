@@ -86,6 +86,7 @@ export async function persistPage(db: Db, page: MappedPage): Promise<void> {
     await tx.delete(schema.gameGenres).where(inArray(schema.gameGenres.gameId, gameIds));
     await tx.delete(schema.gamePlatforms).where(inArray(schema.gamePlatforms.gameId, gameIds));
     await tx.delete(schema.gameCompanies).where(inArray(schema.gameCompanies.gameId, gameIds));
+    await tx.delete(schema.gameSimilar).where(inArray(schema.gameSimilar.gameId, gameIds));
 
     if (page.screenshots.length > 0) {
       await tx.insert(schema.gameScreenshots).values(page.screenshots);
@@ -98,6 +99,9 @@ export async function persistPage(db: Db, page: MappedPage): Promise<void> {
     }
     if (page.gameCompanies.length > 0) {
       await tx.insert(schema.gameCompanies).values(page.gameCompanies);
+    }
+    if (page.gameSimilar.length > 0) {
+      await tx.insert(schema.gameSimilar).values(page.gameSimilar);
     }
   });
 }

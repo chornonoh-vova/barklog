@@ -23,6 +23,7 @@
 - **Typed routes are enabled** (`app.json` → `experiments.typedRoutes`). `Href` is a union of template-literal types; a `string` path variable will not type-check.
 - Every new exported symbol needs a comment explaining *why*, matching the density of the surrounding code. This codebase comments decisions, not mechanics.
 - `pnpm --filter @repo/db test`, `pnpm --filter worker test` and `pnpm --filter api test` start Postgres/Valkey via Testcontainers. Docker must be running.
+- **`apps/*` consume `packages/*` from their built `dist/`, not from source.** After changing a package's source, run `pnpm --filter @repo/<pkg> build` before testing or type-checking any app that depends on it, or you will get stale types (`Property 'gameSimilar' does not exist on type 'MappedPage'`) and failures unrelated to your change. Affects Tasks 3, 6, 7 and 8. `pnpm turbo build --filter=<app>...` does the whole chain.
 
 ---
 
