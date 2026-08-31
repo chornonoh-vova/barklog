@@ -11,7 +11,7 @@ const envSchema = v.object({
   CLERK_SECRET_KEY: required,
   CLERK_PUBLISHABLE_KEY: required,
   ANTHROPIC_API_KEY: required,
-  IDENTIFY_MODEL: v.optional(required, "claude-haiku-4-5"),
+  IDENTIFY_MODEL: v.optional(required, "claude-sonnet-5"),
   NODE_ENV: v.optional(v.picklist(["development", "test", "production"]), "development"),
   LOG_LEVEL: v.optional(v.picklist(LOG_LEVELS), "info"),
 });

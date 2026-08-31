@@ -16,7 +16,7 @@ test("defaults fill in everything that is optional", () => {
     PORT: 3000,
     NODE_ENV: "development",
     LOG_LEVEL: "info",
-    IDENTIFY_MODEL: "claude-haiku-4-5",
+    IDENTIFY_MODEL: "claude-sonnet-5",
   });
 });
 

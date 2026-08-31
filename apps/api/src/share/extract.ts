@@ -57,10 +57,14 @@ export function createTitleExtractor(options: {
       // prompt grows past the floor (few-shot examples, a genre lexicon).
       // Repeat videos are already free via the `extract:` Valkey key.
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      // No `thinking` and no `output_config.effort`: on claude-haiku-4-5,
-      // omitting `thinking` means no thinking (which is what a sub-second
-      // extraction wants), and `effort` is a 4.6-and-later parameter that
-      // errors on this model. Both come back if IDENTIFY_MODEL moves to Opus.
+      // `thinking: { type: "disabled" }`: on claude-sonnet-5, omitting
+      // `thinking` leaves adaptive thinking ON by default — unlike
+      // claude-haiku-4-5, where omitting it meant no thinking at all. This
+      // extraction is a small, sub-second classification over ~250 tokens of
+      // video metadata, so it should not pay for reasoning it does not need.
+      // `output_config.effort` only tunes thinking depth, so it is moot with
+      // thinking off and is left unset.
+      thinking: { type: "disabled" },
       output_config: {
         format: {
           type: "json_schema",
