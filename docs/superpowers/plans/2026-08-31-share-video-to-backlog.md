@@ -1086,7 +1086,9 @@ export function createTitleExtractor(options: {
               titles: {
                 type: "array",
                 items: { type: "string" },
-                maxItems: MAX_GUESSES,
+                // No `maxItems`: Anthropic's structured-output schema subset
+                // rejects it on arrays with a 400. `parseExtraction` caps the
+                // result to MAX_GUESSES instead.
               },
             },
             required: ["titles"],
