@@ -42,7 +42,6 @@ export const gameIdParamSchema = v.object({ id: gameId });
 /** `PUT`/`DELETE /api/backlog/:gameId` */
 export const gameIdPathSchema = v.object({ gameId });
 
-/** What IGDB actually supplies for a well-covered game. */
 export const SIMILAR_LIMIT_DEFAULT = 12;
 
 /**

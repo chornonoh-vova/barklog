@@ -60,9 +60,6 @@ test("parent_game_id is a soft reference with no foreign key", async () => {
 });
 
 test("similar_game_id is a soft reference with no foreign key", async () => {
-  // The sync walks ids ascending, so a page routinely names a similar game
-  // that has not been inserted yet. An FK here would fail the page. Dangling
-  // ids are dropped on read by an inner join instead.
   await db.insert(games).values({
     id: 1942,
     name: "The Witcher 3: Wild Hunt",

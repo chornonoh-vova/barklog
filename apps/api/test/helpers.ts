@@ -137,7 +137,7 @@ export async function seedGame(
   });
 }
 
-/** Seeds the similar-games relation. Ids need not exist — that is the point. */
+/** Ids need not exist — that is the point. */
 export async function seedSimilar(db: Db, gameId: number, similarIds: number[]): Promise<void> {
   await db
     .insert(schema.gameSimilar)

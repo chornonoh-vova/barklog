@@ -309,7 +309,6 @@ test("a game with no suggestions is 200 and empty, not 404", async () => {
 });
 
 test("similar games for an unmirrored id is 404", async () => {
-  // An empty list would be a lie about a game that does not exist.
   const response = await callApi(harness.app, "/api/games/424242/similar");
   const body = (await response.json()) as { status: number; detail: string };
 
@@ -351,7 +350,6 @@ test("a repeated similar-games request is served from the cache", async () => {
   const first = await callApi(harness.app, "/api/games/1/similar");
   expect(((await first.json()) as { items: unknown[] }).items).toHaveLength(1);
 
-  // Remove the rows the answer came from. A cached answer cannot notice.
   await harness.db.delete(schema.gameSimilar).where(eq(schema.gameSimilar.gameId, 1));
 
   const second = await callApi(harness.app, "/api/games/1/similar");
@@ -366,7 +364,6 @@ test("the version bump the sync performs invalidates cached similar games", asyn
   await callApi(harness.app, "/api/games/1/similar");
   await harness.db.delete(schema.gameSimilar).where(eq(schema.gameSimilar.gameId, 1));
 
-  // Exactly what the worker does at the end of a successful run.
   await harness.cache.incr(SEARCH_VERSION_KEY);
 
   const fresh = await callApi(harness.app, "/api/games/1/similar");
@@ -374,9 +371,6 @@ test("the version bump the sync performs invalidates cached similar games", asyn
 });
 
 test("a similar-games 404 is not cached", async () => {
-  // The existence check lives inside the cache loader, and a throw must
-  // propagate without storing anything — otherwise a game added by a later
-  // sync would keep 404ing for the rest of the TTL.
   expect((await callApi(harness.app, "/api/games/1/similar")).status).toBe(404);
 
   await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });

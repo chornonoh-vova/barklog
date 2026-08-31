@@ -41,6 +41,9 @@ export function gamesRoutes(deps: AppDeps) {
   const searchVersion = async (): Promise<number> =>
     (await deps.cache.get<number>(SEARCH_VERSION_KEY)) ?? 0;
 
+  const notInMirror = (id: number) =>
+    problems.create("NOT_FOUND", { detail: `Game ${id} is not in the mirror.` });
+
   /** The three feeds differ only in the query they run. */
   const feed = async (
     name: GameFeed,
@@ -97,9 +100,6 @@ export function gamesRoutes(deps: AppDeps) {
         c.header("Cache-Control", FEED_CACHE_CONTROL);
         return c.json({ items });
       })
-      // Registered before the `/:id` catch-all below. Two path segments cannot
-      // actually collide with one, but keeping the order explicit is what makes
-      // that route's "registered last" comment true.
       .get(
         "/:id/similar",
         sValidator("param", gameIdParamSchema, onInvalid),
@@ -115,20 +115,13 @@ export function gamesRoutes(deps: AppDeps) {
             async () => {
               // Inside the loader, not before it: a throw propagates uncached,
               // so a missing game does not get a 404 pinned for an hour, and a
-              // cache hit pays nothing for the check. An empty list would be a
-              // lie about a game that is not in the mirror at all.
-              if (!(await gameExists(deps.db, id))) {
-                throw problems.create("NOT_FOUND", {
-                  detail: `Game ${id} is not in the mirror.`,
-                });
-              }
+              // cache hit pays nothing for the check.
+              if (!(await gameExists(deps.db, id))) throw notInMirror(id);
 
               return (await similarGames(deps.db, { gameId: id, limit })).map(toGameSummary);
             },
           );
 
-          // Shareable across users, unlike the detail response beside it: this
-          // list embeds nothing about the caller.
           c.header("Cache-Control", FEED_CACHE_CONTROL);
           return c.json({ items });
         },
@@ -138,9 +131,7 @@ export function gamesRoutes(deps: AppDeps) {
         const { id } = c.req.valid("param");
 
         const game = await getGameDetail(deps.db, id);
-        if (!game) {
-          throw problems.create("NOT_FOUND", { detail: `Game ${id} is not in the mirror.` });
-        }
+        if (!game) throw notInMirror(id);
 
         // Embedding the caller's entry is what gives the game screen the right
         // button state in one request. It also makes the response user-varying,

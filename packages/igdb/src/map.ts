@@ -47,11 +47,10 @@ export function mapGames(raw: unknown[]): MappedPage {
   // Keyed by `${gameId}:${companyId}` so a company listed twice for one game —
   // once as developer, once as publisher — merges into a single row.
   const gameCompanies = new Map<string, MappedPage["gameCompanies"][number]>();
-  // Keyed `${gameId}:${similarId}`. Unlike genres and platforms — curated sets
-  // where trusting IGDB not to repeat an entry is safe — this list is
-  // algorithmically generated, and one duplicate would be a unique violation
-  // that fails the entire page.
-  const gameSimilar = new Map<string, MappedPage["gameSimilar"][number]>();
+  // Unlike genres and platforms — curated sets where trusting IGDB not to
+  // repeat an entry is safe — this list is generated, and one duplicate would
+  // be a unique violation that fails the entire page.
+  const seenSimilar = new Set<string>();
 
   const page: MappedPage = {
     gameTypes: [],
@@ -94,10 +93,11 @@ export function mapGames(raw: unknown[]): MappedPage {
       // generated list does not rule it out.
       if (similarId === game.id) continue;
 
-      gameSimilar.set(`${game.id}:${similarId}`, {
-        gameId: game.id,
-        similarGameId: similarId,
-      });
+      const key = `${game.id}:${similarId}`;
+      if (seenSimilar.has(key)) continue;
+      seenSimilar.add(key);
+
+      page.gameSimilar.push({ gameId: game.id, similarGameId: similarId });
     }
 
     for (const genre of game.genres ?? []) {
@@ -135,7 +135,6 @@ export function mapGames(raw: unknown[]): MappedPage {
   page.platforms = [...platforms.values()];
   page.companies = [...companies.values()];
   page.gameCompanies = [...gameCompanies.values()];
-  page.gameSimilar = [...gameSimilar.values()];
 
   return page;
 }

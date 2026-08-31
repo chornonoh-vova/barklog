@@ -163,8 +163,7 @@ test("similar game rows are written for the page", async () => {
 });
 
 test("a similar id pointing outside the mirror is still stored", async () => {
-  // 472 is not in this page and not in the database. The row must persist —
-  // the inner join on read is what hides it until the mirror catches up.
+  // 472 is in neither this page nor the database.
   await persistPage(db, mapGames(PAGE));
 
   const rows = await db

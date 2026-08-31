@@ -127,17 +127,12 @@ test("maps similar game ids into join rows", () => {
 });
 
 test("a game is never similar to itself", () => {
-  // IGDB's list is generated, not curated. A self-reference would render the
-  // game inside its own Similar Games row.
   const page = mapGames([{ ...FULL_GAME, similar_games: [1942, 472] }]);
 
   expect(page.gameSimilar).toEqual([{ gameId: 1942, similarGameId: 472 }]);
 });
 
 test("a repeated similar id collapses to one row", () => {
-  // The table's primary key is (game_id, similar_game_id), so a duplicate
-  // inside one page would be a unique violation that fails the whole
-  // transaction. Unlike genres, this list is not a curated set we can trust.
   const page = mapGames([{ ...FULL_GAME, similar_games: [472, 472] }]);
 
   expect(page.gameSimilar).toEqual([{ gameId: 1942, similarGameId: 472 }]);

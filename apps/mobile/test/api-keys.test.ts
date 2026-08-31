@@ -48,8 +48,6 @@ describe("query keys", () => {
   });
 
   it("keeps similar games outside the detail key, so a backlog write cannot clear it", () => {
-    // The backlog mutations invalidate keys.games.detail(id). Adding a game to
-    // your backlog does not change what is similar to it.
     expect(keys.games.similar(1942, 12)).not.toEqual(expect.arrayContaining(["detail"]));
   });
 

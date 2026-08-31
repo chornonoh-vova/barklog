@@ -305,14 +305,12 @@ export async function getGameDetail(db: Db, gameId: number): Promise<GameDetail 
 }
 
 /**
- * IGDB's own `similar_games`, re-ranked rather than replayed: IGDB's array
- * order is undocumented, so preserving it would be cargo-culting, and this is
- * the same total order every other feed uses — a LIMIT cannot produce an
+ * IGDB's array order is undocumented, so this re-ranks by the same total order
+ * every other feed uses rather than replaying it — a LIMIT cannot produce an
  * unstable list.
  *
- * The inner join drops ids the mirror does not hold yet, which is why the
- * stored relation needs no foreign key and no cleanup job. Read forward only:
- * A listing B does not make B list A.
+ * The inner join drops ids the mirror does not hold yet (see
+ * `gameSimilar.similarGameId` for why there is no FK).
  */
 export async function similarGames(
   db: Db,

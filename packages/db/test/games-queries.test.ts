@@ -350,7 +350,6 @@ test("similar games come back most-rated first", async () => {
   const rows = await similarGames(db, { gameId: 1, limit: 12 });
 
   // 6 = Dark Souls III (4000), 4 = Odyssey (2500), 2 = Ocarina (2000).
-  // IGDB's array order is deliberately discarded.
   expect(rows.map((row) => row.id)).toEqual([6, 4, 2]);
 });
 
@@ -360,7 +359,6 @@ test("a similar id missing from the mirror is dropped", async () => {
 
   const rows = await similarGames(db, { gameId: 1, limit: 12 });
 
-  // The inner join is what hides it. No EXISTS clause, no cleanup job.
   expect(rows.map((row) => row.id)).toEqual([2]);
 });
 
@@ -378,8 +376,6 @@ test("the similar games relation is directional", async () => {
   await seed(RANKING_FIXTURES);
   await seedSimilar(1, [2]);
 
-  // A listing B does not make B list A. This is IGDB's shape, not an
-  // accident of storage.
   expect(await similarGames(db, { gameId: 2, limit: 12 })).toEqual([]);
 });
 

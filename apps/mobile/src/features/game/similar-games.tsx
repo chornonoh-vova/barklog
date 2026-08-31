@@ -1,4 +1,5 @@
 import type { GameSummaryWire } from "@repo/contracts";
+import { useCallback } from "react";
 import { FlatList, PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { useSimilarGames } from "@/api/hooks";
@@ -9,14 +10,12 @@ import { Type } from "@/theme";
 const keyExtractor = (game: GameSummaryWire) => String(game.id);
 
 /**
- * In flight, empty and failed all render nothing — Explore's rule ("a shelf
- * that fails is simply not drawn") applied to a section. That is also what lets
- * the whole feature ship before the backfill has run: until `game_similar` has
- * rows, this draws no section rather than an empty one.
+ * Renders nothing while in flight, empty or failed — Explore's "a shelf that
+ * fails is simply not drawn" rule applied to a section, and what lets this ship
+ * before the `game_similar` backfill has run.
  *
- * One row rather than Explore's two-row grid: this is a subsection of a detail
- * screen, not a browse surface, and a second row would double its height on an
- * already-long page.
+ * One row, not Explore's two-row grid: a detail subsection, not a browse
+ * surface, and a second row would double an already-long page's height.
  */
 export function SimilarGames({
   gameId,
@@ -27,6 +26,22 @@ export function SimilarGames({
 }) {
   const similar = useSimilarGames(gameId);
   const items = similar.data?.items ?? [];
+
+  // Hoisted like GameShelf's renderColumn: an inline closure changes identity on
+  // every render of the detail screen — including each optimistic backlog patch
+  // — and makes FlatList redraw all twelve cells for unchanged data.
+  const renderItem = useCallback(
+    ({ item }: { item: GameSummaryWire }) => (
+      <GameTile
+        id={item.id}
+        title={item.name}
+        subtitle={summarySubtitle(item)}
+        coverImageId={item.coverImageId}
+        onPress={onPressGame}
+      />
+    ),
+    [onPressGame],
+  );
 
   if (items.length === 0) return null;
 
@@ -40,15 +55,7 @@ export function SimilarGames({
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.row}
         showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <GameTile
-            id={item.id}
-            title={item.name}
-            subtitle={summarySubtitle(item)}
-            coverImageId={item.coverImageId}
-            onPress={onPressGame}
-          />
-        )}
+        renderItem={renderItem}
       />
     </View>
   );
