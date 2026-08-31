@@ -4,7 +4,13 @@
 
 **Goal:** Let a user share a YouTube or TikTok video into Barklog and pick the game it is about from a bottom sheet, landing on the normal game detail screen.
 
-**Architecture:** A new `POST /api/games/identify` canonicalises the shared URL, reads keyless oEmbed metadata, extracts candidate game titles with Claude Haiku 4.5, and ranks those guesses through the existing `pg_trgm` search over the games mirror. On the phone, `expo-sharing`'s config plugin generates an iOS Share Extension; `+native-intent.ts` routes the incoming payload to a `/shared` modal route that presents the candidates in `@expo/ui`'s universal `BottomSheet`.
+**Architecture:** A new `POST /api/games/identify` canonicalises the shared URL, reads keyless oEmbed metadata, extracts candidate game titles with Claude, and ranks those guesses through the existing `pg_trgm` search over the games mirror. On the phone, `expo-sharing`'s config plugin generates an iOS Share Extension; `+native-intent.ts` routes the incoming payload to a `/shared` full-screen modal screen that presents the candidates.
+
+> **Reversed after this plan was written** (see the Global Constraints note
+> and Task 3/Task 6 for detail): the model default moved from
+> `claude-haiku-4-5` to `claude-sonnet-5`, and the sheet became a
+> full-screen modal screen (`share-screen.tsx`) instead of `@expo/ui`'s
+> universal `BottomSheet`.
 
 **Tech Stack:** Hono, valibot behind Standard Schema, Drizzle, Valkey via `@repo/cache`, `@anthropic-ai/sdk`, Expo SDK 57, expo-router, `@expo/ui`, TanStack Query, Vitest + Testcontainers.
 
@@ -17,8 +23,8 @@
 - **Every non-2xx response is `application/problem+json` (RFC 9457).** Problem types come from the registry in `apps/api/src/problems.ts`.
 - **No 5xx ever carries an exception message in `detail`.** A fixed constant string is fine; an `error.message` is not.
 - **The API test suite must need no network.** Every outbound call is injected through `AppDeps` and stubbed.
-- **Model: `claude-haiku-4-5`.** On this model, do **not** pass `output_config.effort` (it errors) and do **not** pass `thinking`. Both are Claude-4.6-and-later parameters.
-- **`IDENTIFY_MODEL` is the override.** Default `claude-haiku-4-5`.
+- **Model: `claude-sonnet-5`** (reversed from this plan's original `claude-haiku-4-5` — see Task 3). This model runs adaptive thinking by default, so the code **must** pass `thinking: { type: "disabled" }` explicitly; leave `output_config.effort` unset, since it only tunes thinking depth and is moot with thinking off.
+- **`IDENTIFY_MODEL` is the override.** Default `claude-sonnet-5`, restricted to a `v.picklist` of models verified for this request shape (added by the final-review fix wave, after the `maxItems` incident showed what an unrestricted string invites).
 - **Mobile is iOS-only** (`platforms: ["ios"]` in `app.json`).
 - **`PlatformColor` for every colour** except `Brand.tint`, the app's one hex literal.
 - **ESM everywhere.** Intra-package imports carry the `.js` extension (`./share.js`), matching every existing file.
@@ -56,16 +62,16 @@
 
 ### `apps/mobile`
 
-| File                                                                 | Responsibility                                                                                        |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `src/features/share/extract-url.ts` **(new)**                        | Pure: shared payloads to one URL. **No react-native in its module graph**, so it tests in plain Node. |
-| `src/features/share/use-shared-url.ts` **(new)**                     | `useIncomingShare()` wrapper: the URL, and a clear function.                                          |
-| `src/features/share/share-sheet.tsx` **(new)**                       | The bottom sheet: header, candidate list, states.                                                     |
-| `src/app/+native-intent.ts` **(new)**                                | `expo-sharing` deep link to `/shared`.                                                                |
-| `src/app/shared/_layout.tsx`, `index.tsx`, `game/[id].tsx` **(new)** | The modal route group.                                                                                |
-| `src/app/_layout.tsx`                                                | `Slot` to `Stack`, so a modal sibling can present over the tabs.                                      |
-| `src/api/{client,endpoints,keys,hooks}.ts`                           | `"POST"`, the endpoint, the key, the hook.                                                            |
-| `src/features/onboarding/pages.ts`                                   | The fifth page.                                                                                       |
+| File                                                                 | Responsibility                                                                                                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/features/share/extract-url.ts` **(new)**                        | Pure: shared payloads to one URL. **No react-native in its module graph**, so it tests in plain Node.                                            |
+| `src/features/share/use-shared-url.ts` **(new)**                     | `useIncomingShare()` wrapper: the URL, and a clear function.                                                                                     |
+| `src/features/share/share-sheet.tsx` **(new)**                       | The bottom sheet: header, candidate list, states. **Reversed — shipped as `share-screen.tsx`, a full-screen modal screen; see the Task 6 note.** |
+| `src/app/+native-intent.ts` **(new)**                                | `expo-sharing` deep link to `/shared`.                                                                                                           |
+| `src/app/shared/_layout.tsx`, `index.tsx`, `game/[id].tsx` **(new)** | The modal route group.                                                                                                                           |
+| `src/app/_layout.tsx`                                                | `Slot` to `Stack`, so a modal sibling can present over the tabs.                                                                                 |
+| `src/api/{client,endpoints,keys,hooks}.ts`                           | `"POST"`, the endpoint, the key, the hook.                                                                                                       |
+| `src/features/onboarding/pages.ts`                                   | The fifth page.                                                                                                                                  |
 
 ---
 
@@ -886,6 +892,13 @@ git commit -m "feat(api): canonicalise share links and read oEmbed metadata"
 
 - [ ] **Step 1: Add the dependency and the environment**
 
+> **Reversed after this plan was written:** the default model moved from
+> `claude-haiku-4-5` to `claude-sonnet-5`, and `IDENTIFY_MODEL` was later
+> restricted from any non-empty string to a `v.picklist` of models verified
+> for this request shape (`claude-sonnet-5`, `claude-opus-5`,
+> `claude-opus-4-8`) — see the final-review fix wave. The snippets below show
+> the model default only; the picklist restriction is not reproduced here.
+
 ```bash
 pnpm --filter api add @anthropic-ai/sdk
 ```
@@ -894,7 +907,7 @@ In `apps/api/src/env.ts`, add two entries to `envSchema`:
 
 ```ts
   ANTHROPIC_API_KEY: required,
-  IDENTIFY_MODEL: v.optional(required, "claude-haiku-4-5"),
+  IDENTIFY_MODEL: v.optional(required, "claude-sonnet-5"),
 ```
 
 `ANTHROPIC_API_KEY` is **required**, not optional. Extraction fails soft at
@@ -906,7 +919,7 @@ Append to `apps/api/.env.example`:
 ```
 # Anthropic — https://console.anthropic.com, API keys
 ANTHROPIC_API_KEY=
-# Optional. Defaults to claude-haiku-4-5.
+# Optional. Defaults to claude-sonnet-5.
 IDENTIFY_MODEL=
 ```
 
@@ -927,7 +940,7 @@ const VALID = {
 ```
 
 The first test asserts `toEqual({ ...VALID, PORT: 3000, ... })`, so add
-`IDENTIFY_MODEL: "claude-haiku-4-5"` to that expected object. Then:
+`IDENTIFY_MODEL: "claude-sonnet-5"` to that expected object. Then:
 
 ```ts
 test("a missing Anthropic key stops the process at boot, since every share would degrade", () => {
@@ -975,13 +988,13 @@ describe("parseExtraction", () => {
 
 describe("extractKey", () => {
   it("carries the prompt version and the model, so neither survives a change", () => {
-    expect(extractKey(1, "claude-haiku-4-5", "youtube", "1vs0lLIRt7w")).toBe(
-      "extract:v1:claude-haiku-4-5:youtube:1vs0lLIRt7w",
+    expect(extractKey(1, "claude-sonnet-5", "youtube", "1vs0lLIRt7w")).toBe(
+      "extract:v1:claude-sonnet-5:youtube:1vs0lLIRt7w",
     );
   });
 
   it("changes when the model changes", () => {
-    expect(extractKey(1, "claude-haiku-4-5", "youtube", "x")).not.toBe(
+    expect(extractKey(1, "claude-sonnet-5", "youtube", "x")).not.toBe(
       extractKey(1, "claude-opus-5", "youtube", "x"),
     );
   });
@@ -1005,6 +1018,13 @@ pnpm --filter api test share-extract
 Expected: FAIL — `Cannot find module '../src/share/extract.js'`.
 
 - [ ] **Step 4: Implement extraction**
+
+> **Reversed after this plan was written:** the default model is
+> `claude-sonnet-5`, not `claude-haiku-4-5`. Sonnet 5 runs adaptive thinking
+> by default, so the request **must** pass `thinking: { type: "disabled" }`
+> explicitly — the opposite of the "no `thinking`" guidance this step
+> originally gave, which was correct only for Haiku's omit-to-disable
+> behavior. The snippet below reflects what shipped.
 
 Create `apps/api/src/share/extract.ts`:
 
@@ -1072,11 +1092,13 @@ export function createTitleExtractor(options: {
     const response = await client.messages.create({
       model: options.model,
       max_tokens: MAX_TOKENS,
-      system: SYSTEM,
-      // No `thinking` and no `output_config.effort`: on claude-haiku-4-5,
-      // omitting `thinking` means no thinking (which is what a sub-second
-      // extraction wants), and `effort` is a 4.6-and-later parameter that
-      // errors on this model. Both come back if IDENTIFY_MODEL moves to Opus.
+      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+      // `thinking: { type: "disabled" }`: on claude-sonnet-5, omitting
+      // `thinking` leaves adaptive thinking ON by default, and this
+      // extraction is a small, sub-second classification that should not pay
+      // for reasoning it does not need. `output_config.effort` only tunes
+      // thinking depth, so it is moot with thinking off and is left unset.
+      thinking: { type: "disabled" },
       output_config: {
         format: {
           type: "json_schema",
@@ -1721,7 +1743,7 @@ Two things this needs that do not exist yet:
    `apps/api/test/helpers.ts` default it in `createTestApp`:
 
 ```ts
-    identifyModel: "claude-haiku-4-5",
+    identifyModel: "claude-sonnet-5",
 ```
 
 placed above `...overrides`.
@@ -1921,6 +1943,19 @@ git commit -m "feat(mobile): identify-share endpoint, query key and hook"
 
 ## Task 6: Share intake, the modal route, and the sheet
 
+> **Reversed after this plan was written:** the device check at Step 6 found
+> the transparent-modal nesting this task describes did not hold up (see
+> Step 6's escape hatch below, which is exactly what got exercised). `/shared`
+> shipped as an opaque `fullScreenModal` screen, `share-screen.tsx`, instead
+> of the `@expo/ui` `BottomSheet` this task builds in Steps 13–14. The route
+> group is a plain `Stack` with no per-screen `contentStyle` split, and
+> `useSharedUrl()` additionally exposes `isPending` and `error` — the sheet's
+> resolving/error states, which this task left to `QueryBoundary` alone. Steps
+> 1–4, 7–12, 15–17 held. Steps 5, 6, 13 and 14 below are the plan as written;
+> read `apps/mobile/src/features/share/share-screen.tsx`,
+> `apps/mobile/src/features/share/use-shared-url.ts`, and
+> `apps/mobile/src/app/shared/{_layout,index}.tsx` for what actually shipped.
+
 The only task that cannot be verified in CI. **Do Step 1 through Step 6 and get
 the presentation working on hardware before building the sheet** — §11 of the
 spec flags the transparent-modal nesting as the least certain part of the design.
@@ -2034,6 +2069,9 @@ and replace the `<Slot />` element and its comment:
   </Stack>
 </AuthGate>
 ```
+
+**Reversed:** shipped as `presentation: "fullScreenModal"`, not
+`"transparentModal"` — see the Task 6 note above.
 
 - [ ] **Step 5: Add the modal route group, with the sheet stubbed**
 
@@ -2274,6 +2312,12 @@ export function useSharedUrl(): {
 
 - [ ] **Step 13: Build the sheet**
 
+> **Reversed:** this `share-sheet.tsx` / `BottomSheet` design was abandoned —
+> see the Task 6 note above. What shipped is
+> `apps/mobile/src/features/share/share-screen.tsx`, a full-screen list with
+> no `@expo/ui` dependency. The code below is kept as the plan originally
+> specified it, not as a guide to re-implement.
+
 Create `apps/mobile/src/features/share/share-sheet.tsx`:
 
 ```tsx
@@ -2376,6 +2420,11 @@ const styles = StyleSheet.create({
 ```
 
 - [ ] **Step 14: Replace the placeholder route with the sheet**
+
+> **Reversed:** kept as originally written, for the same reason as Step 13 —
+> the shipped `apps/mobile/src/app/shared/index.tsx` renders `ShareScreen`,
+> not `ShareSheet`, and carries a "Back to Home" toolbar button rather than a
+> focus-driven collapse/re-present.
 
 Replace `apps/mobile/src/app/shared/index.tsx` entirely:
 
