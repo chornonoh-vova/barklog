@@ -147,3 +147,16 @@ first: it is the one that can regress behaviour that already worked.
       this list. Then force-quit and relaunch: still no onboarding, confirming
       the flag the auto-complete branch writes was actually persisted rather
       than the pass relying on the still-live session.
+
+## Similar games checks
+
+- [ ] **26. Similar games stay in their tab.** Open Explore → a popular game →
+      a game in its Similar Games row → another game in that one's row. The tab
+      bar stays visible throughout and Explore stays selected. Back unwinds one
+      level at a time. Repeat from Home and from Search.
+- [ ] **27. A game with no suggestions draws no section.** The IGDB attribution
+      follows the detail rows directly, with no empty heading above it. Obscure
+      games are the easy case to find; before the backfill runs, every game is.
+- [ ] **28. Tiles without cover art show the `gamecontroller` placeholder**, not
+      a blank or a broken image. The section deliberately does not filter on
+      cover art, unlike the Upcoming and Recently Released shelves.

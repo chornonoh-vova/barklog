@@ -221,6 +221,15 @@ two-row grid scrolling sideways over its own feed request. The three queries are
 independent: a shelf that fails or answers empty is simply not drawn, so one
 slow feed cannot take the page down with it.
 
+**Similar games.** The detail screen closes with a row of IGDB's own
+`similar_games`, mirrored into `game_similar` by the nightly sync and served
+from `GET /api/games/:id/similar` — its own cacheable route rather than a field
+on the detail response, which is `private, no-cache` because it embeds the
+caller's backlog entry. The row is absent, not empty, when a game has no
+suggestions, so the feature was deployable before the backfill ran. Each tab's
+`game/[id].tsx` supplies its own push, so tapping a suggestion stays inside the
+current tab.
+
 **UI.** React Native renders lists, rows, images and text content; `@expo/ui/swift-ui`
 inside a `Host` renders controls, plus `ProgressView` for loading and a
 hand-laid-out symbol/title/description stack for empty and error states —
@@ -288,6 +297,7 @@ Every route needs a valid Clerk session token. The only public routes are
 | `GET /api/games/upcoming?limit=`          | unreleased, soonest first                         |
 | `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first    |
 | `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`     |
+| `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12) |
 | `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`            |
 | `GET /api/backlog/stats`                  | counts per status plus average rating             |
 | `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated |
