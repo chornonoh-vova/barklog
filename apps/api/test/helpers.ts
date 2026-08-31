@@ -18,6 +18,7 @@ export const fakeAuthProvider: AuthProvider = {
 };
 
 const unusedShareProvider: ShareProvider = {
+  model: "claude-haiku-4-5",
   resolveShortLink: () => {
     throw new Error("share.resolveShortLink was not stubbed for this test");
   },
@@ -53,7 +54,6 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     cache,
     auth: fakeAuthProvider,
     share: unusedShareProvider,
-    identifyModel: "claude-haiku-4-5",
     production: true,
     ...overrides,
   });

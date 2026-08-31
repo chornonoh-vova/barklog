@@ -29,6 +29,7 @@ export function ShareScreen({
   onSearch: () => void;
 }) {
   const identify = useIdentifyShare(url);
+  const backToHome = { label: "Back to Home", onPress: onGoHome };
 
   const renderItem = useCallback(
     ({ item }: { item: GameSummaryWire }) => (
@@ -51,13 +52,13 @@ export function ShareScreen({
   if (isPending) return <LoadingState />;
 
   if (error !== null) {
-    return <EmptyState {...UNREADABLE} action={{ label: "Back to Home", onPress: onGoHome }} />;
+    return <EmptyState {...UNREADABLE} action={backToHome} />;
   }
 
   // Without this branch the disabled query stays pending and the spinner never
   // finishes.
   if (url === null) {
-    return <EmptyState {...NO_LINK} action={{ label: "Back to Home", onPress: onGoHome }} />;
+    return <EmptyState {...NO_LINK} action={backToHome} />;
   }
 
   return (

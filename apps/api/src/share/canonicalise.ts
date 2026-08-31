@@ -26,8 +26,12 @@ export const MAX_REDIRECTS = 3;
  */
 export const SHORT_LINK_TIMEOUT_MS = 5_000;
 
+function pathSegments(url: URL): string[] {
+  return url.pathname.split("/").filter((segment) => segment !== "");
+}
+
 function youtubeId(url: URL): string | null {
-  const segments = url.pathname.split("/").filter((segment) => segment !== "");
+  const segments = pathSegments(url);
 
   if (url.hostname.toLowerCase() === "youtu.be") return segments[0] ?? null;
   if (segments[0] === "shorts") return segments[1] ?? null;
@@ -63,7 +67,7 @@ export function parseShareUrl(input: string): Canonical {
     };
   }
 
-  const segments = url.pathname.split("/").filter((segment) => segment !== "");
+  const segments = pathSegments(url);
 
   if (TIKTOK_SHORT_HOSTS.has(host) || segments[0] === "t") {
     return { kind: "shortLink", url: input };

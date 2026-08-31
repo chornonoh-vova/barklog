@@ -60,13 +60,18 @@ export function gamesRoutes(deps: AppDeps) {
     query: string,
     limit: number,
     offset: number,
-  ): Promise<GameSummaryWire[]> =>
-    withCache<GameSummaryWire[]>(
+    version: number,
+  ): Promise<GameSummaryWire[]> => {
+    const normalised = normaliseQuery(query);
+
+    return withCache<GameSummaryWire[]>(
       deps.cache,
-      searchKey(await searchVersion(), query, limit, offset),
+      searchKey(version, normalised, limit, offset),
       (value) => (value.length === 0 ? EMPTY_SEARCH_TTL_SECONDS : SEARCH_TTL_SECONDS),
-      async () => (await searchGames(deps.db, { query, limit, offset })).map(toGameSummary),
+      async () =>
+        (await searchGames(deps.db, { query: normalised, limit, offset })).map(toGameSummary),
     );
+  };
 
   const feed = async (
     name: GameFeed,
@@ -86,7 +91,7 @@ export function gamesRoutes(deps: AppDeps) {
   return new Hono<AppEnv>()
     .get("/search", sValidator("query", searchQuerySchema, onInvalid), async (c) => {
       const { q, limit, offset } = c.req.valid("query");
-      const items = await cachedSearch(normaliseQuery(q), limit, offset);
+      const items = await cachedSearch(q, limit, offset, await searchVersion());
 
       c.header("Cache-Control", "private, max-age=60");
       return c.json({ items });
@@ -185,7 +190,7 @@ export function gamesRoutes(deps: AppDeps) {
       try {
         guesses = await withCache(
           deps.cache,
-          extractKey(EXTRACT_PROMPT_VERSION, deps.identifyModel, ref.provider, ref.videoId),
+          extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, ref.provider, ref.videoId),
           EXTRACT_TTL_SECONDS,
           () => deps.share.extractTitles(meta),
         );
@@ -208,8 +213,9 @@ export function gamesRoutes(deps: AppDeps) {
         identified = false;
       }
 
+      const version = await searchVersion();
       const results = await Promise.all(
-        guesses.map((guess) => cachedSearch(normaliseQuery(guess), PER_GUESS_LIMIT, 0)),
+        guesses.map((guess) => cachedSearch(guess, PER_GUESS_LIMIT, 0, version)),
       );
 
       const body: ShareIdentifyResponse = {

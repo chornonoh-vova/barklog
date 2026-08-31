@@ -5,7 +5,7 @@ import type { Canonical, VideoRef } from "../src/share/canonicalise.js";
 import type { VideoMeta } from "../src/share/oembed.js";
 import { VideoGone, VideoMetaUnavailable } from "../src/share/oembed.js";
 import type { ShareProvider } from "../src/types.js";
-import { callApi, createTestApp, seedGame } from "./helpers.js";
+import { callApi, createTestApp, seedGame, type TestHarness } from "./helpers.js";
 
 const RE2_URL = "https://www.youtube.com/watch?v=1vs0lLIRt7w";
 
@@ -16,6 +16,7 @@ const META: VideoMeta = {
 
 function shareStub(overrides: Partial<ShareProvider> = {}): ShareProvider {
   return {
+    model: "claude-haiku-4-5",
     resolveShortLink: async (): Promise<Canonical> => ({ kind: "unsupported" }),
     fetchMeta: async (_ref: VideoRef) => META,
     extractTitles: async () => ["Resident Evil 2"],
@@ -36,13 +37,20 @@ afterAll(async () => {
   await harness.close();
 });
 
-const identify = (body: unknown, init: { user?: string | null } = {}) =>
-  callApi(harness.app, "/api/games/identify", {
+const identifyOn = (
+  app: TestHarness["app"],
+  body: unknown = { url: RE2_URL },
+  init: RequestInit & { user?: string | null } = {},
+) =>
+  callApi(app, "/api/games/identify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     ...init,
   });
+
+const identify = (body: unknown, init: RequestInit & { user?: string | null } = {}) =>
+  identifyOn(harness.app, body, init);
 
 test("identifies the game, returning ranked candidates and the video it came from", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
@@ -103,11 +111,7 @@ test("a resolved short link identifies the video it points to", async () => {
     }),
   });
 
-  const response = await callApi(app.app, "/api/games/identify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: "https://vm.tiktok.com/ZMabcdef1/" }),
-  });
+  const response = await identifyOn(app.app, { url: "https://vm.tiktok.com/ZMabcdef1/" });
   const body = (await response.json()) as { source: { videoId: string } };
 
   expect(response.status).toBe(200);
@@ -122,11 +126,7 @@ test("a short link that resolves to nothing usable is 422", async () => {
     }),
   });
 
-  const response = await callApi(app.app, "/api/games/identify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: "https://vm.tiktok.com/ZMabcdef1/" }),
-  });
+  const response = await identifyOn(app.app, { url: "https://vm.tiktok.com/ZMabcdef1/" });
 
   expect(response.status).toBe(422);
   await app.close();
@@ -141,11 +141,7 @@ test("a gone video is 404, not a 502", async () => {
     }),
   });
 
-  const response = await callApi(app.app, "/api/games/identify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: RE2_URL }),
-  });
+  const response = await identifyOn(app.app);
 
   expect(response.status).toBe(404);
   await app.close();
@@ -160,11 +156,7 @@ test("an oEmbed outage is 502", async () => {
     }),
   });
 
-  const response = await callApi(app.app, "/api/games/identify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: RE2_URL }),
-  });
+  const response = await identifyOn(app.app);
   const body = (await response.json()) as { detail?: string };
 
   expect(response.status).toBe(502);
@@ -184,11 +176,7 @@ test("a failing extraction falls soft to the raw video title", async () => {
     }),
   });
 
-  const response = await callApi(app.app, "/api/games/identify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: RE2_URL }),
-  });
+  const response = await identifyOn(app.app);
   const body = (await response.json()) as { identified: boolean; guesses: string[] };
 
   expect(response.status).toBe(200);
@@ -208,12 +196,7 @@ test("a failed extraction is not cached, so the next call retries it", async () 
     }),
   });
 
-  const send = () =>
-    callApi(app.app, "/api/games/identify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: RE2_URL }),
-    });
+  const send = () => identifyOn(app.app);
 
   await send();
   await send();
@@ -247,10 +230,7 @@ test("the route needs a session token", async () => {
 });
 
 test("a body without a JSON content type is 415", async () => {
-  const response = await callApi(harness.app, "/api/games/identify", {
-    method: "POST",
-    body: JSON.stringify({ url: RE2_URL }),
-  });
+  const response = await identifyOn(harness.app, { url: RE2_URL }, { headers: {} });
 
   expect(response.status).toBe(415);
 });
@@ -261,12 +241,7 @@ test("the identify scope is tighter than the overall one", async () => {
     rateLimits: { identify: { limit: 2, windowSeconds: 60 } },
   });
 
-  const send = () =>
-    callApi(app.app, "/api/games/identify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: RE2_URL }),
-    });
+  const send = () => identifyOn(app.app);
 
   expect((await send()).status).toBe(200);
   expect((await send()).status).toBe(200);

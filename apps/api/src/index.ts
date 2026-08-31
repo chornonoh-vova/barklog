@@ -22,7 +22,6 @@ const app = createApp({
   cache,
   auth: clerkAuthProvider(env),
   share: createShareProvider(env),
-  identifyModel: env.IDENTIFY_MODEL,
   production: env.NODE_ENV === "production",
 });
 

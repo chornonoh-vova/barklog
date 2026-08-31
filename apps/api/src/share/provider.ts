@@ -3,18 +3,15 @@ import { resolveShortLink } from "./canonicalise.js";
 import { createTitleExtractor } from "./extract.js";
 import { fetchVideoMeta } from "./oembed.js";
 
-/**
- * The production wiring for the three impure edges. `fetchImpl` is a parameter
- * so a future integration test can drive real canonicalisation against a
- * recorded server without reaching the internet.
- */
-export function createShareProvider(
-  env: { ANTHROPIC_API_KEY: string; IDENTIFY_MODEL: string },
-  fetchImpl: typeof fetch = fetch,
-): ShareProvider {
+/** The production wiring for the three impure edges. */
+export function createShareProvider(env: {
+  ANTHROPIC_API_KEY: string;
+  IDENTIFY_MODEL: string;
+}): ShareProvider {
   return {
-    resolveShortLink: (url) => resolveShortLink(url, fetchImpl),
-    fetchMeta: (ref) => fetchVideoMeta(ref, fetchImpl),
+    model: env.IDENTIFY_MODEL,
+    resolveShortLink: (url) => resolveShortLink(url, fetch),
+    fetchMeta: (ref) => fetchVideoMeta(ref, fetch),
     extractTitles: createTitleExtractor({
       apiKey: env.ANTHROPIC_API_KEY,
       model: env.IDENTIFY_MODEL,

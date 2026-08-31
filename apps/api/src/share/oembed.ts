@@ -66,10 +66,8 @@ export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Pr
     throw new VideoMetaUnavailable(`${ref.provider} oEmbed payload did not match the schema`);
   }
 
-  const author = parsed.output.author_name;
-
   return {
     title: parsed.output.title,
-    author: author === undefined || author === null || author === "" ? null : author,
+    author: parsed.output.author_name || null,
   };
 }
