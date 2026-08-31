@@ -132,6 +132,19 @@ test("a short link that resolves to nothing usable is 422", async () => {
   await app.close();
 });
 
+test("a short link the shortener failed to answer is 502, not a 422", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      resolveShortLink: async (): Promise<Canonical> => ({ kind: "unreachable" }),
+    }),
+  });
+
+  const response = await identifyOn(app.app, { url: "https://vm.tiktok.com/ZMabcdef1/" });
+
+  expect(response.status).toBe(502);
+  await app.close();
+});
+
 test("a gone video is 404, not a 502", async () => {
   const app = createTestApp({
     share: shareStub({

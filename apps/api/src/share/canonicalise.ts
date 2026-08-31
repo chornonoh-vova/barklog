@@ -8,7 +8,10 @@ export interface VideoRef {
 }
 
 export type Canonical =
-  { kind: "video"; ref: VideoRef } | { kind: "shortLink"; url: string } | { kind: "unsupported" };
+  | { kind: "video"; ref: VideoRef }
+  | { kind: "shortLink"; url: string }
+  | { kind: "unsupported" }
+  | { kind: "unreachable" };
 
 const UNSUPPORTED: Canonical = { kind: "unsupported" };
 
@@ -100,10 +103,13 @@ export function parseShareUrl(input: string): Canonical {
  *  - `redirect: "manual"`, so undici never follows a hop we have not checked;
  *  - at most `MAX_REDIRECTS` hops, so a shortener loop terminates.
  *
- * A stalled or unreachable shortener and a hostile one both resolve to
- * `unsupported` — the caller does not get to distinguish "down" from "gone"
- * here, so a network failure, an abort, or an unparseable `Location` are all
- * caught rather than left to escape as a raw throw.
+ * A network failure or the timeout firing is retriable and resolves to
+ * `unreachable`, not `unsupported` — the shortener merely failed to answer,
+ * which says nothing about whether the link is valid. A hostile or
+ * off-allowlist redirect stays `unsupported`, since that is genuinely
+ * terminal: an unparseable `Location`, a non-redirect status, or a redirect
+ * off the allowlist are all caught and mapped there rather than left to
+ * escape as a raw throw.
  */
 export async function resolveShortLink(url: string, fetchImpl: typeof fetch): Promise<Canonical> {
   let current = url;
@@ -120,8 +126,13 @@ export async function resolveShortLink(url: string, fetchImpl: typeof fetch): Pr
         signal: AbortSignal.timeout(SHORT_LINK_TIMEOUT_MS),
       });
     } catch {
-      return UNSUPPORTED;
+      // Network failure or the timeout signal firing — both retriable.
+      return { kind: "unreachable" };
     }
+
+    // Only the `Location` header is read below; release the body under
+    // undici's pooling rather than leaving it for GC.
+    void response.body?.cancel();
 
     if (response.status < 300 || response.status >= 400) return UNSUPPORTED;
 

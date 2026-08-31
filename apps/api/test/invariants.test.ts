@@ -73,6 +73,24 @@ test("every error the API can produce is a problem document", async () => {
       init: { method: "PUT", headers: { "Content-Type": "application/json" }, body: "{" },
     },
     { label: "422", path: "/api/games/search?q=z", libraryValidationShape: true },
+    {
+      label: "422 share",
+      path: "/api/games/identify",
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: "https://www.youtube.com/feed/subscriptions" }),
+      },
+    },
+    {
+      label: "502 share",
+      path: "/api/games/identify",
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: "https://www.youtube.com/watch?v=1vs0lLIRt7w" }),
+      },
+    },
   ];
 
   for (const testCase of cases) {

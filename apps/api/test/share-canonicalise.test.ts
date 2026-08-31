@@ -138,13 +138,23 @@ describe("resolveShortLink", () => {
     });
   });
 
-  it("is unsupported, not a throw, when the fetch itself fails", async () => {
+  it("is unreachable, not a throw, when the fetch itself fails", async () => {
     const fetchImpl = vi.fn(async () => {
       throw new TypeError("fetch failed");
     }) as unknown as typeof fetch;
 
     expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
-      kind: "unsupported",
+      kind: "unreachable",
+    });
+  });
+
+  it("is unreachable, not unsupported, when the timeout fires", async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new DOMException("The operation was aborted", "TimeoutError");
+    }) as unknown as typeof fetch;
+
+    expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
+      kind: "unreachable",
     });
   });
 

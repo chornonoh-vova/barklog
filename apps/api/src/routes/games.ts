@@ -152,6 +152,15 @@ export function gamesRoutes(deps: AppDeps) {
         canonical = await deps.share.resolveShortLink(canonical.url);
       }
 
+      if (canonical.kind === "unreachable") {
+        // Distinct from `unsupported`: the shortener timed out or the network
+        // hop failed, not that the link is invalid. Retriable, so it gets the
+        // same 502 as an oEmbed failure below, not a terminal 422.
+        throw problems.create("BAD_GATEWAY", {
+          detail: "The video could not be read right now. Try again shortly.",
+        });
+      }
+
       if (canonical.kind !== "video") {
         // A recognised host whose path is not a video page. The schema cannot
         // catch this — it validates the host, not the route within it.
