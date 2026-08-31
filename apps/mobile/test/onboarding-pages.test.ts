@@ -9,7 +9,7 @@ describe("ONBOARDING_PAGES", () => {
       "Welcome to Barklog",
       "Managing your game backlog",
       "Exploring games",
-      "Share a video, fetch the game",
+      "Share a video, pick the game",
       "All game data is powered by IGDB",
     ]);
   });
@@ -49,6 +49,15 @@ describe("ONBOARDING_PAGES", () => {
 
     expect(page?.description).toContain("YouTube");
     expect(page?.description).toContain("TikTok");
+  });
+
+  it("emphasizes the user's choice on the share page, not automatic resolution", () => {
+    // Word-boundary matching: "pick" surrounded by word boundaries guards against
+    // silent regressions to automatic-add copy like "fetches the game". Substring
+    // matching alone would miss this edge case.
+    const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "share");
+
+    expect(page?.description).toMatch(/\bpick\b/i);
   });
 });
 

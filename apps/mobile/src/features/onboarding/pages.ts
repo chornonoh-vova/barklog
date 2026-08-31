@@ -37,9 +37,9 @@ export const ONBOARDING_PAGES = [
   {
     id: "share",
     systemImage: "square.and.arrow.up",
-    title: "Share a video, fetch the game",
+    title: "Share a video, pick the game",
     description:
-      "Watching a game video on YouTube or TikTok? Share it to Barklog and the dog fetches the game for your backlog.",
+      "Watching a game video on YouTube or TikTok? Share it to Barklog and the dog fetches the candidates — pick the right game and it lands in your backlog.",
   },
   {
     id: IGDB_PAGE_ID,
