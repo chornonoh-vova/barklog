@@ -50,14 +50,12 @@ export function ShareScreen({
    */
   if (isPending) return <LoadingState />;
 
-  // The payload never became readable. `NO_LINK` would blame the user for a
-  // failure that was not theirs.
   if (error !== null) {
     return <EmptyState {...UNREADABLE} action={{ label: "Back to Home", onPress: onGoHome }} />;
   }
 
-  // Settled, and nothing in the share was a link. Without this branch the
-  // disabled query stays pending and the spinner never finishes.
+  // Without this branch the disabled query stays pending and the spinner never
+  // finishes.
   if (url === null) {
     return <EmptyState {...NO_LINK} action={{ label: "Back to Home", onPress: onGoHome }} />;
   }
@@ -76,10 +74,11 @@ export function ShareScreen({
             data={data.items}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
-            // Lets the large title collapse on scroll, as the tab roots do.
+            // Keeps the first row out from under the header.
             contentInsetAdjustmentBehavior="automatic"
             ListHeaderComponent={
               <View style={styles.header}>
+                <Text style={styles.question}>Which game is this?</Text>
                 <Text style={styles.source} numberOfLines={2}>
                   {data.source.title}
                 </Text>
@@ -93,6 +92,7 @@ export function ShareScreen({
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
+  header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 2 },
+  question: { ...Type.headline, color: PlatformColor("label") },
   source: { ...Type.subheadline, color: PlatformColor("secondaryLabel") },
 });

@@ -22,6 +22,22 @@ describe("shouldWaitForPayload", () => {
     expect(shouldWaitForPayload({ ...settled, sharedCount: 1, isResolving: true })).toBe(true);
   });
 
+  /** Pins the `isResolving` guard, which the case above does not: a second
+   * share arriving while `/shared` is mounted batches an emptied resolved list
+   * with `isResolving: true` when `hasAttempted` is already set, and without
+   * the guard that frame settles on `NO_LINK`. */
+  it("waits while re-resolving, even though a previous attempt already completed", () => {
+    expect(
+      shouldWaitForPayload({
+        ...settled,
+        sharedCount: 1,
+        isResolving: true,
+        hasAttempted: true,
+        resolvedCount: 1,
+      }),
+    ).toBe(true);
+  });
+
   it("stops waiting once payloads have resolved", () => {
     expect(shouldWaitForPayload({ ...settled, sharedCount: 1, resolvedCount: 1 })).toBe(false);
   });

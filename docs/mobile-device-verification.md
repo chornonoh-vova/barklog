@@ -194,10 +194,9 @@ first: it is the one that can regress behaviour that already worked.
 ## Share intent checks
 
 Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. None of
-this half has run anywhere. It is a shorter list than it was: the candidates
-render on an ordinary full-screen modal screen now rather than in a
-`BottomSheet`, which retired every check that existed to probe how React Native
-content survived being hosted inside SwiftUI.
+this half has run anywhere. The candidates render on an ordinary full-screen
+modal screen, so nothing here probes how React Native content survives being
+hosted inside SwiftUI.
 
 - [ ] **33. Barklog appears in the share sheet** from the YouTube app, the
       TikTok app, and Safari on a watch page. iOS's own share sheet, this one —
@@ -207,12 +206,20 @@ content survived being hosted inside SwiftUI.
 - [ ] **35. Signed-out cold install:** `AuthView` first, `/shared` after
       sign-in. The route is inside both gates, so a share must never show
       candidates to a signed-out user.
-- [ ] **36. The large title renders and collapses on scroll.** `/shared` uses
-      `<Stack.Title large>` like the tab roots, but on a `fullScreenModal`
-      rather than a tab root, which is the less common pairing and the reason
-      this is listed. Scroll the candidate list: the title should shrink into
-      the header the way Home's does, and the list must not start underneath
-      it — that is what `contentInsetAdjustmentBehavior="automatic"` is for.
+- [ ] **36. The toolbar button dismisses the modal, and lands where its label
+      promises.** It reads "Home" with an `accessibilityLabel` of "Back to
+      home", so it should leave `/shared` and land on the **Home** tab. Reading
+      the router source says it may not: `dismissTo("/")` dispatches `POP_TO`,
+      which matches the root stack's `(tabs)` route **by name** and rebuilds it
+      as `{ ...route, params }` — carrying the existing tab state across
+      untouched — so a warm share should land back on whichever tab it
+      interrupted. A cold share, where the tabs have no state yet, should
+      genuinely reach Home. Check both: start on Search, share a video, dismiss,
+      and note which tab you land on. **If it is Search rather than Home, the
+      button's two labels are wrong, not the behaviour** — tell the human before
+      changing anything, since they chose this affordance twice. Also confirm
+      the candidate list does not start underneath the header, which is what
+      `contentInsetAdjustmentBehavior="automatic"` is for.
 - [ ] **37. Each of the four states renders.** Pending (a spinner, briefly);
       the candidate list; "No link in that share" for a photo or link-free text;
       and "No match in the catalogue" for a video whose game is not in the

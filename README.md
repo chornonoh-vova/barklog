@@ -269,10 +269,9 @@ rewrites that to `/shared`; `useSharedUrl` reads the resolved payloads and
 `contentUri` or a `text` payload's body; `POST /api/games/identify` turns the
 link into ranked candidates; and `/shared` lists them as ordinary `GameRow`s.
 Picking one pushes `/shared/game/[id]` — the same `GameDetailScreen` every tab
-renders. `/shared` is a `fullScreenModal` with a large title, like the tab
-roots, and a toolbar button back to home rather than a system back button:
-there is nothing behind a modal root to pop to, and leaving has to clear the
-payload as well as navigate. Every exit calls `clear()` first, or the next cold
+renders. `/shared` is a `fullScreenModal` with a toolbar button back to home
+rather than a system back button: there is nothing behind a modal root to pop
+to, and leaving has to clear the payload as well as navigate. Every exit calls `clear()` first, or the next cold
 launch re-presents a share the user already dealt with.
 
 The screen has four states, and `useSharedUrl` rather than the query decides

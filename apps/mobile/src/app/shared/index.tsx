@@ -13,10 +13,13 @@ export default function SharedIndex() {
    * Group and the next cold launch re-presents a share the user already dealt
    * with.
    *
-   * `dismissTo`, per the v57 router docs, dismisses screens until the href is
-   * reached — which takes this `fullScreenModal` off. `dismissAll()` would pop
-   * to the first screen of the closest stack, which is this one, and `back()`
-   * would return to whichever tab the share interrupted rather than home.
+   * `dismissTo` takes this `fullScreenModal` off; `dismissAll()` would only pop
+   * to the first screen of the closest stack, which is this one.
+   *
+   * Which tab it reveals is not settled. `POP_TO` matches the root stack's
+   * `(tabs)` route by name and rebuilds it as `{ ...route, params }`, carrying
+   * the existing tab state across, so a warm share should land back on the tab
+   * it interrupted rather than on Home. Device check 36 pins it.
    */
   const goHome = useCallback(() => {
     clear();

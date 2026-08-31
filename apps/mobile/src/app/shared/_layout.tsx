@@ -6,5 +6,5 @@ import { Stack } from "expo-router";
  * `game/[id]` instead of that detail screen becoming a second root route.
  */
 export default function SharedLayout() {
-  return <Stack screenOptions={{ headerShown: true }} />;
+  return <Stack />;
 }
