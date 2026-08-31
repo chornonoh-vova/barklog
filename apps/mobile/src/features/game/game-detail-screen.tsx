@@ -33,6 +33,16 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
       <Stack.Screen.BackButton displayMode="minimal" />
       <Stack.Title>{game.data?.name ?? ""}</Stack.Title>
 
+      {game.data?.backlogEntry == null ? null : (
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel="Backlog actions">
+            <Stack.Toolbar.MenuAction icon="trash" destructive onPress={() => remove.mutate()}>
+              Remove from Backlog
+            </Stack.Toolbar.MenuAction>
+          </Stack.Toolbar.Menu>
+        </Stack.Toolbar>
+      )}
+
       <QueryBoundary query={game}>
         {(data) => (
           <ScrollView
@@ -42,11 +52,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
           >
             <Hero game={data} />
 
-            <EntryActions
-              entry={data.backlogEntry}
-              onUpsert={(input) => upsert.mutate(input)}
-              onRemove={() => remove.mutate()}
-            />
+            <EntryActions entry={data.backlogEntry} onUpsert={(input) => upsert.mutate(input)} />
 
             {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
 

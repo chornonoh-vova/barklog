@@ -160,3 +160,29 @@ first: it is the one that can regress behaviour that already worked.
 - [ ] **28. Tiles without cover art show the `gamecontroller` placeholder**, not
       a blank or a broken image. The section deliberately does not filter on
       cover art, unlike the Upcoming and Recently Released shelves.
+
+## Backlog toolbar checks
+
+- [ ] **29. The dots button appears only for games in the backlog.** Open an
+      unadded game: no dots in the top-right corner, no rating button either —
+      one glass "Add to Backlog" button and nothing else. Add it: the dots and
+      the ★ button both appear. Remove it: both go. Watch the title while it
+      happens — the header must not reflow or drop the title, which is the
+      failure mode `ProfileToolbar` documents for header items on iOS 26.
+- [ ] **30. Remove from Backlog works from the dots menu** and leaves the screen
+      standing — the buttons revert to the unadded state, no pop back to the
+      list.
+- [ ] **31. The dots read as a round button on iOS 26 and stay legible on iOS
+      18.** The icon is bare `ellipsis`, so the circle comes from the native
+      glass background; iOS 18 draws the glyph alone. If that is too faint,
+      switch the icon to `ellipsis.circle` — which then doubles the ring on
+      iOS 26.
+- [ ] **32. The rating button reads as a button and its label only goes blue
+      once rated.** Add a game: a filled grey capsule showing a bare ★ with the
+      label in the normal text colour, clearly distinct from the background in
+      light AND dark. Pick a rating: the label turns brand blue and shows the
+      number. Clear it back to No rating: neutral again. This button is
+      `bordered` on every iOS version rather than the `GLASS_STYLE` pair, so
+      compare it against the prominent status button beside it — if the two now
+      look mismatched on iOS 26, the alternative is `glass` plus
+      `tint(Brand.tint)`, which colours the capsule permanently.
