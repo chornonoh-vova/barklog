@@ -41,6 +41,8 @@ export interface AppDeps {
   cache: Cache;
   auth: AuthProvider;
   share: ShareProvider;
+  /** The model that produced a cached extraction — the route needs it to build the cache key. */
+  identifyModel: string;
   production?: boolean;
   rateLimits?: Partial<RateLimits>;
 }

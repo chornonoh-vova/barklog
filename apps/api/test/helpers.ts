@@ -53,6 +53,7 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     cache,
     auth: fakeAuthProvider,
     share: unusedShareProvider,
+    identifyModel: "claude-haiku-4-5",
     production: true,
     ...overrides,
   });

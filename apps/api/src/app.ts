@@ -76,6 +76,7 @@ export function createApp(deps: AppDeps) {
     .use("*", requireAuth(deps.auth.authenticate))
     // After auth (needs the Clerk sub), most specific scope first.
     .use("/api/games/search", rateLimit(deps.cache, "search", limits.search))
+    .on(["POST"], "/api/games/identify", rateLimit(deps.cache, "identify", limits.identify))
     .on([...MUTATING_METHODS], "/api/backlog/*", rateLimit(deps.cache, "write", limits.write))
     .use("/api/*", rateLimit(deps.cache, "overall", limits.overall))
     // Not `MUTATING_METHODS`: a `DELETE` sends no `Content-Type`, so it would
