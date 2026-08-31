@@ -10,6 +10,7 @@ import {
   gamePlatforms,
   games,
   gameScreenshots,
+  gameSimilar,
   gameTypes,
   genres,
   platforms,
@@ -301,4 +302,27 @@ export async function getGameDetail(db: Db, gameId: number): Promise<GameDetail 
     developers: companyRows.filter((company) => company.isDeveloper).map(toRef),
     publishers: companyRows.filter((company) => company.isPublisher).map(toRef),
   };
+}
+
+/**
+ * IGDB's own `similar_games`, re-ranked rather than replayed: IGDB's array
+ * order is undocumented, so preserving it would be cargo-culting, and this is
+ * the same total order every other feed uses — a LIMIT cannot produce an
+ * unstable list.
+ *
+ * The inner join drops ids the mirror does not hold yet, which is why the
+ * stored relation needs no foreign key and no cleanup job. Read forward only:
+ * A listing B does not make B list A.
+ */
+export async function similarGames(
+  db: Db,
+  options: { gameId: number; limit: number },
+): Promise<GameSummary[]> {
+  return db
+    .select(GAME_SUMMARY_COLUMNS)
+    .from(gameSimilar)
+    .innerJoin(games, eq(gameSimilar.similarGameId, games.id))
+    .where(and(eq(gameSimilar.gameId, options.gameId), searchableType))
+    .orderBy(desc(games.totalRatingCount), asc(games.id))
+    .limit(options.limit);
 }

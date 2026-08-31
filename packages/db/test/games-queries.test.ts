@@ -8,6 +8,7 @@ import {
   popularGames,
   recentGames,
   searchGames,
+  similarGames,
   upcomingGames,
 } from "../src/queries/games.js";
 import * as schema from "../src/schema/index.js";
@@ -76,6 +77,12 @@ async function seed(fixtures: Fixture[]): Promise<void> {
       igdbUpdatedAt: UPDATED,
     })),
   );
+}
+
+async function seedSimilar(gameId: number, similarIds: number[]): Promise<void> {
+  await db
+    .insert(schema.gameSimilar)
+    .values(similarIds.map((similarGameId) => ({ gameId, similarGameId })));
 }
 
 beforeEach(async () => {
@@ -334,4 +341,76 @@ test("details for an unmirrored id are null, and gameExists agrees", async () =>
   expect(await getGameDetail(db, 999_999)).toBeNull();
   expect(await gameExists(db, 40)).toBe(true);
   expect(await gameExists(db, 999_999)).toBe(false);
+});
+
+test("similar games come back most-rated first", async () => {
+  await seed(RANKING_FIXTURES);
+  await seedSimilar(1, [2, 4, 6]);
+
+  const rows = await similarGames(db, { gameId: 1, limit: 12 });
+
+  // 6 = Dark Souls III (4000), 4 = Odyssey (2500), 2 = Ocarina (2000).
+  // IGDB's array order is deliberately discarded.
+  expect(rows.map((row) => row.id)).toEqual([6, 4, 2]);
+});
+
+test("a similar id missing from the mirror is dropped", async () => {
+  await seed(RANKING_FIXTURES);
+  await seedSimilar(1, [2, 999_999]);
+
+  const rows = await similarGames(db, { gameId: 1, limit: 12 });
+
+  // The inner join is what hides it. No EXISTS clause, no cleanup job.
+  expect(rows.map((row) => row.id)).toEqual([2]);
+});
+
+test("DLC is filtered out of similar games however popular it is", async () => {
+  await seed(RANKING_FIXTURES);
+  // 8 is type 1 (DLC) with a rating count of 9000 — it would sort first.
+  await seedSimilar(6, [7, 8]);
+
+  const rows = await similarGames(db, { gameId: 6, limit: 12 });
+
+  expect(rows.map((row) => row.id)).toEqual([7]);
+});
+
+test("the similar games relation is directional", async () => {
+  await seed(RANKING_FIXTURES);
+  await seedSimilar(1, [2]);
+
+  // A listing B does not make B list A. This is IGDB's shape, not an
+  // accident of storage.
+  expect(await similarGames(db, { gameId: 2, limit: 12 })).toEqual([]);
+});
+
+test("the similar games limit is respected", async () => {
+  await seed(RANKING_FIXTURES);
+  await seedSimilar(1, [2, 4, 6, 7]);
+
+  const rows = await similarGames(db, { gameId: 1, limit: 2 });
+
+  expect(rows.map((row) => row.id)).toEqual([6, 7]);
+});
+
+test("a game with no suggestions returns an empty list, not an error", async () => {
+  await seed(RANKING_FIXTURES);
+
+  expect(await similarGames(db, { gameId: 1, limit: 12 })).toEqual([]);
+});
+
+test("similar games carry the same projection as every other list", async () => {
+  await seed(RANKING_FIXTURES);
+  await seedSimilar(1, [2]);
+
+  const [row] = await similarGames(db, { gameId: 1, limit: 12 });
+
+  expect(Object.keys(row!).sort()).toEqual([
+    "coverImageId",
+    "firstReleaseDate",
+    "id",
+    "name",
+    "slug",
+    "totalRating",
+    "totalRatingCount",
+  ]);
 });
