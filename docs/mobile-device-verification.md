@@ -19,6 +19,11 @@ before anything cosmetic.
    `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`. The key must be the SAME Clerk instance
    as the API's `CLERK_SECRET_KEY`, or every request is a 401 with nothing in the
    app to explain it. On a physical device use the host's LAN IP, not localhost.
+5. Apple Developer portal -> Identifiers -> create an App ID for
+   `gg.barklog.app.ShareExtension`, create the App Group
+   `group.gg.barklog.app`, and enable the App Group capability on **both**
+   `gg.barklog.app` and the extension App ID. Needed by the `expo-sharing`
+   plugin's generated share extension; without it the build will not install.
 
 Then:
 
@@ -185,3 +190,20 @@ first: it is the one that can regress behaviour that already worked.
       compare it against the prominent status button beside it — if the two now
       look mismatched on iOS 26, the alternative is `glass` plus
       `tint(Brand.tint)`, which colours the capsule permanently.
+
+## Share intent checks
+
+Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. None of
+this half has run anywhere: the `/shared` transparent-modal presentation over
+the native tab controller is the least certain part of the design.
+
+- [ ] **33. Barklog appears in the share sheet** from the YouTube app, the
+      TikTok app, and Safari on a watch page.
+- [ ] **34. Warm launch presents the sheet; cold launch presents the sheet.**
+- [ ] **35. Signed-out cold install:** `AuthView` first, sheet after sign-in.
+- [ ] **36. Dismissing clears the payload** — relaunching does **not**
+      re-present it.
+- [ ] **37. Pick a candidate, go back: the sheet re-presents.**
+- [ ] **38. A private or deleted video shows the 404 copy, not a crash.**
+- [ ] **39. A TikTok short link (`vm.tiktok.com`) resolves.**
+- [ ] **40. Dismissing returns to the originating tab with its stack intact.**

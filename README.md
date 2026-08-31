@@ -29,6 +29,11 @@ Everything is TypeScript. The app is **iOS-only for now** (`platforms: ["ios"]`
 in `app.json`) because a development build is needed: `@clerk/expo`'s native
 components and `@expo/ui` are native modules.
 
+Expo marks iOS share-receiving **experimental**: the generated share extension
+opens the main app target with the payload rather than processing it in its own
+`ViewController`, so the share journey lands in the app itself — see
+[Sharing a video](#sharing-a-video).
+
 - App identifier: `gg.barklog.app`
 - URL scheme: `barklog://`
 - Associated domain: `barklog.gg`
@@ -197,10 +202,13 @@ src/
         _layout.tsx  index.tsx  game/[id].tsx
       explore/   _layout.tsx  index.tsx  game/[id].tsx
       search/    _layout.tsx  index.tsx  game/[id].tsx
+    shared/                route group presented as a transparent modal over (tabs)
+      _layout.tsx  index.tsx  game/[id].tsx
+    +native-intent.ts      redirects an expo-sharing intent to /shared
   api/         errors, client, endpoints, keys, provider, hooks
   auth/        auth-gate, should-clear-cache
   components/  profile-toolbar, cover, game-row, query-boundary, query-states, empty-state
-  features/    backlog/ explore/ search/ game/ onboarding/
+  features/    backlog/ explore/ search/ game/ onboarding/ share/
   hooks/       use-debounced
   onboarding/  onboarding-gate, should-show-onboarding, storage
   ui/          glass, platform-glass, measured-host
@@ -213,6 +221,13 @@ is no Profile tab; the avatar in each tab's header opens Clerk's
 `UserProfileView` instead. Each tab owns its own Stack, and `game/[id].tsx` is
 triplicated — one per tab — so a pushed detail screen stays inside its tab with
 the native tab bar still visible.
+
+The root layout is a `Stack`, not a `Slot`, because `(tabs)` is no longer the
+only root route: `shared/` is its sibling and has to present _over_ the tab
+controller. Under a `Slot` it would replace it — the tabs would unmount, their
+stacks would be lost, and dismissing the share sheet would have nowhere to
+return to. The extra `UINavigationController` that costs is hidden by
+`headerShown: false`.
 Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
 whenever Android lands.
 
@@ -243,6 +258,51 @@ prop, and every list in Barklog is IGDB cover art.
 This branch's UI is committed and statically verified, but not yet exercised
 on a device — [`docs/mobile-device-verification.md`](docs/mobile-device-verification.md)
 is the checklist of what remains.
+
+### Sharing a video
+
+A YouTube or TikTok video shared into Barklog lands on the game it is about.
+The journey: the share extension hands the payload to the main target, which
+opens `barklog://` with an `expo-sharing` host; `app/+native-intent.ts`
+rewrites that to `/shared`; `useSharedUrl` reads the resolved payloads and
+`sharedUrlFrom` picks the first `https` link out of a `website` payload's
+`contentUri` or a `text` payload's body; `POST /api/games/identify` turns the
+link into ranked candidates; and a `BottomSheet` over the tabs lists them as
+ordinary `GameRow`s. Picking one pushes `/shared/game/[id]` — the same
+`GameDetailScreen` every tab renders. Dismissing clears the payload first, or
+the next cold launch would re-present a share the user already dealt with.
+
+The sheet is the **universal** `BottomSheet` from `@expo/ui`, not the
+`@expo/ui/swift-ui` one, because it takes plain React Native children and every
+row here is remote IGDB cover art.
+
+Three activation rules are declared, because the three sources differ —
+YouTube offers a bare URL, Safari on a watch page offers a web page, and TikTok
+offers text containing a URL:
+
+```json
+[
+  "expo-sharing",
+  {
+    "ios": {
+      "enabled": true,
+      "activationRule": {
+        "supportsWebUrlWithMaxCount": 1,
+        "supportsWebPageWithMaxCount": 1,
+        "supportsText": true
+      }
+    }
+  }
+]
+```
+
+`extensionBundleIdentifier` and `appGroupId` are left unset, so they default to
+`gg.barklog.app.ShareExtension` and `group.gg.barklog.app`. Two Apple Developer
+prerequisites follow from that, both needed before a build will install:
+
+- an App ID for `gg.barklog.app.ShareExtension`
+- the App Group `group.gg.barklog.app`, with the App Group capability enabled on
+  **both** `gg.barklog.app` and the extension App ID
 
 ## Auth
 
@@ -282,6 +342,7 @@ src/
   serialize.ts    row -> wire mappers (dates become ISO strings)
   clerk.ts        the production authenticator; the only Clerk import
   middleware/     finalize, auth, media type, rate limiting, validation
+  share/          provider, canonicalise, oembed, title extraction, identify
   routes/         probes, games, backlog, sync status
   app.ts          createApp(deps) — the middleware chain, exports AppType
   index.ts        Node bootstrap
@@ -298,6 +359,7 @@ Every route needs a valid Clerk session token. The only public routes are
 | `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first               |
 | `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`                |
 | `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12) |
+| `POST /api/games/identify`                | `{url}`; YouTube or TikTok, returns ranked candidates        |
 | `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`                       |
 | `GET /api/backlog/stats`                  | counts per status plus average rating                        |
 | `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated            |
