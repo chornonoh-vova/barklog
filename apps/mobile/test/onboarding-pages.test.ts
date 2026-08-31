@@ -4,11 +4,12 @@ import { describe, expect, it } from "vitest";
 import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES, pageIndex } from "@/features/onboarding/pages";
 
 describe("ONBOARDING_PAGES", () => {
-  it("is the four pages, in the agreed order", () => {
+  it("is the five pages, in the agreed order", () => {
     expect(ONBOARDING_PAGES.map((page) => page.title)).toEqual([
       "Welcome to Barklog",
       "Managing your game backlog",
       "Exploring games",
+      "Share a video, fetch the game",
       "All game data is powered by IGDB",
     ]);
   });
@@ -42,6 +43,13 @@ describe("ONBOARDING_PAGES", () => {
       expect(page?.description.toLowerCase()).toMatch(new RegExp(`\\b${status}\\b`));
     }
   });
+
+  it("names both launch platforms on the share page", () => {
+    const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "share");
+
+    expect(page?.description).toContain("YouTube");
+    expect(page?.description).toContain("TikTok");
+  });
 });
 
 describe("pageIndex", () => {
@@ -54,7 +62,7 @@ describe("pageIndex", () => {
   });
 
   it("finds the last page", () => {
-    expect(pageIndex(IGDB_PAGE_ID)).toBe(3);
+    expect(pageIndex(IGDB_PAGE_ID)).toBe(4);
   });
 
   it("resolves an unknown selection to 0 rather than -1", () => {
@@ -73,6 +81,11 @@ describe("nextPageId", () => {
 
   it("gives undefined past the last page, the signal to complete instead of advance", () => {
     expect(nextPageId(IGDB_PAGE_ID)).toBeUndefined();
+  });
+
+  it("puts the share page between explore and the attribution", () => {
+    expect(nextPageId("explore")).toBe("share");
+    expect(nextPageId("share")).toBe(IGDB_PAGE_ID);
   });
 
   it("treats an unknown selection as page 0, so it still returns a next id", () => {

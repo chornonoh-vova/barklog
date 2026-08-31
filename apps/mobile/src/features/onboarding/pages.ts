@@ -35,6 +35,13 @@ export const ONBOARDING_PAGES = [
       "See what's popular, what's coming out, and what just landed. Or search by name if you already know what you want.",
   },
   {
+    id: "share",
+    systemImage: "square.and.arrow.up",
+    title: "Share a video, fetch the game",
+    description:
+      "Watching a game video on YouTube or TikTok? Share it to Barklog and the dog fetches the game for your backlog.",
+  },
+  {
     id: IGDB_PAGE_ID,
     systemImage: "books.vertical.fill",
     title: "All game data is powered by IGDB",
