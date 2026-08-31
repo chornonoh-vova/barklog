@@ -4,14 +4,17 @@ import {
   gameFeedQuerySchema,
   gameIdParamSchema,
   searchQuerySchema,
+  similarQuerySchema,
   type GameFeed,
 } from "@repo/contracts";
 import {
+  gameExists,
   getBacklogEntry,
   getGameDetail,
   popularGames,
   recentGames,
   searchGames,
+  similarGames,
   upcomingGames,
   type GameSummary,
 } from "@repo/db";
@@ -25,6 +28,8 @@ import {
   SEARCH_TTL_SECONDS,
   SEARCH_VERSION_KEY,
   searchKey,
+  SIMILAR_TTL_SECONDS,
+  similarKey,
 } from "../cache-keys.js";
 import { onInvalid, problems } from "../problems.js";
 import { toBacklogEntry, toGameDetail, toGameSummary, type GameSummaryWire } from "../serialize.js";
@@ -92,6 +97,42 @@ export function gamesRoutes(deps: AppDeps) {
         c.header("Cache-Control", FEED_CACHE_CONTROL);
         return c.json({ items });
       })
+      // Registered before the `/:id` catch-all below. Two path segments cannot
+      // actually collide with one, but keeping the order explicit is what makes
+      // that route's "registered last" comment true.
+      .get(
+        "/:id/similar",
+        sValidator("param", gameIdParamSchema, onInvalid),
+        sValidator("query", similarQuerySchema, onInvalid),
+        async (c) => {
+          const { id } = c.req.valid("param");
+          const { limit } = c.req.valid("query");
+
+          const items = await withCache<GameSummaryWire[]>(
+            deps.cache,
+            similarKey(await searchVersion(), id, limit),
+            SIMILAR_TTL_SECONDS,
+            async () => {
+              // Inside the loader, not before it: a throw propagates uncached,
+              // so a missing game does not get a 404 pinned for an hour, and a
+              // cache hit pays nothing for the check. An empty list would be a
+              // lie about a game that is not in the mirror at all.
+              if (!(await gameExists(deps.db, id))) {
+                throw problems.create("NOT_FOUND", {
+                  detail: `Game ${id} is not in the mirror.`,
+                });
+              }
+
+              return (await similarGames(deps.db, { gameId: id, limit })).map(toGameSummary);
+            },
+          );
+
+          // Shareable across users, unlike the detail response beside it: this
+          // list embeds nothing about the caller.
+          c.header("Cache-Control", FEED_CACHE_CONTROL);
+          return c.json({ items });
+        },
+      )
       // Registered last so the static paths above are never shadowed.
       .get("/:id", sValidator("param", gameIdParamSchema, onInvalid), async (c) => {
         const { id } = c.req.valid("param");

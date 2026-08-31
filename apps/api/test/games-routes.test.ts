@@ -3,7 +3,14 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { SEARCH_VERSION_KEY } from "../src/cache-keys.js";
-import { callApi, createTestApp, OTHER_USER, seedGame, TEST_USER } from "./helpers.js";
+import {
+  callApi,
+  createTestApp,
+  OTHER_USER,
+  seedGame,
+  seedSimilar,
+  TEST_USER,
+} from "./helpers.js";
 
 const harness = createTestApp();
 
@@ -267,4 +274,123 @@ test("an id above int4 range is 422, not a 500 from Postgres", async () => {
 
   expect(response.status).toBe(422);
   expect(body.errors[0]?.field).toBe("id");
+});
+
+test("similar games are returned most-rated first with a feed cache directive", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+  await seedGame(harness.db, { id: 2, name: "Dark Souls III", count: 4000 });
+  await seedGame(harness.db, { id: 3, name: "Elden Ring", count: 2000 });
+  await seedSimilar(harness.db, 1, [2, 3]);
+
+  const response = await callApi(harness.app, "/api/games/1/similar");
+  const body = (await response.json()) as { items: { id: number }[] };
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("cache-control")).toBe("private, max-age=300");
+  expect(body.items.map((item) => item.id)).toEqual([2, 3]);
+});
+
+test("a similar id the mirror does not hold is omitted", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+  await seedSimilar(harness.db, 1, [999_999]);
+
+  const response = await callApi(harness.app, "/api/games/1/similar");
+
+  expect(((await response.json()) as { items: unknown[] }).items).toEqual([]);
+});
+
+test("a game with no suggestions is 200 and empty, not 404", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+
+  const response = await callApi(harness.app, "/api/games/1/similar");
+
+  expect(response.status).toBe(200);
+  expect(((await response.json()) as { items: unknown[] }).items).toEqual([]);
+});
+
+test("similar games for an unmirrored id is 404", async () => {
+  // An empty list would be a lie about a game that does not exist.
+  const response = await callApi(harness.app, "/api/games/424242/similar");
+  const body = (await response.json()) as { status: number; detail: string };
+
+  expect(response.status).toBe(404);
+  expect(body.detail).toContain("424242");
+});
+
+test("a similar-games limit over the cap is 422", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+
+  const response = await callApi(harness.app, "/api/games/1/similar?limit=500");
+  const body = (await response.json()) as { errors: { field: string }[] };
+
+  expect(response.status).toBe(422);
+  expect(body.errors[0]?.field).toBe("limit");
+});
+
+test("the default similar-games limit is twelve", async () => {
+  await seedGame(harness.db, { id: 1, name: "Subject", count: 10 });
+  for (let id = 100; id < 120; id += 1) {
+    await seedGame(harness.db, { id, name: `Similar ${id}`, count: id });
+  }
+  await seedSimilar(
+    harness.db,
+    1,
+    Array.from({ length: 20 }, (_unused, index) => 100 + index),
+  );
+
+  const response = await callApi(harness.app, "/api/games/1/similar");
+
+  expect(((await response.json()) as { items: unknown[] }).items).toHaveLength(12);
+});
+
+test("a repeated similar-games request is served from the cache", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+  await seedGame(harness.db, { id: 2, name: "Dark Souls III", count: 4000 });
+  await seedSimilar(harness.db, 1, [2]);
+
+  const first = await callApi(harness.app, "/api/games/1/similar");
+  expect(((await first.json()) as { items: unknown[] }).items).toHaveLength(1);
+
+  // Remove the rows the answer came from. A cached answer cannot notice.
+  await harness.db.delete(schema.gameSimilar).where(eq(schema.gameSimilar.gameId, 1));
+
+  const second = await callApi(harness.app, "/api/games/1/similar");
+  expect(((await second.json()) as { items: unknown[] }).items).toHaveLength(1);
+});
+
+test("the version bump the sync performs invalidates cached similar games", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+  await seedGame(harness.db, { id: 2, name: "Dark Souls III", count: 4000 });
+  await seedSimilar(harness.db, 1, [2]);
+
+  await callApi(harness.app, "/api/games/1/similar");
+  await harness.db.delete(schema.gameSimilar).where(eq(schema.gameSimilar.gameId, 1));
+
+  // Exactly what the worker does at the end of a successful run.
+  await harness.cache.incr(SEARCH_VERSION_KEY);
+
+  const fresh = await callApi(harness.app, "/api/games/1/similar");
+  expect(((await fresh.json()) as { items: unknown[] }).items).toEqual([]);
+});
+
+test("a similar-games 404 is not cached", async () => {
+  // The existence check lives inside the cache loader, and a throw must
+  // propagate without storing anything — otherwise a game added by a later
+  // sync would keep 404ing for the rest of the TTL.
+  expect((await callApi(harness.app, "/api/games/1/similar")).status).toBe(404);
+
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+
+  expect((await callApi(harness.app, "/api/games/1/similar")).status).toBe(200);
+});
+
+test("the similar route is not shadowed by the :id catch-all", async () => {
+  await seedGame(harness.db, { id: 1, name: "Dark Souls", count: 3500 });
+
+  const response = await callApi(harness.app, "/api/games/1/similar");
+  const body = (await response.json()) as Record<string, unknown>;
+
+  // The detail route would answer with a name and a backlogEntry.
+  expect(body).not.toHaveProperty("backlogEntry");
+  expect(body).toHaveProperty("items");
 });

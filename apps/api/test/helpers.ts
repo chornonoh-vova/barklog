@@ -136,3 +136,10 @@ export async function seedGame(
     igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
   });
 }
+
+/** Seeds the similar-games relation. Ids need not exist — that is the point. */
+export async function seedSimilar(db: Db, gameId: number, similarIds: number[]): Promise<void> {
+  await db
+    .insert(schema.gameSimilar)
+    .values(similarIds.map((similarGameId) => ({ gameId, similarGameId })));
+}
