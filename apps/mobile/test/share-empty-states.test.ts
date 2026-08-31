@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { NO_LINK, TITLE_MATCH_NOTICE, UNREADABLE, noMatch } from "@/features/share/empty-states";
 
 describe("NO_LINK", () => {
   it("is the state for a share that resolved with no link in it", () => {
@@ -24,6 +24,13 @@ describe("UNREADABLE", () => {
     expect(UNREADABLE.title).not.toBe(NO_LINK.title);
     expect(UNREADABLE.description).not.toBe(NO_LINK.description);
     expect(UNREADABLE.description).not.toMatch(/screenshot/);
+  });
+});
+
+describe("TITLE_MATCH_NOTICE", () => {
+  it("says the matches came from the video title, not an identified game", () => {
+    expect(TITLE_MATCH_NOTICE).toMatch(/video title/);
+    expect(TITLE_MATCH_NOTICE).not.toBe("");
   });
 });
 

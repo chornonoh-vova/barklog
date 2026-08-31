@@ -64,6 +64,12 @@ export interface ShareSourceWire {
 
 export interface ShareIdentifyResponse {
   source: ShareSourceWire;
+  /**
+   * `false` when the game could not be identified from the video and
+   * `guesses` is just the raw video title used as a search query instead.
+   * Drives the fallback notice in the share screen.
+   */
+  identified: boolean;
   /** What the extraction believed the game was called. Drives the empty-state copy. */
   guesses: string[];
   items: GameSummaryWire[];

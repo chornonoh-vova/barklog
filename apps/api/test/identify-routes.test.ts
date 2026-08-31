@@ -52,6 +52,7 @@ test("identifies the game, returning ranked candidates and the video it came fro
   const response = await identify({ url: RE2_URL });
   const body = (await response.json()) as {
     source: { provider: string; videoId: string; title: string; author: string | null };
+    identified: boolean;
     guesses: string[];
     items: { id: number }[];
   };
@@ -64,6 +65,7 @@ test("identifies the game, returning ranked candidates and the video it came fro
     title: META.title,
     author: "Snamwiches",
   });
+  expect(body.identified).toBe(true);
   expect(body.guesses).toEqual(["Resident Evil 2"]);
   expect(body.items.map((item) => item.id)).toEqual([1, 2]);
 });
@@ -187,9 +189,10 @@ test("a failing extraction falls soft to the raw video title", async () => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url: RE2_URL }),
   });
-  const body = (await response.json()) as { guesses: string[] };
+  const body = (await response.json()) as { identified: boolean; guesses: string[] };
 
   expect(response.status).toBe(200);
+  expect(body.identified).toBe(false);
   expect(body.guesses).toEqual([META.title]);
   await app.close();
 });

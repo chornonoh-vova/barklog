@@ -181,6 +181,7 @@ export function gamesRoutes(deps: AppDeps) {
       // loader propagates uncached — the same property `/:id/similar` relies on
       // — so one transient failure cannot pin a degraded answer for 30 days.
       let guesses: string[];
+      let identified: boolean;
       try {
         guesses = await withCache(
           deps.cache,
@@ -188,6 +189,7 @@ export function gamesRoutes(deps: AppDeps) {
           EXTRACT_TTL_SECONDS,
           () => deps.share.extractTitles(meta),
         );
+        identified = true;
       } catch (error) {
         // Logged, not thrown: this is the one failure mode in the route that
         // never reaches `apiErrorHandler`, so without a log line an Anthropic
@@ -203,6 +205,7 @@ export function gamesRoutes(deps: AppDeps) {
         // Fail soft: the raw title is a worse query than an extracted one, but
         // it is a far better answer than an error page.
         guesses = [meta.title];
+        identified = false;
       }
 
       const results = await Promise.all(
@@ -216,6 +219,7 @@ export function gamesRoutes(deps: AppDeps) {
           title: meta.title,
           author: meta.author,
         },
+        identified,
         guesses,
         items: mergeCandidates(results, limit),
       };

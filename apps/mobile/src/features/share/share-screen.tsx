@@ -8,7 +8,7 @@ import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
-import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { NO_LINK, TITLE_MATCH_NOTICE, UNREADABLE, noMatch } from "@/features/share/empty-states";
 import { Screen, Type } from "@/theme";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
@@ -82,6 +82,7 @@ export function ShareScreen({
                 <Text style={styles.source} numberOfLines={2}>
                   {data.source.title}
                 </Text>
+                {data.identified ? null : <Text style={styles.notice}>{TITLE_MATCH_NOTICE}</Text>}
               </View>
             }
           />
@@ -95,4 +96,5 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 2 },
   question: { ...Type.headline, color: PlatformColor("label") },
   source: { ...Type.subheadline, color: PlatformColor("secondaryLabel") },
+  notice: { ...Type.footnote, color: PlatformColor("secondaryLabel"), paddingTop: 4 },
 });
