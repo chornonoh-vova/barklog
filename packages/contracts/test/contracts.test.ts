@@ -8,6 +8,8 @@ import {
   gameIdParamSchema,
   MAX_GAME_ID,
   searchQuerySchema,
+  SIMILAR_LIMIT_DEFAULT,
+  similarQuerySchema,
 } from "../src/index.js";
 
 const parse = <T extends v.GenericSchema>(schema: T, input: unknown) =>
@@ -94,4 +96,17 @@ test("a path id above int4 range is rejected; the int4 max is accepted", () => {
   // Anything above this must be a 422 from validation, not a 500 from Postgres.
   expect(accepts(gameIdParamSchema, { id: String(MAX_GAME_ID + 1) })).toBe(false);
   expect(parse(gameIdParamSchema, { id: String(MAX_GAME_ID) })).toEqual({ id: MAX_GAME_ID });
+});
+
+test("the similar-games limit defaults to twelve, what IGDB actually supplies", () => {
+  expect(SIMILAR_LIMIT_DEFAULT).toBe(12);
+  expect(parse(similarQuerySchema, {})).toEqual({ limit: 12 });
+});
+
+test("the similar-games limit shares the search cap rather than inventing one", () => {
+  expect(accepts(similarQuerySchema, { limit: 50 })).toBe(true);
+  expect(accepts(similarQuerySchema, { limit: 51 })).toBe(false);
+  expect(accepts(similarQuerySchema, { limit: 0 })).toBe(false);
+  // A non-numeric limit coerces to NaN and is rejected, not silently defaulted.
+  expect(accepts(similarQuerySchema, { limit: "abc" })).toBe(false);
 });

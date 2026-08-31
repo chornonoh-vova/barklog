@@ -34,3 +34,18 @@ export function searchKey(version: number, query: string, limit: number, offset:
 export function feedKey(feed: GameFeed, version: number, limit: number, now: Date): string {
   return `${feed}:v${version}:${startOfUtcDay(now).toISOString().slice(0, 10)}:${limit}`;
 }
+
+/**
+ * An hour, like the feeds: the relation only changes when a sync writes it.
+ * Unlike the feeds there is no day bucketing — nothing here moves at midnight.
+ */
+export const SIMILAR_TTL_SECONDS = 3600;
+
+/**
+ * Version-prefixed, so the `incr(SEARCH_VERSION_KEY)` the worker performs at
+ * the end of a successful sync sweeps these too. No `sha1` — there is no free
+ * text in this key to normalise or bound.
+ */
+export function similarKey(version: number, gameId: number, limit: number): string {
+  return `similar:v${version}:${gameId}:${limit}`;
+}
