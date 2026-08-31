@@ -37,9 +37,9 @@ export default function SharedIndex() {
       {/* A toolbar button, not `Stack.Screen.BackButton`: this is the root of a
           modal with nothing behind it to pop to, and leaving needs to clear the
           payload as well as navigate. */}
-      <Stack.Toolbar placement="right">
+      <Stack.Toolbar placement="left">
         <Stack.Toolbar.Button
-          icon="xmark"
+          icon="chevron.left"
           accessibilityLabel="Back to home"
           onPress={goHome}
         >
