@@ -6,7 +6,7 @@ import { useSharedUrl } from "@/features/share/use-shared-url";
 
 export default function SharedIndex() {
   const router = useRouter();
-  const { url, clear } = useSharedUrl();
+  const { url, isResolving, clear } = useSharedUrl();
 
   /**
    * Focus, not local state: pushing the detail screen collapses the sheet, and
@@ -34,6 +34,7 @@ export default function SharedIndex() {
   return (
     <ShareSheet
       url={url}
+      isResolving={isResolving}
       isPresented={isFocused}
       onSelect={openGame}
       onDismiss={dismiss}

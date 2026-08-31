@@ -272,9 +272,18 @@ ordinary `GameRow`s. Picking one pushes `/shared/game/[id]` — the same
 `GameDetailScreen` every tab renders. Dismissing clears the payload first, or
 the next cold launch would re-present a share the user already dealt with.
 
-The sheet is the **universal** `BottomSheet` from `@expo/ui`, not the
-`@expo/ui/swift-ui` one, because it takes plain React Native children and every
-row here is remote IGDB cover art.
+A share carrying no link — a photo, or text with no url — gets its own empty
+state, keyed off `isResolving` rather than the query: a disabled TanStack query
+is permanently `isPending`, so routing that case through `QueryBoundary` would
+spin forever.
+
+The sheet is the **universal** `BottomSheet` from `@expo/ui` rather than the
+`@expo/ui/swift-ui` one — but the universal layer is not a React Native
+passthrough: on iOS it maps to SwiftUI, so a sheet's children are SwiftUI
+children. The sheet's body is therefore wrapped in `RNHostView`, which hosts an
+RN subtree inside SwiftUI. That wrapper is load-bearing rather than decorative;
+without it the sheet presents empty, and every row here is remote IGDB cover
+art that only React Native can draw.
 
 Three activation rules are declared, because the three sources differ —
 YouTube offers a bare URL, Safari on a watch page offers a web page, and TikTok

@@ -194,16 +194,38 @@ first: it is the one that can regress behaviour that already worked.
 ## Share intent checks
 
 Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. None of
-this half has run anywhere: the `/shared` transparent-modal presentation over
-the native tab controller is the least certain part of the design.
+this half has run anywhere. Check 33 first: it is the only one that can fail
+because of how `@expo/ui` hosts the sheet's contents rather than because of
+anything in the share journey itself, and it fails in two distinguishable ways.
 
-- [ ] **33. Barklog appears in the share sheet** from the YouTube app, the
+- [ ] **33. The sheet renders its rows, and tapping one navigates.** HIGHEST
+      RISK of this section, and it fails in two ways that mean different things.
+      If the sheet presents but shows _nothing_, `RNHostView` is not hosting the
+      React Native subtree: `@expo/ui`'s universal layer maps to SwiftUI on iOS,
+      so the `RNHostView` wrapper in `share-sheet.tsx` is the only reason RN
+      children render at all — it is load-bearing, not decoration, and
+      `matchContents` is mount-only. If the rows render but taps do nothing, the
+      suspect is the `pointerEvents="none"` that the universal wrapper sets on
+      its own `Host`
+      (`@expo/ui/src/universal/BottomSheet/index.ios.tsx`), which no public prop
+      can override. The escape is to compose `@expo/ui/swift-ui`'s `BottomSheet`
+      directly — our own `Host` without that prop, a `Group` carrying
+      `presentationDetents`, `presentationDragIndicator` and `padding`, and
+      `RNHostView` inside it. About twenty lines, replicating the universal
+      wrapper minus the one prop we cannot control.
+- [ ] **34. Barklog appears in the share sheet** from the YouTube app, the
       TikTok app, and Safari on a watch page.
-- [ ] **34. Warm launch presents the sheet; cold launch presents the sheet.**
-- [ ] **35. Signed-out cold install:** `AuthView` first, sheet after sign-in.
-- [ ] **36. Dismissing clears the payload** — relaunching does **not**
+- [ ] **35. Warm launch presents the sheet; cold launch presents the sheet.**
+- [ ] **36. Signed-out cold install:** `AuthView` first, sheet after sign-in.
+- [ ] **37. Dismissing clears the payload** — relaunching does **not**
       re-present it.
-- [ ] **37. Pick a candidate, go back: the sheet re-presents.**
-- [ ] **38. A private or deleted video shows the 404 copy, not a crash.**
-- [ ] **39. A TikTok short link (`vm.tiktok.com`) resolves.**
-- [ ] **40. Dismissing returns to the originating tab with its stack intact.**
+- [ ] **38. Pick a candidate, go back: the sheet re-presents.**
+- [ ] **39. A private or deleted video shows the 404 copy, not a crash.**
+- [ ] **40. A TikTok short link (`vm.tiktok.com`) resolves.**
+- [ ] **41. Dismissing returns to the originating tab with its stack intact.**
+- [ ] **42. A share with no link in it shows "No link in that share", not a
+      spinner.** Share a photo, or text with no url. A disabled query is
+      permanently `isPending`, so this state exists only because
+      `share-sheet.tsx` branches on `isResolving` before reaching
+      `QueryBoundary`; if a spinner appears instead, that branch is not being
+      taken.

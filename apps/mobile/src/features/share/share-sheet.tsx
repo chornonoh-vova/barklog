@@ -1,4 +1,4 @@
-import { BottomSheet } from "@expo/ui";
+import { BottomSheet, RNHostView } from "@expo/ui";
 import type { GameSummaryWire } from "@repo/contracts";
 import { useCallback } from "react";
 import { FlatList, PlatformColor, StyleSheet, Text, View } from "react-native";
@@ -7,26 +7,23 @@ import { useIdentifyShare } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
+import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
+import { NO_LINK, noMatch } from "@/features/share/empty-states";
 import { Type } from "@/theme";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
-/** Reads as a sentence when the guesses are joined, not as a debug dump. */
-function guessLine(guesses: string[]): string {
-  if (guesses.length === 0) return "We could not tell which game this video is about.";
-
-  return `We think this is about ${guesses.join(" or ")}, but it is not in the catalogue yet.`;
-}
-
 export function ShareSheet({
   url,
+  isResolving,
   isPresented,
   onSelect,
   onDismiss,
   onSearch,
 }: {
   url: string | null;
+  isResolving: boolean;
   isPresented: boolean;
   onSelect: (id: number) => void;
   onDismiss: () => void;
@@ -54,36 +51,53 @@ export function ShareSheet({
       snapPoints={["half", "full"]}
       contentPadding={0}
     >
-      <View style={styles.sheet}>
-        <QueryBoundary query={identify}>
-          {(data) => (
-            <>
-              <View style={styles.header}>
-                <Text style={styles.title}>Barklog fetched these</Text>
-                <Text style={styles.source} numberOfLines={2}>
-                  {data.source.title}
-                </Text>
-              </View>
+      {/* `RNHostView`, and it cannot be simplified away: `@expo/ui`'s universal
+          layer maps to SwiftUI on iOS, not to React Native, so the sheet's
+          children are SwiftUI children. An RN subtree — every row here is
+          remote IGDB cover art — needs an explicit host or it renders nothing
+          at all. `matchContents={false}` lets the host take the parent SwiftUI
+          view's size; `true` would size it to its children and fight the
+          `presentationDetents` the snap points set. */}
+      <RNHostView matchContents={false}>
+        <View style={styles.sheet}>
+          {isResolving ? (
+            // Transient: iOS is still resolving the payload, so no url yet.
+            <LoadingState />
+          ) : url === null ? (
+            // Resolved, and there was no link in it. Without this branch the
+            // disabled query stays `isPending` forever and the user watches a
+            // spinner that will never finish.
+            <EmptyState {...NO_LINK} action={{ label: "Close", onPress: onDismiss }} />
+          ) : (
+            <QueryBoundary query={identify}>
+              {(data) => (
+                <>
+                  <View style={styles.header}>
+                    <Text style={styles.title}>Barklog fetched these</Text>
+                    <Text style={styles.source} numberOfLines={2}>
+                      {data.source.title}
+                    </Text>
+                  </View>
 
-              {data.items.length === 0 ? (
-                <EmptyState
-                  title="No match in the catalogue"
-                  systemImage="magnifyingglass"
-                  description={guessLine(data.guesses)}
-                  action={{ label: "Search Instead", onPress: onSearch }}
-                />
-              ) : (
-                <FlatList
-                  data={data.items}
-                  keyExtractor={keyExtractor}
-                  renderItem={renderItem}
-                  contentInsetAdjustmentBehavior="automatic"
-                />
+                  {data.items.length === 0 ? (
+                    <EmptyState
+                      {...noMatch(data.guesses)}
+                      action={{ label: "Search Instead", onPress: onSearch }}
+                    />
+                  ) : (
+                    <FlatList
+                      data={data.items}
+                      keyExtractor={keyExtractor}
+                      renderItem={renderItem}
+                      contentInsetAdjustmentBehavior="automatic"
+                    />
+                  )}
+                </>
               )}
-            </>
+            </QueryBoundary>
           )}
-        </QueryBoundary>
-      </View>
+        </View>
+      </RNHostView>
     </BottomSheet>
   );
 }
