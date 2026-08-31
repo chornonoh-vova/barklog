@@ -34,25 +34,32 @@ describe("TITLE_MATCH_NOTICE", () => {
 
 describe("noMatch", () => {
   it("says only that it could not tell when there is no guess", () => {
-    const state = noMatch([]);
+    const state = noMatch(true, []);
 
     expect(state.description).toBe("We could not tell which game this video is about.");
   });
 
   it("names a single guess", () => {
-    expect(noMatch(["Resident Evil 4"]).description).toBe(
+    expect(noMatch(true, ["Resident Evil 4"]).description).toBe(
       "We think this is about Resident Evil 4, but it is not in the catalogue yet.",
     );
   });
 
   it("joins several guesses into one sentence", () => {
-    expect(noMatch(["Hollow Knight", "Silksong"]).description).toBe(
+    expect(noMatch(true, ["Hollow Knight", "Silksong"]).description).toBe(
       "We think this is about Hollow Knight or Silksong, but it is not in the catalogue yet.",
     );
   });
 
+  it("does not quote the raw video title back as a game when extraction failed soft", () => {
+    const state = noMatch(false, ["Sekiro's 100% is actually miserable"]);
+
+    expect(state.description).toBe("We could not tell which game this video is about.");
+    expect(state.description).not.toMatch(/Sekiro/);
+  });
+
   it("reads differently from the other states, which are different situations", () => {
-    const titles = [noMatch([]).title, NO_LINK.title, UNREADABLE.title];
+    const titles = [noMatch(true, []).title, NO_LINK.title, UNREADABLE.title];
 
     expect(new Set(titles).size).toBe(titles.length);
   });

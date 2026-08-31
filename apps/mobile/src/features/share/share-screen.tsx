@@ -66,7 +66,7 @@ export function ShareScreen({
       {(data) =>
         data.items.length === 0 ? (
           <EmptyState
-            {...noMatch(data.guesses)}
+            {...noMatch(data.identified, data.guesses)}
             action={{ label: "Search Instead", onPress: onSearch }}
           />
         ) : (

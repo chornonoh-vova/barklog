@@ -37,13 +37,20 @@ export const UNREADABLE: EmptyStateContent = {
 export const TITLE_MATCH_NOTICE =
   "We couldn't tell which game this is, so these are matches for the video title instead.";
 
-/** Reads as a sentence when the guesses are joined, not as a debug dump. */
-export function noMatch(guesses: string[]): EmptyStateContent {
+/**
+ * Reads as a sentence when the guesses are joined, not as a debug dump.
+ *
+ * `identified` gates which sentence is used, not just `guesses.length`: on
+ * the fail-soft path `guesses` holds the video's raw title, not a game
+ * title, so quoting it back as "we think this is about ..." would assert a
+ * belief the server explicitly disclaimed.
+ */
+export function noMatch(identified: boolean, guesses: string[]): EmptyStateContent {
   return {
     title: "No match in the catalogue",
     systemImage: "magnifyingglass",
     description:
-      guesses.length === 0
+      !identified || guesses.length === 0
         ? "We could not tell which game this video is about."
         : `We think this is about ${guesses.join(" or ")}, but it is not in the catalogue yet.`,
   };
