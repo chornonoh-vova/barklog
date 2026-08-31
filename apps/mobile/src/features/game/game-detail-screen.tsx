@@ -9,11 +9,18 @@ import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
+import { SimilarGames } from "@/features/game/similar-games";
 import { screenshotUrl } from "@/igdb-image";
 
 const SHOT_WIDTH = 280;
 
-export function GameDetailScreen() {
+/**
+ * `onOpenGame` rather than a path: typed routes make `Href` a union of
+ * template-literal types, so each tab's route file builds its own literal push
+ * and this screen stays ignorant of the router. Every tab has its own copy of
+ * this route so a push stays inside the current tab.
+ */
+export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => void }) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const gameId = Number(id);
   const game = useGame(gameId);
@@ -66,6 +73,8 @@ export function GameDetailScreen() {
             )}
 
             <DetailRows game={data} />
+
+            <SimilarGames gameId={gameId} onPressGame={onOpenGame} />
 
             <IgdbAttribution slug={data.slug} />
           </ScrollView>
