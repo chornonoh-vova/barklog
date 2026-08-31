@@ -68,4 +68,11 @@ describe("shareIdentifySchema", () => {
   it("rejects an unknown key, so a typo is a 422 and not silently ignored", () => {
     expect(parse({ url: "https://youtu.be/1vs0lLIRt7w", limitt: 5 }).success).toBe(false);
   });
+
+  it("rejects an http url through the schema, not only through the helper", () => {
+    const result = parse({ url: "http://www.youtube.com/watch?v=1vs0lLIRt7w" });
+
+    expect(result.success).toBe(false);
+    expect(result.issues?.map((issue) => v.getDotPath(issue))).toContain("url");
+  });
 });

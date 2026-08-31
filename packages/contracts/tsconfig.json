@@ -1,7 +1,7 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "lib": ["ES2024"],
+    "lib": ["ES2024", "DOM"],
     "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -10,7 +10,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": []
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
