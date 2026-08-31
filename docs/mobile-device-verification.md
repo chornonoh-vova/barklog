@@ -197,6 +197,7 @@ Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. None of
 this half has run anywhere. Check 33 first: it is the only one that can fail
 because of how `@expo/ui` hosts the sheet's contents rather than because of
 anything in the share journey itself, and it fails in two distinguishable ways.
+Check 43 is the same class of unknown and worth doing straight after it.
 
 - [ ] **33. The sheet renders its rows, and tapping one navigates.** HIGHEST
       RISK of this section, and it fails in two ways that mean different things.
@@ -229,3 +230,32 @@ anything in the share journey itself, and it fails in two distinguishable ways.
       `share-sheet.tsx` branches on `isResolving` before reaching
       `QueryBoundary`; if a spinner appears instead, that branch is not being
       taken.
+- [ ] **43. The list scrolls, and the sheet still drags from half to full.**
+      Same class of unknown as 33, and the reason it is listed separately: this
+      is a `UIScrollView` (the `FlatList`) inside an RN subtree inside a SwiftUI
+      `Group` inside a UIKit sheet, which is exactly where a scroll gesture and
+      a sheet-drag gesture fail to coordinate. Both must work: flick the list
+      with the sheet at `half` and it should scroll without moving the sheet;
+      drag the sheet's own grabber and it should expand to `full` without
+      scrolling the list. A share with enough candidates to overflow half a
+      screen is needed — search a heavily-sequelled series.
+- [ ] **44. Close dismisses from under a live sheet.** Different from item 41,
+      which only covers a swipe: a swipe reaches `onDismiss` _after_ the native
+      sheet has gone, whereas **Close** calls `router.back()` while the SwiftUI
+      sheet is still presented, so the containing route pops out from under a
+      live UIKit presentation. Reach it by sharing something with no link in it
+      (item 42), then tap Close. Expect the sheet and the route to go together,
+      landing on the originating tab, with no orphaned dimming overlay left
+      behind and no second tap needed.
+- [ ] **45. Search Instead lands on the Search tab.** The other programmatic
+      path, and it pops from under a live sheet the same way 44 does, but via
+      `router.dismissTo("/search")` rather than `back()`. Reach it by sharing a
+      video whose game is not in the catalogue. Expect the Search tab, its stack
+      at the root, and the sheet fully gone — not the tab visible behind a
+      still-presented sheet.
+- [ ] **46. The error state's Close behaves like 44.** The third and last
+      inescapable-by-button state, reached when payload resolution itself fails
+      rather than when the share carried no link. Hard to force deliberately;
+      airplane mode part-way through a share is the closest lever. If it cannot
+      be reproduced, say so on the checklist rather than ticking it — the state
+      exists precisely because the failure is not reproducible on demand.

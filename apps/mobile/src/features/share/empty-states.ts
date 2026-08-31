@@ -18,6 +18,17 @@ export const NO_LINK: EmptyStateContent = {
     "Barklog needs a YouTube or TikTok link. Share the video itself, not a screenshot of it.",
 };
 
+/**
+ * Resolution itself failed: iOS never handed the payload over in a readable
+ * form. Separate from `NO_LINK` because that copy's advice — share the video,
+ * not a screenshot — is wrong when the share was fine and the read was not.
+ */
+export const UNREADABLE: EmptyStateContent = {
+  title: "Could not read that share",
+  systemImage: "exclamationmark.triangle",
+  description: "Barklog could not open what was shared. Try sharing the video again.",
+};
+
 /** Reads as a sentence when the guesses are joined, not as a debug dump. */
 export function noMatch(guesses: string[]): EmptyStateContent {
   return {

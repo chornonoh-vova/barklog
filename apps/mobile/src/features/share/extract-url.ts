@@ -11,6 +11,8 @@ export interface ResolvedPayloadLike {
   value?: string | null;
 }
 
+/** `https` only, deliberately: a bare `http://` link is treated as no link at
+ * all, because `shareIdentifySchema` rejects one anyway. */
 const URL_IN_TEXT = /https:\/\/[^\s<>"']+/;
 
 /** A url at the end of a sentence collects punctuation that is not part of it. */

@@ -1,5 +1,6 @@
 import { BottomSheet, RNHostView } from "@expo/ui";
 import type { GameSummaryWire } from "@repo/contracts";
+import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { FlatList, PlatformColor, StyleSheet, Text, View } from "react-native";
 
@@ -9,21 +10,23 @@ import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
-import { NO_LINK, noMatch } from "@/features/share/empty-states";
+import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
 import { Type } from "@/theme";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
 export function ShareSheet({
   url,
-  isResolving,
+  isPending,
+  error,
   isPresented,
   onSelect,
   onDismiss,
   onSearch,
 }: {
   url: string | null;
-  isResolving: boolean;
+  isPending: boolean;
+  error: Error | null;
   isPresented: boolean;
   onSelect: (id: number) => void;
   onDismiss: () => void;
@@ -44,6 +47,53 @@ export function ShareSheet({
     [onSelect],
   );
 
+  /**
+   * Four states, and the order matters. `isPending` has to come first: the
+   * settled branches below all read as terminal, and one of them would flash
+   * on every share's first frame if pending were not checked ahead of them.
+   */
+  let body: ReactNode;
+  if (isPending) {
+    body = <LoadingState />;
+  } else if (error !== null) {
+    // The payload never became readable. `NO_LINK` below would blame the user
+    // for a failure that was not theirs.
+    body = <EmptyState {...UNREADABLE} action={{ label: "Close", onPress: onDismiss }} />;
+  } else if (url === null) {
+    // Settled, and nothing in the share was a link. Without this branch the
+    // disabled query stays `isPending` forever and the spinner never finishes.
+    body = <EmptyState {...NO_LINK} action={{ label: "Close", onPress: onDismiss }} />;
+  } else {
+    body = (
+      <QueryBoundary query={identify}>
+        {(data) => (
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>Barklog fetched these</Text>
+              <Text style={styles.source} numberOfLines={2}>
+                {data.source.title}
+              </Text>
+            </View>
+
+            {data.items.length === 0 ? (
+              <EmptyState
+                {...noMatch(data.guesses)}
+                action={{ label: "Search Instead", onPress: onSearch }}
+              />
+            ) : (
+              <FlatList
+                data={data.items}
+                keyExtractor={keyExtractor}
+                renderItem={renderItem}
+                contentInsetAdjustmentBehavior="automatic"
+              />
+            )}
+          </>
+        )}
+      </QueryBoundary>
+    );
+  }
+
   return (
     <BottomSheet
       isPresented={isPresented}
@@ -59,44 +109,7 @@ export function ShareSheet({
           view's size; `true` would size it to its children and fight the
           `presentationDetents` the snap points set. */}
       <RNHostView matchContents={false}>
-        <View style={styles.sheet}>
-          {isResolving ? (
-            // Transient: iOS is still resolving the payload, so no url yet.
-            <LoadingState />
-          ) : url === null ? (
-            // Resolved, and there was no link in it. Without this branch the
-            // disabled query stays `isPending` forever and the user watches a
-            // spinner that will never finish.
-            <EmptyState {...NO_LINK} action={{ label: "Close", onPress: onDismiss }} />
-          ) : (
-            <QueryBoundary query={identify}>
-              {(data) => (
-                <>
-                  <View style={styles.header}>
-                    <Text style={styles.title}>Barklog fetched these</Text>
-                    <Text style={styles.source} numberOfLines={2}>
-                      {data.source.title}
-                    </Text>
-                  </View>
-
-                  {data.items.length === 0 ? (
-                    <EmptyState
-                      {...noMatch(data.guesses)}
-                      action={{ label: "Search Instead", onPress: onSearch }}
-                    />
-                  ) : (
-                    <FlatList
-                      data={data.items}
-                      keyExtractor={keyExtractor}
-                      renderItem={renderItem}
-                      contentInsetAdjustmentBehavior="automatic"
-                    />
-                  )}
-                </>
-              )}
-            </QueryBoundary>
-          )}
-        </View>
+        <View style={styles.sheet}>{body}</View>
       </RNHostView>
     </BottomSheet>
   );

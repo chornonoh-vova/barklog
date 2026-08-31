@@ -221,6 +221,8 @@ is no Profile tab; the avatar in each tab's header opens Clerk's
 `UserProfileView` instead. Each tab owns its own Stack, and `game/[id].tsx` is
 triplicated — one per tab — so a pushed detail screen stays inside its tab with
 the native tab bar still visible.
+Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
+whenever Android lands.
 
 The root layout is a `Stack`, not a `Slot`, because `(tabs)` is no longer the
 only root route: `shared/` is its sibling and has to present _over_ the tab
@@ -228,8 +230,6 @@ controller. Under a `Slot` it would replace it — the tabs would unmount, their
 stacks would be lost, and dismissing the share sheet would have nowhere to
 return to. The extra `UINavigationController` that costs is hidden by
 `headerShown: false`.
-Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
-whenever Android lands.
 
 **Explore.** Three shelves — Most Popular, Upcoming, Recently Released — each a
 two-row grid scrolling sideways over its own feed request. The three queries are
@@ -272,10 +272,14 @@ ordinary `GameRow`s. Picking one pushes `/shared/game/[id]` — the same
 `GameDetailScreen` every tab renders. Dismissing clears the payload first, or
 the next cold launch would re-present a share the user already dealt with.
 
-A share carrying no link — a photo, or text with no url — gets its own empty
-state, keyed off `isResolving` rather than the query: a disabled TanStack query
-is permanently `isPending`, so routing that case through `QueryBoundary` would
-spin forever.
+The sheet has four states, and `useSharedUrl` rather than the query decides
+between the first three: pending, a resolution failure, a share with no link in
+it, and only then the candidate list. A disabled TanStack query is permanently
+`isPending`, so routing a settled-but-urlless share through `QueryBoundary`
+would spin forever. Pending is derived from `sharedPayloads` — which
+`useIncomingShare` seeds synchronously — rather than from its `isResolving`
+flag, which starts `false` and only turns true from an effect, one frame too
+late to keep a terminal empty state from flashing.
 
 The sheet is the **universal** `BottomSheet` from `@expo/ui` rather than the
 `@expo/ui/swift-ui` one — but the universal layer is not a React Native
