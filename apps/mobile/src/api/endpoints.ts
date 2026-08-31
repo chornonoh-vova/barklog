@@ -1,5 +1,6 @@
 import {
   SEARCH_LIMIT_DEFAULT,
+  SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
   type BacklogListResponse,
   type BacklogSort,
@@ -29,6 +30,11 @@ export function createEndpoints(request: Request) {
       }),
 
     getGame: (id: number) => request<GameDetailResponse>(`/api/games/${id}`),
+
+    similarGames: (id: number, input: { limit?: number } = {}) =>
+      request<GameListResponse>(`/api/games/${id}/similar`, {
+        query: { limit: input.limit ?? SIMILAR_LIMIT_DEFAULT },
+      }),
 
     listBacklog: (input: { status?: BacklogStatus; sort?: BacklogSort } = {}) =>
       request<BacklogListResponse>("/api/backlog", {

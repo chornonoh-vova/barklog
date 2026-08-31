@@ -10,6 +10,12 @@ export const keys = {
       ["games", "search", q, limit, offset] as const,
     feed: (feed: GameFeed, limit: number) => ["games", "feed", feed, limit] as const,
     detail: (id: number) => ["games", "detail", id] as const,
+    /**
+     * Deliberately not nested under `detail`: the backlog mutations invalidate
+     * that key, and adding a game to your backlog does not change what is
+     * similar to it.
+     */
+    similar: (id: number, limit: number) => ["games", "similar", id, limit] as const,
   },
   backlog: {
     all: ["backlog"] as const,

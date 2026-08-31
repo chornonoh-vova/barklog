@@ -43,6 +43,16 @@ describe("query keys", () => {
     expect(keys.backlog.stats()[0]).toBe(keys.backlog.all[0]);
   });
 
+  it("keys similar games by id and limit", () => {
+    expect(keys.games.similar(1942, 12)).toEqual(["games", "similar", 1942, 12]);
+  });
+
+  it("keeps similar games outside the detail key, so a backlog write cannot clear it", () => {
+    // The backlog mutations invalidate keys.games.detail(id). Adding a game to
+    // your backlog does not change what is similar to it.
+    expect(keys.games.similar(1942, 12)).not.toEqual(expect.arrayContaining(["detail"]));
+  });
+
   it("is stable across calls", () => {
     expect(keys.games.detail(1)).toEqual(keys.games.detail(1));
   });

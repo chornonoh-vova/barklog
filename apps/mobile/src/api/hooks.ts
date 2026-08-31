@@ -8,6 +8,7 @@ import {
 import {
   SEARCH_LIMIT_DEFAULT,
   SEARCH_QUERY_MIN,
+  SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
   type BacklogListResponse,
   type BacklogSort,
@@ -86,6 +87,23 @@ export function useGame(id: number): UseQueryResult<GameDetailResponse> {
   const api = useApi();
 
   return useQuery({ queryKey: keys.games.detail(id), queryFn: () => api.getGame(id) });
+}
+
+/**
+ * The client's default 60 s `staleTime` is left alone deliberately: the response
+ * carries `max-age=300`, so repeat opens are absorbed below this layer, and the
+ * relation itself only changes when a nightly sync writes it.
+ */
+export function useSimilarGames(
+  id: number,
+  limit = SIMILAR_LIMIT_DEFAULT,
+): UseQueryResult<GameListResponse> {
+  const api = useApi();
+
+  return useQuery({
+    queryKey: keys.games.similar(id, limit),
+    queryFn: () => api.similarGames(id, { limit }),
+  });
 }
 
 /**

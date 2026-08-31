@@ -47,6 +47,23 @@ describe("createEndpoints", () => {
     expect(calls[0]).toEqual({ path: "/api/games/1942", options: {} });
   });
 
+  it("fetches similar games with a default limit of twelve", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).similarGames(1942);
+
+    expect(calls[0]).toEqual({
+      path: "/api/games/1942/similar",
+      options: { query: { limit: 12 } },
+    });
+  });
+
+  it("passes an explicit similar-games limit through", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).similarGames(1942, { limit: 6 });
+
+    expect(calls[0]?.options).toEqual({ query: { limit: 6 } });
+  });
+
   it("lists the backlog with the default sort and no status filter", async () => {
     const { request, calls } = spy();
     await createEndpoints(request).listBacklog();
