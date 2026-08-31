@@ -24,6 +24,10 @@ before anything cosmetic.
    `group.gg.barklog.app`, and enable the App Group capability on **both**
    `gg.barklog.app` and the extension App ID. Needed by the `expo-sharing`
    plugin's generated share extension; without it the build will not install.
+6. `@expo/config-plugins` re-resolved from `57.0.8` to `57.0.9` on this
+   branch (`pnpm-lock.yaml`), so the prebuild toolchain differs from whatever
+   generated the last native project. Prebuild fresh rather than reusing an
+   `ios/` directory from before this branch.
 
 Then:
 
@@ -193,10 +197,16 @@ first: it is the one that can regress behaviour that already worked.
 
 ## Share intent checks
 
-Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. None of
-this half has run anywhere. The candidates render on an ordinary full-screen
-modal screen, so nothing here probes how React Native content survives being
-hosted inside SwiftUI.
+Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. The
+candidates render on an ordinary full-screen modal screen, so nothing here
+probes how React Native content survives being hosted inside SwiftUI.
+
+The happy path is confirmed: the repo owner shared a YouTube link on a device
+today, and it resolved to the correct game and rendered the candidate list.
+That run exercises check 33 (Barklog appearing in the share sheet) and the
+candidate-list branch of check 37. Everything else below — checks 34–36 and
+38–43, and the other three states in check 37 — is still unrun. Boxes stay
+unticked here; the owner ticks them as each is verified.
 
 - [ ] **33. Barklog appears in the share sheet** from the YouTube app, the
       TikTok app, and Safari on a watch page. iOS's own share sheet, this one —
