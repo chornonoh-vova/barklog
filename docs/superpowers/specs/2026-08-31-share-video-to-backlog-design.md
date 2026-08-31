@@ -11,9 +11,11 @@ Barklog, switching to Search, and typing a title they may only half know —
 "that RE2 thing". The video already carries the answer.
 
 This document describes making Barklog a destination in the iOS share sheet.
-The user hits share on a video, picks Barklog, and the app presents a bottom
-sheet of the games the video is most likely about. Tapping one opens the normal
-game detail screen, where the existing backlog controls take over unchanged.
+The user hits share on a video, picks Barklog, and the app presents a
+full-screen list of the games the video is most likely about (shipped this
+way; §12 originally specified a bottom sheet — see that section for the
+reversal). Tapping one opens the normal game detail screen, where the
+existing backlog controls take over unchanged.
 
 The example that drove the design:
 
@@ -43,19 +45,19 @@ the feature exists (§19).
 
 ## 2. Decisions
 
-| Decision              | Choice                                                  | Why                                                                                                                                                                        |
-| --------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Share intake          | `expo-sharing`, `useIncomingShare()`                    | First-party as of SDK 57. Its config plugin generates the iOS Share Extension, the App Group and the activation rules, so no third-party plugin and no hand-written Swift. |
-| Metadata source       | Keyless oEmbed                                          | `youtube.com/oembed` and `tiktok.com/oembed` need no key, no quota and no account. Verified against both on 2026-08-31.                                                    |
-| Title extraction      | Claude Haiku 4.5                                        | Video titles name games in prose, abbreviations and nicknames. The mirror's `pg_trgm` index wants a short title, not an eight-word sentence.                               |
-| Extraction failure    | Fail soft to the raw title                              | Matches the fail-open cache in `packages/cache`. A degraded answer beats a dead sheet.                                                                                     |
-| Method                | `POST /api/games/identify`                              | An action, not a resource. Keeps an opaque third-party URL out of query strings and access logs. HTTP caching is useless here; we cache by video id server-side.           |
-| Candidate search      | Reuse `searchGames`                                     | The extraction is the new work. Ranking against the mirror is a job the existing trigram query and its cache already do well.                                              |
-| Result caching        | Cache metadata and extraction, never the candidate list | A game synced tonight appears in shares immediately instead of waiting out a share-level TTL.                                                                              |
-| Sheet                 | Universal `BottomSheet` from `@expo/ui`                 | Takes plain React Native children, so `GameRow` and its IGDB covers work unchanged. The `@expo/ui/swift-ui` variant cannot render a remote image.                          |
-| Placement             | A `/shared` modal route group                           | A share can arrive on any tab or with the app cold. A modal presented over the tab controller is tab-agnostic and returns the user exactly where they were.                |
-| Rate limiting         | A fourth scope, `identify`                              | One call costs an outbound HTTP round trip plus an LLM call. No existing read is comparable.                                                                               |
-| New workspace package | None                                                    | The pipeline is used only by `apps/api`. `apps/api/src/share/` beats a `packages/*` for it.                                                                                |
+| Decision              | Choice                                                  | Why                                                                                                                                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Share intake          | `expo-sharing`, `useIncomingShare()`                    | First-party as of SDK 57. Its config plugin generates the iOS Share Extension, the App Group and the activation rules, so no third-party plugin and no hand-written Swift.                                                                                                             |
+| Metadata source       | Keyless oEmbed                                          | `youtube.com/oembed` and `tiktok.com/oembed` need no key, no quota and no account. Verified against both on 2026-08-31.                                                                                                                                                                |
+| Title extraction      | Claude Sonnet 5 (`IDENTIFY_MODEL`)                      | Video titles name games in prose, abbreviations and nicknames. The mirror's `pg_trgm` index wants a short title, not an eight-word sentence. **Reversed during implementation** from the original choice of Claude Haiku 4.5 — see §6.                                                 |
+| Extraction failure    | Fail soft to the raw title                              | Matches the fail-open cache in `packages/cache`. A degraded answer beats a dead screen.                                                                                                                                                                                                |
+| Method                | `POST /api/games/identify`                              | An action, not a resource. Keeps an opaque third-party URL out of query strings and access logs. HTTP caching is useless here; we cache by video id server-side.                                                                                                                       |
+| Candidate search      | Reuse `searchGames`                                     | The extraction is the new work. Ranking against the mirror is a job the existing trigram query and its cache already do well.                                                                                                                                                          |
+| Result caching        | Cache metadata and extraction, never the candidate list | A game synced tonight appears in shares immediately instead of waiting out a share-level TTL.                                                                                                                                                                                          |
+| Presentation          | A full-screen modal screen (`share-screen.tsx`)         | **Reversed during implementation** — see §12. Originally a universal `BottomSheet` from `@expo/ui`, chosen because it takes plain React Native children so `GameRow` and its IGDB covers work unchanged. Shipped as a plain full-screen list instead; `GameRow` still works unchanged. |
+| Placement             | A `/shared` modal route group                           | A share can arrive on any tab or with the app cold. A modal presented over the tab controller is tab-agnostic and returns the user exactly where they were.                                                                                                                            |
+| Rate limiting         | A fourth scope, `identify`                              | One call costs an outbound HTTP round trip plus an LLM call. No existing read is comparable.                                                                                                                                                                                           |
+| New workspace package | None                                                    | The pipeline is used only by `apps/api`. `apps/api/src/share/` beats a `packages/*` for it.                                                                                                                                                                                            |
 
 ## 3. Data flow
 
@@ -68,7 +70,7 @@ iOS share sheet
                                                           │
                           POST /api/games/identify { url } │
                                                           ▼
-   canonicalise ──▶ oEmbed ──▶ Claude Haiku ──▶ searchGames ──▶ candidates
+   canonicalise ──▶ oEmbed ──▶ Claude Sonnet 5 ──▶ searchGames ──▶ candidates
       (pure)        (7d cache)   (30d cache)     (existing cache)
 ```
 
@@ -120,7 +122,7 @@ Timeout 5s. Cached under `oembed:{provider}:{videoId}` for 7 days: a published
 video's title effectively never changes.
 
 Only `title` and `author` are kept. The thumbnail is deliberately dropped —
-the sheet's visual language is IGDB cover art, and a video still competing with
+the screen's visual language is IGDB cover art, and a video still competing with
 it makes the list harder to scan, not easier.
 
 ## 6. Step 3 — extraction with Claude
@@ -128,27 +130,40 @@ it makes the list harder to scan, not easier.
 `apps/api/src/share/extract.ts`. One non-streaming call to `@anthropic-ai/sdk`.
 
 ```
-model:         claude-haiku-4-5      (IDENTIFY_MODEL, overridable)
+model:         claude-sonnet-5       (IDENTIFY_MODEL, overridable)
 max_tokens:    256
+thinking:      { type: "disabled" }
 output_config: { format: { type: "json_schema", schema } }
 ```
 
-The schema is `{ titles: string[] }`, one to three entries, best guess first.
-Three model-specific notes, all of which are easy to get wrong:
+**Reversed during implementation:** this section originally specified
+`claude-haiku-4-5` as the default, with no `thinking` and no
+`output_config.effort` (correct for a pre-4.6 model, where omitting `thinking`
+means no thinking). The shipped default is `claude-sonnet-5`, which runs
+adaptive thinking whenever `thinking` is omitted — so the request now **must**
+pass `thinking: { type: "disabled" }` explicitly to get the same sub-second,
+no-reasoning behaviour. `output_config.effort` stays unset either way: it only
+tunes thinking depth, so it is moot once thinking is off. `IDENTIFY_MODEL` is
+now a `v.picklist` of models verified to accept this exact combination
+(`claude-sonnet-5`, `claude-opus-5`, `claude-opus-4-8`), not an arbitrary
+string — see the final-review fix wave that closed this hole after an
+unrelated schema bug (`maxItems`, below) shipped silently for the life of the
+branch.
 
-- **No `output_config.effort`.** Effort errors on Haiku 4.5; it is a
-  Claude 4.6-and-later parameter.
-- **No `thinking`.** Omitting it on a pre-4.6 model means no thinking, which is
-  what a sub-second extraction wants. Haiku 4.5 would need the deprecated
-  `budget_tokens` form to enable it, and it should not be enabled.
-- **Parse tool and structured output JSON**, never string-match it.
+The schema is `{ titles: string[] }`, best guess first. It no longer bounds
+the count to one-to-three entries in the schema itself: Anthropic's
+structured-output schema subset rejects `maxItems` on arrays with a 400, which
+is exactly the incident above. `parseExtraction` caps the result to
+`MAX_GUESSES` (3) after the fact instead.
 
-Cost, at roughly 500 input and 60 output tokens against Haiku 4.5's $1/$5 per
-MTok, is about **$0.0008 per unique video** — and only per *unique* video, since
-step 3 is cached for 30 days. `IDENTIFY_MODEL` exists so a swap to
-`claude-opus-5` (about $0.004, five times more, and needing `effort: "low"`
-rather than nothing) is a one-line change if Haiku turns out weak on messy
-titles.
+- **Parse structured output JSON**, never string-match it.
+
+Cost, at roughly 500 input and 60 output tokens against Sonnet 5's $2/$10 per
+MTok, is about **$0.0016 per unique video** — roughly 2× the Haiku-era estimate
+of $0.0008, and only per _unique_ video, since step 3 is cached for 30 days.
+`IDENTIFY_MODEL` still exists so a swap to another verified model is a
+one-line change; the earlier note about needing `effort: "low"` on a swap to
+Opus no longer applies — effort is moot with thinking off regardless of model.
 
 ### The cache key carries the prompt and the model
 
@@ -215,7 +230,7 @@ interface ShareIdentifyResponse {
 }
 ```
 
-`source.title` lets the sheet show its provenance — _"From: Can You Beat
+`source.title` lets the screen show its provenance — _"From: Can You Beat
 Resident Evil 2…"_ — and `guesses` drives the no-results copy. Both are free;
 we already have them.
 
@@ -245,17 +260,18 @@ future `GET /identify` would collide and must be registered ahead of `/:id`.
 
 ## 9. Failure behaviour
 
-| Case                                                    | Result                                               |
-| ------------------------------------------------------- | ---------------------------------------------------- |
-| Host not YouTube or TikTok                              | 422 from the valibot schema                          |
-| Short link resolves off-host, or exceeds three hops     | 422                                                  |
-| Video deleted or private (oEmbed 401/403/404)           | 404 problem                                          |
-| oEmbed timeout or 5xx                                   | 502 problem with `Retry-After`                       |
-| Claude errors, times out, or returns unparseable output | **200.** Falls back to searching the raw video title |
-| Extraction succeeded, mirror has no match               | **200** with `items: []` and `guesses` populated     |
+| Case                                                    | Result                                                                                                  |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Host not YouTube or TikTok                              | 422 from the valibot schema                                                                             |
+| Short link resolves off-host, or exceeds three hops     | 422                                                                                                     |
+| Short link resolution times out or the fetch fails      | 502 (added by the final-review fix wave — a shortener outage is retriable, unlike an off-host redirect) |
+| Video deleted or private (oEmbed 401/403/404)           | 404 problem                                                                                             |
+| oEmbed timeout or 5xx                                   | 502 problem with `Retry-After`                                                                          |
+| Claude errors, times out, or returns unparseable output | **200.** Falls back to searching the raw video title                                                    |
+| Extraction succeeded, mirror has no match               | **200** with `items: []` and `guesses` populated                                                        |
 
 The last two rows are the interesting ones. Neither is an error from the user's
-point of view — one degrades quietly, the other is a real answer the sheet can
+point of view — one degrades quietly, the other is a real answer the screen can
 explain: _"We think this is about Resident Evil 2, but it's not in the
 catalogue."_
 
@@ -325,9 +341,19 @@ and dismissing has nowhere to return to.
 ```tsx
 <Stack screenOptions={{ headerShown: false }}>
   <Stack.Screen name="(tabs)" />
-  <Stack.Screen name="shared" options={{ presentation: "transparentModal" }} />
+  <Stack.Screen name="shared" options={{ presentation: "fullScreenModal" }} />
 </Stack>
 ```
+
+**Reversed during implementation:** this section originally specified
+`presentation: "transparentModal"`, with `/shared`'s own layout further split
+into a transparent `index` and an opaque `game/[id]` (below), so the sheet
+below would float over the tabs it came from. The device check this section
+called for found that nesting did not hold up cleanly, and the shipped
+presentation is the plain, opaque `"fullScreenModal"` instead — see §12 for
+what replaced the sheet. `/shared/_layout.tsx` is now just a passthrough
+`<Stack />` with no per-screen `contentStyle`, since both its screens are
+opaque by default.
 
 The cost is exactly the `UINavigationController` that comment was avoiding.
 `headerShown: false` makes it invisible, but it is real, and the reversal must
@@ -340,8 +366,8 @@ src/app/
   +native-intent.ts    expo-sharing host -> "/shared", else pass through
   _layout.tsx          Slot -> Stack
   shared/
-    _layout.tsx        transparent contentStyle on index, opaque on game/[id]
-    index.tsx          the sheet
+    _layout.tsx        a passthrough Stack (shipped; no transparent/opaque split)
+    index.tsx          the full-screen candidate list (shipped as ShareScreen, not a sheet)
     game/[id].tsx      -> GameDetailScreen (fourth copy, per-tab pattern)
 ```
 
@@ -350,40 +376,64 @@ existing choice to triplicate it per tab so a pushed detail screen stays inside
 its stack. It supplies its own push target for the similar-games row, exactly
 as the other three do.
 
-**This nesting is the least certain part of the design** — a transparent modal
-group whose second screen must be opaque. It is a per-screen `contentStyle`,
-but it wants a device check before the rest of the sheet is built, not a
-confident assertion here.
+## 12. The candidate list
 
-## 12. The sheet
+> **Reversed during implementation.** This section originally specified
+> `src/features/share/share-sheet.tsx`, a `ShareSheet` built on the universal
+> `BottomSheet` from the `@expo/ui` root export — **not** `@expo/ui/swift-ui`,
+> chosen because the universal component takes plain React Native children so
+> `GameRow` and its remote IGDB cover art render unchanged (the SwiftUI
+> variant's `Image` only accepts an SF Symbol, an asset-catalog name, or a
+> local file URI). That component was abandoned; what shipped is
+> `src/features/share/share-screen.tsx`, a full-screen list mounted directly
+> at `/shared` (§11), reusing the same `GameRow`, `QueryBoundary`, and
+> `EmptyState` for the same reason — they take plain React Native children.
+> The rest of this section describes the shipped screen.
 
-`src/features/share/share-sheet.tsx`, using the universal `BottomSheet` from
-the `@expo/ui` root export — **not** `@expo/ui/swift-ui`. The universal
-component takes plain React Native children, so `GameRow`, `Cover`,
-`QueryBoundary`, `EmptyState` and `summarySubtitle` are all reused as they
-stand. The SwiftUI variant cannot: its `Image` accepts an SF Symbol, an
-asset-catalog name or a local file URI, and every row here is remote IGDB cover
-art. The README already documents that constraint; this is the first feature
-where the universal component is the answer to it.
+`ShareScreen` renders one of four states, in order: a loading spinner while
+the share payload is still resolving; an error state if resolution failed; a
+"no link in that share" state if the payload carried no URL (e.g. an image or
+plain text); or, once a URL is in hand, the identify query's result — either
+the empty-state copy from `noMatch()` or a `FlatList` of `GameRow` with a
+header naming the source video.
 
-- `snapPoints={["half", "full"]}`, `contentPadding={0}` for a full-bleed list.
-- Header: an SF symbol, "Barklog fetched these", and `source.title` beneath it
-  as secondary text.
-- Body: `FlatList` of `GameRow`. Resolving, empty and error states come from the
-  existing `QueryBoundary` and `query-states`.
-- Empty state uses `guesses`, plus a button into Search.
+- No sheet, no `snapPoints`, no `contentPadding` — this is a plain
+  full-screen list under the `/shared` stack's own header (a "Back to Home"
+  toolbar button, not `Stack.Screen.BackButton`, since this stack has nothing
+  behind it to pop to and leaving needs to clear the payload too).
+- Header: "Which game is this?", the source video's title beneath it, and — if
+  extraction failed soft — `TITLE_MATCH_NOTICE` explaining the list is a raw
+  title search, not an identified game.
+- Body: `FlatList` of `GameRow`. Resolving, empty and error states come from
+  `QueryBoundary` and `query-states`, plus the four states listed above.
+- Empty state uses `noMatch(data.identified, data.guesses)`. It is gated on
+  `identified`, not just on `guesses` being empty: when extraction failed
+  soft, `guesses` holds the raw video title, not a game title, and quoting it
+  back as "we think this is about ..." would assert a belief the server
+  explicitly disclaimed. `identified: false` always gets the plain
+  could-not-tell sentence instead (fixed by the final-review fix wave).
 
-Two behaviours that are easy to miss and both matter:
+One behaviour from the original sheet design did **not** carry over, and one
+did:
 
-**`isPresented` is driven by screen focus, not a local boolean.** Selecting a
-candidate pushes `/shared/game/[id]`; the sheet collapses as focus leaves and
-re-presents when the user comes back. "Wrong pick, go back" then works without
-any extra state.
+**Not carried over: sheet collapse/re-present driven by screen focus.** The
+sheet's `isPresented` was to track focus, so pushing `/shared/game/[id]` would
+collapse it and coming back would re-present it with no state of its own.
+There is no sheet to collapse now — selecting a candidate pushes
+`/shared/game/[id]` as an ordinary stack push, and going back returns to the
+list exactly as it was, via normal stack pop rather than a focus-driven
+re-present.
 
-**`clearSharedPayloads()` must be called on dismiss.** Without it the payload
-survives in the App Group and the next cold launch re-presents a stale share.
-This is the bug most likely to reach a device unnoticed, so it gets an explicit
-checklist line in §16.
+**Carried over, refined: `clear()` on every actual exit, not on dismiss in
+general.** `useSharedUrl()` (the `useIncomingShare()` wrapper) exposes
+`clear`, wired to `expo-sharing`'s `clearSharedPayloads()`. Without it the
+payload survives in the App Group and the next cold launch re-presents a
+stale share — the bug most likely to reach a device unnoticed, so it has an
+explicit checklist line in §16. It fires on the two routes that actually leave
+the share flow — the "Back to Home" button and the empty state's "Search
+Instead" — but **not** on selecting a candidate, since pushing
+`/shared/game/[id]` stays inside the share flow rather than exiting it; a
+"wrong pick, go back" pop returns to the same unconsumed payload.
 
 ### Cold start behind the gates
 
@@ -391,9 +441,11 @@ A share into a cold, signed-out install needs no code, and it is worth writing
 down why so nobody adds defensive handling for it. `+native-intent.ts`
 redirects to `/shared`, but `AuthGate` renders `AuthView` over everything, so
 the route mounts invisibly. When sign-in completes the gate renders its
-children, `/shared` is already the active route, and the sheet appears —
+children, `/shared` is already the active route, and the screen appears —
 because the payload lives in the App Group, not in navigation state, and
-`useIncomingShare()` reads it whenever the component mounts.
+`useIncomingShare()` (mounted inside `use-shared-url.ts`, itself mounted by
+`/shared/index.tsx` — not the root layout) reads it whenever that component
+mounts.
 
 ## 13. API layer additions
 
@@ -437,20 +489,20 @@ out of scope here (§19).
 
 ### New
 
-| File                                               | What                                           |
-| -------------------------------------------------- | ---------------------------------------------- |
-| `packages/contracts/src/share.ts`                  | URL schema, host allowlist, limits, wire types |
-| `apps/api/src/share/canonicalise.ts`               | URL -> provider + video id; the SSRF boundary  |
-| `apps/api/src/share/oembed.ts`                     | The two keyless metadata fetches               |
-| `apps/api/src/share/extract.ts`                    | The Claude call and its cache                  |
-| `apps/api/src/share/identify.ts`                   | Guess -> candidate merge and ranking           |
-| `apps/mobile/src/app/+native-intent.ts`            | `expo-sharing` host -> `/shared`               |
-| `apps/mobile/src/app/shared/_layout.tsx`           | The modal group                                |
-| `apps/mobile/src/app/shared/index.tsx`             | The sheet route                                |
-| `apps/mobile/src/app/shared/game/[id].tsx`         | Detail, fourth copy                            |
-| `apps/mobile/src/features/share/share-sheet.tsx`   | The sheet                                      |
-| `apps/mobile/src/features/share/use-shared-url.ts` | `useIncomingShare()` wrapper                   |
-| `apps/mobile/src/features/share/extract-url.ts`    | Pure URL-from-payload                          |
+| File                                               | What                                                                        |
+| -------------------------------------------------- | --------------------------------------------------------------------------- |
+| `packages/contracts/src/share.ts`                  | URL schema, host allowlist, limits, wire types                              |
+| `apps/api/src/share/canonicalise.ts`               | URL -> provider + video id; the SSRF boundary                               |
+| `apps/api/src/share/oembed.ts`                     | The two keyless metadata fetches                                            |
+| `apps/api/src/share/extract.ts`                    | The Claude call and its cache                                               |
+| `apps/api/src/share/identify.ts`                   | Guess -> candidate merge and ranking                                        |
+| `apps/mobile/src/app/+native-intent.ts`            | `expo-sharing` host -> `/shared`                                            |
+| `apps/mobile/src/app/shared/_layout.tsx`           | The modal group                                                             |
+| `apps/mobile/src/app/shared/index.tsx`             | The candidate screen route (shipped; originally the sheet route)            |
+| `apps/mobile/src/app/shared/game/[id].tsx`         | Detail, fourth copy                                                         |
+| `apps/mobile/src/features/share/share-screen.tsx`  | The candidate screen (shipped as `share-screen.tsx`, not `share-sheet.tsx`) |
+| `apps/mobile/src/features/share/use-shared-url.ts` | `useIncomingShare()` wrapper                                                |
+| `apps/mobile/src/features/share/extract-url.ts`    | Pure URL-from-payload                                                       |
 
 ### Changed
 
@@ -492,43 +544,52 @@ Everything except the device row runs under `pnpm test` with no network.
 
 ### Device checklist
 
-Added to `docs/mobile-device-verification.md`:
+Added to `docs/mobile-device-verification.md` as checks 33–43. **Reversed
+during implementation:** "the sheet" below is the shipped full-screen modal
+screen (§12), not a bottom sheet, and "dismissing returns the user to the tab
+they started on" overstated what the code guarantees — check 36 documents
+that the landing tab is genuinely unsettled: `dismissTo("/")` matches the root
+stack's `(tabs)` route by name and should carry existing tab state across, but
+that is reasoning from reading the router source, not a confirmed behaviour,
+so the check calls it out explicitly rather than asserting it.
 
 - Barklog appears in the share sheet from the YouTube app, the TikTok app, and
   Safari on a watch page.
-- Warm launch, and cold launch, both present the sheet.
-- Signed-out cold install: `AuthView` first, sheet after sign-in (§12).
+- Warm launch, and cold launch, both open `/shared`.
+- Signed-out cold install: `AuthView` first, the candidate screen after
+  sign-in (§12).
 - Dismissing clears the payload — relaunch does **not** re-present it.
-- Pick a candidate, go back: the sheet re-presents.
+- Pick a candidate, go back: the candidate list is still there, populated.
 - A private or deleted video shows the 404 copy, not a crash.
-- Dismissing returns the user to the tab they started on, with its stack intact.
+- Dismissing lands on **some** tab with its stack intact; which tab is
+  unsettled — see check 36.
 
 ## 17. Task order
 
 API first, so nothing waits on the Apple Developer portal.
 
-| #   | Task                                                              | Verified by      |
-| --- | ----------------------------------------------------------------- | ---------------- |
-| 1   | Contracts: `share.ts`                                             | Unit, no network |
-| 2   | `canonicalise` + `oembed`, `AppDeps.share`, cache keys            | Unit, stubbed    |
-| 3   | `extract` — Haiku 4.5, structured output, fail-soft               | Unit, stubbed    |
-| 4   | The route, the `identify` scope, `cachedSearch`, the merge        | Testcontainers   |
-| 5   | Mobile API layer, POST in the method union                        | Unit             |
-| 6   | Plugin, `+native-intent`, `Slot` -> `Stack`, `/shared`, the sheet | **Device only**  |
-| 7   | The onboarding page                                               | Unit             |
+| #   | Task                                                                                | Verified by      |
+| --- | ----------------------------------------------------------------------------------- | ---------------- |
+| 1   | Contracts: `share.ts`                                                               | Unit, no network |
+| 2   | `canonicalise` + `oembed`, `AppDeps.share`, cache keys                              | Unit, stubbed    |
+| 3   | `extract` — Claude, structured output, fail-soft (shipped: Sonnet 5, not Haiku 4.5) | Unit, stubbed    |
+| 4   | The route, the `identify` scope, `cachedSearch`, the merge                          | Testcontainers   |
+| 5   | Mobile API layer, POST in the method union                                          | Unit             |
+| 6   | Plugin, `+native-intent`, `Slot` -> `Stack`, `/shared`, the screen                  | **Device only**  |
+| 7   | The onboarding page                                                                 | Unit             |
 
 Tasks 1–5 and 7 are fully verifiable in CI. Task 6 is not, and should begin
 with the §11 presentation-nesting check on hardware before the rest of the
-sheet is built.
+screen is built.
 
 ## 18. Risks
 
 | Risk                                                                                                                                                                        | Mitigation                                                                                                                                                                                                                                  |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Expo marks iOS share-receiving **experimental** — the extension opens the main target rather than processing in a `ViewController`, which Apple does not officially support | Accepted, and recorded in the README next to the `platforms: ["ios"]` note. It works on SDK 57. A future iOS release or an App Review question could end it; the fallback is the deferred in-app paste entry, which needs no native target. |
-| Haiku 4.5 is too weak for slang-heavy or vague titles                                                                                                                       | `IDENTIFY_MODEL` makes the swap to `claude-opus-5` one line. Measure on real shares before deciding.                                                                                                                                        |
+| The default model is too weak for slang-heavy or vague titles                                                                                                               | `IDENTIFY_MODEL` makes a swap to another verified model (`claude-opus-5` or `claude-opus-4-8`) one line. Measure on real shares before deciding.                                                                                            |
 | oEmbed is an undocumented-stability contract on TikTok's side                                                                                                               | The valibot response schema fails loudly rather than silently degrading, and the fail-soft path already handles a dead metadata step for the user.                                                                                          |
-| Root `Slot` -> `Stack` regresses the tab controller                                                                                                                         | Covered by the last device-checklist line: dismissing must return to the originating tab with its stack intact.                                                                                                                             |
+| Root `Slot` -> `Stack` regresses the tab controller                                                                                                                         | Covered by the last device-checklist line: dismissing must land on some tab with its stack intact. Which tab is a separate, still-open question — see check 36.                                                                             |
 | A stale payload re-presents on launch                                                                                                                                       | An explicit `clearSharedPayloads()` on dismiss, plus its own checklist line.                                                                                                                                                                |
 | The `identify` limit of 10/min is too tight for a curious user                                                                                                              | It is data in `rate-limits.ts`, overridable per deployment through `AppDeps.rateLimits`, as the other three scopes already are.                                                                                                             |
 | Titles that never name a game ("I beat the hardest boss in gaming")                                                                                                         | Unfixable from metadata alone, and correctly handled: the zero-match 200 explains itself and offers Search.                                                                                                                                 |
@@ -544,7 +605,8 @@ sheet is built.
 - **In-app paste-a-link entry.** Would make the feature reachable without any
   native target, and is the fallback if the experimental iOS path breaks.
 - **A "what's new" surface**, so existing users learn the feature exists (§14).
-- **The video thumbnail in the sheet header** (§5).
+- **The video thumbnail in the candidate screen's header** (§5) — there is no
+  sheet header to put it in now that §12 shipped as a full-screen screen.
 - **IGDB `alternative_names` in the mirror.** Would improve ordinary search as
   well as this feature, and would shrink what the extraction step has to carry.
   It is a worker and schema change with its own value, so it belongs in its own
