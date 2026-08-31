@@ -39,3 +39,19 @@ export const OEMBED_TTL_SECONDS = 604_800;
 export function oembedKey(provider: ShareProviderName, videoId: string): string {
   return `oembed:${provider}:${videoId}`;
 }
+
+/** Deterministic given the metadata, and the metadata is cached for 7 days. */
+export const EXTRACT_TTL_SECONDS = 2_592_000;
+
+/**
+ * Both the prompt version and the model belong in the key: either one changing
+ * changes the answer, and a 30-day TTL outlives several deploys.
+ */
+export function extractKey(
+  promptVersion: number,
+  model: string,
+  provider: string,
+  videoId: string,
+): string {
+  return `extract:v${promptVersion}:${model}:${provider}:${videoId}`;
+}

@@ -7,6 +7,7 @@ const VALID = {
   VALKEY_URL: "redis://localhost:6379",
   CLERK_SECRET_KEY: "sk_test_x",
   CLERK_PUBLISHABLE_KEY: "pk_test_x",
+  ANTHROPIC_API_KEY: "sk-ant-test-x",
 };
 
 test("defaults fill in everything that is optional", () => {
@@ -15,6 +16,7 @@ test("defaults fill in everything that is optional", () => {
     PORT: 3000,
     NODE_ENV: "development",
     LOG_LEVEL: "info",
+    IDENTIFY_MODEL: "claude-haiku-4-5",
   });
 });
 
@@ -30,4 +32,8 @@ test("the log levels are LogTape's, so `warn` is a boot failure", () => {
   expect(parseEnv({ ...VALID, LOG_LEVEL: "warning" }).LOG_LEVEL).toBe("warning");
   expect(() => parseEnv({ ...VALID, LOG_LEVEL: "warn" })).toThrow(/LOG_LEVEL/);
   expect(() => parseEnv({ ...VALID, LOG_LEVEL: "verbose" })).toThrow(/LOG_LEVEL/);
+});
+
+test("a missing Anthropic key stops the process at boot, since every share would degrade", () => {
+  expect(() => parseEnv({ ...VALID, ANTHROPIC_API_KEY: undefined })).toThrow(/ANTHROPIC_API_KEY/);
 });
