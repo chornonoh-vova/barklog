@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
+import { problems } from "../src/problems.js";
 import type { Canonical, VideoRef } from "../src/share/canonicalise.js";
 import type { VideoMeta } from "../src/share/oembed.js";
 import { VideoGone, VideoMetaUnavailable } from "../src/share/oembed.js";
@@ -69,16 +70,64 @@ test("identifies the game, returning ranked candidates and the video it came fro
 
 test("an unsupported host is 422, naming the url field", async () => {
   const response = await identify({ url: "https://vimeo.com/12345" });
-  const body = (await response.json()) as { errors: { field: string }[] };
+  const body = (await response.json()) as { errors: { field: string }[]; type: string };
 
   expect(response.status).toBe(422);
   expect(body.errors[0]?.field).toBe("url");
+  // The schema hook's shape, not the registry's — pins that this reaches
+  // valibot's rejection and not `UNPROCESSABLE_SHARE`.
+  expect(body.type).toBe("about:blank");
 });
 
 test("a supported host that is not a video page is 422", async () => {
   const response = await identify({ url: "https://www.youtube.com/feed/subscriptions" });
+  const body = (await response.json()) as { type: string };
 
   expect(response.status).toBe(422);
+  // The registry's shape, not the schema hook's — pins that a recognised host
+  // with a non-video path reaches `UNPROCESSABLE_SHARE`, not schema validation.
+  expect(body.type).toBe(problems.get("UNPROCESSABLE_SHARE").type);
+});
+
+test("a resolved short link identifies the video it points to", async () => {
+  await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
+
+  const app = createTestApp({
+    share: shareStub({
+      resolveShortLink: async (): Promise<Canonical> => ({
+        kind: "video",
+        ref: { provider: "youtube", videoId: "1vs0lLIRt7w", pageUrl: RE2_URL },
+      }),
+    }),
+  });
+
+  const response = await callApi(app.app, "/api/games/identify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: "https://vm.tiktok.com/ZMabcdef1/" }),
+  });
+  const body = (await response.json()) as { source: { videoId: string } };
+
+  expect(response.status).toBe(200);
+  expect(body.source.videoId).toBe("1vs0lLIRt7w");
+  await app.close();
+});
+
+test("a short link that resolves to nothing usable is 422", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      resolveShortLink: async (): Promise<Canonical> => ({ kind: "unsupported" }),
+    }),
+  });
+
+  const response = await callApi(app.app, "/api/games/identify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: "https://vm.tiktok.com/ZMabcdef1/" }),
+  });
+
+  expect(response.status).toBe(422);
+  await app.close();
 });
 
 test("a gone video is 404, not a 502", async () => {

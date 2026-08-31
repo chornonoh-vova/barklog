@@ -1,4 +1,5 @@
 import { sValidator } from "@hono/standard-validator";
+import { getLogger } from "@logtape/logtape";
 import { withCache } from "@repo/cache";
 import {
   gameFeedQuerySchema,
@@ -42,10 +43,11 @@ import { toBacklogEntry, toGameDetail, toGameSummary, type GameSummaryWire } fro
 import { parseShareUrl, type Canonical } from "../share/canonicalise.js";
 import { EXTRACT_PROMPT_VERSION } from "../share/extract.js";
 import { mergeCandidates, PER_GUESS_LIMIT } from "../share/identify.js";
-import { VideoGone } from "../share/oembed.js";
+import { VideoGone, type VideoMeta } from "../share/oembed.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
 const FEED_CACHE_CONTROL = "private, max-age=300";
+const log = getLogger(["api", "identify"]);
 
 export function gamesRoutes(deps: AppDeps) {
   const searchVersion = async (): Promise<number> =>
@@ -155,7 +157,7 @@ export function gamesRoutes(deps: AppDeps) {
 
       const { ref } = canonical;
 
-      let meta;
+      let meta: VideoMeta;
       try {
         meta = await withCache(
           deps.cache,
@@ -186,7 +188,18 @@ export function gamesRoutes(deps: AppDeps) {
           EXTRACT_TTL_SECONDS,
           () => deps.share.extractTitles(meta),
         );
-      } catch {
+      } catch (error) {
+        // Logged, not thrown: this is the one failure mode in the route that
+        // never reaches `apiErrorHandler`, so without a log line an Anthropic
+        // outage degrades every identify response in complete silence.
+        log.warn(
+          "Extraction failed for {provider}:{videoId}, falling back to the raw title: {message}",
+          {
+            provider: ref.provider,
+            videoId: ref.videoId,
+            message: error instanceof Error ? error.message : String(error),
+          },
+        );
         // Fail soft: the raw title is a worse query than an extracted one, but
         // it is a far better answer than an error page.
         guesses = [meta.title];
