@@ -14,6 +14,10 @@ export const GAME_FIELDS = [
   "total_rating",
   "total_rating_count",
   "parent_game",
+  // Bare ids, not expanded: the mirror already holds every game, so the ids
+  // resolve locally on read. Soft references like `parent_game` — the target
+  // may not be mirrored yet when this page lands.
+  "similar_games",
   "game_type.id",
   "game_type.type",
   "cover.image_id",

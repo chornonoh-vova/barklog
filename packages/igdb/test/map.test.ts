@@ -115,3 +115,36 @@ test("platform abbreviation is optional", () => {
 test("a malformed record is rejected loudly rather than silently dropped", () => {
   expect(() => mapGames([{ id: "not-a-number", name: "Bad" }])).toThrow();
 });
+
+test("maps similar game ids into join rows", () => {
+  const page = mapGames([{ ...FULL_GAME, similar_games: [1943, 472, 11156] }]);
+
+  expect(page.gameSimilar).toEqual([
+    { gameId: 1942, similarGameId: 1943 },
+    { gameId: 1942, similarGameId: 472 },
+    { gameId: 1942, similarGameId: 11156 },
+  ]);
+});
+
+test("a game is never similar to itself", () => {
+  // IGDB's list is generated, not curated. A self-reference would render the
+  // game inside its own Similar Games row.
+  const page = mapGames([{ ...FULL_GAME, similar_games: [1942, 472] }]);
+
+  expect(page.gameSimilar).toEqual([{ gameId: 1942, similarGameId: 472 }]);
+});
+
+test("a repeated similar id collapses to one row", () => {
+  // The table's primary key is (game_id, similar_game_id), so a duplicate
+  // inside one page would be a unique violation that fails the whole
+  // transaction. Unlike genres, this list is not a curated set we can trust.
+  const page = mapGames([{ ...FULL_GAME, similar_games: [472, 472] }]);
+
+  expect(page.gameSimilar).toEqual([{ gameId: 1942, similarGameId: 472 }]);
+});
+
+test("an absent similar_games field yields no rows", () => {
+  const page = mapGames([{ id: 7, name: "Minimal", slug: "minimal", updated_at: 1700000000 }]);
+
+  expect(page.gameSimilar).toEqual([]);
+});

@@ -23,6 +23,7 @@ export interface MappedPage {
   screenshots: { gameId: number; imageId: string }[];
   gameGenres: { gameId: number; genreId: number }[];
   gamePlatforms: { gameId: number; platformId: number }[];
+  gameSimilar: { gameId: number; similarGameId: number }[];
   gameCompanies: {
     gameId: number;
     companyId: number;
@@ -46,6 +47,11 @@ export function mapGames(raw: unknown[]): MappedPage {
   // Keyed by `${gameId}:${companyId}` so a company listed twice for one game —
   // once as developer, once as publisher — merges into a single row.
   const gameCompanies = new Map<string, MappedPage["gameCompanies"][number]>();
+  // Keyed `${gameId}:${similarId}`. Unlike genres and platforms — curated sets
+  // where trusting IGDB not to repeat an entry is safe — this list is
+  // algorithmically generated, and one duplicate would be a unique violation
+  // that fails the entire page.
+  const gameSimilar = new Map<string, MappedPage["gameSimilar"][number]>();
 
   const page: MappedPage = {
     gameTypes: [],
@@ -56,6 +62,7 @@ export function mapGames(raw: unknown[]): MappedPage {
     screenshots: [],
     gameGenres: [],
     gamePlatforms: [],
+    gameSimilar: [],
     gameCompanies: [],
   };
 
@@ -80,6 +87,17 @@ export function mapGames(raw: unknown[]): MappedPage {
 
     for (const shot of game.screenshots ?? []) {
       page.screenshots.push({ gameId: game.id, imageId: shot.image_id });
+    }
+
+    for (const similarId of game.similar_games ?? []) {
+      // A game inside its own Similar Games row reads as a bug, and IGDB's
+      // generated list does not rule it out.
+      if (similarId === game.id) continue;
+
+      gameSimilar.set(`${game.id}:${similarId}`, {
+        gameId: game.id,
+        similarGameId: similarId,
+      });
     }
 
     for (const genre of game.genres ?? []) {
@@ -117,6 +135,7 @@ export function mapGames(raw: unknown[]): MappedPage {
   page.platforms = [...platforms.values()];
   page.companies = [...companies.values()];
   page.gameCompanies = [...gameCompanies.values()];
+  page.gameSimilar = [...gameSimilar.values()];
 
   return page;
 }

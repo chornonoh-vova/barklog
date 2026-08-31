@@ -26,6 +26,7 @@ export const igdbGameSchema = v.object({
   total_rating: v.optional(v.number()),
   total_rating_count: v.optional(int),
   parent_game: v.optional(int),
+  similar_games: v.optional(v.array(int)),
   game_type: v.optional(v.object({ id: int, type: v.string() })),
   cover: v.optional(v.object({ id: int, image_id: v.string() })),
   screenshots: v.optional(v.array(v.object({ id: int, image_id: v.string() }))),

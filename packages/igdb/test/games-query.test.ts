@@ -21,3 +21,11 @@ test("every requested field is expressed with non-deprecated syntax", () => {
 test("the query never requests more than IGDB's 500-row maximum", () => {
   expect(gamesPageQuery({ since: null, afterId: 0, limit: 500 })).toContain("limit 500;");
 });
+
+test("the field list requests similar games as bare ids", () => {
+  // `similar_games` is `repeated Game`, so requesting it unexpanded yields ids
+  // rather than nested objects. Expanding it would multiply the page payload
+  // for data the mirror already holds.
+  expect(GAME_FIELDS).toContain("similar_games");
+  expect(GAME_FIELDS).not.toMatch(/similar_games\./);
+});
