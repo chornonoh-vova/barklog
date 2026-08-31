@@ -48,7 +48,7 @@ caller's backlog. Pagination — the list is at most a dozen games. Android.
 | Unknown game id | `404`, checked inside the cache loader | An empty list would be a lie about a game that does not exist. `PUT /api/backlog/:gameId` already guards this way with the same `gameExists` helper. Inside the loader because a throw propagates uncached, so a cache hit pays nothing for the check. |
 | Layout | One horizontal row of `GameTile`s, limit 12 | Reads as a subsection of a detail screen rather than a browse surface. A two-row grid would double the section's height on an already-long screen. |
 | Section title | "Similar Games" | Matches the neutral register of the detail rows above it ("Released", "Genres", "Platforms"). |
-| In-tab navigation | Base path passed in as a prop | See §7. |
+| In-tab navigation | An `onOpenGame` callback passed in by each tab's route file | Typed routes are enabled, so `Href` is a union of template-literal types and a `string` base path is not assignable to it. See §7. |
 
 ## 3. Data flow
 
@@ -194,24 +194,45 @@ The detail screen currently pushes nowhere, and it is triplicated across three
 tabs precisely so a push stays inside its tab. It therefore cannot hardcode a
 prefix.
 
-Expo Router 57 does support relative hrefs (`../456`), but the v57 documentation
-shows no `relativeToDirectory` option and route-relative resolution is subtle
-enough that the feature should not rest on it. So the base path is passed in:
+`app.json` sets `experiments.typedRoutes`, and the generated `href` type in
+`.expo/types/router.d.ts` is a union of template-literal types:
+
+```ts
+| `/explore/game/${Router.SingleRoutePart<T>}${`?${string}` | `#${string}` | ''}`
+| `/game/${Router.SingleRoutePart<T>}${...}`
+| `/search/game/${Router.SingleRoutePart<T>}${...}`
+```
+
+So a `string`-typed base path interpolated into a template produces
+`` `${string}/${number}` ``, which is far too wide to be assignable. Passing the
+path down is not an option; passing the **push** down is:
 
 ```tsx
 // app/(tabs)/explore/game/[id].tsx
 export default function ExploreGameDetail() {
-  return <GameDetailScreen basePath="/explore/game" />;
+  const router = useRouter();
+  const openGame = useCallback((id: number) => router.push(`/explore/game/${id}`), [router]);
+
+  return <GameDetailScreen onOpenGame={openGame} />;
 }
 ```
 
-`(home)` passes `"/game"`, `search` passes `"/search/game"`. Three one-line
-re-exports become three four-line components. Explicit, no router-semantics
-risk, and a pure string.
+`(home)` uses `/game/${id}`, `search` uses `/search/game/${id}`. Each literal
+matches the union by construction — the same call `features/explore/explore-screen.tsx`
+already makes and type-checks against today.
 
-Rejected alternative: a `useSegments()`-based hook deriving the tab from the
-segment array, which would index into a shape that depends on the route-group
-layout.
+`GameDetailScreen` then takes `onOpenGame: (id: number) => void` and knows
+nothing about the router at all. `useCallback` in the route file matters: `GameTile`
+is memoised on `onPress`, so a fresh closure per render would defeat it.
+
+Three one-line re-exports become three six-line components. The duplication is
+honest — the literal route string is exactly what must differ per tab, and it
+mirrors the triplication of the route files themselves.
+
+Rejected alternatives: relative hrefs (`../456`) — supported in v57, but the docs
+show no `relativeToDirectory` option and route-relative resolution is too subtle
+to rest the feature on; and a `useSegments()`-based hook, which would index into a
+segment array whose shape depends on the route-group layout.
 
 Pushing detail onto detail is unbounded. iOS handles it and back always works,
 so it is allowed, as the App Store allows it.
@@ -235,10 +256,10 @@ apps/api/src/routes/games.ts              +GET /:id/similar
 apps/mobile/src/api/endpoints.ts          +similarGames()
 apps/mobile/src/api/keys.ts               +games.similar()
 apps/mobile/src/api/hooks.ts              +useSimilarGames()
-apps/mobile/src/features/game/game-detail-screen.tsx  +basePath prop, +section
-apps/mobile/src/app/(tabs)/(home)/game/[id].tsx       wrapper
-apps/mobile/src/app/(tabs)/explore/game/[id].tsx      wrapper
-apps/mobile/src/app/(tabs)/search/game/[id].tsx       wrapper
+apps/mobile/src/features/game/game-detail-screen.tsx  +onOpenGame prop, +section
+apps/mobile/src/app/(tabs)/(home)/game/[id].tsx       wrapper, pushes /game/:id
+apps/mobile/src/app/(tabs)/explore/game/[id].tsx      wrapper, pushes /explore/game/:id
+apps/mobile/src/app/(tabs)/search/game/[id].tsx       wrapper, pushes /search/game/:id
 README.md                                 route table + apps/api section
 docs/mobile-device-verification.md        +manual check
 ```
