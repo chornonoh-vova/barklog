@@ -172,8 +172,7 @@ first: it is the one that can regress behaviour that already worked.
 - [ ] **30. Remove from Backlog works from the dots menu** and leaves the screen
       standing — the buttons revert to the unadded state, no pop back to the
       list.
-- [ ] **31. The dots read as a round button on iOS 26 and stay legible on iOS
-      18.** The icon is bare `ellipsis`, so the circle comes from the native
+- [ ] **31. The dots read as a round button on iOS 26 and stay legible on iOS 18.** The icon is bare `ellipsis`, so the circle comes from the native
       glass background; iOS 18 draws the glyph alone. If that is too faint,
       switch the icon to `ellipsis.circle` — which then doubles the ring on
       iOS 26.

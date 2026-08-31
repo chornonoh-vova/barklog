@@ -21,7 +21,7 @@
 - **Never add `similar` to `GameDetailWire`** or to the `GET /api/games/:id` response.
 - **No new wire type.** The route returns the existing `GameListResponse`.
 - **Typed routes are enabled** (`app.json` → `experiments.typedRoutes`). `Href` is a union of template-literal types; a `string` path variable will not type-check.
-- Every new exported symbol needs a comment explaining *why*, matching the density of the surrounding code. This codebase comments decisions, not mechanics.
+- Every new exported symbol needs a comment explaining _why_, matching the density of the surrounding code. This codebase comments decisions, not mechanics.
 - `pnpm --filter @repo/db test`, `pnpm --filter worker test` and `pnpm --filter api test` start Postgres/Valkey via Testcontainers. Docker must be running.
 - **`apps/*` consume `packages/*` from their built `dist/`, not from source.** After changing a package's source, run `pnpm --filter @repo/<pkg> build` before testing or type-checking any app that depends on it, or you will get stale types (`Property 'gameSimilar' does not exist on type 'MappedPage'`) and failures unrelated to your change. Affects Tasks 3, 6, 7 and 8. `pnpm turbo build --filter=<app>...` does the whole chain.
 
@@ -31,32 +31,32 @@
 
 **New**
 
-| File | Responsibility |
-|---|---|
+| File                                              | Responsibility                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------------- |
 | `apps/mobile/src/features/game/similar-games.tsx` | The section: fetch, render-nothing-when-empty, a row of `GameTile`s |
-| `packages/db/drizzle/0004_*.sql` | Generated migration creating `game_similar` |
+| `packages/db/drizzle/0004_*.sql`                  | Generated migration creating `game_similar`                         |
 
 **Modified**
 
-| File | Change |
-|---|---|
-| `packages/igdb/src/games-query.ts` | `+"similar_games"` in `GAME_FIELDS` |
-| `packages/igdb/src/schemas.ts` | `+similar_games: v.optional(v.array(int))` |
-| `packages/igdb/src/map.ts` | `+MappedPage.gameSimilar`, dedup, self-reference filter |
-| `packages/db/src/schema/mirror.ts` | `+gameSimilar` table |
-| `packages/db/src/testing.ts` | `+game_similar` in `truncateAll` |
-| `packages/db/src/queries/games.ts` | `+similarGames()` |
-| `packages/contracts/src/games.ts` | `+SIMILAR_LIMIT_DEFAULT`, `+similarQuerySchema` |
-| `apps/worker/src/persist.ts` | `+`delete and insert for the relation |
-| `apps/api/src/cache-keys.ts` | `+SIMILAR_TTL_SECONDS`, `+similarKey()` |
-| `apps/api/src/routes/games.ts` | `+GET /:id/similar` |
-| `apps/mobile/src/api/endpoints.ts` | `+similarGames()` |
-| `apps/mobile/src/api/keys.ts` | `+games.similar()` |
-| `apps/mobile/src/api/hooks.ts` | `+useSimilarGames()` |
-| `apps/mobile/src/features/game/game-detail-screen.tsx` | `+onOpenGame` prop, `+`section |
-| `apps/mobile/src/app/(tabs)/{(home),explore,search}/game/[id].tsx` | Wrappers supplying the push |
-| `README.md` | Route table + `apps/api` section |
-| `docs/mobile-device-verification.md` | Manual in-tab navigation check |
+| File                                                               | Change                                                  |
+| ------------------------------------------------------------------ | ------------------------------------------------------- |
+| `packages/igdb/src/games-query.ts`                                 | `+"similar_games"` in `GAME_FIELDS`                     |
+| `packages/igdb/src/schemas.ts`                                     | `+similar_games: v.optional(v.array(int))`              |
+| `packages/igdb/src/map.ts`                                         | `+MappedPage.gameSimilar`, dedup, self-reference filter |
+| `packages/db/src/schema/mirror.ts`                                 | `+gameSimilar` table                                    |
+| `packages/db/src/testing.ts`                                       | `+game_similar` in `truncateAll`                        |
+| `packages/db/src/queries/games.ts`                                 | `+similarGames()`                                       |
+| `packages/contracts/src/games.ts`                                  | `+SIMILAR_LIMIT_DEFAULT`, `+similarQuerySchema`         |
+| `apps/worker/src/persist.ts`                                       | `+`delete and insert for the relation                   |
+| `apps/api/src/cache-keys.ts`                                       | `+SIMILAR_TTL_SECONDS`, `+similarKey()`                 |
+| `apps/api/src/routes/games.ts`                                     | `+GET /:id/similar`                                     |
+| `apps/mobile/src/api/endpoints.ts`                                 | `+similarGames()`                                       |
+| `apps/mobile/src/api/keys.ts`                                      | `+games.similar()`                                      |
+| `apps/mobile/src/api/hooks.ts`                                     | `+useSimilarGames()`                                    |
+| `apps/mobile/src/features/game/game-detail-screen.tsx`             | `+onOpenGame` prop, `+`section                          |
+| `apps/mobile/src/app/(tabs)/{(home),explore,search}/game/[id].tsx` | Wrappers supplying the push                             |
+| `README.md`                                                        | Route table + `apps/api` section                        |
+| `docs/mobile-device-verification.md`                               | Manual in-tab navigation check                          |
 
 **Task dependency order:** 1 → 2 → {3, 4} → 5 → 6 → 7 → 8 → 9. Tasks 3 and 4 both depend on 2 and are independent of each other.
 
@@ -65,12 +65,14 @@
 ## Task 1: Pull `similar_games` from IGDB
 
 **Files:**
+
 - Modify: `packages/igdb/src/games-query.ts:6-30` (the `GAME_FIELDS` array)
 - Modify: `packages/igdb/src/schemas.ts:20-52` (`igdbGameSchema`)
 - Modify: `packages/igdb/src/map.ts:5-33` (`MappedPage`), `:37-118` (`mapGames`)
 - Test: `packages/igdb/test/games-query.test.ts`, `packages/igdb/test/map.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `MappedPage.gameSimilar: { gameId: number; similarGameId: number }[]`. Task 3 writes these rows.
 
@@ -160,38 +162,42 @@ In `packages/igdb/src/schemas.ts`, add to `igdbGameSchema` after `parent_game`:
 In `packages/igdb/src/map.ts`, add to the `MappedPage` interface after `gamePlatforms`:
 
 ```ts
-  gameSimilar: { gameId: number; similarGameId: number }[];
+gameSimilar: {
+  gameId: number;
+  similarGameId: number;
+}
+[];
 ```
 
 Add `gameSimilar: []` to the `page` literal initialiser. Declare a dedup map beside the existing `gameCompanies` one:
 
 ```ts
-  // Keyed `${gameId}:${similarId}`. Unlike genres and platforms — curated sets
-  // where trusting IGDB not to repeat an entry is safe — this list is
-  // algorithmically generated, and one duplicate would be a unique violation
-  // that fails the entire page.
-  const gameSimilar = new Map<string, MappedPage["gameSimilar"][number]>();
+// Keyed `${gameId}:${similarId}`. Unlike genres and platforms — curated sets
+// where trusting IGDB not to repeat an entry is safe — this list is
+// algorithmically generated, and one duplicate would be a unique violation
+// that fails the entire page.
+const gameSimilar = new Map<string, MappedPage["gameSimilar"][number]>();
 ```
 
 Inside the `for (const game of games)` loop, after the screenshots loop:
 
 ```ts
-    for (const similarId of game.similar_games ?? []) {
-      // A game inside its own Similar Games row reads as a bug, and IGDB's
-      // generated list does not rule it out.
-      if (similarId === game.id) continue;
+for (const similarId of game.similar_games ?? []) {
+  // A game inside its own Similar Games row reads as a bug, and IGDB's
+  // generated list does not rule it out.
+  if (similarId === game.id) continue;
 
-      gameSimilar.set(`${game.id}:${similarId}`, {
-        gameId: game.id,
-        similarGameId: similarId,
-      });
-    }
+  gameSimilar.set(`${game.id}:${similarId}`, {
+    gameId: game.id,
+    similarGameId: similarId,
+  });
+}
 ```
 
 And beside the other `[...map.values()]` assignments at the end:
 
 ```ts
-  page.gameSimilar = [...gameSimilar.values()];
+page.gameSimilar = [...gameSimilar.values()];
 ```
 
 - [x] **Step 7: Run the tests to verify they pass**
@@ -220,12 +226,14 @@ without."
 ## Task 2: The `game_similar` table
 
 **Files:**
+
 - Modify: `packages/db/src/schema/mirror.ts` (append after `gameCompanies`)
 - Modify: `packages/db/src/testing.ts:31-40` (`truncateAll`)
 - Create: `packages/db/drizzle/0004_*.sql` (generated — do not hand-write)
 - Test: `packages/db/test/mirror-schema.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `schema.gameSimilar` with columns `gameId`, `similarGameId`. Tasks 3, 4 and 6 use it.
 
@@ -355,10 +363,12 @@ on read instead."
 ## Task 3: `persistPage` writes the relation
 
 **Files:**
+
 - Modify: `apps/worker/src/persist.ts:82-100` (the delete block and the guarded inserts)
 - Test: `apps/worker/test/persist.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MappedPage.gameSimilar` (Task 1), `schema.gameSimilar` (Task 2).
 - Produces: nothing new.
 
@@ -436,7 +446,7 @@ Expected: FAIL — `game_similar` is empty because `persistPage` does not write 
 In `apps/worker/src/persist.ts`, alongside the other scoped deletes:
 
 ```ts
-    await tx.delete(schema.gameSimilar).where(inArray(schema.gameSimilar.gameId, gameIds));
+await tx.delete(schema.gameSimilar).where(inArray(schema.gameSimilar.gameId, gameIds));
 ```
 
 - [x] **Step 4: Add the insert**
@@ -444,9 +454,9 @@ In `apps/worker/src/persist.ts`, alongside the other scoped deletes:
 With the other guarded inserts:
 
 ```ts
-    if (page.gameSimilar.length > 0) {
-      await tx.insert(schema.gameSimilar).values(page.gameSimilar);
-    }
+if (page.gameSimilar.length > 0) {
+  await tx.insert(schema.gameSimilar).values(page.gameSimilar);
+}
 ```
 
 - [x] **Step 5: Run the tests to verify they pass**
@@ -474,10 +484,12 @@ suggestion IGDB dropped disappears and a replay stays a no-op."
 ## Task 4: The `similarGames` query
 
 **Files:**
+
 - Modify: `packages/db/src/queries/games.ts` (append after `getGameDetail`)
 - Test: `packages/db/test/games-queries.test.ts`
 
 **Interfaces:**
+
 - Consumes: `schema.gameSimilar` (Task 2).
 - Produces: `similarGames(db, { gameId, limit }): Promise<GameSummary[]>`. Task 6 calls it.
 
@@ -630,11 +642,13 @@ join."
 ## Task 5: Contract and cache key
 
 **Files:**
+
 - Modify: `packages/contracts/src/games.ts` (append after `gameFeedQuerySchema`)
 - Modify: `apps/api/src/cache-keys.ts` (append after `feedKey`)
 - Test: `packages/contracts/test/contracts.test.ts`
 
 **Interfaces:**
+
 - Consumes: `SEARCH_LIMIT_MAX`, `integerFrom` (both already in `packages/contracts/src`).
 - Produces: `SIMILAR_LIMIT_DEFAULT = 12`, `similarQuerySchema` (`{ limit: number }`), `SIMILAR_TTL_SECONDS = 3600`, `similarKey(version, gameId, limit): string`. Tasks 6 and 7 use these.
 
@@ -730,11 +744,13 @@ sweeps it."
 ## Task 6: `GET /api/games/:id/similar`
 
 **Files:**
+
 - Modify: `apps/api/src/routes/games.ts` (new route registered before the `/:id` handler)
 - Modify: `apps/api/test/helpers.ts` (add `seedSimilar`)
 - Test: `apps/api/test/games-routes.test.ts`
 
 **Interfaces:**
+
 - Consumes: `similarGames` (Task 4), `similarQuerySchema` + `SIMILAR_LIMIT_DEFAULT` (Task 5), `SIMILAR_TTL_SECONDS` + `similarKey` (Task 5), and the existing `gameExists`, `gameIdParamSchema`, `toGameSummary`, `FEED_CACHE_CONTROL`.
 - Produces: `GET /api/games/:id/similar?limit=` returning `{ items: GameSummaryWire[] }`.
 
@@ -748,11 +764,7 @@ Append to `apps/api/test/helpers.ts`:
 
 ```ts
 /** Seeds the similar-games relation. Ids need not exist — that is the point. */
-export async function seedSimilar(
-  db: Db,
-  gameId: number,
-  similarIds: number[],
-): Promise<void> {
+export async function seedSimilar(db: Db, gameId: number, similarIds: number[]): Promise<void> {
   await db
     .insert(schema.gameSimilar)
     .values(similarIds.map((similarGameId) => ({ gameId, similarGameId })));
@@ -960,12 +972,14 @@ Existence check inside the cache loader so a 404 is never cached."
 ## Task 7: Mobile endpoint, key and hook
 
 **Files:**
+
 - Modify: `apps/mobile/src/api/endpoints.ts` (after `getGame`)
 - Modify: `apps/mobile/src/api/keys.ts` (in the `games` namespace)
 - Modify: `apps/mobile/src/api/hooks.ts` (after `useGame`)
 - Test: `apps/mobile/test/api-endpoints.test.ts`, `apps/mobile/test/api-keys.test.ts`
 
 **Interfaces:**
+
 - Consumes: `SIMILAR_LIMIT_DEFAULT` (Task 5), the route from Task 6.
 - Produces: `useSimilarGames(id: number, limit?: number): UseQueryResult<GameListResponse>`. Task 8 calls it.
 
@@ -976,38 +990,36 @@ Existence check inside the cache loader so a 404 is never cached."
 Add to `apps/mobile/test/api-keys.test.ts`:
 
 ```ts
-  it("keys similar games by id and limit", () => {
-    expect(keys.games.similar(1942, 12)).toEqual(["games", "similar", 1942, 12]);
-  });
+it("keys similar games by id and limit", () => {
+  expect(keys.games.similar(1942, 12)).toEqual(["games", "similar", 1942, 12]);
+});
 
-  it("keeps similar games outside the detail key, so a backlog write cannot clear it", () => {
-    // The backlog mutations invalidate keys.games.detail(id). Adding a game to
-    // your backlog does not change what is similar to it.
-    expect(keys.games.similar(1942, 12)).not.toEqual(
-      expect.arrayContaining(["detail"]),
-    );
-  });
+it("keeps similar games outside the detail key, so a backlog write cannot clear it", () => {
+  // The backlog mutations invalidate keys.games.detail(id). Adding a game to
+  // your backlog does not change what is similar to it.
+  expect(keys.games.similar(1942, 12)).not.toEqual(expect.arrayContaining(["detail"]));
+});
 ```
 
 Add to `apps/mobile/test/api-endpoints.test.ts`:
 
 ```ts
-  it("fetches similar games with a default limit of twelve", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).similarGames(1942);
+it("fetches similar games with a default limit of twelve", async () => {
+  const { request, calls } = spy();
+  await createEndpoints(request).similarGames(1942);
 
-    expect(calls[0]).toEqual({
-      path: "/api/games/1942/similar",
-      options: { query: { limit: 12 } },
-    });
+  expect(calls[0]).toEqual({
+    path: "/api/games/1942/similar",
+    options: { query: { limit: 12 } },
   });
+});
 
-  it("passes an explicit similar-games limit through", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).similarGames(1942, { limit: 6 });
+it("passes an explicit similar-games limit through", async () => {
+  const { request, calls } = spy();
+  await createEndpoints(request).similarGames(1942, { limit: 6 });
 
-    expect(calls[0]?.options).toEqual({ query: { limit: 6 } });
-  });
+  expect(calls[0]?.options).toEqual({ query: { limit: 6 } });
+});
 ```
 
 - [x] **Step 2: Run the tests to verify they fail**
@@ -1083,6 +1095,7 @@ The key sits outside games.detail so a backlog write does not clear it."
 ## Task 8: The section, and in-tab navigation
 
 **Files:**
+
 - Create: `apps/mobile/src/features/game/similar-games.tsx`
 - Modify: `apps/mobile/src/features/game/game-detail-screen.tsx`
 - Modify: `apps/mobile/src/app/(tabs)/(home)/game/[id].tsx`
@@ -1090,6 +1103,7 @@ The key sits outside games.detail so a backlog write does not clear it."
 - Modify: `apps/mobile/src/app/(tabs)/search/game/[id].tsx`
 
 **Interfaces:**
+
 - Consumes: `useSimilarGames` (Task 7), the existing `GameTile` and `summarySubtitle`.
 - Produces: `<SimilarGames gameId onPressGame />`; `GameDetailScreen` gains a required `onOpenGame: (id: number) => void` prop.
 
@@ -1283,10 +1297,12 @@ typed routes make Href a union of template-literal types."
 ## Task 9: Docs, backfill and coverage measurement
 
 **Files:**
+
 - Modify: `README.md` (the `apps/api` route table, and the `apps/mobile` Explore/detail prose)
 - Modify: `docs/mobile-device-verification.md`
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: nothing code-facing.
 
@@ -1295,7 +1311,7 @@ typed routes make Href a union of template-literal types."
 In `README.md`, in the `apps/api` route table, immediately after the `GET /api/games/:id` row:
 
 ```markdown
-| `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12) |
+| `GET /api/games/:id/similar?limit=` | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12) |
 ```
 
 - [x] **Step 2: Document the section in the mobile prose**
@@ -1394,17 +1410,17 @@ Expected: a dozen plausible RPGs, no DLC, no duplicates, and no Witcher 3 itself
 
 **Spec coverage:**
 
-| Spec section | Task |
-|---|---|
-| §4 IGDB layer (field, schema, mapper, dedup, self-filter) | 1 |
-| §5 mirror table, no FK, no index, `truncateAll`, `persistPage` | 2, 3 |
-| §6 `similarGames` query, contracts, cache keys, route | 4, 5, 6 |
-| §7 mobile section, render-nothing, query key, navigation | 7, 8 |
-| §8 files | all |
-| §9 testing | tests inside 1–8; device checks in 9 |
-| §10 rollout, backfill, coverage queries | 9 |
-| §11 risks — contract test as the deprecation tripwire | 9 step 7 |
-| §12 deferred | no task, by design |
+| Spec section                                                   | Task                                 |
+| -------------------------------------------------------------- | ------------------------------------ |
+| §4 IGDB layer (field, schema, mapper, dedup, self-filter)      | 1                                    |
+| §5 mirror table, no FK, no index, `truncateAll`, `persistPage` | 2, 3                                 |
+| §6 `similarGames` query, contracts, cache keys, route          | 4, 5, 6                              |
+| §7 mobile section, render-nothing, query key, navigation       | 7, 8                                 |
+| §8 files                                                       | all                                  |
+| §9 testing                                                     | tests inside 1–8; device checks in 9 |
+| §10 rollout, backfill, coverage queries                        | 9                                    |
+| §11 risks — contract test as the deprecation tripwire          | 9 step 7                             |
+| §12 deferred                                                   | no task, by design                   |
 
 No gaps.
 

@@ -18,8 +18,7 @@ export const ONBOARDING_PAGES = [
     id: "welcome",
     systemImage: "pawprint.fill",
     title: "Welcome to Barklog",
-    description:
-      "Barklog holds the games you're playing and the ones you keep meaning to start.",
+    description: "Barklog holds the games you're playing and the ones you keep meaning to start.",
   },
   {
     id: "backlog",

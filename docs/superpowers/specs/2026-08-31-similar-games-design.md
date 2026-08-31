@@ -35,20 +35,20 @@ caller's backlog. Pagination — the list is at most a dozen games. Android.
 
 ## 2. Decisions
 
-| Decision | Choice | Why |
-|---|---|---|
-| Source | IGDB `similar_games`, mirrored | Confirmed live at field 34 of IGDB's own `Game` proto and not deprecated — only `follows` carries a `[deprecated = true]` marker. Genuinely cross-genre in a way overlap scoring cannot fake, and there is no ranking heuristic to tune or defend. |
-| Ordering | Re-rank on read by `total_rating_count DESC, id ASC` | IGDB's array order is undocumented, so preserving it would be cargo-culting. This is the same total order every other feed uses, so a `LIMIT` cannot produce an unstable list. Costs no `position` column. |
-| Target foreign key | None | The sync walks ids ascending, so a low-id page routinely names a game not yet inserted. An FK would reject the row and fail the page. Same reasoning, and the same test, as `games.parentGameId`. |
-| Dangling ids | Dropped by `innerJoin` on read | No `EXISTS` clause, no cleanup job, and self-healing as the mirror fills in. |
-| Filtering | `SEARCHABLE_GAME_TYPE_IDS` only | Keeps DLC, mods, bundles and episodes out. Games without cover art are kept: `components/cover.tsx` already draws a `gamecontroller` placeholder, so dropping them would shrink a short list for no visual gain. The release feeds filter on cover art for a different reason — placeholder rows padding a release week. |
-| Transport | A separate `GET /api/games/:id/similar` | `GET /api/games/:id` is `private, no-cache` because it embeds the caller's `backlogEntry`, so it can never enter the shared cache. A similar-games list is identical for every user. Folding it in would recompute it on every detail open, forever. |
-| Response type | The existing `GameListResponse` | No new wire type, and `GameDetailWire` is untouched. |
-| Backlog state on tiles | Absent | Including it would make the response user-varying and throw away the caching. Explore's tiles do not show it either. |
-| Unknown game id | `404`, checked inside the cache loader | An empty list would be a lie about a game that does not exist. `PUT /api/backlog/:gameId` already guards this way with the same `gameExists` helper. Inside the loader because a throw propagates uncached, so a cache hit pays nothing for the check. |
-| Layout | One horizontal row of `GameTile`s, limit 12 | Reads as a subsection of a detail screen rather than a browse surface. A two-row grid would double the section's height on an already-long screen. |
-| Section title | "Similar Games" | Matches the neutral register of the detail rows above it ("Released", "Genres", "Platforms"). |
-| In-tab navigation | An `onOpenGame` callback passed in by each tab's route file | Typed routes are enabled, so `Href` is a union of template-literal types and a `string` base path is not assignable to it. See §7. |
+| Decision               | Choice                                                      | Why                                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source                 | IGDB `similar_games`, mirrored                              | Confirmed live at field 34 of IGDB's own `Game` proto and not deprecated — only `follows` carries a `[deprecated = true]` marker. Genuinely cross-genre in a way overlap scoring cannot fake, and there is no ranking heuristic to tune or defend.                                                                       |
+| Ordering               | Re-rank on read by `total_rating_count DESC, id ASC`        | IGDB's array order is undocumented, so preserving it would be cargo-culting. This is the same total order every other feed uses, so a `LIMIT` cannot produce an unstable list. Costs no `position` column.                                                                                                               |
+| Target foreign key     | None                                                        | The sync walks ids ascending, so a low-id page routinely names a game not yet inserted. An FK would reject the row and fail the page. Same reasoning, and the same test, as `games.parentGameId`.                                                                                                                        |
+| Dangling ids           | Dropped by `innerJoin` on read                              | No `EXISTS` clause, no cleanup job, and self-healing as the mirror fills in.                                                                                                                                                                                                                                             |
+| Filtering              | `SEARCHABLE_GAME_TYPE_IDS` only                             | Keeps DLC, mods, bundles and episodes out. Games without cover art are kept: `components/cover.tsx` already draws a `gamecontroller` placeholder, so dropping them would shrink a short list for no visual gain. The release feeds filter on cover art for a different reason — placeholder rows padding a release week. |
+| Transport              | A separate `GET /api/games/:id/similar`                     | `GET /api/games/:id` is `private, no-cache` because it embeds the caller's `backlogEntry`, so it can never enter the shared cache. A similar-games list is identical for every user. Folding it in would recompute it on every detail open, forever.                                                                     |
+| Response type          | The existing `GameListResponse`                             | No new wire type, and `GameDetailWire` is untouched.                                                                                                                                                                                                                                                                     |
+| Backlog state on tiles | Absent                                                      | Including it would make the response user-varying and throw away the caching. Explore's tiles do not show it either.                                                                                                                                                                                                     |
+| Unknown game id        | `404`, checked inside the cache loader                      | An empty list would be a lie about a game that does not exist. `PUT /api/backlog/:gameId` already guards this way with the same `gameExists` helper. Inside the loader because a throw propagates uncached, so a cache hit pays nothing for the check.                                                                   |
+| Layout                 | One horizontal row of `GameTile`s, limit 12                 | Reads as a subsection of a detail screen rather than a browse surface. A two-row grid would double the section's height on an already-long screen.                                                                                                                                                                       |
+| Section title          | "Similar Games"                                             | Matches the neutral register of the detail rows above it ("Released", "Genres", "Platforms").                                                                                                                                                                                                                            |
+| In-tab navigation      | An `onOpenGame` callback passed in by each tab's route file | Typed routes are enabled, so `Href` is a union of template-literal types and a `string` base path is not assignable to it. See §7.                                                                                                                                                                                       |
 
 ## 3. Data flow
 
@@ -272,17 +272,17 @@ apps/mobile/src/features/game/similar-games.tsx
 
 ## 9. Testing
 
-| Where | What |
-|---|---|
-| `packages/igdb/test/games-query.test.ts` | `similar_games` present in the field list |
-| `packages/igdb/test/map.test.ts` | ids mapped; duplicates collapsed; self-reference dropped; absent field yields `[]` |
-| `packages/igdb/test/contract.test.ts` | already covers it — IGDB `400`s on a dead field |
-| `packages/db/test/mirror-schema.test.ts` | `similar_game_id` accepts a nonexistent game |
-| `packages/db/test/games-queries.test.ts` | dangling id dropped; non-searchable type filtered; ordering; limit; directionality |
-| `apps/worker/test/persist.test.ts` | rows written; replay is a no-op; a dropped suggestion disappears |
-| `apps/api/test/games-routes.test.ts` | `200` shape; `404` unknown id; `422` bad limit; `Cache-Control`; repeat served from cache; version bump invalidates |
-| `apps/mobile/test/api-endpoints.test.ts` | path and query construction |
-| `apps/mobile/test/api-keys.test.ts` | key shape |
+| Where                                    | What                                                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `packages/igdb/test/games-query.test.ts` | `similar_games` present in the field list                                                                           |
+| `packages/igdb/test/map.test.ts`         | ids mapped; duplicates collapsed; self-reference dropped; absent field yields `[]`                                  |
+| `packages/igdb/test/contract.test.ts`    | already covers it — IGDB `400`s on a dead field                                                                     |
+| `packages/db/test/mirror-schema.test.ts` | `similar_game_id` accepts a nonexistent game                                                                        |
+| `packages/db/test/games-queries.test.ts` | dangling id dropped; non-searchable type filtered; ordering; limit; directionality                                  |
+| `apps/worker/test/persist.test.ts`       | rows written; replay is a no-op; a dropped suggestion disappears                                                    |
+| `apps/api/test/games-routes.test.ts`     | `200` shape; `404` unknown id; `422` bad limit; `Cache-Control`; repeat served from cache; version bump invalidates |
+| `apps/mobile/test/api-endpoints.test.ts` | path and query construction                                                                                         |
+| `apps/mobile/test/api-keys.test.ts`      | key shape                                                                                                           |
 
 The mobile section gets no component test — the repo has no component tests, by
 convention. `docs/mobile-device-verification.md` takes the manual check instead:
@@ -321,13 +321,13 @@ obscure games is a vanity metric.
 The backfill ran in 23.5 minutes (749 pages, 374,108 games) — IGDB time was the
 predicted ~3 minutes; the database writes dominated, as expected.
 
-| Metric | Result |
-|---|---|
-| Rows in `game_similar` | 3,155,422 |
-| Games covered | 315,597 of 374,110 — **84.4%** |
-| Games with `total_rating_count > 50` covered | 3,361 of 3,361 — **100%** |
-| Self-references | 0 |
-| Duplicate pairs | 0 |
+| Metric                                       | Result                         |
+| -------------------------------------------- | ------------------------------ |
+| Rows in `game_similar`                       | 3,155,422                      |
+| Games covered                                | 315,597 of 374,110 — **84.4%** |
+| Games with `total_rating_count > 50` covered | 3,361 of 3,361 — **100%**      |
+| Self-references                              | 0                              |
+| Duplicate pairs                              | 0                              |
 
 Coverage beat the estimate substantially: global coverage was expected to be
 poor enough to be worth dismissing, and is 84%. Among the games people actually
@@ -345,12 +345,12 @@ of list genre-overlap scoring would not have produced.
 
 ## 11. Risks
 
-| Risk | Mitigation |
-|---|---|
-| ~~Coverage among popular games disappoints~~ | **Retired 2026-08-31.** Measured at 100% of games with `total_rating_count > 50` (§10). |
-| IGDB deprecates `similar_games` later | The nightly contract test fails the build on a dead field. Detection is automatic; the section then degrades to nothing. |
-| `--full` re-sync churn | Every write is an upsert, so the run is replay-safe by construction, and the advisory lock prevents overlap with the cron. |
-| IGDB's suggestions are occasionally odd | Accepted. It is the same source as every other field on the screen, and the alternative is a heuristic we would have to defend instead. |
+| Risk                                         | Mitigation                                                                                                                              |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~Coverage among popular games disappoints~~ | **Retired 2026-08-31.** Measured at 100% of games with `total_rating_count > 50` (§10).                                                 |
+| IGDB deprecates `similar_games` later        | The nightly contract test fails the build on a dead field. Detection is automatic; the section then degrades to nothing.                |
+| `--full` re-sync churn                       | Every write is an upsert, so the run is replay-safe by construction, and the advisory lock prevents overlap with the cron.              |
+| IGDB's suggestions are occasionally odd      | Accepted. It is the same source as every other field on the screen, and the alternative is a heuristic we would have to defend instead. |
 
 ## 12. Deferred
 

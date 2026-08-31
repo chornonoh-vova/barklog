@@ -7,16 +7,12 @@
     "icon": "./assets/icon/icon.png",
     "scheme": "barklog",
     "userInterfaceStyle": "automatic",
-    "platforms": [
-      "ios"
-    ],
+    "platforms": ["ios"],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
       "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
-      "associatedDomains": [
-        "applinks:barklog.gg"
-      ]
+      "associatedDomains": ["applinks:barklog.gg"]
     },
     "plugins": [
       "expo-router",

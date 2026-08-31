@@ -28,20 +28,20 @@
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `apps/mobile/src/igdb-url.ts` | **Modify.** Gains `siteUrl()` beside `gameUrl()`, so the IGDB base URL stays declared once. |
-| `apps/mobile/src/onboarding/should-show-onboarding.ts` | **Create.** The entire show/skip policy as one pure function. No imports. |
-| `apps/mobile/src/onboarding/storage.ts` | **Create.** The AsyncStorage read/write pair, and the only file that knows the storage key. |
-| `apps/mobile/src/onboarding/onboarding-gate.tsx` | **Create.** Wires storage + Clerk + splash to the policy and picks what to render. |
-| `apps/mobile/src/features/onboarding/pages.ts` | **Create.** The four pages' copy and symbols. Type-only imports, so it is testable in Node. |
-| `apps/mobile/src/features/onboarding/onboarding-screen.tsx` | **Create.** The SwiftUI pager and its two buttons. Presentation only; takes `onComplete`. |
-| `apps/mobile/src/app/_layout.tsx` | **Modify.** Mounts `OnboardingGate` around `AuthGate`, and takes over `preventAutoHideAsync()`. |
-| `apps/mobile/src/auth/auth-gate.tsx` | **Modify.** Loses its module-scope `preventAutoHideAsync()` line only. |
-| `apps/mobile/test/igdb-url.test.ts` | **Modify.** `siteUrl()` case. |
-| `apps/mobile/test/onboarding-decision.test.ts` | **Create.** Every row of the policy table. |
-| `apps/mobile/test/onboarding-pages.test.ts` | **Create.** Copy invariants, including that page 2 still names all four backlog statuses. |
-| `docs/mobile-device-verification.md` | **Modify.** Checks 19-25. |
+| File                                                        | Responsibility                                                                                  |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `apps/mobile/src/igdb-url.ts`                               | **Modify.** Gains `siteUrl()` beside `gameUrl()`, so the IGDB base URL stays declared once.     |
+| `apps/mobile/src/onboarding/should-show-onboarding.ts`      | **Create.** The entire show/skip policy as one pure function. No imports.                       |
+| `apps/mobile/src/onboarding/storage.ts`                     | **Create.** The AsyncStorage read/write pair, and the only file that knows the storage key.     |
+| `apps/mobile/src/onboarding/onboarding-gate.tsx`            | **Create.** Wires storage + Clerk + splash to the policy and picks what to render.              |
+| `apps/mobile/src/features/onboarding/pages.ts`              | **Create.** The four pages' copy and symbols. Type-only imports, so it is testable in Node.     |
+| `apps/mobile/src/features/onboarding/onboarding-screen.tsx` | **Create.** The SwiftUI pager and its two buttons. Presentation only; takes `onComplete`.       |
+| `apps/mobile/src/app/_layout.tsx`                           | **Modify.** Mounts `OnboardingGate` around `AuthGate`, and takes over `preventAutoHideAsync()`. |
+| `apps/mobile/src/auth/auth-gate.tsx`                        | **Modify.** Loses its module-scope `preventAutoHideAsync()` line only.                          |
+| `apps/mobile/test/igdb-url.test.ts`                         | **Modify.** `siteUrl()` case.                                                                   |
+| `apps/mobile/test/onboarding-decision.test.ts`              | **Create.** Every row of the policy table.                                                      |
+| `apps/mobile/test/onboarding-pages.test.ts`                 | **Create.** Copy invariants, including that page 2 still names all four backlog statuses.       |
+| `docs/mobile-device-verification.md`                        | **Modify.** Checks 19-25.                                                                       |
 
 Gate logic sits beside `src/auth/` and the screen under `src/features/`, which is the split the app already uses (`auth-gate.tsx` + `should-clear-cache.ts` vs `features/explore/`).
 
@@ -52,10 +52,12 @@ Gate logic sits beside `src/auth/` and the screen under `src/features/`, which i
 The last page links to igdb.com itself, not to a game. `src/igdb-url.ts` already owns the base URL and must keep owning it.
 
 **Files:**
+
 - Modify: `apps/mobile/src/igdb-url.ts`
 - Test: `apps/mobile/test/igdb-url.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `siteUrl(): string` returning `"https://www.igdb.com"`. Task 5 imports it as `import { siteUrl } from "@/igdb-url"`.
 
@@ -130,10 +132,12 @@ git commit -m "feat(mobile): igdb site root url"
 The whole decision, as one pure function, for the same reason `should-clear-cache.ts` exists: the interesting cases are unreachable in a simulator.
 
 **Files:**
+
 - Create: `apps/mobile/src/onboarding/should-show-onboarding.ts`
 - Test: `apps/mobile/test/onboarding-decision.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces:
   ```ts
@@ -147,13 +151,13 @@ The whole decision, as one pure function, for the same reason `should-clear-cach
 
 The policy, which the test below encodes row for row:
 
-| `hasSeen` | `isSignedIn` | Result |
-|---|---|---|
-| `undefined` (read in flight) | anything | `pending` |
-| `true` | anything | `complete` |
-| `false` | `undefined` (Clerk not loaded) | `pending` |
-| `false` | `true` | `complete` |
-| `false` | `false` | `show` |
+| `hasSeen`                    | `isSignedIn`                   | Result     |
+| ---------------------------- | ------------------------------ | ---------- |
+| `undefined` (read in flight) | anything                       | `pending`  |
+| `true`                       | anything                       | `complete` |
+| `false`                      | `undefined` (Clerk not loaded) | `pending`  |
+| `false`                      | `true`                         | `complete` |
+| `false`                      | `false`                        | `show`     |
 
 - [ ] **Step 1: Write the failing test**
 
@@ -270,10 +274,12 @@ git commit -m "feat(mobile): onboarding show/skip policy"
 Copy in its own module, typed and tested, for the same reason `features/backlog/empty-states.ts` is: it can then be checked against the contracts it describes.
 
 **Files:**
+
 - Create: `apps/mobile/src/features/onboarding/pages.ts`
 - Test: `apps/mobile/test/onboarding-pages.test.ts`
 
 **Interfaces:**
+
 - Consumes: `SFSymbol` type from `sf-symbols-typescript` (a devDependency, types only — safe in Node tests).
 - Produces:
   ```ts
@@ -284,7 +290,12 @@ Copy in its own module, typed and tested, for the same reason `features/backlog/
     description: string;
   }
   // a readonly 4-tuple, NOT a plain array — see the note below
-  export const ONBOARDING_PAGES: readonly [OnboardingPage, OnboardingPage, OnboardingPage, OnboardingPage];
+  export const ONBOARDING_PAGES: readonly [
+    OnboardingPage,
+    OnboardingPage,
+    OnboardingPage,
+    OnboardingPage,
+  ];
   export const IGDB_PAGE_ID = "igdb";
   ```
   Task 5 imports `ONBOARDING_PAGES` and `IGDB_PAGE_ID` from `./pages`.
@@ -389,8 +400,7 @@ export const ONBOARDING_PAGES = [
     id: "welcome",
     systemImage: "pawprint.fill",
     title: "Welcome to Barklog",
-    description:
-      "Barklog holds the games you're playing and the ones you keep meaning to start.",
+    description: "Barklog holds the games you're playing and the ones you keep meaning to start.",
   },
   {
     id: "backlog",
@@ -438,10 +448,12 @@ git commit -m "feat(mobile): onboarding page copy"
 ## Task 4: The persisted flag
 
 **Files:**
+
 - Modify: `apps/mobile/package.json` (via `expo install`, do not hand-edit)
 - Create: `apps/mobile/src/onboarding/storage.ts`
 
 **Interfaces:**
+
 - Consumes: `@react-native-async-storage/async-storage` default export.
 - Produces:
   ```ts
@@ -534,9 +546,11 @@ git commit -m "feat(mobile): persist the onboarding-seen flag"
 ## Task 5: The pager
 
 **Files:**
+
 - Create: `apps/mobile/src/features/onboarding/onboarding-screen.tsx`
 
 **Interfaces:**
+
 - Consumes: `ONBOARDING_PAGES`, `IGDB_PAGE_ID` (Task 3); `siteUrl()` (Task 1); `GLASS_PROMINENT_STYLE` from `@/ui/platform-glass`; `Brand` from `@/theme`.
 - Produces: `OnboardingScreen({ onComplete }: { onComplete: () => void })`. Task 6 renders it. It holds no persistence and no auth knowledge — `onComplete` fires for both Skip and the final button, and the gate decides what that means.
 
@@ -550,7 +564,18 @@ Read https://docs.expo.dev/versions/v57.0.0/sdk/ui/ before starting. Two facts t
 Create `apps/mobile/src/features/onboarding/onboarding-screen.tsx`:
 
 ```tsx
-import { Button, Host, HStack, Image, Label, Link, Spacer, TabView, Text, VStack } from "@expo/ui/swift-ui";
+import {
+  Button,
+  Host,
+  HStack,
+  Image,
+  Label,
+  Link,
+  Spacer,
+  TabView,
+  Text,
+  VStack,
+} from "@expo/ui/swift-ui";
 import {
   accessibilityHidden,
   buttonStyle,
@@ -715,11 +740,13 @@ git commit -m "feat(mobile): onboarding pager"
 The one task that changes existing behaviour. Read `src/auth/auth-gate.tsx` in full before editing it.
 
 **Files:**
+
 - Create: `apps/mobile/src/onboarding/onboarding-gate.tsx`
 - Modify: `apps/mobile/src/app/_layout.tsx`
 - Modify: `apps/mobile/src/auth/auth-gate.tsx:9`
 
 **Interfaces:**
+
 - Consumes: `onboardingDecision`, `OnboardingDecision` (Task 2); `readHasSeenOnboarding`, `markOnboardingSeen` (Task 4); `OnboardingScreen` (Task 5).
 - Produces: `OnboardingGate({ children }: { children: ReactNode })`. Mounted only by `_layout.tsx`.
 
@@ -824,13 +851,13 @@ void SplashScreen.preventAutoHideAsync();
 Keep the `import * as SplashScreen from "expo-splash-screen";` — `hideAsync` is still used at line 39. Then extend the existing comment on the hide effect so the split is not a mystery to the next reader:
 
 ```ts
-  useEffect(() => {
-    // Held open until Clerk has read the keychain, so a returning user never
-    // sees the sign-in screen flash. The `preventAutoHideAsync` that holds it
-    // lives in `app/_layout.tsx`, because `OnboardingGate` may paint before
-    // this component ever mounts and it hides the splash itself.
-    if (isLoaded) void SplashScreen.hideAsync();
-  }, [isLoaded]);
+useEffect(() => {
+  // Held open until Clerk has read the keychain, so a returning user never
+  // sees the sign-in screen flash. The `preventAutoHideAsync` that holds it
+  // lives in `app/_layout.tsx`, because `OnboardingGate` may paint before
+  // this component ever mounts and it hides the splash itself.
+  if (isLoaded) void SplashScreen.hideAsync();
+}, [isLoaded]);
 ```
 
 - [ ] **Step 3: Mount the gate in the root layout**
@@ -859,17 +886,17 @@ void SplashScreen.preventAutoHideAsync();
 Then wrap `AuthGate`:
 
 ```tsx
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-            <OnboardingGate>
-              <AuthGate>
-                {/* `Slot`, not `Stack`: (tabs) is the only root route, so a Stack
+<ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+  <OnboardingGate>
+    <AuthGate>
+      {/* `Slot`, not `Stack`: (tabs) is the only root route, so a Stack
                     would wrap the tab controller in a UINavigationController for
                     nothing. */}
-                <Slot />
-              </AuthGate>
-            </OnboardingGate>
-            <StatusBar style="auto" />
-          </ThemeProvider>
+      <Slot />
+    </AuthGate>
+  </OnboardingGate>
+  <StatusBar style="auto" />
+</ThemeProvider>
 ```
 
 - [ ] **Step 4: Verify the whole suite, types and lint**
@@ -906,6 +933,7 @@ git commit -m "feat(mobile): onboarding gate ahead of the auth gate"
 Nothing in Tasks 1-6 ran the app. Six behaviours can only be confirmed on a device, and the first of them is a regression risk in code that already worked.
 
 **Files:**
+
 - Modify: `docs/mobile-device-verification.md`
 
 - [ ] **Step 1: Append the checks**
@@ -956,17 +984,17 @@ git commit -m "docs: device checks for mobile onboarding"
 
 **Spec coverage:**
 
-| Spec section | Task |
-|---|---|
-| §3 placement and control flow, splash move | Task 6 |
-| §4 the decision | Task 2 |
-| §5 storage | Task 4 |
-| §6 UI, `Link`, safe-area risk | Task 5 (build), Task 7 check 21 (risk) |
-| §7 copy, `siteUrl()` | Task 3, Task 1 |
-| §8 files | File Structure table |
-| §9 testing | Tasks 1, 2, 3 |
-| §10 risks | Task 7 checks 19-21, Task 4 Step 4 (prebuild) |
-| §11 deferred | Nothing to build |
+| Spec section                               | Task                                          |
+| ------------------------------------------ | --------------------------------------------- |
+| §3 placement and control flow, splash move | Task 6                                        |
+| §4 the decision                            | Task 2                                        |
+| §5 storage                                 | Task 4                                        |
+| §6 UI, `Link`, safe-area risk              | Task 5 (build), Task 7 check 21 (risk)        |
+| §7 copy, `siteUrl()`                       | Task 3, Task 1                                |
+| §8 files                                   | File Structure table                          |
+| §9 testing                                 | Tasks 1, 2, 3                                 |
+| §10 risks                                  | Task 7 checks 19-21, Task 4 Step 4 (prebuild) |
+| §11 deferred                               | Nothing to build                              |
 
 No gaps.
 

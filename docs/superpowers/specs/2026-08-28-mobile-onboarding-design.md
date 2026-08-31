@@ -31,15 +31,15 @@ flag on the user record. Per-page analytics. Animated or illustrated artwork.
 
 ## 2. Decisions
 
-| Decision | Choice | Why |
-|---|---|---|
-| Placement | A gate component wrapping `AuthGate` | Routes live under `Slot`, which is inside `AuthGate`, so a route can never run first. |
-| Persistence | `@react-native-async-storage/async-storage` | The SDK 57 documented key-value store. Lives in the app container, so a reinstall clears it, which is the case Skip exists for. `expo-secure-store` is keychain-backed and would silently outlive an uninstall. |
-| Returning signed-in user | Auto-complete | If Clerk restores a session at launch, the user has an account and has seen the pitch. Skip the pages and write the flag. |
-| Read failure | Resolves to "seen" | Read failure and fresh install are distinguishable here (`getItem` returns `null` for missing, throws for broken), so this is a deliberate choice, not an ambiguity being resolved. The actual trade is never seeing onboarding when storage is broken versus seeing a dismissable onboarding on every launch — nobody is trapped either way, since `onboarding-gate.tsx` completes locally on Skip or Start regardless of storage — but repeated onboarding reads as a bug, so `true` wins. |
-| Pager | `TabView` + `tabViewStyle({ type: "page" })` from `@expo/ui/swift-ui` | A real SwiftUI paged pager with dot indicators. No custom gesture handling and no dot state to track. |
-| Page artwork | 52pt hierarchical SF Symbol | The recipe `components/empty-state.tsx` already uses. No assets, correct in both appearances. |
-| Controls | Skip top-right; `Continue` / `Start` bottom | A visible primary action for users who do not think to swipe. Skip is hidden on the last page, where the primary button does the same thing. |
+| Decision                 | Choice                                                                | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Placement                | A gate component wrapping `AuthGate`                                  | Routes live under `Slot`, which is inside `AuthGate`, so a route can never run first.                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Persistence              | `@react-native-async-storage/async-storage`                           | The SDK 57 documented key-value store. Lives in the app container, so a reinstall clears it, which is the case Skip exists for. `expo-secure-store` is keychain-backed and would silently outlive an uninstall.                                                                                                                                                                                                                                                                              |
+| Returning signed-in user | Auto-complete                                                         | If Clerk restores a session at launch, the user has an account and has seen the pitch. Skip the pages and write the flag.                                                                                                                                                                                                                                                                                                                                                                    |
+| Read failure             | Resolves to "seen"                                                    | Read failure and fresh install are distinguishable here (`getItem` returns `null` for missing, throws for broken), so this is a deliberate choice, not an ambiguity being resolved. The actual trade is never seeing onboarding when storage is broken versus seeing a dismissable onboarding on every launch — nobody is trapped either way, since `onboarding-gate.tsx` completes locally on Skip or Start regardless of storage — but repeated onboarding reads as a bug, so `true` wins. |
+| Pager                    | `TabView` + `tabViewStyle({ type: "page" })` from `@expo/ui/swift-ui` | A real SwiftUI paged pager with dot indicators. No custom gesture handling and no dot state to track.                                                                                                                                                                                                                                                                                                                                                                                        |
+| Page artwork             | 52pt hierarchical SF Symbol                                           | The recipe `components/empty-state.tsx` already uses. No assets, correct in both appearances.                                                                                                                                                                                                                                                                                                                                                                                                |
+| Controls                 | Skip top-right; `Continue` / `Start` bottom                           | A visible primary action for users who do not think to swipe. Skip is hidden on the last page, where the primary button does the same thing.                                                                                                                                                                                                                                                                                                                                                 |
 
 ## 3. Placement and control flow
 
@@ -85,18 +85,18 @@ would otherwise have had to infer from three separate comments.
 export type OnboardingDecision = "pending" | "show" | "complete";
 
 export function onboardingDecision(
-  hasSeen: boolean | undefined,    // undefined = storage read in flight
+  hasSeen: boolean | undefined, // undefined = storage read in flight
   isSignedIn: boolean | undefined, // undefined = Clerk has not loaded
 ): OnboardingDecision;
 ```
 
-| `hasSeen` | `isSignedIn` | Result | Reason |
-|---|---|---|---|
-| `undefined` | any | `pending` | Storage read in flight. Render nothing, splash held. |
-| `true` | any | `complete` | Hot path. Does not wait on Clerk. |
-| `false` | `undefined` | `pending` | The session has to be known first, or a reinstalling user gets a flash of onboarding before the auto-complete fires. |
-| `false` | `true` | `complete` | Existing session. The gate also writes the flag, so the next launch takes the hot path. |
-| `false` | `false` | `show` | Genuine first run. |
+| `hasSeen`   | `isSignedIn` | Result     | Reason                                                                                                               |
+| ----------- | ------------ | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `undefined` | any          | `pending`  | Storage read in flight. Render nothing, splash held.                                                                 |
+| `true`      | any          | `complete` | Hot path. Does not wait on Clerk.                                                                                    |
+| `false`     | `undefined`  | `pending`  | The session has to be known first, or a reinstalling user gets a flash of onboarding before the auto-complete fires. |
+| `false`     | `true`       | `complete` | Existing session. The gate also writes the flag, so the next launch takes the hot path.                              |
+| `false`     | `false`      | `show`     | Genuine first run.                                                                                                   |
 
 Waiting on `isSignedIn` costs nothing: `AuthGate` already blocks on the same
 keychain read, so the splash is held for exactly as long as it is today.
@@ -128,7 +128,9 @@ blocks the transition into the app is not.
 ```tsx
 <Host style={styles.host} seedColor={Brand.tint}>
   <VStack>
-    <HStack>                              {/* Skip, hidden on the last page */}
+    <HStack>
+      {" "}
+      {/* Skip, hidden on the last page */}
       <Spacer />
       <Button label="Skip" modifiers={[buttonStyle("plain")]} onPress={onComplete} />
     </HStack>
@@ -190,12 +192,12 @@ padding from `useSafeAreaInsets` around the `Host`. Recorded as a risk in §10.
 `src/features/onboarding/pages.ts`. Titles are the repo owner's wording and are
 not to be re-edited.
 
-| # | id | Symbol | Title | Description |
-|---|---|---|---|---|
-| 1 | `welcome` | `pawprint.fill` | Welcome to Barklog | Barklog holds the games you're playing and the ones you keep meaning to start. |
-| 2 | `backlog` | `checklist` | Managing your game backlog | Add a game, then mark it waiting, playing, completed, or abandoned. Abandoned is a real answer. |
-| 3 | `explore` | `sparkle.magnifyingglass` | Exploring games | See what's popular, what's coming out, and what just landed. Or search by name if you already know what you want. |
-| 4 | `igdb` | `books.vertical.fill` | All game data is powered by IGDB | Every cover, release date, platform, and summary in Barklog comes from IGDB, a games database its community maintains. |
+| #   | id        | Symbol                    | Title                            | Description                                                                                                            |
+| --- | --------- | ------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | `welcome` | `pawprint.fill`           | Welcome to Barklog               | Barklog holds the games you're playing and the ones you keep meaning to start.                                         |
+| 2   | `backlog` | `checklist`               | Managing your game backlog       | Add a game, then mark it waiting, playing, completed, or abandoned. Abandoned is a real answer.                        |
+| 3   | `explore` | `sparkle.magnifyingglass` | Exploring games                  | See what's popular, what's coming out, and what just landed. Or search by name if you already know what you want.      |
+| 4   | `igdb`    | `books.vertical.fill`     | All game data is powered by IGDB | Every cover, release date, platform, and summary in Barklog comes from IGDB, a games database its community maintains. |
 
 Page 2 names the four `BACKLOG_STATUSES` values from `@repo/contracts`. A test
 asserts it still does, so renaming a status fails the suite rather than leaving
@@ -231,27 +233,27 @@ the app already uses.
 
 `vitest.config.mts` runs `test/**/*.test.ts` in plain Node with no react-native
 transform, so anything under test must avoid react-native and `@expo/ui`
-imports. `pages.ts` qualifies: its only import is the `SFSymbol` *type* from
+imports. `pages.ts` qualifies: its only import is the `SFSymbol` _type_ from
 `sf-symbols-typescript`.
 
-| File | Covers |
-|---|---|
-| `test/onboarding-decision.test.ts` | Every row of §4's table, plus repeat renders in each state. |
-| `test/onboarding-pages.test.ts` | Four pages; unique ids; every title and description non-empty; `igdb` is last; page 2's description contains every `BACKLOG_STATUSES` value. |
-| `test/igdb-url.test.ts` | Extended with `siteUrl()`. |
-| `test/onboarding-storage.test.ts` | The three read outcomes (missing, present, throws) and that a write failure resolves rather than rejects, mocking `@react-native-async-storage/async-storage` with a `vi.mock` factory so the real, react-native-requiring module is never loaded. |
+| File                               | Covers                                                                                                                                                                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test/onboarding-decision.test.ts` | Every row of §4's table, plus repeat renders in each state.                                                                                                                                                                                        |
+| `test/onboarding-pages.test.ts`    | Four pages; unique ids; every title and description non-empty; `igdb` is last; page 2's description contains every `BACKLOG_STATUSES` value.                                                                                                       |
+| `test/igdb-url.test.ts`            | Extended with `siteUrl()`.                                                                                                                                                                                                                         |
+| `test/onboarding-storage.test.ts`  | The three read outcomes (missing, present, throws) and that a write failure resolves rather than rejects, mocking `@react-native-async-storage/async-storage` with a `vi.mock` factory so the real, react-native-requiring module is never loaded. |
 
 The two components are not unit-tested: they are thin native wrappers whose
 behaviour off-device is meaningless. They go on the device checklist instead.
 
 ## 10. Risks
 
-| Risk | Mitigation |
-|---|---|
-| SwiftUI safe area does not apply inside `Host`, so Skip sits under the notch. | §6 fallback: root `SafeAreaProvider` plus `useSafeAreaInsets` padding. Device check. |
-| `TabView` page style needs iOS 26 behaviour the repo has not exercised. | `tabViewStyle` is documented for all supported versions and is not glass-gated like `buttonStyle`. Device check ranks it high. |
-| A new autolinked native module means `prebuild` and a fresh native build. | Called out as a task step, not an aside. |
-| The splash move regresses "relaunching goes straight to the tabs" (device check 3). | The same effect still runs in `AuthGate`; only the `preventAutoHide` call relocates. Re-run device check 3. |
+| Risk                                                                                | Mitigation                                                                                                                     |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| SwiftUI safe area does not apply inside `Host`, so Skip sits under the notch.       | §6 fallback: root `SafeAreaProvider` plus `useSafeAreaInsets` padding. Device check.                                           |
+| `TabView` page style needs iOS 26 behaviour the repo has not exercised.             | `tabViewStyle` is documented for all supported versions and is not glass-gated like `buttonStyle`. Device check ranks it high. |
+| A new autolinked native module means `prebuild` and a fresh native build.           | Called out as a task step, not an aside.                                                                                       |
+| The splash move regresses "relaunching goes straight to the tabs" (device check 3). | The same effect still runs in `AuthGate`; only the `preventAutoHide` call relocates. Re-run device check 3.                    |
 
 ## 11. Deferred
 

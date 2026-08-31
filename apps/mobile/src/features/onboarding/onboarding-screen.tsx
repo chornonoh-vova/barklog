@@ -1,4 +1,15 @@
-import { Button, Host, HStack, Image, Label, Link, Spacer, TabView, Text, VStack } from "@expo/ui/swift-ui";
+import {
+  Button,
+  Host,
+  HStack,
+  Image,
+  Label,
+  Link,
+  Spacer,
+  TabView,
+  Text,
+  VStack,
+} from "@expo/ui/swift-ui";
 import {
   accessibilityHidden,
   buttonStyle,
