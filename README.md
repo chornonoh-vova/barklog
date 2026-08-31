@@ -202,7 +202,7 @@ src/
         _layout.tsx  index.tsx  game/[id].tsx
       explore/   _layout.tsx  index.tsx  game/[id].tsx
       search/    _layout.tsx  index.tsx  game/[id].tsx
-    shared/                route group presented as a full-screen modal over (tabs)
+    shared/                full-screen modal listing the candidates for a shared video
       _layout.tsx  index.tsx  game/[id].tsx
     +native-intent.ts      redirects an expo-sharing intent to /shared
   api/         errors, client, endpoints, keys, provider, hooks
@@ -230,14 +230,6 @@ over it. Under a `Slot` it would replace the tab controller outright — the tab
 would unmount and their stacks would be lost, so there would be nothing to
 return to. The extra `UINavigationController` that costs is hidden by
 `headerShown: false`.
-
-That root layout also owns the share sheet itself, rendered as a sibling of the
-`Stack` inside both gates. The sheet is not part of the `/shared` screen: it
-outlives that screen's own navigation, and sitting inside the gates keeps it
-from rendering — or querying — for a signed-out or onboarding user. Which route
-is showing decides whether it is presented, via `usePathname()`, so pushing
-`/shared/game/[id]` collapses the sheet and popping back re-presents it.
-`/shared` underneath is a plain opaque screen you back out of to home.
 
 **Explore.** Three shelves — Most Popular, Upcoming, Recently Released — each a
 two-row grid scrolling sideways over its own feed request. The three queries are
@@ -275,15 +267,15 @@ opens `barklog://` with an `expo-sharing` host; `app/+native-intent.ts`
 rewrites that to `/shared`; `useSharedUrl` reads the resolved payloads and
 `sharedUrlFrom` picks the first `https` link out of a `website` payload's
 `contentUri` or a `text` payload's body; `POST /api/games/identify` turns the
-link into ranked candidates; and a `BottomSheet` from the root layout lists
-them as ordinary `GameRow`s over the `/shared` screen. Picking one pushes
-`/shared/game/[id]` — the same `GameDetailScreen` every tab renders. Dismissing
-clears the payload first, or the next cold launch would re-present a share the
-user already dealt with; because `clear()` is a bare native call with no React
-state behind it, the root layout remembers _which_ url was dismissed rather than
-keeping a flag it would then have to reset.
+link into ranked candidates; and `/shared` lists them as ordinary `GameRow`s.
+Picking one pushes `/shared/game/[id]` — the same `GameDetailScreen` every tab
+renders. `/shared` is a `fullScreenModal` with a large title, like the tab
+roots, and a toolbar button back to home rather than a system back button:
+there is nothing behind a modal root to pop to, and leaving has to clear the
+payload as well as navigate. Every exit calls `clear()` first, or the next cold
+launch re-presents a share the user already dealt with.
 
-The sheet has four states, and `useSharedUrl` rather than the query decides
+The screen has four states, and `useSharedUrl` rather than the query decides
 between the first three: pending, a resolution failure, a share with no link in
 it, and only then the candidate list. A disabled TanStack query is permanently
 pending, so routing a settled-but-urlless share through `QueryBoundary` would
@@ -293,14 +285,6 @@ part, so it lives in `shouldWaitForPayload` — pure, and unit-tested — becaus
 `isResolving` starts `false` and only turns true from an effect, one frame too
 late; an empty resolved list means both "not started" and "finished with
 nothing"; and a recorded error leaves the list empty too.
-
-The sheet is the **universal** `BottomSheet` from `@expo/ui` rather than the
-`@expo/ui/swift-ui` one — but the universal layer is not a React Native
-passthrough: on iOS it maps to SwiftUI, so a sheet's children are SwiftUI
-children. The sheet's body is therefore wrapped in `RNHostView`, which hosts an
-RN subtree inside SwiftUI. That wrapper is load-bearing rather than decorative;
-without it the sheet presents empty, and every row here is remote IGDB cover
-art that only React Native can draw.
 
 Three activation rules are declared, because the three sources differ —
 YouTube offers a bare URL, Safari on a watch page offers a web page, and TikTok

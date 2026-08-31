@@ -194,72 +194,48 @@ first: it is the one that can regress behaviour that already worked.
 ## Share intent checks
 
 Added by `docs/superpowers/plans/2026-08-31-share-video-to-backlog.md`. None of
-this half has run anywhere. Check 33 first: it is the only one that can fail
-because of how `@expo/ui` hosts the sheet's contents rather than because of
-anything in the share journey itself, and it fails in two distinguishable ways.
-Check 43 is the same class of unknown and worth doing straight after it.
+this half has run anywhere. It is a shorter list than it was: the candidates
+render on an ordinary full-screen modal screen now rather than in a
+`BottomSheet`, which retired every check that existed to probe how React Native
+content survived being hosted inside SwiftUI.
 
-- [ ] **33. The sheet renders its rows, and tapping one navigates.** HIGHEST
-      RISK of this section, and it fails in two ways that mean different things.
-      If the sheet presents but shows _nothing_, `RNHostView` is not hosting the
-      React Native subtree: `@expo/ui`'s universal layer maps to SwiftUI on iOS,
-      so the `RNHostView` wrapper in `share-sheet.tsx` is the only reason RN
-      children render at all — it is load-bearing, not decoration, and
-      `matchContents` is mount-only. If the rows render but taps do nothing, the
-      suspect is the `pointerEvents="none"` that the universal wrapper sets on
-      its own `Host`
-      (`@expo/ui/src/universal/BottomSheet/index.ios.tsx`), which no public prop
-      can override. The escape is to compose `@expo/ui/swift-ui`'s `BottomSheet`
-      directly — our own `Host` without that prop, a `Group` carrying
-      `presentationDetents`, `presentationDragIndicator` and `padding`, and
-      `RNHostView` inside it. About twenty lines, replicating the universal
-      wrapper minus the one prop we cannot control.
-- [ ] **34. Barklog appears in the share sheet** from the YouTube app, the
-      TikTok app, and Safari on a watch page.
-- [ ] **35. Warm launch presents the sheet; cold launch presents the sheet.**
-- [ ] **36. Signed-out cold install:** `AuthView` first, sheet after sign-in.
-- [ ] **37. Dismissing clears the payload** — relaunching does **not**
-      re-present it.
-- [ ] **38. Pick a candidate, go back: the sheet re-presents.** Presentation is
-      keyed on the path being exactly `/shared`, so pushing `/shared/game/[id]`
-      must collapse the sheet and popping back must bring it up again.
-- [ ] **39. A private or deleted video shows the 404 copy, not a crash.**
-- [ ] **40. A TikTok short link (`vm.tiktok.com`) resolves.**
-- [ ] **41. Swiping the sheet away leaves the `/shared` screen standing.** The
-      sheet is presented from the root layout over a `fullScreenModal`, so a
-      swipe-down dismisses the sheet only: expect the opaque "Shared video"
-      screen underneath with its Back to Home button, _not_ a return to the
-      tabs. Then tap Back to Home and expect the Home tab with its stack intact.
-- [ ] **42. A share with no link in it shows "No link in that share", not a
-      spinner.** Share a photo, or text with no url. A disabled query is
-      permanently pending, so this state exists only because `share-sheet.tsx`
-      checks `shouldWaitForPayload`'s answer before reaching `QueryBoundary`; if
-      a spinner appears instead, that branch is not being taken.
-- [ ] **43. The list scrolls, and the sheet still drags from half to full.**
-      Same class of unknown as 33, and the reason it is listed separately: this
-      is a `UIScrollView` (the `FlatList`) inside an RN subtree inside a SwiftUI
-      `Group` inside a UIKit sheet, which is exactly where a scroll gesture and
-      a sheet-drag gesture fail to coordinate. Both must work: flick the list
-      with the sheet at `half` and it should scroll without moving the sheet;
-      drag the sheet's own grabber and it should expand to `full` without
-      scrolling the list. A share with enough candidates to overflow half a
-      screen is needed — search a heavily-sequelled series.
-- [ ] **44. Close hides the sheet without touching the route.** Reach it by
-      sharing something with no link in it (item 42), then tap Close. It sets
-      state in the root layout rather than navigating, so expect the sheet to go
-      and the `/shared` screen to stay, with no orphaned dimming overlay and no
-      second tap needed. Confirm it does not immediately re-present: `clear()`
-      has no React state behind it, so the root layout compares the dismissed
-      url against the current one to know the sheet should stay closed.
-- [ ] **45. Search Instead lands on the Search tab.** The one button that also
-      navigates: it hides the sheet _and_ calls `router.dismissTo("/search")`,
-      so the modal pops from under a sheet that is still on screen at the moment
-      of the call. Reach it by sharing a video whose game is not in the
-      catalogue. Expect the Search tab, its stack at the root, the `/shared`
-      modal gone, and no sheet left over it.
-- [ ] **46. The error state's Close behaves like 44.** Reached when payload
-      resolution itself fails rather than when the share carried no link. Hard
-      to force deliberately; airplane mode part-way through a share is the
-      closest lever. If it cannot
-      be reproduced, say so on the checklist rather than ticking it — the state
-      exists precisely because the failure is not reproducible on demand.
+- [ ] **33. Barklog appears in the share sheet** from the YouTube app, the
+      TikTok app, and Safari on a watch page. iOS's own share sheet, this one —
+      the app no longer has a sheet of its own.
+- [ ] **34. Warm launch opens `/shared`; cold launch opens `/shared`.** The
+      modal should come up over the tabs either way, not replace them.
+- [ ] **35. Signed-out cold install:** `AuthView` first, `/shared` after
+      sign-in. The route is inside both gates, so a share must never show
+      candidates to a signed-out user.
+- [ ] **36. The large title renders and collapses on scroll.** `/shared` uses
+      `<Stack.Title large>` like the tab roots, but on a `fullScreenModal`
+      rather than a tab root, which is the less common pairing and the reason
+      this is listed. Scroll the candidate list: the title should shrink into
+      the header the way Home's does, and the list must not start underneath
+      it — that is what `contentInsetAdjustmentBehavior="automatic"` is for.
+- [ ] **37. Each of the four states renders.** Pending (a spinner, briefly);
+      the candidate list; "No link in that share" for a photo or link-free text;
+      and "No match in the catalogue" for a video whose game is not in the
+      catalogue. The fourth, "Could not read that share", is item 42.
+- [ ] **38. The toolbar Home button returns to the Home tab and clears the
+      payload.** It is a `Stack.Toolbar` button rather than a system back
+      button, because a modal root has nothing behind it to pop to. Tap it,
+      then force-quit and relaunch: the share must **not** re-present, which is
+      the `clear()` call. Landing on Home rather than the tab the share
+      interrupted is intended — that is `dismissTo("/")`.
+- [ ] **39. Pick a candidate, then go back.** Selecting a row pushes
+      `/shared/game/[id]` inside the modal, with the tab bar _not_ visible
+      because the modal covers it. Back returns to the candidate list, still
+      populated, not to the tabs.
+- [ ] **40. Search Instead lands on the Search tab.** Reach it from the
+      no-match state. Expect the Search tab at the root of its stack and the
+      `/shared` modal gone.
+- [ ] **41. A private or deleted video shows the 404 copy, not a crash.**
+- [ ] **42. A TikTok short link (`vm.tiktok.com`) resolves.**
+- [ ] **43. Re-sharing the identical video shows the candidates again.**
+      `useIncomingShare` dedupes equal payloads against a ref, so this was a
+      real risk while the hook lived at the root layout for the app's lifetime.
+      It now mounts with `/shared` and every exit calls `clear()`, so a fresh
+      mount should always resolve — but that reasoning is static, so share one
+      video, go Home, and share the same video again. Expect candidates, not an
+      empty or stuck screen.
