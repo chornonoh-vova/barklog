@@ -8,13 +8,25 @@ import { expect, inject } from "vitest";
 
 import { createApp } from "../src/app.js";
 import type { AuthProvider } from "../src/middleware/auth.js";
-import type { AppDeps, Db } from "../src/types.js";
+import type { AppDeps, Db, ShareProvider } from "../src/types.js";
 
 export const TEST_USER = "user_2testAAA";
 export const OTHER_USER = "user_2testBBB";
 
 export const fakeAuthProvider: AuthProvider = {
   authenticate: (c) => c.req.header("X-Test-User") ?? null,
+};
+
+const unusedShareProvider: ShareProvider = {
+  resolveShortLink: () => {
+    throw new Error("share.resolveShortLink was not stubbed for this test");
+  },
+  fetchMeta: () => {
+    throw new Error("share.fetchMeta was not stubbed for this test");
+  },
+  extractTitles: () => {
+    throw new Error("share.extractTitles was not stubbed for this test");
+  },
 };
 
 // Configured at import time, not in `globalSetup`: that runs in its own
@@ -40,6 +52,7 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     db,
     cache,
     auth: fakeAuthProvider,
+    share: unusedShareProvider,
     production: true,
     ...overrides,
   });

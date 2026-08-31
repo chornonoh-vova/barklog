@@ -7,6 +7,9 @@ import { configureLogging } from "@repo/logging";
 import { createApp } from "./app.js";
 import { clerkAuthProvider } from "./clerk.js";
 import { parseEnv } from "./env.js";
+import { resolveShortLink } from "./share/canonicalise.js";
+import { fetchVideoMeta } from "./share/oembed.js";
+import type { ShareProvider } from "./types.js";
 
 const env = parseEnv(process.env);
 
@@ -16,10 +19,21 @@ const log = getLogger(["api"]);
 const { db, close: closeDb } = createDb(env.DATABASE_URL);
 const cache = createCache(env.VALKEY_URL);
 
+// resolveShortLink and fetchMeta are wired to the real fetch; extractTitles
+// is not implemented yet (a later task's job) and no route calls it yet.
+const shareProvider: ShareProvider = {
+  resolveShortLink: (url) => resolveShortLink(url, fetch),
+  fetchMeta: (ref) => fetchVideoMeta(ref, fetch),
+  extractTitles: () => {
+    throw new Error("share.extractTitles is not implemented yet");
+  },
+};
+
 const app = createApp({
   db,
   cache,
   auth: clerkAuthProvider(env),
+  share: shareProvider,
   production: env.NODE_ENV === "production",
 });
 

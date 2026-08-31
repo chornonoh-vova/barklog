@@ -105,6 +105,7 @@ test("the registry's type URIs are the library's slugs", () => {
     "https://barklog.gg/problems/content-too-large",
     "https://barklog.gg/problems/unsupported-media-type",
     "https://barklog.gg/problems/too-many-requests",
+    "https://barklog.gg/problems/bad-gateway",
     "https://barklog.gg/problems/service-unavailable",
   ]);
 });

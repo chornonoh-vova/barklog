@@ -3,14 +3,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { SEARCH_VERSION_KEY } from "../src/cache-keys.js";
-import {
-  callApi,
-  createTestApp,
-  OTHER_USER,
-  seedGame,
-  seedSimilar,
-  TEST_USER,
-} from "./helpers.js";
+import { callApi, createTestApp, OTHER_USER, seedGame, seedSimilar, TEST_USER } from "./helpers.js";
 
 const harness = createTestApp();
 

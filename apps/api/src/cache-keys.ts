@@ -32,3 +32,10 @@ export const SIMILAR_TTL_SECONDS = 3600;
 export function similarKey(version: number, gameId: number, limit: number): string {
   return `similar:v${version}:${gameId}:${limit}`;
 }
+
+/** A published video's title effectively never changes. */
+export const OEMBED_TTL_SECONDS = 604_800;
+
+export function oembedKey(provider: string, videoId: string): string {
+  return `oembed:${provider}:${videoId}`;
+}

@@ -3,6 +3,8 @@ import type { Database } from "@repo/db";
 
 import type { AuthProvider } from "./middleware/auth.js";
 import type { RateLimits } from "./rate-limits.js";
+import type { Canonical, VideoRef } from "./share/canonicalise.js";
+import type { VideoMeta } from "./share/oembed.js";
 
 export type Db = Database["db"];
 
@@ -22,10 +24,23 @@ export interface AppEnv {
   Variables: AppVariables;
 }
 
+/**
+ * The three impure edges of the identify pipeline, injected so the test suite
+ * needs no network — the same reason `auth: AuthProvider` is a dep.
+ * `parseShareUrl` is deliberately absent: it is pure, so tests exercise the
+ * real one.
+ */
+export interface ShareProvider {
+  resolveShortLink(url: string): Promise<Canonical>;
+  fetchMeta(ref: VideoRef): Promise<VideoMeta>;
+  extractTitles(meta: VideoMeta): Promise<string[]>;
+}
+
 export interface AppDeps {
   db: Db;
   cache: Cache;
   auth: AuthProvider;
+  share: ShareProvider;
   production?: boolean;
   rateLimits?: Partial<RateLimits>;
 }
