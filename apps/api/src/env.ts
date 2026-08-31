@@ -13,6 +13,13 @@ const required = v.pipe(v.string(), v.minLength(1));
  * which is the `maxItems` incident again. Extend this list only once both
  * properties are confirmed in current Anthropic documentation for the
  * candidate model.
+ *
+ * claude-opus-5's entry is conditional: it accepts `thinking: { type:
+ * "disabled" }` only at `output_config.effort` of `high` or lower — `xhigh`
+ * or `max` gets a 400, checked per request. It qualifies today only because
+ * `extract.ts` never sets `output_config.effort`, so its default of `high`
+ * applies. Setting effort to `xhigh` there would 400 every request on this
+ * model and route it onto the fail-soft path.
  */
 const IDENTIFY_MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8"] as const;
 

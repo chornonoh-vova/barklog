@@ -132,7 +132,7 @@ export async function resolveShortLink(url: string, fetchImpl: typeof fetch): Pr
 
     // Only the `Location` header is read below; release the body under
     // undici's pooling rather than leaving it for GC.
-    void response.body?.cancel();
+    void response.body?.cancel().catch(() => {});
 
     if (response.status < 300 || response.status >= 400) return UNSUPPORTED;
 

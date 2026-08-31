@@ -63,7 +63,9 @@ export function createTitleExtractor(options: {
       // extraction is a small, sub-second classification over ~250 tokens of
       // video metadata, so it should not pay for reasoning it does not need.
       // `output_config.effort` only tunes thinking depth, so it is moot with
-      // thinking off and is left unset.
+      // thinking off and is left unset. WARNING: if you do set it, `xhigh` or
+      // `max` 400s claude-opus-5 while thinking is disabled — see the
+      // IDENTIFY_MODELS comment in env.ts before changing this.
       thinking: { type: "disabled" },
       output_config: {
         format: {
