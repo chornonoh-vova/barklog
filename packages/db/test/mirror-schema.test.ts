@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
-import { gameGenres, games, genres } from "../src/schema/index.js";
+import { gameGenres, games, gameSimilar, genres } from "../src/schema/index.js";
 import { truncateAll } from "../src/testing.js";
 
 const { db, close } = createDb(inject("databaseUrl"));
@@ -57,4 +57,34 @@ test("parent_game_id is a soft reference with no foreign key", async () => {
     .from(games)
     .where(sql`${games.id} = 9999`);
   expect(rows[0]!.parentGameId).toBe(424242);
+});
+
+test("similar_game_id is a soft reference with no foreign key", async () => {
+  // The sync walks ids ascending, so a page routinely names a similar game
+  // that has not been inserted yet. An FK here would fail the page. Dangling
+  // ids are dropped on read by an inner join instead.
+  await db.insert(games).values({
+    id: 1942,
+    name: "The Witcher 3: Wild Hunt",
+    slug: "the-witcher-3-wild-hunt",
+    igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
+  });
+  await db.insert(gameSimilar).values({ gameId: 1942, similarGameId: 424242 });
+
+  const rows = await db.select().from(gameSimilar);
+  expect(rows).toEqual([{ gameId: 1942, similarGameId: 424242 }]);
+});
+
+test("game_similar cascades when its owning game is deleted", async () => {
+  await db.insert(games).values({
+    id: 1942,
+    name: "The Witcher 3: Wild Hunt",
+    slug: "the-witcher-3-wild-hunt",
+    igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
+  });
+  await db.insert(gameSimilar).values({ gameId: 1942, similarGameId: 472 });
+
+  await db.delete(games).where(sql`${games.id} = 1942`);
+
+  expect(await db.select().from(gameSimilar)).toHaveLength(0);
 });

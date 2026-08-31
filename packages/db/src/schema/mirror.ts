@@ -119,3 +119,24 @@ export const gameCompanies = pgTable(
   },
   (t) => [primaryKey({ columns: [t.gameId, t.companyId] })],
 );
+
+/**
+ * IGDB's own `similar_games`, one row per suggestion. The relation is
+ * directional — A listing B does not make B list A — and is read forward only.
+ */
+export const gameSimilar = pgTable(
+  "game_similar",
+  {
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    // Deliberately no foreign key, for the same reason as games.parentGameId:
+    // the sync walks ids ascending, so a page routinely names a similar game
+    // not yet inserted, and an FK would fail the page. Dangling ids are
+    // dropped on read by the inner join in similarGames().
+    similarGameId: integer("similar_game_id").notNull(),
+  },
+  // No secondary index: the only read is `where game_id = $1`, which the
+  // primary key's leading column already serves.
+  (t) => [primaryKey({ columns: [t.gameId, t.similarGameId] })],
+);
