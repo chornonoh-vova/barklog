@@ -50,8 +50,8 @@ export function createTitleExtractor(options: {
       model: options.model,
       max_tokens: MAX_TOKENS,
       // A content-block array rather than a bare string, so the prefix can
-      // carry `cache_control`. NOTE: claude-haiku-4-5's minimum cacheable
-      // prefix is 4096 tokens and this prefix is ~250, so the marker is inert
+      // carry `cache_control`. NOTE: claude-sonnet-5's minimum cacheable
+      // prefix is 1024 tokens and this prefix is ~250, so the marker is inert
       // today — `cache_creation_input_tokens` will read 0, with no error. It is
       // here deliberately: it costs nothing and starts paying the moment the
       // prompt grows past the floor (few-shot examples, a genre lexicon).
