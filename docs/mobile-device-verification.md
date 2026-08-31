@@ -220,16 +220,21 @@ Check 43 is the same class of unknown and worth doing straight after it.
 - [ ] **36. Signed-out cold install:** `AuthView` first, sheet after sign-in.
 - [ ] **37. Dismissing clears the payload** — relaunching does **not**
       re-present it.
-- [ ] **38. Pick a candidate, go back: the sheet re-presents.**
+- [ ] **38. Pick a candidate, go back: the sheet re-presents.** Presentation is
+      keyed on the path being exactly `/shared`, so pushing `/shared/game/[id]`
+      must collapse the sheet and popping back must bring it up again.
 - [ ] **39. A private or deleted video shows the 404 copy, not a crash.**
 - [ ] **40. A TikTok short link (`vm.tiktok.com`) resolves.**
-- [ ] **41. Dismissing returns to the originating tab with its stack intact.**
+- [ ] **41. Swiping the sheet away leaves the `/shared` screen standing.** The
+      sheet is presented from the root layout over a `fullScreenModal`, so a
+      swipe-down dismisses the sheet only: expect the opaque "Shared video"
+      screen underneath with its Back to Home button, _not_ a return to the
+      tabs. Then tap Back to Home and expect the Home tab with its stack intact.
 - [ ] **42. A share with no link in it shows "No link in that share", not a
       spinner.** Share a photo, or text with no url. A disabled query is
-      permanently `isPending`, so this state exists only because
-      `share-sheet.tsx` branches on `isResolving` before reaching
-      `QueryBoundary`; if a spinner appears instead, that branch is not being
-      taken.
+      permanently pending, so this state exists only because `share-sheet.tsx`
+      checks `shouldWaitForPayload`'s answer before reaching `QueryBoundary`; if
+      a spinner appears instead, that branch is not being taken.
 - [ ] **43. The list scrolls, and the sheet still drags from half to full.**
       Same class of unknown as 33, and the reason it is listed separately: this
       is a `UIScrollView` (the `FlatList`) inside an RN subtree inside a SwiftUI
@@ -239,23 +244,22 @@ Check 43 is the same class of unknown and worth doing straight after it.
       drag the sheet's own grabber and it should expand to `full` without
       scrolling the list. A share with enough candidates to overflow half a
       screen is needed — search a heavily-sequelled series.
-- [ ] **44. Close dismisses from under a live sheet.** Different from item 41,
-      which only covers a swipe: a swipe reaches `onDismiss` _after_ the native
-      sheet has gone, whereas **Close** calls `router.back()` while the SwiftUI
-      sheet is still presented, so the containing route pops out from under a
-      live UIKit presentation. Reach it by sharing something with no link in it
-      (item 42), then tap Close. Expect the sheet and the route to go together,
-      landing on the originating tab, with no orphaned dimming overlay left
-      behind and no second tap needed.
-- [ ] **45. Search Instead lands on the Search tab.** The other programmatic
-      path, and it pops from under a live sheet the same way 44 does, but via
-      `router.dismissTo("/search")` rather than `back()`. Reach it by sharing a
-      video whose game is not in the catalogue. Expect the Search tab, its stack
-      at the root, and the sheet fully gone — not the tab visible behind a
-      still-presented sheet.
-- [ ] **46. The error state's Close behaves like 44.** The third and last
-      inescapable-by-button state, reached when payload resolution itself fails
-      rather than when the share carried no link. Hard to force deliberately;
-      airplane mode part-way through a share is the closest lever. If it cannot
+- [ ] **44. Close hides the sheet without touching the route.** Reach it by
+      sharing something with no link in it (item 42), then tap Close. It sets
+      state in the root layout rather than navigating, so expect the sheet to go
+      and the `/shared` screen to stay, with no orphaned dimming overlay and no
+      second tap needed. Confirm it does not immediately re-present: `clear()`
+      has no React state behind it, so the root layout compares the dismissed
+      url against the current one to know the sheet should stay closed.
+- [ ] **45. Search Instead lands on the Search tab.** The one button that also
+      navigates: it hides the sheet _and_ calls `router.dismissTo("/search")`,
+      so the modal pops from under a sheet that is still on screen at the moment
+      of the call. Reach it by sharing a video whose game is not in the
+      catalogue. Expect the Search tab, its stack at the root, the `/shared`
+      modal gone, and no sheet left over it.
+- [ ] **46. The error state's Close behaves like 44.** Reached when payload
+      resolution itself fails rather than when the share carried no link. Hard
+      to force deliberately; airplane mode part-way through a share is the
+      closest lever. If it cannot
       be reproduced, say so on the checklist rather than ticking it — the state
       exists precisely because the failure is not reproducible on demand.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { NO_LINK, SHARED_LANDING, UNREADABLE, noMatch } from "@/features/share/empty-states";
 
 describe("NO_LINK", () => {
   it("is the state for a share that resolved with no link in it", () => {
@@ -27,6 +27,14 @@ describe("UNREADABLE", () => {
   });
 });
 
+describe("SHARED_LANDING", () => {
+  it("offers the way out of the screen the sheet floats above", () => {
+    expect(SHARED_LANDING.title).not.toBe("");
+    expect(SHARED_LANDING.systemImage).not.toBe("");
+    expect(SHARED_LANDING.description).toMatch(/home/);
+  });
+});
+
 describe("noMatch", () => {
   it("says only that it could not tell when there is no guess", () => {
     const state = noMatch([]);
@@ -46,8 +54,8 @@ describe("noMatch", () => {
     );
   });
 
-  it("reads differently from the other two states, which are different failures", () => {
-    const titles = [noMatch([]).title, NO_LINK.title, UNREADABLE.title];
+  it("reads differently from the other states, which are different situations", () => {
+    const titles = [noMatch([]).title, NO_LINK.title, UNREADABLE.title, SHARED_LANDING.title];
 
     expect(new Set(titles).size).toBe(titles.length);
   });

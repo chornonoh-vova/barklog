@@ -4,12 +4,10 @@ import { PlatformColor } from "react-native";
 export default function SharedLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* Transparent, so the sheet floats over the tabs the user came from. */}
-      <Stack.Screen name="index" options={{ contentStyle: { backgroundColor: "transparent" } }} />
       {/* Redundant but explicit: `NativeStackView` already paints every
           non-`transparentModal` screen with the theme background, so this only
-          states the intent that the detail screen is opaque while its sibling
-          above is not. */}
+          states that the detail screen pushed from here is a normal opaque
+          screen. `index` needs no entry — it takes the group's defaults. */}
       <Stack.Screen
         name="game/[id]"
         options={{

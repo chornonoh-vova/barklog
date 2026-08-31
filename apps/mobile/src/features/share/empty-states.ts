@@ -29,6 +29,16 @@ export const UNREADABLE: EmptyStateContent = {
   description: "Barklog could not open what was shared. Try sharing the video again.",
 };
 
+/**
+ * The `/shared` screen itself, which the sheet floats above — and all the user
+ * is left looking at once they dismiss the sheet without picking anything.
+ */
+export const SHARED_LANDING: EmptyStateContent = {
+  title: "Shared video",
+  systemImage: "square.and.arrow.down",
+  description: "Pick the game this video is about from the sheet, or head back home.",
+};
+
 /** Reads as a sentence when the guesses are joined, not as a debug dump. */
 export function noMatch(guesses: string[]): EmptyStateContent {
   return {

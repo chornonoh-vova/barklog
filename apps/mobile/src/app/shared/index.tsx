@@ -1,45 +1,26 @@
-import { useIsFocused, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { View } from "react-native";
 
-import { ShareSheet } from "@/features/share/share-sheet";
-import { useSharedUrl } from "@/features/share/use-shared-url";
+import { EmptyState } from "@/components/empty-state";
+import { SHARED_LANDING } from "@/features/share/empty-states";
+import { Screen } from "@/theme";
 
 export default function SharedIndex() {
   const router = useRouter();
-  const { url, isPending, error, clear } = useSharedUrl();
 
   /**
-   * Focus, not local state: pushing the detail screen collapses the sheet, and
-   * coming back re-presents it. "Wrong pick, go back" then needs no state of
-   * its own.
+   * `dismissTo("/")`, per the v57 router docs: it dismisses screens until the
+   * href is reached, which takes this `fullScreenModal` off and lands on home.
+   * `dismissAll()` pops to the first screen of the *closest* stack — this
+   * screen — so it would do nothing, and `back()` returns to whichever tab the
+   * share interrupted rather than home.
    */
-  const isFocused = useIsFocused();
-
-  const dismiss = useCallback(() => {
-    // Before `back()`: without this the payload survives in the App Group and
-    // the next cold launch re-presents a share the user already dealt with.
-    clear();
-    router.back();
-  }, [clear, router]);
-
-  const openGame = useCallback((id: number) => router.push(`/shared/game/${id}`), [router]);
-
-  const search = useCallback(() => {
-    clear();
-    // `dismissTo`, not `replace`: the sheet lives inside a modal stack, and
-    // `replace` would swap the modal's own screen rather than closing it.
-    router.dismissTo("/search");
-  }, [clear, router]);
+  const goHome = useCallback(() => router.dismissTo("/"), [router]);
 
   return (
-    <ShareSheet
-      url={url}
-      isPending={isPending}
-      error={error}
-      isPresented={isFocused}
-      onSelect={openGame}
-      onDismiss={dismiss}
-      onSearch={search}
-    />
+    <View style={Screen.fill}>
+      <EmptyState {...SHARED_LANDING} action={{ label: "Back to Home", onPress: goHome }} />
+    </View>
   );
 }

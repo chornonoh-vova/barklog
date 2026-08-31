@@ -202,7 +202,7 @@ src/
         _layout.tsx  index.tsx  game/[id].tsx
       explore/   _layout.tsx  index.tsx  game/[id].tsx
       search/    _layout.tsx  index.tsx  game/[id].tsx
-    shared/                route group presented as a transparent modal over (tabs)
+    shared/                route group presented as a full-screen modal over (tabs)
       _layout.tsx  index.tsx  game/[id].tsx
     +native-intent.ts      redirects an expo-sharing intent to /shared
   api/         errors, client, endpoints, keys, provider, hooks
@@ -225,11 +225,19 @@ Icons are SF Symbols (`sf`) with Material Symbols (`md`) kept in place for
 whenever Android lands.
 
 The root layout is a `Stack`, not a `Slot`, because `(tabs)` is no longer the
-only root route: `shared/` is its sibling and has to present _over_ the tab
-controller. Under a `Slot` it would replace it — the tabs would unmount, their
-stacks would be lost, and dismissing the share sheet would have nowhere to
+only root route: `shared/` is its sibling, presented as a `fullScreenModal`
+over it. Under a `Slot` it would replace the tab controller outright — the tabs
+would unmount and their stacks would be lost, so there would be nothing to
 return to. The extra `UINavigationController` that costs is hidden by
 `headerShown: false`.
+
+That root layout also owns the share sheet itself, rendered as a sibling of the
+`Stack` inside both gates. The sheet is not part of the `/shared` screen: it
+outlives that screen's own navigation, and sitting inside the gates keeps it
+from rendering — or querying — for a signed-out or onboarding user. Which route
+is showing decides whether it is presented, via `usePathname()`, so pushing
+`/shared/game/[id]` collapses the sheet and popping back re-presents it.
+`/shared` underneath is a plain opaque screen you back out of to home.
 
 **Explore.** Three shelves — Most Popular, Upcoming, Recently Released — each a
 two-row grid scrolling sideways over its own feed request. The three queries are
@@ -267,19 +275,24 @@ opens `barklog://` with an `expo-sharing` host; `app/+native-intent.ts`
 rewrites that to `/shared`; `useSharedUrl` reads the resolved payloads and
 `sharedUrlFrom` picks the first `https` link out of a `website` payload's
 `contentUri` or a `text` payload's body; `POST /api/games/identify` turns the
-link into ranked candidates; and a `BottomSheet` over the tabs lists them as
-ordinary `GameRow`s. Picking one pushes `/shared/game/[id]` — the same
-`GameDetailScreen` every tab renders. Dismissing clears the payload first, or
-the next cold launch would re-present a share the user already dealt with.
+link into ranked candidates; and a `BottomSheet` from the root layout lists
+them as ordinary `GameRow`s over the `/shared` screen. Picking one pushes
+`/shared/game/[id]` — the same `GameDetailScreen` every tab renders. Dismissing
+clears the payload first, or the next cold launch would re-present a share the
+user already dealt with; because `clear()` is a bare native call with no React
+state behind it, the root layout remembers _which_ url was dismissed rather than
+keeping a flag it would then have to reset.
 
 The sheet has four states, and `useSharedUrl` rather than the query decides
 between the first three: pending, a resolution failure, a share with no link in
 it, and only then the candidate list. A disabled TanStack query is permanently
-`isPending`, so routing a settled-but-urlless share through `QueryBoundary`
-would spin forever. Pending is derived from `sharedPayloads` — which
-`useIncomingShare` seeds synchronously — rather than from its `isResolving`
-flag, which starts `false` and only turns true from an effect, one frame too
-late to keep a terminal empty state from flashing.
+pending, so routing a settled-but-urlless share through `QueryBoundary` would
+spin forever. Deciding which of those a frame is in turns out to be the fiddly
+part, so it lives in `shouldWaitForPayload` — pure, and unit-tested — because
+`useIncomingShare` gives three overlapping signals and none alone is enough:
+`isResolving` starts `false` and only turns true from an effect, one frame too
+late; an empty resolved list means both "not started" and "finished with
+nothing"; and a recorded error leaves the list empty too.
 
 The sheet is the **universal** `BottomSheet` from `@expo/ui` rather than the
 `@expo/ui/swift-ui` one — but the universal layer is not a React Native

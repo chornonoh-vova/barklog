@@ -1,7 +1,8 @@
 import { useIncomingShare } from "expo-sharing";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { sharedUrlFrom } from "./extract-url";
+import { shouldWaitForPayload } from "./should-wait-for-payload";
 
 export function useSharedUrl(): {
   url: string | null;
@@ -15,20 +16,26 @@ export function useSharedUrl(): {
   const url = useMemo(() => sharedUrlFrom(resolvedSharedPayloads), [resolvedSharedPayloads]);
 
   /**
-   * Not `isResolving` alone. That flag starts `false` and only turns true from
-   * the hook's effect, so on the first painted frame of every share it would
-   * report settled with no url yet — a terminal empty state flashing before
-   * resolution has even started. `sharedPayloads` is seeded synchronously from
-   * `getSharedPayloads()`, so on that same frame it already knows a share
-   * exists.
-   *
-   * The `error === null` term is load-bearing: a failed resolution leaves the
-   * resolved list empty and returns `isResolving` to `false`, so without it
-   * this would report pending forever and spin on the error path.
+   * Watching `isResolving` fall back to false is the only signal the hook gives
+   * that an attempt finished. Emptiness cannot stand in for it: a resolve that
+   * succeeds and yields nothing is indistinguishable from one that has not
+   * started, and reading it as the latter waits forever.
    */
-  const isPending =
-    isResolving ||
-    (sharedPayloads.length > 0 && resolvedSharedPayloads.length === 0 && error === null);
+  const [hasAttempted, setHasAttempted] = useState(false);
+  const wasResolving = useRef(false);
+
+  useEffect(() => {
+    if (wasResolving.current && !isResolving) setHasAttempted(true);
+    wasResolving.current = isResolving;
+  }, [isResolving]);
+
+  const isPending = shouldWaitForPayload({
+    isResolving,
+    sharedCount: sharedPayloads.length,
+    resolvedCount: resolvedSharedPayloads.length,
+    hasError: error !== null,
+    hasAttempted,
+  });
 
   return { url, isPending, error, clear: clearSharedPayloads };
 }
