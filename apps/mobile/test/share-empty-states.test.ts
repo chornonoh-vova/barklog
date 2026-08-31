@@ -18,8 +18,6 @@ describe("UNREADABLE", () => {
     expect(UNREADABLE.description).not.toBe("");
   });
 
-  /** The NO_LINK advice — share the video, not a screenshot — is wrong when the
-   * cause is a failed resolution, so the two must not be interchangeable. */
   it("does not give NO_LINK's advice, which would be wrong for this cause", () => {
     expect(UNREADABLE.title).not.toBe(NO_LINK.title);
     expect(UNREADABLE.description).not.toBe(NO_LINK.description);

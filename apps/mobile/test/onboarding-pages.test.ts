@@ -52,12 +52,11 @@ describe("ONBOARDING_PAGES", () => {
   });
 
   it("emphasizes the user's choice on the share page, not automatic resolution", () => {
-    // Word-boundary matching: "pick" surrounded by word boundaries guards against
-    // silent regressions to automatic-add copy like "fetches the game". Substring
-    // matching alone would miss this edge case.
+    // `\b` guards against matching inside a longer word like "picked" or
+    // "nitpick" — it does not detect automatic-add copy.
     const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "share");
 
-    expect(page?.description).toMatch(/\bpick\b/i);
+    expect(page?.description).toMatch(/\b(pick|choose|select)\b/i);
   });
 });
 

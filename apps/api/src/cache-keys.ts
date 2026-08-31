@@ -40,7 +40,11 @@ export function oembedKey(provider: ShareProviderName, videoId: string): string 
   return `oembed:${provider}:${videoId}`;
 }
 
-/** Deterministic given the metadata, and the metadata is cached for 7 days. */
+/**
+ * 30 days is its own budget, not derived from `OEMBED_TTL_SECONDS` above. The
+ * key already encodes everything the answer depends on — prompt version,
+ * model, and video metadata — so a cached extraction cannot go stale under it.
+ */
 export const EXTRACT_TTL_SECONDS = 2_592_000;
 
 /**

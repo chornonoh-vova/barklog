@@ -99,7 +99,6 @@ export function useIdentifyShare(url: string | null): UseQueryResult<ShareIdenti
     // `??` and `enabled` together: the key must be stable, and the query must
     // not run before a payload has resolved.
     queryKey: keys.games.identify(url ?? ""),
-    // `enabled` gates the call, so the empty-string fallback is never sent.
     queryFn: () => api.identifyShare({ url: url ?? "" }),
     enabled: url !== null,
     // The server's answer for a given video is immutable for the life of its

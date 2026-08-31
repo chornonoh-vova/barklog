@@ -43,8 +43,6 @@ describe("sharedUrlFrom", () => {
     expect(sharedUrlFrom([{ contentType: "image", contentUri: "file:///tmp/a.png" }])).toBeNull();
   });
 
-  /** `useIdentifyShare` gates on `url !== null`, so an empty string would pass
-   * the gate and cache a response under the not-yet-resolved key. */
   it("is null, never an empty string, for a blank website contentUri", () => {
     expect(sharedUrlFrom([{ contentType: "website", contentUri: "" }])).toBeNull();
   });

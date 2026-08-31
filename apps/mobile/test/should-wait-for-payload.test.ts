@@ -46,8 +46,6 @@ describe("shouldWaitForPayload", () => {
     expect(shouldWaitForPayload({ ...settled, sharedCount: 1, hasError: true })).toBe(false);
   });
 
-  /** The hole the previous derivation left: a resolve that succeeds and yields
-   * nothing looks identical to one that has not started. */
   it("stops waiting when an attempt completed and returned nothing", () => {
     expect(shouldWaitForPayload({ ...settled, sharedCount: 1, hasAttempted: true })).toBe(false);
   });
