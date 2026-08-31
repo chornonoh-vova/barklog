@@ -1188,6 +1188,8 @@ git commit -m "feat(api): extract game titles from video metadata with claude"
   - `RateLimitScope` gains `"identify"`
   - `AppDeps.identifyModel: string` — the route builds the extraction cache key,
     so the route has to know which model produced it
+    **Reversed: folded into `ShareProvider.model` during a cleanup pass — no
+    top-level `AppDeps.identifyModel` field shipped.**
   - `problems` gains `UNPROCESSABLE_SHARE` (422)
 
 - [ ] **Step 1: Write the failing merge test**

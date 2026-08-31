@@ -203,10 +203,12 @@ probes how React Native content survives being hosted inside SwiftUI.
 
 The happy path is confirmed: the repo owner shared a YouTube link on a device
 today, and it resolved to the correct game and rendered the candidate list.
-That run exercises check 33 (Barklog appearing in the share sheet) and the
-candidate-list branch of check 37. Everything else below — checks 34–36 and
-38–43, and the other three states in check 37 — is still unrun. Boxes stay
-unticked here; the owner ticks them as each is verified.
+That run exercises the YouTube-app share path of check 33 (Barklog appearing
+in the share sheet requires the YouTube app, the TikTok app, and Safari; only
+the first of the three was covered) and the candidate-list branch of check 37.
+Everything else below — checks 34–36 and 38–43, the TikTok and Safari share
+paths of check 33, and the other three states in check 37 — is still unrun.
+Boxes stay unticked here; the owner ticks them as each is verified.
 
 - [ ] **33. Barklog appears in the share sheet** from the YouTube app, the
       TikTok app, and Safari on a watch page. iOS's own share sheet, this one —
