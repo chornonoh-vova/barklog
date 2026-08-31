@@ -3,17 +3,13 @@ import { expect, test } from "vitest";
 
 import { igdbGameSchema } from "../src/schemas.js";
 
-/** The narrowest row IGDB can return for a game: everything optional omitted. */
 const MINIMAL = { id: 2, name: "Bare", slug: "bare", updated_at: 1_755_000_001 };
 
 test("a row with every optional field omitted parses", () => {
-  // IGDB omits absent fields rather than sending null, so this is the common
-  // case, not an edge case.
   expect(v.parse(igdbGameSchema, MINIMAL)).toEqual(MINIMAL);
 });
 
 test("an omitted optional stays absent rather than becoming null", () => {
-  // `map.ts` relies on this: it turns `undefined` into null itself.
   expect(Object.keys(v.parse(igdbGameSchema, MINIMAL))).toEqual([
     "id",
     "name",
@@ -26,8 +22,6 @@ test("fields we did not ask for are stripped", () => {
   const parsed = v.parse(igdbGameSchema, { ...MINIMAL, checksum: "abc", category: 0 });
 
   expect(parsed).not.toHaveProperty("checksum");
-  // `category` is the deprecated field of spec §7. Even if IGDB sends it, it
-  // must not reach a row.
   expect(parsed).not.toHaveProperty("category");
 });
 

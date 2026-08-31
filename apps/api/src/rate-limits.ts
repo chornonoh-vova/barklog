@@ -7,7 +7,6 @@ export interface RateLimitRule {
 
 export type RateLimits = Record<RateLimitScope, RateLimitRule>;
 
-/** Spec §13. Keyed on the Clerk `sub`, so the limits are per person. */
 export const DEFAULT_RATE_LIMITS: RateLimits = {
   search: { limit: 30, windowSeconds: 60 },
   write: { limit: 60, windowSeconds: 60 },

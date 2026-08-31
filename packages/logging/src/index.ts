@@ -21,21 +21,14 @@ export const LOG_LEVELS = [
 export type { LogLevel };
 
 export interface LoggingOptions {
-  /** Root category. Every logger in the process hangs off it: `["api", …]`. */
   service: string;
   level: LogLevel;
-  /** Tests pass a recording sink; a process always wants the console. */
   sink?: Sink;
 }
 
 /**
- * One configuration for both processes: JSON lines on stdout, one object per
- * record, and an implicit context so a `traceId` or a `runId` reaches every
- * line written while it is in scope.
- *
- * `contextLocalStorage` is the load-bearing option. Without it `withContext`
- * and the Hono adapter's request context degrade to no-ops that only warn on
- * the meta logger — which is why the meta logger is wired to the same sink.
+ * `contextLocalStorage` is load-bearing: without it `withContext` and the Hono
+ * request context silently degrade to no-ops that only warn on the meta logger.
  */
 export async function configureLogging(options: LoggingOptions): Promise<void> {
   await configure({

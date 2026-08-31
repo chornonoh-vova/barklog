@@ -8,7 +8,6 @@ import type * as schema from "./schema/index.js";
 
 export const POSTGRES_IMAGE = "postgres:18-alpine";
 
-/** Starts a migrated Postgres for a test suite. Never used outside tests. */
 export async function startPostgres(): Promise<{ url: string; stop(): Promise<void> }> {
   const container = await new PostgreSqlContainer(POSTGRES_IMAGE).start();
   const url = container.getConnectionUri();

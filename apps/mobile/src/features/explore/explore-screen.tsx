@@ -23,9 +23,8 @@ export function ExploreScreen() {
   const recent = useGameFeed("recent");
   const router = useRouter();
 
-  // Each tab owns its own detail route (`/explore/game/[id]`, `/search/game/[id]`,
-  // and the unprefixed `/game/[id]` inside `(home)`) so the push stays inside the
-  // current tab. A bare `/game/${id}` resolves to `(home)` and switches tabs.
+  // Each tab owns its own detail route so a push stays in the current tab: a
+  // bare `/game/${id}` resolves to `(home)` and switches tabs.
   const openGame = useCallback((id: number) => router.push(`/explore/game/${id}`), [router]);
 
   const shelves = toShelves({
@@ -39,8 +38,6 @@ export function ExploreScreen() {
     for (const feed of feeds) void feed.refetch();
   };
 
-  // Only take the whole screen over when nothing at all is drawable; a feed
-  // that fails beside two that answered just goes unrendered.
   if (shelves.length === 0) {
     if (feeds.some((feed) => feed.isPending)) return <LoadingState />;
 

@@ -2,24 +2,14 @@ import type { MiddlewareHandler } from "hono";
 
 import type { AppEnv } from "../types.js";
 
-/** The whole API is authenticated, so anything unstated must not be stored. */
 export const DEFAULT_CACHE_CONTROL = "no-store";
 
 const REQUEST_ID_HEADER = "X-Request-Id";
 
 /**
- * Two fixes applied to the finished response, whoever built it.
- *
- * `Cache-Control` is a default rather than a per-route obligation: forgetting
- * `no-store` on a new authenticated route is a real mistake, while forgetting to
- * override the default on a cacheable one is only a missed optimisation.
- *
  * `X-Request-Id` is re-stamped because `requestId()` sets it as a *prepared*
- * header. Prepared headers survive `c.json()`, but a problem document is a fresh
- * `Response` built by the problem renderer, and they do not survive that — so
- * without this the one response class where the id matters most would be the one
- * class missing it. The body still carries `traceId`; this keeps the header
- * matching it.
+ * header, and those do not survive the fresh `Response` a problem document is
+ * built as — leaving the id off the responses that need it most.
  */
 export function finalize(): MiddlewareHandler<AppEnv> {
   return async (c, next) => {

@@ -18,8 +18,6 @@ afterAll(async () => {
 });
 
 test("the API cannot reach IGDB, and the manifest is what guarantees it", async () => {
-  // Spec §3: the separation is enforced by the package manifest, not by
-  // convention, so the design cannot regress into a live proxy by accident.
   const manifest = JSON.parse(
     await readFile(new URL("../package.json", import.meta.url), "utf8"),
   ) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
@@ -33,10 +31,8 @@ test("the API cannot reach IGDB, and the manifest is what guarantees it", async 
 test("AppType still exposes every route the mobile client calls", () => {
   const client = hc<AppType>("http://api.test");
 
-  // The runtime assertions are a formality — `hc` is a Proxy and answers to any
-  // property. The real guarantee is at the type level: if a route module's
-  // chain were broken, AppType would degrade to {} and none of these accesses
-  // would compile. That is why `check-types` runs against tsconfig.test.json.
+  // `hc` is a Proxy, so the runtime assertions are a formality: the real
+  // guarantee is that a broken route chain would not compile.
   expect(typeof client.healthz.$get).toBe("function");
   expect(typeof client.readyz.$get).toBe("function");
   expect(typeof client.api.games.search.$get).toBe("function");
@@ -58,12 +54,6 @@ test("every error the API can produce is a problem document", async () => {
     label: string;
     path: string;
     init?: RequestInit & { user?: string | null };
-    /**
-     * The 422 is rendered by the library's `standardSchemaProblemHook`, which builds its
-     * response without the context: `about:blank`, no `instance`, no `traceId`
-     * (Task 5, Step 7). It is the one documented exception, so it is spelled out
-     * here rather than silently passing a weaker assertion.
-     */
     libraryValidationShape?: true;
   }
 
@@ -89,8 +79,6 @@ test("every error the API can produce is a problem document", async () => {
     const response = await callApi(harness.app, testCase.path, testCase.init);
     const body = (await response.json()) as Record<string, unknown>;
 
-    // True of every error without exception: the media type, the status
-    // agreeing with the body, a title, and a header to trace it by.
     expect(response.status, testCase.label).toBeGreaterThanOrEqual(400);
     expect(response.headers.get("content-type"), testCase.label).toContain(
       "application/problem+json",
@@ -111,8 +99,6 @@ test("every error the API can produce is a problem document", async () => {
 });
 
 test("the registry's type URIs are the library's slugs", () => {
-  // A record of the vocabulary, so a library upgrade that renames a slug fails
-  // here rather than surprising a client.
   expect(problems.types().map((key) => problems.get(key).type)).toEqual([
     "https://barklog.gg/problems/unauthorized",
     "https://barklog.gg/problems/not-found",
@@ -137,6 +123,5 @@ test("sync status reports the last run, and null before the worker has ever run"
   const body = (await populated.json()) as { lastRun: Record<string, unknown> | null };
 
   expect(body.lastRun).toMatchObject({ status: "success", counts: { games: 10 } });
-  // The stored error string stays server-side.
   expect(body.lastRun).not.toHaveProperty("error");
 });

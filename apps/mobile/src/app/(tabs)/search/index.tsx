@@ -14,7 +14,6 @@ export default function SearchRoute() {
       <Stack.SearchBar
         placement="automatic"
         placeholder="Search games"
-        // The native search bar hands over an event, not a string.
         onChangeText={(event) => setQuery(event.nativeEvent.text)}
       />
       <SearchScreen query={query} />

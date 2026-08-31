@@ -28,17 +28,12 @@ describe("ONBOARDING_PAGES", () => {
   });
 
   it("ends on the IGDB attribution", () => {
-    // The last page carries the igdb.com link and the primary button says
-    // "Start" there, both keyed on it being last.
     expect(ONBOARDING_PAGES.at(-1)?.id).toBe(IGDB_PAGE_ID);
   });
 
   it("names every real backlog status on the backlog page", () => {
-    // The point of this test: rename a status in @repo/contracts and this fails,
-    // rather than leaving onboarding describing an app that no longer exists.
-    // A word-boundary regex, not `toContain`: a plain substring check would
-    // still pass after renaming "playing" to "play", since "playing" contains
-    // "play" — which defeats the point of the guard.
+    // A word-boundary regex, not `toContain`: "playing" contains "play", so a
+    // substring check would survive the rename this guards against.
     const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "backlog");
 
     expect(page).toBeDefined();
@@ -63,9 +58,6 @@ describe("pageIndex", () => {
   });
 
   it("resolves an unknown selection to 0 rather than -1", () => {
-    // Undocumented until now: `onboarding-screen.tsx` feeds this straight into
-    // `nextPageId`, so an id the native view reports that we don't have reads
-    // as page 0 — the button below it would say "Continue", not "Start".
     expect(pageIndex("no-such-page")).toBe(0);
   });
 });

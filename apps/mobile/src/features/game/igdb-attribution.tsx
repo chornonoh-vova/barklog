@@ -4,12 +4,8 @@ import { PlatformColor, StyleSheet, Text, View } from "react-native";
 import { gameUrl } from "@/igdb-url";
 import { Type } from "@/theme";
 
-/**
- * The credit IGDB's terms of use ask for, closing out the screen whose every
- * field came from them. Only the word IGDB is the link, as an inner `Text` with
- * its own `onPress` rather than a `Pressable` around the line, so the tappable
- * region is the word itself and the sentence still wraps as one run of text.
- */
+/** The credit IGDB's terms require. An inner `Text` rather than a `Pressable`
+ * around the line, so only the word is tappable and the sentence wraps as one. */
 export function IgdbAttribution({ slug }: { slug: string }) {
   const url = gameUrl(slug);
 

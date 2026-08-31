@@ -15,14 +15,6 @@ const envSchema = v.object({
 
 export type WorkerEnv = v.InferOutput<typeof envSchema>;
 
-/**
- * Parsed once at boot so a missing secret stops the process immediately rather
- * than surfacing at midnight when the sync fires.
- *
- * `v.getDotPath` is what names the offending variable — without it a missing
- * `IGDB_CLIENT_SECRET` reads as an anonymous "Invalid key", and the tests below
- * match on the name.
- */
 export function parseEnv(source: Record<string, string | undefined>): WorkerEnv {
   const result = v.safeParse(envSchema, source);
 

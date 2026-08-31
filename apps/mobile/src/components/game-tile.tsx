@@ -6,10 +6,8 @@ import { Type } from "@/theme";
 
 const TILE_WIDTH = 100;
 
-/** Fixed heights, so the two rows of a shelf stay aligned. */
 const TITLE_LINE = 17;
 
-/** Memoized like `GameRow`, taking `id` rather than a per-tile closure. */
 export const GameTile = memo(function GameTile({
   id,
   title,

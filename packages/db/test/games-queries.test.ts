@@ -29,19 +29,13 @@ interface Fixture {
   id: number;
   name: string;
   count: number;
-  /** Defaults to 0 = Main Game, which is searchable. */
+  /** 0 = Main Game (searchable), 1 = DLC. */
   typeId?: number;
   rating?: number | null;
-  /** Null keeps a fixture out of both release feeds. */
   releaseDate?: Date | null;
   cover?: string | null;
 }
 
-/**
- * The ranking cases from spec §9 and §15. `Zeldas Adventure` and the ROM hack
- * are the rows a naive ranking puts first: plain `similarity` prefers the short
- * title, and pure `word_similarity` ties the ROM hack with Odyssey.
- */
 const RANKING_FIXTURES: Fixture[] = [
   { id: 1, name: "The Legend of Zelda: Breath of the Wild", count: 3000 },
   { id: 2, name: "The Legend of Zelda: Ocarina of Time", count: 2000 },
@@ -50,7 +44,6 @@ const RANKING_FIXTURES: Fixture[] = [
   { id: 5, name: "Mario Teaches Typing ROM Hack", count: 1 },
   { id: 6, name: "Dark Souls III", count: 4000 },
   { id: 7, name: "Dark Souls", count: 3500 },
-  // Type 1 is DLC: not searchable, however popular it is.
   { id: 8, name: "Dark Souls: Artorias of the Abyss", count: 9000, typeId: 1 },
   { id: 9, name: "Obscure Unrated Platformer", count: 800, rating: 40 },
 ];
@@ -99,8 +92,6 @@ test("a four-letter prefix finds the popular Zelda, not the obscure one", async 
   const results = await searchGames(db, { query: "zeld", limit: 10, offset: 0 });
   const names = results.map((row) => row.name);
 
-  // word_similarity is what makes a long title match at all; the popularity
-  // term is what decides which of the matches comes first.
   expect(names[0]).toBe("The Legend of Zelda: Breath of the Wild");
   expect(names).toContain("Zeldas Adventure");
   expect(names.indexOf("Zeldas Adventure")).toBeGreaterThan(1);
@@ -139,8 +130,6 @@ test("non-searchable game types are excluded however popular they are", async ()
 });
 
 test("pagination neither repeats nor skips a row", async () => {
-  // Two identical names with identical popularity: only the id tie-break makes
-  // the order total, and without it a page boundary could duplicate a row.
   await seed([
     { id: 20, name: "Same Name Game", count: 100 },
     { id: 21, name: "Same Name Game", count: 100 },
@@ -166,16 +155,12 @@ test("popular ranks by rating count behind a rating floor and searchable types",
   const names = (await popularGames(db, { limit: 10 })).map((row) => row.name);
 
   expect(names[0]).toBe("Dark Souls III");
-  // Below the rating floor, so popularity alone does not earn a place.
   expect(names).not.toContain("Obscure Unrated Platformer");
-  // A DLC, so out of scope for the explore feed.
   expect(names).not.toContain("Dark Souls: Artorias of the Abyss");
 });
 
 test("popular excludes a well-rated game that has not been rated enough times", async () => {
-  // Rating is high enough to clear POPULAR_RATING_FLOOR, but the count sits
-  // right at POPULAR_RATING_COUNT_FLOOR (50, matching games_popular_idx's
-  // partial predicate of `> 50`), which is not enough to qualify.
+  // A count of exactly 50 does not clear POPULAR_RATING_COUNT_FLOOR's `> 50`.
   await seed([
     ...RANKING_FIXTURES,
     { id: 10, name: "Hidden Gem With Few Ratings", count: 50, rating: 95 },
@@ -186,17 +171,13 @@ test("popular excludes a well-rated game that has not been rated enough times", 
   expect(names).not.toContain("Hidden Gem With Few Ratings");
 });
 
-/** A fixed clock, so the window boundaries below are arithmetic. */
 const NOW = new Date("2026-06-15T12:00:00Z");
 const at = (iso: string): Date => new Date(iso);
 
 const RELEASE_FIXTURES: Fixture[] = [
-  // Ahead of today, so upcoming — and deliberately not in date order here.
   { id: 30, name: "Ships Next Year", count: 0, releaseDate: at("2027-03-01T00:00:00Z") },
   { id: 31, name: "Ships Next Month", count: 0, releaseDate: at("2026-07-01T00:00:00Z") },
-  // Midnight today: the boundary itself belongs to upcoming, not recent.
   { id: 32, name: "Ships Today", count: 0, releaseDate: at("2026-06-15T00:00:00Z") },
-  // Inside the 90-day window, so recent. Counts decide their order.
   {
     id: 33,
     name: "Out Last Week, Talked About",
@@ -204,9 +185,7 @@ const RELEASE_FIXTURES: Fixture[] = [
     releaseDate: at("2026-06-08T00:00:00Z"),
   },
   { id: 34, name: "Out Last Week, Ignored", count: 4, releaseDate: at("2026-06-09T00:00:00Z") },
-  // One second before today, so the far edge of recent.
   { id: 35, name: "Out Yesterday", count: 50, releaseDate: at("2026-06-14T23:59:59Z") },
-  // Older than the window.
   { id: 36, name: "Out Last Year", count: 5000, releaseDate: at("2025-06-15T00:00:00Z") },
 ];
 
@@ -250,7 +229,6 @@ test("a game with no release date reaches neither feed", async () => {
 test("both release feeds skip non-searchable types and games with no cover art", async () => {
   await seed([
     ...RELEASE_FIXTURES,
-    // Type 1 is DLC.
     { id: 40, name: "Upcoming DLC", count: 0, typeId: 1, releaseDate: at("2026-07-02T00:00:00Z") },
     {
       id: 41,
@@ -318,15 +296,12 @@ test("game details gather every child collection and split the companies", async
     { id: 6, name: "PC (Microsoft Windows)", abbreviation: "PC", slug: "win" },
   ]);
   expect(detail?.screenshots).toEqual(["sc6l7z", "sc6l80"]);
-  // A company flagged both ways appears in both lists.
   expect(detail?.developers.map((company) => company.id)).toEqual([908]);
   expect(detail?.publishers.map((company) => company.id)).toEqual([42, 908]);
   expect(detail?.parentGame).toBeNull();
 });
 
 test("a parent_game_id pointing at a game we have not mirrored resolves to null", async () => {
-  // Spec §4: parent_game_id is a soft reference with no foreign key, because a
-  // DLC can arrive in a sync page before its parent does.
   await seed([{ id: 30, name: "Some Expansion", count: 10 }]);
   await db.update(schema.games).set({ parentGameId: 999_999 }).where(eq(schema.games.id, 30));
 
@@ -364,7 +339,7 @@ test("a similar id missing from the mirror is dropped", async () => {
 
 test("DLC is filtered out of similar games however popular it is", async () => {
   await seed(RANKING_FIXTURES);
-  // 8 is type 1 (DLC) with a rating count of 9000 — it would sort first.
+  // 8 is DLC with a rating count of 9000 — it would otherwise sort first.
   await seedSimilar(6, [7, 8]);
 
   const rows = await similarGames(db, { gameId: 6, limit: 12 });

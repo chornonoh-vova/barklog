@@ -16,13 +16,10 @@ import { Screen, Type } from "@/theme";
 
 const keyExtractor = (item: BacklogListItemWire) => String(item.gameId);
 
-// Lowercase, and deliberately not a component: `SectionList` calls this as a
-// plain function rather than rendering it as an element, and React Compiler
-// gives anything that looks like a component a `useMemoCache` call — which would
-// then run outside a render.
+// Lowercase, deliberately not a component: `SectionList` calls this as a plain
+// function, and React Compiler would give a component a `useMemoCache` call
+// that then runs outside a render.
 const renderSectionHeader = ({ section }: { section: BacklogSection }) =>
-  // A null title means a single status is filtered, so there is no header worth
-  // drawing.
   section.title === null ? null : (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
@@ -56,9 +53,6 @@ export function BacklogScreen() {
     [backlog.data, filter],
   );
 
-  // Both of these read the backlog query, never `stats`. `stats` is a second
-  // request that can fail or lag on its own, and gating on it left an empty
-  // unfiltered list with no empty state at all whenever it did.
   if (backlog.isPending) return <LoadingState />;
 
   if (filter === undefined && backlog.data?.items.length === 0) {
@@ -70,9 +64,8 @@ export function BacklogScreen() {
     );
   }
 
-  // Passed as an element, not a component, so it lives inside the list's own
-  // scroll view — a sibling above the list leaves the large title with nothing
-  // to collapse against and the header ends up clipped instead of scrolling.
+  // An element, not a component, so it sits inside the list's scroll view — a
+  // sibling above the list leaves the large title nothing to collapse against.
   const listHeader = (
     <View style={styles.header}>
       <StatusFilter value={filter} onChange={setFilter} />
@@ -91,8 +84,6 @@ export function BacklogScreen() {
           renderItem={renderItem}
           renderSectionHeader={renderSectionHeader}
           ListHeaderComponent={listHeader}
-          // `null` is unreachable: an empty unfiltered list took the
-          // onboarding branch above.
           ListEmptyComponent={
             filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
           }

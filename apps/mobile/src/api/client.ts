@@ -10,7 +10,6 @@ export type Request = <T>(path: string, options?: RequestOptions) => Promise<T>;
 
 export interface ApiClientDeps {
   baseUrl: string;
-  /** Clerk's `getToken`. `skipCache` forces a refresh. */
   getToken: (options?: { skipCache?: boolean }) => Promise<string | null>;
   fetchImpl?: typeof fetch;
 }
@@ -28,7 +27,6 @@ function buildUrl(baseUrl: string, path: string, query: RequestOptions["query"])
   return serialised === "" ? url : `${url}?${serialised}`;
 }
 
-/** No React, so the branching here is unit-testable in Node. */
 export function createRequest(deps: ApiClientDeps): Request {
   const doFetch = deps.fetchImpl ?? fetch;
 
@@ -51,8 +49,7 @@ export function createRequest(deps: ApiClientDeps): Request {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     };
-    // A DELETE carries no body, and a Content-Type on one is rejected by the
-    // API's requireJson middleware.
+    // A `Content-Type` on a bodyless DELETE is rejected by the API.
     if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
     const url = buildUrl(deps.baseUrl, path, options.query);
@@ -65,9 +62,6 @@ export function createRequest(deps: ApiClientDeps): Request {
         ...(reload ? { cache: "reload" as RequestCache } : {}),
       });
     } catch (cause) {
-      // DNS failure, dropped connection, ATS refusing plain HTTP. Wrapped so
-      // every caller catches one error type; `cause` keeps the reason, which the
-      // generic message below would otherwise collapse.
       throw new ApiError({
         status: 0,
         type: "about:blank",
@@ -99,9 +93,8 @@ export function createRequest(deps: ApiClientDeps): Request {
   return async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     let response = await send(path, options);
 
-    // NSURLSession does the If-None-Match revalidation itself and hands back a
-    // transparent 200, so a bare 304 should never arrive. If one does, ask for
-    // the body rather than reimplementing revalidation in JS.
+    // NSURLSession revalidates itself and returns a transparent 200, so a bare
+    // 304 should never arrive. If one does, ask for the body.
     if (response.status === 304) {
       response = await send(path, options, { reload: true });
 
@@ -115,8 +108,6 @@ export function createRequest(deps: ApiClientDeps): Request {
       }
     }
 
-    // Clerk refreshes proactively, so a 401 means a revoked session rather than
-    // an expired token. One forced refresh, then give up.
     if (response.status === 401) {
       response = await send(path, options, { skipTokenCache: true });
     }

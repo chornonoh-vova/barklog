@@ -15,8 +15,8 @@ import { Screen } from "@/theme";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  // useState, not module scope: a client created at import time would be shared
-  // across Fast Refresh reloads and outlive the tree it belongs to.
+  // useState, not module scope: a client made at import time would outlive the
+  // tree across Fast Refresh reloads.
   const [queryClient] = useState(createQueryClient);
 
   return (

@@ -41,7 +41,6 @@ test("search rejects the bounds the spec puts on limit and offset", () => {
   expect(accepts(searchQuerySchema, { q: "zelda", limit: 51 })).toBe(false);
   expect(accepts(searchQuerySchema, { q: "zelda", limit: 0 })).toBe(false);
   expect(accepts(searchQuerySchema, { q: "zelda", offset: 201 })).toBe(false);
-  // A non-numeric limit coerces to NaN and is rejected, not silently defaulted.
   expect(accepts(searchQuerySchema, { q: "zelda", limit: "abc" })).toBe(false);
 });
 
@@ -66,7 +65,6 @@ test("an upsert body is a status and an optional 1-10 rating", () => {
     rating: 9,
   });
   expect(parse(backlogUpsertSchema, { status: "waiting" })).toEqual({ status: "waiting" });
-  // null is how the client clears a rating it previously set.
   expect(parse(backlogUpsertSchema, { status: "playing", rating: null })).toEqual({
     status: "playing",
     rating: null,
@@ -80,7 +78,6 @@ test("an upsert body rejects an unknown key, and names it", () => {
   const result = v.safeParse(backlogUpsertSchema, { status: "playing", note: "hi" });
 
   expect(result.success).toBe(false);
-  // The field name matters: it is what reaches the client in `errors[]`.
   expect(result.issues?.map((issue) => v.getDotPath(issue))).toEqual(["note"]);
 });
 
@@ -92,8 +89,6 @@ test("a path id coerces from its string form and rejects nonsense", () => {
 });
 
 test("a path id above int4 range is rejected; the int4 max is accepted", () => {
-  // games.id / backlog_entries.game_id are Postgres `integer` (int4) columns.
-  // Anything above this must be a 422 from validation, not a 500 from Postgres.
   expect(accepts(gameIdParamSchema, { id: String(MAX_GAME_ID + 1) })).toBe(false);
   expect(parse(gameIdParamSchema, { id: String(MAX_GAME_ID) })).toEqual({ id: MAX_GAME_ID });
 });
@@ -107,6 +102,5 @@ test("the similar-games limit shares the search cap rather than inventing one", 
   expect(accepts(similarQuerySchema, { limit: 50 })).toBe(true);
   expect(accepts(similarQuerySchema, { limit: 51 })).toBe(false);
   expect(accepts(similarQuerySchema, { limit: 0 })).toBe(false);
-  // A non-numeric limit coerces to NaN and is rejected, not silently defaulted.
   expect(accepts(similarQuerySchema, { limit: "abc" })).toBe(false);
 });

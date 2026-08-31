@@ -1,11 +1,5 @@
 import type { ProblemDocument } from "@repo/contracts";
 
-/**
- * Every non-2xx becomes one of these. A failure upstream of the API — a proxy
- * 502, a captive portal — is not `application/problem+json`, so parsing degrades
- * to the status line rather than throwing a JSON error where an HTTP one
- * happened.
- */
 export class ApiError extends Error {
   readonly status: number;
   readonly type: string;
@@ -13,7 +7,7 @@ export class ApiError extends Error {
   readonly detail?: string;
   readonly traceId?: string;
   readonly errors?: { field: string; message: string }[];
-  /** Seconds, from `Retry-After`. Present on a 429. */
+  /** Seconds, from `Retry-After`. */
   readonly retryAfter?: number;
 
   constructor(fields: {
@@ -24,7 +18,6 @@ export class ApiError extends Error {
     traceId?: string;
     errors?: { field: string; message: string }[];
     retryAfter?: number;
-    /** The original `fetch` failure, when this wraps one. */
     cause?: unknown;
   }) {
     super(
@@ -49,10 +42,7 @@ function isProblemDocument(body: unknown): body is Partial<ProblemDocument> {
   return typeof body === "object" && body !== null && !Array.isArray(body);
 }
 
-/**
- * `response.status` always wins over the body's `status` member: a proxy
- * rewriting one must not change what the app believes failed.
- */
+/** `response.status` wins over the body's, which a proxy may have rewritten. */
 export function toApiError(response: Response, body: unknown, retryAfter?: number): ApiError {
   const problem = isProblemDocument(body) ? body : undefined;
   const str = (value: unknown): string | undefined =>

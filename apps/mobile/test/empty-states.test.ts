@@ -13,8 +13,6 @@ describe("EMPTY_BACKLOG", () => {
 
 describe("EMPTY_FILTER", () => {
   it("has copy for every status in the enum", () => {
-    // Keyed off BACKLOG_STATUSES so adding a fifth status fails here rather
-    // than shipping a blank screen.
     for (const status of BACKLOG_STATUSES) {
       const state = EMPTY_FILTER[status];
 

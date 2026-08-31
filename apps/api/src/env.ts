@@ -16,13 +16,6 @@ const envSchema = v.object({
 
 export type ApiEnv = v.InferOutput<typeof envSchema>;
 
-/**
- * Parsed once at boot, so a missing secret refuses the process rather than
- * surfacing as a 500 on the first request that needs it.
- *
- * `v.getDotPath` is what puts the variable's name in the message — without it a
- * missing `CLERK_SECRET_KEY` reads as an anonymous "Invalid key".
- */
 export function parseEnv(source: Record<string, string | undefined>): ApiEnv {
   const result = v.safeParse(envSchema, source);
 

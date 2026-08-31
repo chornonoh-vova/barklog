@@ -18,7 +18,6 @@ type Db = NodePgDatabase<typeof schema>;
 
 const log = getLogger(["worker", "sync"]);
 
-/** Arbitrary but fixed: any process holding this lock is running the sync. */
 export const SYNC_LOCK_KEY = 8823001;
 
 export interface SyncDeps {
@@ -37,8 +36,7 @@ export async function syncAll(
   deps: SyncDeps,
   options: { full?: boolean } = {},
 ): Promise<SyncResult> {
-  // The advisory lock is session-scoped, so it has to be taken and released on
-  // one dedicated connection rather than through the pool.
+  // The advisory lock is session-scoped, so it needs one dedicated connection.
   const lockConnection = await deps.pool.connect();
   const locked = await lockConnection.query<{ locked: boolean }>(
     "SELECT pg_try_advisory_lock($1) AS locked",
@@ -83,17 +81,14 @@ export async function syncAll(
         if (raw.length < PAGE_SIZE) break;
       }
 
-      // With nothing ingested, keep the previous watermark. `since` is the
-      // stored value minus the overlap, so adding it back recovers the
-      // original exactly; writing `since` itself would drift the watermark
-      // backwards every run.
+      // `since` is the stored watermark minus the overlap; add it back, or the
+      // watermark drifts backwards on every empty run.
       const watermark =
         newestUpdatedAt ?? (since ? new Date(since.getTime() + WATERMARK_OVERLAP_MS) : new Date(0));
 
       await finishRun(deps.db, runId, { watermark, counts });
 
-      // Only after a successful run: every search cached under the old
-      // version becomes unreachable at once.
+      // Only after a successful run: this orphans every cached search at once.
       await deps.cache.incr(SEARCH_VERSION_KEY);
 
       log.info("Sync complete: {games} games across {pages} pages.", {

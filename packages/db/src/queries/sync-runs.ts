@@ -6,11 +6,8 @@ import { syncRuns } from "../schema/sync.js";
 
 type Db = NodePgDatabase<typeof schema>;
 
-/**
- * Rewind the watermark by a minute before querying IGDB. IGDB's `updated_at`
- * has second resolution and rows can land either side of a boundary, so a small
- * overlap costs a few redundant upserts and prevents a silent gap.
- */
+/** Overlap the watermark: IGDB's `updated_at` is second-resolution, so an
+ * exact boundary can drop rows. */
 export const WATERMARK_OVERLAP_MS = 60_000;
 
 export async function startRun(db: Db): Promise<string> {
@@ -41,12 +38,6 @@ export async function failRun(db: Db, id: string, error: string): Promise<void> 
     .where(eq(syncRuns.id, id));
 }
 
-/**
- * The watermark of the most recent successful run, minus the overlap. `null`
- * means no successful run has ever completed, which the caller treats as a
- * request for a full seed. A failed run never advances this, so a failed range
- * is simply retried on the next run.
- */
 export async function getWatermark(db: Db): Promise<Date | null> {
   const [row] = await db
     .select({ watermark: syncRuns.watermark })
@@ -70,10 +61,6 @@ export interface SyncRunSummary {
   error: string | null;
 }
 
-/**
- * The most recently *started* run, not the most recently finished, so a run in
- * progress is what `GET /api/sync/status` reports.
- */
 export async function getLastRun(db: Db): Promise<SyncRunSummary | null> {
   const rows = await db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(1);
 

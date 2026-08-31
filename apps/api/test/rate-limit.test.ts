@@ -4,8 +4,6 @@ import { afterAll, beforeEach, expect, test } from "vitest";
 import { DEFAULT_RATE_LIMITS } from "../src/rate-limits.js";
 import { callApi, createTestApp } from "./helpers.js";
 
-// Two requests per window rather than thirty: the behaviour under test is the
-// window, and the real limits are asserted separately as data.
 const harness = createTestApp({
   rateLimits: { search: { limit: 2, windowSeconds: 60 } },
 });
@@ -65,11 +63,9 @@ test("scopes count separately", async () => {
     rateLimits: { write: { limit: 1, windowSeconds: 60 } },
   });
 
-  // Exhaust the write scope.
   await callApi(scoped.app, "/api/backlog/1", { method: "DELETE" });
   expect((await callApi(scoped.app, "/api/backlog/1", { method: "DELETE" })).status).toBe(429);
 
-  // A read is a different scope and is unaffected.
   expect((await callApi(scoped.app, "/api/games/search?q=zelda")).status).not.toBe(429);
 
   await scoped.close();
@@ -88,8 +84,6 @@ test("the overall scope counts every /api request", async () => {
 });
 
 test("a broader scope's block reports its own headers, not a narrower passing scope's", async () => {
-  // Search stays at its default (30/min) and is not what blocks here; overall
-  // is shrunk so it is the one that exceeds its limit on the same request.
   const scoped = createTestApp({
     rateLimits: { overall: { limit: 1, windowSeconds: 60 } },
   });
@@ -117,7 +111,6 @@ test("the probes are never rate limited", async () => {
 });
 
 test("a Valkey outage cannot reject a request", async () => {
-  // Spec §13: availability over enforcement, consistent with the cache.
   const failOpen = createTestApp({
     cache: createCache("redis://127.0.0.1:1"),
     rateLimits: { overall: { limit: 1, windowSeconds: 60 } },

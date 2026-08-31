@@ -52,8 +52,6 @@ test("maps a fully populated game", () => {
 });
 
 test("IGDB omits absent optional fields entirely", () => {
-  // IGDB does not send nulls — it leaves the key out. Every optional field must
-  // survive being missing.
   const page = mapGames([{ id: 7, name: "Minimal", slug: "minimal", updated_at: 1700000000 }]);
 
   expect(page.games[0]).toEqual({
@@ -74,7 +72,6 @@ test("IGDB omits absent optional fields entirely", () => {
 });
 
 test("a company that both develops and publishes becomes one row with both flags", () => {
-  // Two involved_companies entries collide on the (game_id, company_id) PK.
   const page = mapGames([FULL_GAME]);
 
   expect(page.gameCompanies).toEqual([
@@ -84,7 +81,6 @@ test("a company that both develops and publishes becomes one row with both flags
 });
 
 test("a genre shared by two games is emitted once", () => {
-  // Otherwise: "ON CONFLICT DO UPDATE command cannot affect row a second time".
   const page = mapGames([
     FULL_GAME,
     { ...FULL_GAME, id: 1943, slug: "blood-and-wine", involved_companies: [] },

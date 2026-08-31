@@ -82,8 +82,6 @@ test("the first upsert creates and the second updates the same row", async () =>
     status: "completed",
     rating: 9,
   });
-  // The composite primary key is the "exactly one status per game" rule: this
-  // is an update, not a second row.
   expect(second.created).toBe(false);
   expect(second.entry.status).toBe("completed");
   expect(second.entry.rating).toBe(9);

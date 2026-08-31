@@ -24,11 +24,6 @@ import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 const NO_RATING = 0;
 const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RATING_MIN + i);
 
-/**
- * Every change writes immediately. `PUT` is a full replace of a two-field
- * resource and the client holds both fields, so a Save button would add a
- * dirty-state concept for nothing.
- */
 export function EntryActions({
   entry,
   onUpsert,
@@ -45,8 +40,6 @@ export function EntryActions({
           <Menu
             label={`★ ${ratingButtonLabel(rating)}`.trim()}
             modifiers={[
-              // `glass` is near-invisible on a flat background, and `bordered`
-              // tints its label with the accent whether or not there is a rating.
               buttonStyle("bordered"),
               controlSize("large"),
               clipShape("capsule"),

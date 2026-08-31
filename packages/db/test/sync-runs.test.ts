@@ -44,7 +44,6 @@ test("a failed run does not advance the watermark, so the range is retried", asy
   const second = await startRun(db);
   await failRun(db, second, "IGDB returned 503");
 
-  // Still the first run's watermark: tomorrow re-fetches the same range.
   expect(await getWatermark(db)).toEqual(new Date("2026-08-19T23:59:00Z"));
 });
 

@@ -1,12 +1,8 @@
 import { expect } from "vitest";
 
 /**
- * Drizzle wraps driver errors as `Failed query: ...` and hangs the real
- * Postgres error off `cause`, so asserting on `.message` alone would pass for
- * any failure at all. This flattens the whole chain and matches against that.
- *
- * Lives here rather than in `src/testing.ts` because it imports vitest, which
- * must not become a runtime dependency of the package.
+ * Drizzle hangs the real Postgres error off `cause`, so asserting on `.message`
+ * alone would pass for any failure at all. This flattens the whole chain.
  */
 export async function expectRejectedBy(
   operation: Promise<unknown>,

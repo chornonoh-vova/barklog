@@ -9,10 +9,6 @@ function rateLimitKey(scope: RateLimitScope, userId: string, window: number): st
   return `rl:${scope}:${userId}:${window}`;
 }
 
-/**
- * A fixed window, not a sliding one: `INCR` plus `EXPIRE` is atomic and cheap,
- * and the window number is part of the key, so nothing has to be cleaned up.
- */
 export function rateLimit(
   cache: Cache,
   scope: RateLimitScope,
@@ -20,27 +16,18 @@ export function rateLimit(
 ): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     const userId = c.get("userId");
-    // Only the public probes reach here without an identity, and they are not
-    // limited — a probe that gets a 429 restarts a healthy container.
     if (!userId) return next();
 
     const nowSeconds = Math.floor(Date.now() / 1000);
     const window = Math.floor(nowSeconds / rule.windowSeconds);
     const resetSeconds = (window + 1) * rule.windowSeconds - nowSeconds;
 
-    // Derived from this rule, not a shared constant: `windowSeconds` is
-    // caller-configurable (tests shrink it; a future config could lengthen
-    // it), and the TTL must exceed whatever window it is timing so the
-    // counter always outlives the window it counts — a shorter TTL would
-    // expire the key mid-window, silently resetting the count and disabling
-    // enforcement for the rest of it. Doubling the window is arbitrary but
-    // ample, and the key still expires on its own, so nothing needs cleaning
-    // up. For the real 60s windows this is 120s, same as before.
+    // Must outlive the window it counts, or the key expires mid-window and
+    // silently resets the count.
     const keyTtlSeconds = rule.windowSeconds * 2;
 
     const count = await cache.incrAndExpire(rateLimitKey(scope, userId, window), keyTtlSeconds);
 
-    // Fail open. A counter we cannot read is not a reason to refuse service.
     if (count === null) return next();
 
     const headers: Record<string, string> = {
@@ -50,10 +37,6 @@ export function rateLimit(
     };
 
     if (count > rule.limit) {
-      // The one place that renders a problem instead of throwing one: a 429 has
-      // to carry `Retry-After` and the RateLimit headers, and a thrown problem
-      // is rendered by `app.onError` where there is nowhere to attach them.
-      // Same renderer, so the document is identical to every other problem.
       const response = await renderProblem(
         c,
         problems.create("TOO_MANY_REQUESTS", {
@@ -73,27 +56,11 @@ export function rateLimit(
 
     await next();
 
-    // Written after `next()` resolves, not before. A single request can match
-    // more than one scope — every /api/* request also matches "overall" — and
-    // writing pre-`next()` realizes `c.res` early: Hono's `set res()` then
-    // merges that already-realized response's headers onto whatever the
-    // nested chain eventually returns, including a *different*, more specific
-    // scope's 429 further down, clobbering its correct blocking numbers with
-    // this scope's stale, passing ones. Firing the write after `next()`
-    // sidesteps that, because nothing realizes `c.res` ahead of the nested
-    // dispatch, so that merge path is never entered — which also fixes the
-    // original bug where these headers were dropped entirely on a 404 (see
-    // `finalize.ts`, which re-stamps `X-Request-Id` post-`next()` for the same
-    // reason).
-    //
-    // Each middleware's `await next()` unwinds innermost-first, so on an
-    // all-pass request "overall" stamps first and the more specific "search"
-    // or "write" stamps last, overwriting it — the most specific scope's
-    // numbers are what the client sees, which is the semantics the brief
-    // wants. If *this* scope blocked, it already returned its own response
-    // above and never reaches here. If a *different* scope blocked further
-    // down the chain, `c.res.status` is 429 here and is left alone — the
-    // blocking scope's headers, including `Retry-After`, stay intact.
+    // After `next()`, never before: writing early realizes `c.res`, and Hono
+    // then merges those headers onto whatever the nested chain returns —
+    // clobbering a more specific scope's 429 numbers with this scope's passing
+    // ones. Unwinding is innermost-first, so the most specific scope stamps
+    // last. A 429 from another scope is left alone so its `Retry-After` stands.
     if (c.res.status !== 429) {
       for (const [name, value] of Object.entries(headers)) {
         c.header(name, value);

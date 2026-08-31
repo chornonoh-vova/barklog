@@ -28,8 +28,6 @@ describe("errorCopy", () => {
   });
 
   it("returns generic copy for a 5xx and does not use detail", () => {
-    // The API strips `detail` from 5xx problem documents by design, but even
-    // if one somehow carried a detail, the generic copy must not surface it.
     const copy = errorCopy(
       new ApiError({
         status: 500,

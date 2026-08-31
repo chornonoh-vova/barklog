@@ -47,11 +47,7 @@ const PAGE = [
   },
 ];
 
-/**
- * `synced_at` is deliberately excluded: it records when the sync last touched
- * the row, so it is expected to move on every replay. The idempotency
- * guarantee is about the mirrored *data*, not the bookkeeping column.
- */
+/** `synced_at` is excluded: it is bookkeeping, and moves on every replay. */
 async function snapshot() {
   const games = await db.select().from(schema.games).orderBy(schema.games.id);
   return {
@@ -75,8 +71,6 @@ afterAll(async () => {
 });
 
 test("replaying the same page leaves the database identical", async () => {
-  // Spec §6: a failed run does not advance the watermark, so the next run
-  // re-fetches the same range. That is only safe if replay is a no-op.
   await persistPage(db, mapGames(PAGE));
   const first = await snapshot();
 
@@ -124,7 +118,6 @@ test("an updated game overwrites its previous values", async () => {
 });
 
 test("removed child rows disappear on re-sync", async () => {
-  // Join rows are replaced wholesale, so a genre IGDB dropped must not linger.
   await persistPage(db, mapGames(PAGE));
   await persistPage(db, mapGames([{ ...PAGE[0]!, genres: [], screenshots: [] }]));
 
@@ -139,7 +132,6 @@ test("an empty page is a no-op", async () => {
 });
 
 test("a failure inside the page rolls the whole page back", async () => {
-  // The transaction boundary is per page, so a half-written page cannot exist.
   const page = mapGames(PAGE);
   page.gameGenres.push({ gameId: 999999, genreId: 12 }); // violates the games FK
 
@@ -163,7 +155,6 @@ test("similar game rows are written for the page", async () => {
 });
 
 test("a similar id pointing outside the mirror is still stored", async () => {
-  // 472 is in neither this page nor the database.
   await persistPage(db, mapGames(PAGE));
 
   const rows = await db
@@ -180,7 +171,5 @@ test("a similar game IGDB dropped disappears on re-sync", async () => {
 
   const rows = await db.select().from(schema.gameSimilar);
 
-  // 1942's suggestions are gone; 1943's are untouched, because the delete is
-  // scoped to the games in the page.
   expect(rows).toEqual([{ gameId: 1943, similarGameId: 1942 }]);
 });

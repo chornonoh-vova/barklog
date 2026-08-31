@@ -8,14 +8,10 @@ import { useReleaseSplash } from "@/splash";
 import { shouldClearCache } from "./should-clear-cache";
 
 /**
- * Two hooks, deliberately. `useAuthViewState()` decides what to render:
- * `isSignedIn` alone flips true as soon as the session exists, which is before a
- * native biometric-enrollment prompt has finished, so swapping on it would
- * unmount `AuthView` mid-prompt and cut the enrollment off.
- * `useAuth({ treatPendingAsSignedOut: false })` supplies the active user id,
- * which `useAuthViewState` does not expose. The flag keeps a session
- * mid-establishment from reading as signed-out and clearing the cache under a
- * user who never left.
+ * Two hooks, deliberately: `isSignedIn` flips true before a native
+ * biometric-enrollment prompt finishes, so rendering off it would unmount
+ * `AuthView` mid-prompt. `treatPendingAsSignedOut: false` stops a session
+ * mid-establishment from reading as signed-out and clearing the cache.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
   const { isLoaded, isAuthFlowComplete } = useAuthViewState();
@@ -27,13 +23,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (!isLoaded) return;
 
     if (shouldClearCache(previous.current, userId)) queryClient.clear();
-    // `undefined` means "not yet known", not signed-out. Recording it would
-    // erase which user we were on and let the next change past.
     if (userId !== undefined) previous.current = userId;
   }, [isLoaded, userId, queryClient]);
 
-  // Held until Clerk has read the keychain, so a returning user never sees the
-  // sign-in screen flash.
   useReleaseSplash(isLoaded);
 
   if (!isLoaded) return null;

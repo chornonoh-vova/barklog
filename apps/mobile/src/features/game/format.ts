@@ -1,14 +1,8 @@
 import type { BacklogStatsWire, BacklogStatus, GameSummaryWire } from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-/**
- * Every user-facing string built from API data, kept pure so the copy is pinned
- * by tests and a game with no release date, genres or ratings cannot produce a
- * line reading " · ".
- *
- * `en-GB` is fixed rather than taken from the device: these are catalogue dates,
- * not the user's own, and a stable format keeps the detail rows from reflowing.
- */
+/** `en-GB` is fixed, not taken from the device: these are catalogue dates, and
+ * a stable format keeps the detail rows from reflowing. */
 
 const STATUS_LABELS: Record<BacklogStatus, string> = {
   waiting: "Waiting",
@@ -17,10 +11,6 @@ const STATUS_LABELS: Record<BacklogStatus, string> = {
   abandoned: "Abandoned",
 };
 
-/**
- * One symbol per status, shared by every surface that draws a status as a glyph
- * so the action capsule and an empty list cannot drift apart.
- */
 const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
   waiting: "clock",
   playing: "gamecontroller",
@@ -30,7 +20,6 @@ const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
 
 const SEPARATOR = " · ";
 
-/** Joins only the parts that exist, so an absent field leaves no separator. */
 function joinParts(parts: (string | null)[]): string | null {
   const present = parts.filter((part): part is string => part !== null && part !== "");
 
@@ -41,7 +30,6 @@ export function namesLine(refs: { name: string }[]): string | null {
   return refs.length === 0 ? null : refs.map((ref) => ref.name).join(", ");
 }
 
-/** Abbreviations where IGDB has one, so "PS5" beats "PlayStation 5" in a row. */
 export function platformNames(
   platforms: { name: string; abbreviation: string | null }[],
 ): string | null {
@@ -59,10 +47,6 @@ export function metaLine(input: {
   return joinParts([releaseYear(input.firstReleaseDate), namesLine(input.genres)]);
 }
 
-/**
- * `GameSummaryWire` carries no genres, so a summary row gets the release year
- * alone. Its own function so no call site fakes an empty `genres` array.
- */
 export function summarySubtitle(game: GameSummaryWire): string | null {
   return releaseYear(game.firstReleaseDate);
 }
@@ -93,12 +77,10 @@ export function statusSymbol(status: BacklogStatus): SFSymbol {
   return STATUS_SYMBOLS[status];
 }
 
-/** The prominent capsule doubles as the add affordance when untracked. */
 export function statusButtonLabel(status: BacklogStatus | null): string {
   return status === null ? "Add to Backlog" : statusLabel(status);
 }
 
-/** Pairs with `statusButtonLabel`: `plus` is the add affordance, not a status. */
 export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
   return status === null ? "plus" : statusSymbol(status);
 }

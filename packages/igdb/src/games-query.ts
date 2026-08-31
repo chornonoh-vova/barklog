@@ -1,8 +1,6 @@
 /**
- * Only non-deprecated fields (spec §7). `category` and `status` are deprecated
- * in favour of `game_type` and `game_status`; we use `game_type` and do not
- * store release status. The nightly contract test fails the build if IGDB
- * rejects anything here.
+ * Non-deprecated fields only — never add `category` or `status` back. The
+ * nightly contract test fails the build if IGDB rejects anything here.
  */
 export const GAME_FIELDS = [
   "id",
@@ -14,9 +12,6 @@ export const GAME_FIELDS = [
   "total_rating",
   "total_rating_count",
   "parent_game",
-  // Bare ids, not expanded: the mirror already holds every game, so the ids
-  // resolve locally on read. Soft references like `parent_game` — the target
-  // may not be mirrored yet when this page lands.
   "similar_games",
   "game_type.id",
   "game_type.type",
@@ -42,10 +37,6 @@ export interface GamesPageQueryOptions {
   limit: number;
 }
 
-/**
- * Keyset pagination, not offset: IGDB's deep offsets degrade badly, and sorting
- * by id makes the initial seed and the nightly delta the same code path.
- */
 export function gamesPageQuery(options: GamesPageQueryOptions): string {
   const where =
     options.since === null

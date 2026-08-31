@@ -13,19 +13,9 @@ import { GAME_SUMMARY_COLUMNS, type GameSummary } from "./games.js";
 
 type Db = NodePgDatabase<typeof schema>;
 
-/**
- * Declared here rather than imported from `@repo/contracts`, so this package
- * stays free of any runtime dependency on it. `test/status-parity.test.ts`
- * fails if the two lists drift.
- */
 export const BACKLOG_SORTS = ["updated_at", "added_at", "rating", "name"] as const;
 export type BacklogSort = (typeof BACKLOG_SORTS)[number];
 
-/**
- * A personal backlog runs to hundreds of rows, so `GET /api/backlog` returns
- * the whole collection unpaginated (spec §8). This keeps the response bounded
- * anyway.
- */
 export const BACKLOG_SOFT_CAP = 5000;
 
 export interface BacklogEntry {
@@ -57,16 +47,10 @@ const ENTRY_COLUMNS = {
 const ORDER_BY: Record<BacklogSort, SQL> = {
   updated_at: desc(backlogEntries.updatedAt),
   added_at: desc(backlogEntries.addedAt),
-  // NULLS LAST: an unrated entry belongs after every rated one, not on top.
   rating: sql`${backlogEntries.rating} DESC NULLS LAST`,
   name: asc(games.name),
 };
 
-/**
- * Just-in-time provisioning (spec §4). Chosen over a Clerk webhook because a
- * webhook needs a publicly reachable URL, which would drag a tunnelling tool
- * into local development.
- */
 export async function ensureUser(db: Db, userId: string): Promise<void> {
   await db.insert(users).values({ id: userId }).onConflictDoNothing();
 }
@@ -125,8 +109,7 @@ export async function getBacklogStats(db: Db, userId: string): Promise<BacklogSt
     total += row.count;
   }
 
-  // `avg` over a numeric column comes back as a string, and as null when every
-  // rating is null or there are no rows at all.
+  // `avg` returns a string, and null when there is nothing to average.
   const average = aggregate[0]?.average ?? null;
 
   return {
@@ -136,14 +119,8 @@ export async function getBacklogStats(db: Db, userId: string): Promise<BacklogSt
   };
 }
 
-/**
- * `PUT` semantics: one statement that creates or replaces, which is what makes
- * an offline retry harmless (spec §8).
- *
- * `xmax = 0` is how Postgres tells an insert apart from an `ON CONFLICT` update
- * in the same `RETURNING` clause: a freshly inserted row has no updating
- * transaction id. That is the whole difference between a 201 and a 200.
- */
+/** `xmax = 0` distinguishes an insert from an `ON CONFLICT` update — a freshly
+ * inserted row has no updating transaction id. It is the 201-vs-200 signal. */
 export async function upsertBacklogEntry(
   db: Db,
   input: {

@@ -38,8 +38,6 @@ export function createEndpoints(request: Request) {
 
     listBacklog: (input: { status?: BacklogStatus; sort?: BacklogSort } = {}) =>
       request<BacklogListResponse>("/api/backlog", {
-        // `undefined` is dropped by the query builder, so "All" sends no
-        // `status` rather than `?status=`.
         query: { status: input.status, sort: input.sort ?? "updated_at" },
       }),
 

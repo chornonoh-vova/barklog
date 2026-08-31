@@ -19,8 +19,7 @@ export function syncRoutes(deps: AppDeps) {
               watermark: run.watermark?.toISOString() ?? null,
               counts: run.counts,
             },
-      // `run.error` is deliberately omitted: it is an exception message, and
-      // spec §11's reasoning about 5xx detail applies to it just the same.
+      // `run.error` is deliberately omitted: exception messages leak internals.
     });
   });
 }

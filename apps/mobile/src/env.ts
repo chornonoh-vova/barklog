@@ -1,9 +1,6 @@
 /**
- * A function rather than an inline `if (!x) throw`, because TypeScript does not
- * carry that narrowing into the component closures that read these values.
- *
- * The `process.env.EXPO_PUBLIC_*` reads stay inline and literal: Expo's Babel
- * transform substitutes them statically and cannot follow a dynamic lookup.
+ * The `process.env.EXPO_PUBLIC_*` reads must stay inline and literal: Expo's
+ * Babel transform substitutes them statically and cannot follow a dynamic lookup.
  */
 function requireEnv(name: string, value: string | undefined): string {
   if (!value) {

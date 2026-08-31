@@ -24,8 +24,6 @@ test("a miss loads, stores, and a second call does not load again", async () => 
 });
 
 test("the TTL can be derived from the loaded value", async () => {
-  // Spec §10: an empty search result is cached at the shorter TTL, which is
-  // what absorbs the typo storm search-as-you-type generates.
   const ttl = vi.fn((value: number[]) => (value.length === 0 ? 60 : 600));
 
   await withCache(cache, "empty", ttl, async () => []);

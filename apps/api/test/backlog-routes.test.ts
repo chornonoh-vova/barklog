@@ -83,8 +83,6 @@ test("an unknown key is rejected, and the offending key is named", async () => {
   const error = body.errors[0]!;
 
   expect(response.status).toBe(422);
-  // valibot puts the rejected key in the issue path, so `field` is usable here
-  // as it is everywhere else.
   expect(error.field).toBe("note");
 });
 
@@ -176,8 +174,6 @@ test("the list revalidates with an ETag and answers 304 on a match", async () =>
   const etag = first.headers.get("etag");
 
   expect(etag).toBeTruthy();
-  // `no-cache`, not `no-store`: the client must be allowed to keep the copy it
-  // revalidates against.
   expect(first.headers.get("cache-control")).toBe("private, no-cache");
 
   const revalidated = await callApi(harness.app, "/api/backlog", {
@@ -187,7 +183,6 @@ test("the list revalidates with an ETag and answers 304 on a match", async () =>
   expect(revalidated.status).toBe(304);
   expect(await revalidated.text()).toBe("");
   expect(revalidated.headers.get("etag")).toBe(etag);
-  // A 304 must still be traceable and must still carry the security headers.
   expect(revalidated.headers.get("x-request-id")).toBeTruthy();
   expect(revalidated.headers.get("x-content-type-options")).toBe("nosniff");
 });

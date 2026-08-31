@@ -13,11 +13,8 @@ export type {
   GameSummaryWire,
 } from "@repo/contracts";
 
-/**
- * Rows become wire shapes before anything is cached or hashed: otherwise a cache
- * hit hands the route a string where a miss hands it a Date, and the ETag
- * changes for no reason.
- */
+// Rows are converted before anything is cached or hashed, or a hit and a miss
+// would hand the route different types and shift the ETag.
 const iso = (value: Date | null): string | null => (value === null ? null : value.toISOString());
 
 export function toGameSummary(row: GameSummary): GameSummaryWire {

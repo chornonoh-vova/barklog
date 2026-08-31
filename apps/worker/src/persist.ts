@@ -8,12 +8,9 @@ type Db = NodePgDatabase<typeof schema>;
 const excluded = (column: string) => sql.raw(`excluded.${column}`);
 
 /**
- * Writes one IGDB page in a single transaction. Reference rows are upserted
- * first so the games and join rows can never reference a missing parent, and
- * join rows are replaced wholesale so anything IGDB dropped disappears.
- *
- * Every write is an upsert or a scoped replace, which is what makes replaying
- * a page a no-op — the property the sync's failure model depends on.
+ * Reference rows go first so nothing references a missing parent, and join rows
+ * are replaced wholesale so anything IGDB dropped disappears. Every write is an
+ * upsert or a scoped replace, which is what makes replaying a page a no-op.
  */
 export async function persistPage(db: Db, page: MappedPage): Promise<void> {
   if (page.games.length === 0) return;

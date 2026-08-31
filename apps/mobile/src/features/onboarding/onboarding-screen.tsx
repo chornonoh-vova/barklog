@@ -22,14 +22,6 @@ import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 
 import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES } from "./pages";
 
-/**
- * A SwiftUI `TabView` in page style, so the swipe gesture and the dot indicators
- * are UIKit's rather than ours. `selection` is controlled because the bottom
- * button both advances the pager and changes its own label on the last page.
- *
- * Presentation only. `onComplete` covers Skip and the final button alike; the
- * gate above decides what completing means.
- */
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [selection, setSelection] = useState<string>(ONBOARDING_PAGES[0].id);
 
@@ -72,7 +64,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
                   modifiers={[
                     foregroundStyle({ type: "hierarchical", style: "secondary" }),
                     padding({ bottom: 4 }),
-                    // The symbol restates the title; VoiceOver reads the copy only.
+                    // The symbol restates the title, so VoiceOver reads the copy only.
                     accessibilityHidden(true),
                   ]}
                 />
@@ -90,15 +82,12 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
                     foregroundStyle({ type: "hierarchical", style: "secondary" }),
                     multilineTextAlignment("center"),
                     frame({ maxWidth: 320 }),
-                    // Wrap rather than truncate on a short host or large type.
                     fixedSize({ vertical: true }),
                   ]}
                 >
                   {page.description}
                 </Text>
                 {page.id === IGDB_PAGE_ID ? (
-                  // SwiftUI `Link` opens the URL itself, so there is no
-                  // `openURL` call and no `Pressable` wrapper to get wrong.
                   <Link
                     destination={siteUrl()}
                     modifiers={[font({ textStyle: "subheadline" }), padding({ top: 8 })]}

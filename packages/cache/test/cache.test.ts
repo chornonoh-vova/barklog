@@ -36,7 +36,6 @@ test("ping reports a healthy connection, which /readyz depends on", async () => 
 });
 
 test("a dead Valkey fails open rather than throwing", async () => {
-  // Spec §10: the cache must never be able to take the service down.
   const dead = createCache("redis://127.0.0.1:1");
 
   expect(await dead.get("anything")).toBeNull();
@@ -48,8 +47,6 @@ test("a dead Valkey fails open rather than throwing", async () => {
 });
 
 test("incrAndExpire counts and puts a TTL on the key in one round trip", async () => {
-  // The rate limiter needs both, atomically: a counter with no TTL would leak
-  // one key per user per window for ever.
   expect(await cache.incrAndExpire("rl:search:user_1:9000", 120)).toBe(1);
   expect(await cache.incrAndExpire("rl:search:user_1:9000", 120)).toBe(2);
 

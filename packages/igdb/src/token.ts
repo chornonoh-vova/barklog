@@ -1,6 +1,5 @@
 const TOKEN_KEY = "igdb:token";
 const TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-/** Refresh an hour before expiry so a long sync never runs out mid-flight. */
 const HEADROOM_SECONDS = 3600;
 
 export interface TokenCache {
@@ -51,7 +50,6 @@ export function createTokenSource(options: TokenSourceOptions): TokenSource {
         return cached;
       }
 
-      // Collapse concurrent misses into one Twitch call.
       inFlight ??= fetchToken().finally(() => {
         inFlight = null;
       });

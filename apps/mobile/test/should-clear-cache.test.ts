@@ -11,14 +11,10 @@ describe("shouldClearCache", () => {
   });
 
   it("clears when the active user changes without signing out", () => {
-    // `setActive` on a multi-session instance swaps the user with `isSignedIn`
-    // true the whole way through, so this never appears as a sign-out edge.
     expect(shouldClearCache(A, B)).toBe(true);
   });
 
   it("does not clear on first load when signed out", () => {
-    // The critical case: clearing here would be harmless but the guard exists
-    // so a cold start is never mistaken for a sign-out.
     expect(shouldClearCache(undefined, null)).toBe(false);
   });
 
@@ -27,7 +23,6 @@ describe("shouldClearCache", () => {
   });
 
   it("does not clear on sign-in", () => {
-    // The sign-out that preceded it already emptied the cache.
     expect(shouldClearCache(null, A)).toBe(false);
   });
 
@@ -37,9 +32,6 @@ describe("shouldClearCache", () => {
   });
 
   it("does not clear while the session is still loading", () => {
-    // `userId` is `undefined` while Clerk re-establishes a session (e.g. a
-    // token refresh in flight). It must never be read as a sign-out or as a
-    // different user.
     expect(shouldClearCache(A, undefined)).toBe(false);
     expect(shouldClearCache(undefined, undefined)).toBe(false);
   });

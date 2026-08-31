@@ -100,8 +100,6 @@ describe("statusButtonSymbol", () => {
   });
 
   it("gives every status in the enum its own symbol", () => {
-    // Distinctness is the point: the capsule is the only place the status is
-    // shown as a glyph, so two statuses sharing one would read as the same.
     const symbols = BACKLOG_STATUSES.map((status) => statusButtonSymbol(status));
 
     expect(new Set(symbols).size).toBe(symbols.length);

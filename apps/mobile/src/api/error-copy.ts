@@ -1,12 +1,5 @@
 import { isApiError } from "./errors";
 
-/**
- * Keyed off status rather than shown verbatim, because a 5xx problem document
- * carries no `detail` by design — the API strips exception messages so they
- * cannot leak schema names and file paths.
- *
- * Framework-free so Vitest reaches it without pulling in native modules.
- */
 export function errorCopy(error: unknown): { title: string; description: string } {
   if (!isApiError(error)) {
     return { title: "Something went wrong", description: "Please try again." };

@@ -70,7 +70,6 @@ test("a cached token short-circuits the network entirely", async () => {
 });
 
 test("a second call in the same process reuses the in-memory token", async () => {
-  // The in-memory fallback is what keeps a Valkey outage from stopping a sync.
   const fetchImpl = vi.fn(async () => tokenResponse("tok_abc"));
   const deadCache = {
     get: async () => null,

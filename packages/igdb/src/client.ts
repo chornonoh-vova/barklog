@@ -47,8 +47,6 @@ export function createIgdbClient(options: IgdbClientOptions): IgdbClient {
 
       lastError = new Error(`IGDB ${endpoint} failed with ${response.status}`);
 
-      // A 4xx other than 429 means the query itself is wrong; retrying it will
-      // never help, and hammering IGDB with it is worse than failing fast.
       if (!isRetryable(response.status)) throw lastError;
 
       const backoff = retryBaseMs * 2 ** attempt;

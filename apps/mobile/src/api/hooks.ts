@@ -24,12 +24,6 @@ import { errorCopy } from "./error-copy";
 import { keys } from "./keys";
 import { useApi } from "./provider";
 
-/**
- * Reads have a full error path via `QueryBoundary`; writes have none — an
- * optimistic patch rolls back silently on failure with nothing telling the
- * user why. Same status-keyed copy as the read path, surfaced with a native
- * alert since a mutation has no screen real estate of its own to render into.
- */
 function alertOnMutationError(error: unknown): void {
   const { title, description } = errorCopy(error);
   Alert.alert(title, description);
@@ -74,11 +68,7 @@ export function useSearchGames(
   return useQuery({
     queryKey: keys.games.search(q, limit, 0),
     queryFn: () => api.searchGames({ q, limit }),
-    // The API rejects a shorter query with a 422; not asking is better than
-    // being told no.
     enabled: q.length >= SEARCH_QUERY_MIN,
-    // Results stay on screen while the next keystroke's query resolves, so the
-    // list does not blank between characters.
     placeholderData: keepPreviousData,
   });
 }
@@ -89,11 +79,6 @@ export function useGame(id: number): UseQueryResult<GameDetailResponse> {
   return useQuery({ queryKey: keys.games.detail(id), queryFn: () => api.getGame(id) });
 }
 
-/**
- * The client's default 60 s `staleTime` is left alone deliberately: the response
- * carries `max-age=300`, so repeat opens are absorbed below this layer, and the
- * relation itself only changes when a nightly sync writes it.
- */
 export function useSimilarGames(
   id: number,
   limit = SIMILAR_LIMIT_DEFAULT,
@@ -106,13 +91,6 @@ export function useSimilarGames(
   });
 }
 
-/**
- * Both backlog writes are the same optimistic move: patch the cached game
- * detail, put it back if the request fails, then invalidate the game and the
- * whole backlog namespace on settle — which sweeps the list and the stats
- * together because they share a first key element. Only the request itself and
- * the entry it leaves behind differ, so those are the two parameters.
- */
 function useBacklogEntryMutation<TInput>(
   gameId: number,
   options: {
@@ -154,10 +132,6 @@ function useBacklogEntryMutation<TInput>(
   });
 }
 
-/**
- * `PUT` is a full replace of a two-field resource, so the optimistic patch can
- * simply write the new entry — there is no partial state to merge.
- */
 export function useUpsertBacklogEntry(gameId: number) {
   const api = useApi();
 

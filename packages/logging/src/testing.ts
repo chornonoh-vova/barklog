@@ -6,7 +6,6 @@ export interface RecordingSink {
   clear(): void;
 }
 
-/** A sink that keeps records in memory so a test can assert on them. */
 export function recordingSink(): RecordingSink {
   const records: LogRecord[] = [];
 

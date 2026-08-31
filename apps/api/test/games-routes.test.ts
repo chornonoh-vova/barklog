@@ -51,14 +51,10 @@ test("a one-character query is 422, naming the field that failed", async () => {
   expect(response.status).toBe(422);
   expect(response.headers.get("content-type")).toContain("application/problem+json");
   expect(body.errors[0]?.field).toBe("q");
-  // valibot's wording, passed through untouched.
   expect(body.errors[0]?.message).toBe("Invalid length: Expected >=2 but received 1");
-  // The library's shape and wording, adopted as-is (Task 5, Step 7): `about:blank`
-  // rather than a barklog type, and no instance or traceId in the body.
   expect(body.type).toBe("about:blank");
   expect(body.title).toBe("Validation Error");
   expect(body.detail).toBe("Request validation failed");
-  // The header is what keeps a 422 traceable.
   expect(response.headers.get("x-request-id")).toBeTruthy();
 });
 
@@ -71,8 +67,6 @@ test("a limit over the cap is 422 rather than silently clamped", async () => {
 });
 
 test("a non-numeric limit is 422, not a silent fallback to the default", async () => {
-  // `integerFrom` coerces with `Number`, so junk becomes NaN and fails the
-  // `v.number()` check rather than passing through as 20.
   const response = await callApi(harness.app, "/api/games/search?q=zelda&limit=abc");
   const body = (await response.json()) as { errors: { field: string; message: string }[] };
 
@@ -89,7 +83,6 @@ test("a repeated search is served from the cache", async () => {
   const first = await callApi(harness.app, "/api/games/search?q=hades");
   expect(((await first.json()) as { items: unknown[] }).items).toHaveLength(1);
 
-  // Remove the row the answer came from. A cached answer cannot notice.
   await harness.db.delete(schema.games).where(eq(schema.games.id, 1));
 
   const second = await callApi(harness.app, "/api/games/search?q=hades");
@@ -112,7 +105,6 @@ test("the version bump the sync performs invalidates every cached search at once
   await callApi(harness.app, "/api/games/search?q=hades");
   await harness.db.delete(schema.games).where(eq(schema.games.id, 1));
 
-  // This is exactly what the worker does at the end of a successful run.
   await harness.cache.incr(SEARCH_VERSION_KEY);
 
   const fresh = await callApi(harness.app, "/api/games/search?q=hades");
@@ -120,8 +112,6 @@ test("the version bump the sync performs invalidates every cached search at once
 });
 
 test("a cache hit and a cache miss are byte-identical", async () => {
-  // Dates must be serialised before they are cached, or a hit would answer with
-  // strings where a miss answered with Date objects.
   await seedGame(harness.db, {
     id: 1,
     name: "Hades",
@@ -147,8 +137,6 @@ test("popular ranks by rating count behind a rating floor", async () => {
   expect(body.items.map((item) => item.id)).toEqual([1]);
 });
 
-/** Whole days of margin, so any run hour lands a fixture on its intended side
- * of the UTC day boundary the routes split on. */
 const daysFromNow = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
 test("upcoming lists what has not shipped yet, soonest first", async () => {
@@ -215,8 +203,6 @@ test("details carry the child collections and the caller's own backlog entry", a
   };
 
   expect(response.status).toBe(200);
-  // Never max-age: the response is user-varying (embeds the caller's
-  // backlogEntry), so it must be revalidated rather than reused (spec §8).
   expect(response.headers.get("cache-control")).toBe("private, no-cache");
   expect(body.id).toBe(1942);
   expect(body.genres).toEqual([]);
@@ -238,12 +224,8 @@ test("another user's entry never appears in the caller's game details", async ()
 });
 
 test("game details must never enter a shared cache: two users, same request, no flush between", async () => {
-  // Regression guard for spec §8/§17: wrapping this route in withCache with a
-  // key that is not user-scoped would let this test pass every OTHER
-  // assertion in the suite (each test gets a fresh cache flush in
-  // beforeEach) while still leaking TEST_USER's backlogEntry to OTHER_USER
-  // within a single request sequence. Two calls in one test, no flush
-  // between, is what actually exercises that.
+  // Two calls in one test, with no cache flush between, is what actually
+  // catches a non-user-scoped cache key leaking one user's entry to another.
   await seedGame(harness.db, { id: 1942, name: "The Witcher 3: Wild Hunt", count: 4021 });
   await harness.db.insert(schema.users).values({ id: TEST_USER });
   await harness.db
@@ -266,9 +248,6 @@ test("an unmirrored id is 404 and a non-numeric id is 422", async () => {
 });
 
 test("an id above int4 range is 422, not a 500 from Postgres", async () => {
-  // games.id is a Postgres `integer` column; 2147483648 overflows it. Without
-  // the MAX_GAME_ID bound in the contract this reaches the query layer and
-  // Postgres rejects it, which surfaces as a 500 with a stack trace.
   const response = await callApi(harness.app, "/api/games/2147483648");
   const body = (await response.json()) as { errors: { field: string }[] };
 
@@ -384,7 +363,6 @@ test("the similar route is not shadowed by the :id catch-all", async () => {
   const response = await callApi(harness.app, "/api/games/1/similar");
   const body = (await response.json()) as Record<string, unknown>;
 
-  // The detail route would answer with a name and a backlogEntry.
   expect(body).not.toHaveProperty("backlogEntry");
   expect(body).toHaveProperty("items");
 });

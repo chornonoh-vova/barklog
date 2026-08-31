@@ -3,11 +3,7 @@ import eslintConfigPrettier from "eslint-config-prettier";
 import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
 
-/**
- * Shared ESLint configuration for every workspace in the repo.
- *
- * @type {import("eslint").Linter.Config[]}
- */
+/** @type {import("eslint").Linter.Config[]} */
 export const config = [
   { ignores: ["dist/**", "build/**", "coverage/**", ".expo/**", ".turbo/**"] },
   js.configs.recommended,

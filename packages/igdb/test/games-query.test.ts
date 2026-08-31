@@ -3,16 +3,12 @@ import { expect, test } from "vitest";
 import { GAME_FIELDS, gamesPageQuery } from "../src/games-query.js";
 
 test("the field list contains no deprecated fields", () => {
-  // `category` and `status` were deprecated in favour of `game_type` and
-  // `game_status`. Spec §7. This needs no network, so it guards every PR;
-  // the live contract test (test/contract.test.ts) catches IGDB-side removals.
   expect(GAME_FIELDS).not.toMatch(/(^|,)category(\.|,|$)/);
   expect(GAME_FIELDS).not.toMatch(/(^|,)status(\.|,|$)/);
   expect(GAME_FIELDS).toContain("game_type.type");
 });
 
 test("every requested field is expressed with non-deprecated syntax", () => {
-  // game_type is a reference now, not an inline enum, so it must be expanded.
   expect(GAME_FIELDS).toContain("game_type.id");
   expect(GAME_FIELDS).toContain("involved_companies.company.id");
   expect(GAME_FIELDS).toContain("cover.image_id");
@@ -23,9 +19,6 @@ test("the query never requests more than IGDB's 500-row maximum", () => {
 });
 
 test("the field list requests similar games as bare ids", () => {
-  // `similar_games` is `repeated Game`, so requesting it unexpanded yields ids
-  // rather than nested objects. Expanding it would multiply the page payload
-  // for data the mirror already holds.
   expect(GAME_FIELDS).toContain("similar_games");
   expect(GAME_FIELDS).not.toMatch(/similar_games\./);
 });

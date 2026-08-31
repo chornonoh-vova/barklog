@@ -6,8 +6,7 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 120_000,
     pool: "forks",
-    // One Postgres and one Valkey are shared by the whole suite, so files must
-    // not truncate or flush under each other.
+    // Shared containers: concurrent files would truncate and flush under each other.
     fileParallelism: false,
   },
 });

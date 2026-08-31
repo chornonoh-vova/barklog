@@ -19,7 +19,6 @@ function game(id: number, updatedAt: number) {
   };
 }
 
-/** An IGDB stub that serves fixed pages and records the queries it was asked. */
 function stubIgdb(pages: unknown[][]) {
   const calls: { since: Date | null; afterId: number }[] = [];
   let index = 0;
@@ -52,8 +51,6 @@ afterAll(async () => {
 });
 
 test("a short page ends the run without another request", async () => {
-  // Fewer than PAGE_SIZE rows means IGDB has nothing more to give, so asking
-  // again would be a wasted round trip.
   const igdb = stubIgdb([[game(1, 1700000000), game(2, 1700000100)]]);
 
   const result = await syncAll({ db, pool, cache: stubCache(), igdb });
@@ -90,7 +87,6 @@ test("a second run is incremental, asking only for changes since the watermark",
   const second = stubIgdb([[game(2, 1755100000)]]);
   await syncAll({ db, pool, cache: stubCache(), igdb: second });
 
-  // Rewound by the 60s overlap so nothing is lost at the second boundary.
   expect(second.calls[0]!.since).toEqual(new Date(1755000000 * 1000 - 60_000));
 });
 
@@ -126,7 +122,6 @@ test("a failing page marks the run failed and leaves the watermark alone", async
   const runs = await db.query.syncRuns.findMany();
   expect(runs.map((run) => run.status).sort()).toEqual(["failed", "success"]);
 
-  // The next run still asks from the first run's watermark.
   const third = stubIgdb([[]]);
   await syncAll({ db, pool, cache: stubCache(), igdb: third });
   expect(third.calls[0]!.since).toEqual(new Date(1755000000 * 1000 - 60_000));
@@ -146,8 +141,6 @@ test("a failed run does not bump search:ver", async () => {
 });
 
 test("a run with nothing to do keeps the previous watermark rather than rewinding it", async () => {
-  // Writing back the rewound value every night would drift the watermark
-  // backwards by a minute per run.
   await syncAll({ db, pool, cache: stubCache(), igdb: stubIgdb([[game(1, 1755000000)]]) });
   const second = await syncAll({ db, pool, cache: stubCache(), igdb: stubIgdb([[]]) });
 
@@ -168,8 +161,6 @@ test("a concurrent run is skipped rather than run twice", async () => {
 });
 
 test("an empty page ends the run", async () => {
-  // The other termination path: a full page followed by nothing at all, rather
-  // than by a short page.
   const full = Array.from({ length: PAGE_SIZE }, (_, i) => game(i + 1, 1700000000 + i));
   const igdb = stubIgdb([full, []]);
 
@@ -195,7 +186,6 @@ test("every line written during a run carries that run's id", async () => {
   expect(result.status).toBe("success");
 
   const runIds = new Set(logs.records.map((record) => record.properties.runId));
-  // One run, one id, on every record — nobody threaded it through a signature.
   expect(runIds.size).toBe(1);
   expect([...runIds][0]).toBeTruthy();
   expect(logs.records.length).toBeGreaterThan(0);

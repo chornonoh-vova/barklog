@@ -8,15 +8,7 @@ export const SEARCH_LIMIT_MAX = 50;
 export const SEARCH_OFFSET_MAX = 200;
 export const SEARCH_LIMIT_DEFAULT = 20;
 
-/**
- * `games.id` and `backlog_entries.game_id` are Postgres `integer` (int4) columns
- * (see `packages/db/src/schema/mirror.ts`), not `bigint`. Without this bound, an
- * id above int4 range reaches the query layer and Postgres rejects it, which
- * surfaces as a 500 with a stack trace rather than a 422 — and, worse, is a
- * cost a client can trigger at will on the `error` log level that 4xx handling
- * was deliberately kept off of. A change to either the column type or this
- * constant must change the other.
- */
+/** int4 upper bound; must track the `games.id` column type. */
 export const MAX_GAME_ID = 2_147_483_647;
 
 const gameId = integerFrom(1, MAX_GAME_ID);
@@ -28,27 +20,18 @@ export const searchQuerySchema = v.object({
 });
 export type SearchQuery = v.InferOutput<typeof searchQuerySchema>;
 
-/** The three explore feeds, by URL segment. */
 export type GameFeed = "popular" | "upcoming" | "recent";
 
-/** Shared by `/popular`, `/upcoming` and `/recent`. */
 export const gameFeedQuerySchema = v.object({
   limit: v.optional(integerFrom(1, SEARCH_LIMIT_MAX), SEARCH_LIMIT_DEFAULT),
 });
 
-/** `GET /api/games/:id` */
 export const gameIdParamSchema = v.object({ id: gameId });
 
-/** `PUT`/`DELETE /api/backlog/:gameId` */
 export const gameIdPathSchema = v.object({ gameId });
 
 export const SIMILAR_LIMIT_DEFAULT = 12;
 
-/**
- * `GET /api/games/:id/similar`. Its own default, but the shared
- * `SEARCH_LIMIT_MAX` cap rather than a third limit constant — asking for more
- * than IGDB stores simply yields a shorter list.
- */
 export const similarQuerySchema = v.object({
   limit: v.optional(integerFrom(1, SEARCH_LIMIT_MAX), SIMILAR_LIMIT_DEFAULT),
 });

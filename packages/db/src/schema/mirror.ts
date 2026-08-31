@@ -39,13 +39,12 @@ export const games = pgTable(
   {
     id: integer("id").primaryKey(),
     name: text("name").notNull(),
-    // Indexed but NOT unique: IGDB slugs occasionally migrate between games,
-    // and a unique constraint would turn that into a failed sync page.
+    // Not unique: IGDB slugs occasionally migrate between games.
     slug: text("slug").notNull(),
     summary: text("summary"),
     firstReleaseDate: timestamp("first_release_date", { withTimezone: true }),
     gameTypeId: integer("game_type_id").references(() => gameTypes.id),
-    // Deliberately no foreign key — see the test in mirror-schema.test.ts.
+    // Deliberately no foreign key: the target may not be mirrored yet.
     parentGameId: integer("parent_game_id"),
     totalRating: real("total_rating"),
     totalRatingCount: integer("total_rating_count").notNull().default(0),
@@ -59,9 +58,6 @@ export const games = pgTable(
     index("games_popular_idx")
       .on(sql`${t.totalRatingCount} DESC`)
       .where(sql`${t.totalRatingCount} > 50`),
-    // Serves both release feeds. The moving window cannot go in the predicate
-    // — it would have to reference now() — but the null half is static, and
-    // both feeds' range quals imply it.
     index("games_release_date_idx")
       .on(t.firstReleaseDate)
       .where(sql`${t.firstReleaseDate} is not null`),
@@ -120,23 +116,15 @@ export const gameCompanies = pgTable(
   (t) => [primaryKey({ columns: [t.gameId, t.companyId] })],
 );
 
-/**
- * IGDB's own `similar_games`, one row per suggestion. The relation is
- * directional — A listing B does not make B list A — and is read forward only.
- */
 export const gameSimilar = pgTable(
   "game_similar",
   {
     gameId: integer("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
-    // Deliberately no foreign key, for the same reason as games.parentGameId:
-    // the sync walks ids ascending, so a page routinely names a similar game
-    // not yet inserted, and an FK would fail the page. Dangling ids are
-    // dropped on read by the inner join in similarGames().
+    // Deliberately no foreign key: the sync walks ids ascending, so a page
+    // routinely names a game not yet inserted. Dangling ids are dropped on read.
     similarGameId: integer("similar_game_id").notNull(),
   },
-  // No secondary index: the only read is `where game_id = $1`, which the
-  // primary key's leading column already serves.
   (t) => [primaryKey({ columns: [t.gameId, t.similarGameId] })],
 );

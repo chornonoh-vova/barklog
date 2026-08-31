@@ -6,9 +6,7 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 120_000,
     pool: "forks",
-    // One Postgres container is shared by the whole suite, so test files must
-    // not run concurrently — a truncate in one file would wipe rows another
-    // file just inserted.
+    // One shared Postgres container: concurrent files would truncate each other.
     fileParallelism: false,
   },
 });

@@ -59,8 +59,6 @@ describe("toApiError", () => {
   });
 
   it("prefers the response status over a mismatched body status", () => {
-    // A proxy rewriting the status must not be able to make the app think a
-    // failure was something else.
     expect(toApiError(response(503), { title: "Nope", status: 200 }).status).toBe(503);
   });
 

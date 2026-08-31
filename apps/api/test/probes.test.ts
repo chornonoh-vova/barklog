@@ -23,10 +23,6 @@ test("readyz is 200 with both dependencies up", async () => {
 });
 
 test("a Valkey outage takes readiness down, by decision", async () => {
-  // Spec §12 records the cost: the cache is fail-open, so the API still serves
-  // every request correctly with Valkey down, and a strict probe will pull a
-  // working instance out of rotation. The trade buys a probe that reports the
-  // true state of the dependencies. Reverting it is one branch.
   const dead = createCache("redis://127.0.0.1:1");
   const harnessWithDeadCache = createTestApp({ cache: dead });
 
@@ -40,8 +36,6 @@ test("a Valkey outage takes readiness down, by decision", async () => {
     status: 503,
     checks: { postgres: "up", valkey: "down" },
   });
-  // 503 is a 5xx: no detail, no driver error string, no hostname. These are
-  // unauthenticated endpoints.
   expect(body.detail).toBeUndefined();
   expect(JSON.stringify(body)).not.toContain("127.0.0.1");
 
@@ -67,19 +61,14 @@ test("liveness stays up when readiness is down", async () => {
   const dead = createCache("redis://127.0.0.1:1");
   const harnessWithDeadCache = createTestApp({ cache: dead });
 
-  // The distinction is the whole point: a Postgres blip must not restart pods.
   expect((await callApi(harnessWithDeadCache.app, "/healthz")).status).toBe(200);
   expect((await callApi(harnessWithDeadCache.app, "/readyz")).status).toBe(503);
 
   await harnessWithDeadCache.close();
 });
 
-/**
- * Wraps a real cache so `ping` counts how many times it is actually called,
- * proving whether `/readyz` reused a memoised verdict or ran a fresh check.
- * `createTestApp` closes its own internally-created cache, not an override
- * passed in, so the wrapped cache is closed by the caller directly.
- */
+// `createTestApp` closes only the cache it creates itself, so the caller must
+// close this one.
 function countingPingCache(): {
   cache: Cache;
   pingCount: () => number;

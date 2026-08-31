@@ -5,17 +5,11 @@ import type { StyleProp, ViewStyle } from "react-native";
 import { Brand } from "@/theme";
 
 /**
- * A `Host` with `matchContents` takes its height from SwiftUI pushing the
- * measured size into Fabric state, and that push is deduped against the value
- * already there (`dispatchSizePatch` returns `nullptr` to cancel the commit).
- * Reopening a screen builds a fresh shadow node back at `auto` while the state
- * still holds the first measurement, so the commit is cancelled, the host
- * collapses to zero and its content draws over its neighbours. `onLayoutContent`
- * fires on every mount regardless, so mirroring it into `minHeight` keeps a
- * floor under the host; a taller measurement still wins.
- *
- * A component rather than a hook because the four props have to agree — keeping
- * the state but forgetting `matchContents` brings the collapse back.
+ * SwiftUI dedupes the measured size it pushes into Fabric state, so reopening a
+ * screen — fresh shadow node at `auto`, state still holding the old value —
+ * cancels the commit and collapses the host to zero. `onLayoutContent` fires on
+ * every mount regardless, so mirroring it into `minHeight` keeps a floor under
+ * it. A component, not a hook, because all four props have to agree.
  */
 export function MeasuredHost({
   style,

@@ -16,7 +16,6 @@ import { StyleSheet } from "react-native";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { Brand } from "@/theme";
 
-/** Named so the copy modules can be typed by it and spread at a call site. */
 export interface EmptyStateContent {
   title: string;
   systemImage: SFSymbol;
@@ -38,7 +37,7 @@ export function EmptyState({
           modifiers={[
             foregroundStyle({ type: "hierarchical", style: "secondary" }),
             padding({ bottom: 4 }),
-            // The symbol restates the title; VoiceOver reads the copy only.
+            // The symbol restates the title, so VoiceOver reads the copy only.
             accessibilityHidden(true),
           ]}
         />
@@ -49,7 +48,6 @@ export function EmptyState({
             foregroundStyle({ type: "hierarchical", style: "secondary" }),
             multilineTextAlignment("center"),
             frame({ maxWidth: 320 }),
-            // Wrap rather than truncate when the host is shorter than ideal.
             fixedSize({ vertical: true }),
           ]}
         >

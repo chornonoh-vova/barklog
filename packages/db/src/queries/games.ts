@@ -18,34 +18,19 @@ import {
 
 type Db = NodePgDatabase<typeof schema>;
 
-/**
- * Read from the live `/game_types` data, not transcribed from the legacy enum
- * (spec §7): Main Game, Standalone Expansion, Remake, Remaster, Expanded Game.
- * 316,525 of the 373,590 mirrored games.
- */
+/** Main Game, Standalone Expansion, Remake, Remaster, Expanded Game. */
 export const SEARCHABLE_GAME_TYPE_IDS = [0, 4, 8, 9, 10] as const;
 
-/**
- * Ranking constants. Starting points tuned against the real mirror, and the
- * reason they live here: changing how search feels is a one-line change with a
- * fixture test behind it, not a query rewrite.
- */
 export const WORD_SIMILARITY_THRESHOLD = 0.3;
 export const SIMILARITY_WEIGHT = 0.6;
 export const POPULARITY_WEIGHT = 0.4;
 export const POPULARITY_CEILING = 500;
 
-/** The explore feed only shows games people have actually rated well. */
 export const POPULAR_RATING_FLOOR = 70;
 
 /**
- * Must equal the predicate on `games_popular_idx` (a partial index on
- * `total_rating_count DESC WHERE total_rating_count > 50`, see
- * `schema/mirror.ts`). `popularGames`'s rating floor alone does not imply
- * that predicate, so without repeating it here Postgres cannot use the
- * index and falls back to a sequential scan: measured on the real mirror,
- * 45ms seq scan versus 0.36ms index scan. A future change to either the
- * index or this constant must change the other.
+ * Must equal the predicate on `games_popular_idx` in `schema/mirror.ts`, or
+ * Postgres cannot use the index and seq-scans instead (45ms versus 0.36ms).
  */
 export const POPULAR_RATING_COUNT_FLOOR = 50;
 
@@ -82,7 +67,6 @@ export interface GameDetail extends GameSummary {
   publishers: NamedRef[];
 }
 
-/** The projection every list endpoint returns. Also used nested, as `game`. */
 export const GAME_SUMMARY_COLUMNS = {
   id: games.id,
   name: games.name,
@@ -94,13 +78,10 @@ export const GAME_SUMMARY_COLUMNS = {
 };
 
 /**
- * `word_similarity` rather than plain `similarity`: plain similarity compares
- * whole strings, so `zeld` against `The Legend of Zelda: Ocarina of Time` scores
- * near zero. `word_similarity` scores the query against the best-matching span
- * of words inside the name. The `<%` operator uses the same gin_trgm_ops index.
- *
- * The threshold is a GUC, so this runs in a transaction: `SET LOCAL` is scoped
- * to it and reverts on commit, which keeps the pooled connection clean.
+ * `word_similarity`, not `similarity`: the latter compares whole strings, so
+ * `zeld` against `The Legend of Zelda` scores near zero. Its threshold is a GUC,
+ * hence the transaction — `SET LOCAL` reverts on commit and leaves the pooled
+ * connection clean.
  */
 export async function searchGames(
   db: Db,
@@ -109,11 +90,8 @@ export async function searchGames(
   const { query, limit, offset } = options;
 
   return db.transaction(async (tx) => {
-    // The repo's only raw-SQL interpolation. `SET LOCAL` cannot take a bind
-    // parameter, so this is a string-built statement — safe only because
-    // WORD_SIMILARITY_THRESHOLD is a fixed module constant above, never
-    // caller-supplied. A future edit that makes this value come from a
-    // request must not reuse `sql.raw` here without addressing that.
+    // `SET LOCAL` takes no bind parameter, so this is string-built — safe only
+    // because the threshold is a module constant, never caller-supplied.
     await tx.execute(
       sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${WORD_SIMILARITY_THRESHOLD}`),
     );
@@ -129,7 +107,6 @@ export async function searchGames(
               / ${POPULARITY_CEILING}`,
         ),
         desc(games.totalRatingCount),
-        // A total order, so a page boundary can neither repeat nor skip a row.
         asc(games.id),
       )
       .limit(limit)
@@ -137,11 +114,6 @@ export async function searchGames(
   });
 }
 
-/**
- * `total_rating_count DESC` behind a `total_rating` floor. v1 uses rating count
- * as a proxy for IGDB's `popularity_primitives` (spec §17); swapping it in
- * touches this function only.
- */
 export async function popularGames(db: Db, options: { limit: number }): Promise<GameSummary[]> {
   return db
     .select(GAME_SUMMARY_COLUMNS)
@@ -160,19 +132,10 @@ export async function popularGames(db: Db, options: { limit: number }): Promise<
 const RECENT_WINDOW_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/**
- * The boundary both release feeds split on, so no game sits on both shelves.
- * A parameter rather than `now()` inside the query, so a test can pin the edge.
- */
 export function startOfUtcDay(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-/**
- * Popular's rating floors cannot serve here — nothing unreleased, and little
- * released this month, clears them — so cover art stands in for "a real
- * listing" rather than one of the placeholder rows filling any release week.
- */
 const releaseFeedFilter = and(searchableType, isNotNull(games.coverImageId));
 
 export async function upcomingGames(
@@ -209,12 +172,6 @@ export async function gameExists(db: Db, gameId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
-/**
- * Five indexed reads rather than one query with aggregate subselects: each is
- * a primary-key or composite-key lookup, and the assembly stays readable.
- * The caller's backlog entry is deliberately NOT joined here — the mirror half
- * of the schema and the user half meet in the route, not in a query.
- */
 export async function getGameDetail(db: Db, gameId: number): Promise<GameDetail | null> {
   const parent = alias(games, "parent");
 
@@ -304,14 +261,6 @@ export async function getGameDetail(db: Db, gameId: number): Promise<GameDetail 
   };
 }
 
-/**
- * IGDB's array order is undocumented, so this re-ranks by the same total order
- * every other feed uses rather than replaying it — a LIMIT cannot produce an
- * unstable list.
- *
- * The inner join drops ids the mirror does not hold yet (see
- * `gameSimilar.similarGameId` for why there is no FK).
- */
 export async function similarGames(
   db: Db,
   options: { gameId: number; limit: number },

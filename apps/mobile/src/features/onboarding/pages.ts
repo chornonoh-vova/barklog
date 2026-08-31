@@ -1,29 +1,18 @@
 import type { SFSymbol } from "sf-symbols-typescript";
 
-/**
- * Copy in its own module, with no react-native or @expo/ui import anywhere in
- * its graph, so `test/onboarding-pages.test.ts` can check it against
- * `BACKLOG_STATUSES` in plain Node. `SFSymbol` is a type, so it erases.
- */
+/** No react-native or @expo/ui anywhere in this module's graph, so the copy is
+ * testable in plain Node. */
 export interface OnboardingPage {
-  /** Also the `TabView.Tab` value, so it must be stable and unique. */
   id: string;
   systemImage: SFSymbol;
   title: string;
   description: string;
 }
 
-/** The page that carries the igdb.com link and the final "Start" button. */
 export const IGDB_PAGE_ID = "igdb";
 
-/**
- * `as const satisfies` rather than a plain annotation: the tuple keeps its
- * literal length, which is what lets `onboarding-screen.tsx` index `[0]` for its
- * initial selection without a non-null assertion.
- *
- * The third page's three items paraphrase the `SHELVES` feeds in
- * `features/explore/shelves.ts`.
- */
+/** `as const satisfies`, not an annotation: the tuple keeps its literal length,
+ * which is what lets a caller index `[0]` without a non-null assertion. */
 export const ONBOARDING_PAGES = [
   {
     id: "welcome",
@@ -55,25 +44,15 @@ export const ONBOARDING_PAGES = [
   },
 ] as const satisfies readonly OnboardingPage[];
 
-/**
- * `0` for an unknown `selection`, not `-1`: `nextPageId` then treats it as page
- * 0, so the button reads "Continue" rather than "Start" instead of indexing off
- * the end of the tuple.
- */
+/** `0`, not `-1`, for an unknown id: `nextPageId` then reads it as page 0
+ * rather than indexing off the end of the tuple. */
 export function pageIndex(selection: string): number {
   const index = ONBOARDING_PAGES.findIndex((page) => page.id === selection);
 
   return index === -1 ? 0 : index;
 }
 
-/**
- * `undefined` on the last page is the whole signal: it is what tells the
- * caller to complete instead of advance, so there is no separate `isLast`
- * needed to drive that decision.
- */
 export function nextPageId(selection: string): string | undefined {
-  // `noUncheckedIndexedAccess` makes this `OnboardingPage | undefined` already;
-  // no assertion needed to read past the end of the tuple.
   const next = ONBOARDING_PAGES[pageIndex(selection) + 1];
 
   return next?.id;

@@ -43,8 +43,6 @@ export function SearchScreen({ query }: { query: string }) {
     [openGame],
   );
 
-  // The API rejects a shorter query with a 422, so the prompt stands in for it
-  // rather than the query firing and failing.
   if (debounced.length < SEARCH_QUERY_MIN) return PROMPT;
 
   return (

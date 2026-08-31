@@ -5,7 +5,6 @@ import { Type } from "@/theme";
 
 const COLLAPSED_LINES = 3;
 
-/** React Native, not a SwiftUI `DisclosureGroup`: body content, not a control. */
 export function ExpandableSummary({ summary }: { summary: string }) {
   const [expanded, setExpanded] = useState(false);
 

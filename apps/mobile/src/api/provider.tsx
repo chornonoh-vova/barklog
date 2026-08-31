@@ -8,10 +8,6 @@ import { createEndpoints, type Endpoints } from "./endpoints";
 
 const ApiContext = createContext<Endpoints | null>(null);
 
-/**
- * Mounted inside `ClerkProvider` so `useAuth` has one, and outside `AuthGate` so
- * the endpoints exist before the first screen renders.
- */
 export function ApiProvider({ children }: { children: ReactNode }) {
   const { getToken } = useAuth();
 

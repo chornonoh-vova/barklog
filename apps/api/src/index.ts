@@ -10,7 +10,6 @@ import { parseEnv } from "./env.js";
 
 const env = parseEnv(process.env);
 
-// Before anything else logs: a record written before this lands nowhere.
 await configureLogging({ service: "api", level: env.LOG_LEVEL });
 const log = getLogger(["api"]);
 
@@ -32,18 +31,11 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
     log.info("{signal} — shutting down", { signal });
 
-    // Force-exit if graceful shutdown does not finish in time — one lingering
-    // keep-alive connection (server.close's callback fires only once every
-    // connection has ended) or a hung close() call must not hang the process
-    // forever waiting for a SIGKILL. Unref'd so it never itself keeps the
-    // process alive.
     const forceExit = setTimeout(() => process.exit(1), 10_000);
     forceExit.unref();
 
     server.close(() => {
-      // allSettled, not all: a rejected close (e.g. a Valkey socket already
-      // gone on SIGTERM) must not swallow process.exit — every close is
-      // attempted and exit runs regardless of the outcome.
+      // allSettled, not all: a rejected close must not swallow `process.exit`.
       void Promise.allSettled([closeDb(), cache.close()]).then(() => process.exit(0));
     });
   });

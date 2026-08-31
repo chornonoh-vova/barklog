@@ -6,9 +6,8 @@ import type { AppEnv } from "../types.js";
 const JSON_CONTENT_TYPE = /^application\/(?:[\w.+-]+\+)?json\b/i;
 
 /**
- * Hono's validator treats a non-JSON body as an empty object, which surfaces as
- * a 422 about missing fields — misleading when the real problem is the media
- * type. This turns that case into the 415 spec §11 asks for, before validation.
+ * Hono's validator reads a non-JSON body as an empty object, so without this a
+ * wrong media type surfaces as a 422 about missing fields.
  */
 export function requireJson(): MiddlewareHandler<AppEnv> {
   return async (c, next) => {

@@ -15,8 +15,6 @@ describe.runIf(clientId && clientSecret)("IGDB contract", () => {
   const client = createIgdbClient({ clientId: clientId!, tokens });
 
   test("IGDB accepts every field we request", async () => {
-    // A deprecated or removed field makes IGDB answer 400, which the client
-    // surfaces without retrying.
     const rows = await client.gamesPage({ since: null, afterId: 0 });
 
     expect(Array.isArray(rows)).toBe(true);
@@ -32,8 +30,6 @@ describe.runIf(clientId && clientSecret)("IGDB contract", () => {
   });
 
   test("game_type ids used for search filtering still resolve", async () => {
-    // Spec §9 filters search by game_type_id. Confirm the ids we rely on exist
-    // rather than trusting the legacy enum values.
     const rows = await client.gamesPage({ since: null, afterId: 0 });
     const types = new Set(
       rows

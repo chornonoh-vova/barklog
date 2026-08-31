@@ -37,19 +37,13 @@ const seconds = (value: number) => new Date(value * 1000);
 export function mapGames(raw: unknown[]): MappedPage {
   const games = raw.map((row) => v.parse(igdbGameSchema, row));
 
-  // Reference rows are deduplicated by id: two games in one page routinely
-  // share a genre, and inserting it twice in one statement raises
-  // "ON CONFLICT DO UPDATE command cannot affect row a second time".
+  // Deduplicated by id: a repeat in one statement raises "ON CONFLICT DO
+  // UPDATE command cannot affect row a second time".
   const gameTypes = new Map<number, MappedPage["gameTypes"][number]>();
   const genres = new Map<number, MappedPage["genres"][number]>();
   const platforms = new Map<number, MappedPage["platforms"][number]>();
   const companies = new Map<number, MappedPage["companies"][number]>();
-  // Keyed by `${gameId}:${companyId}` so a company listed twice for one game —
-  // once as developer, once as publisher — merges into a single row.
   const gameCompanies = new Map<string, MappedPage["gameCompanies"][number]>();
-  // Unlike genres and platforms — curated sets where trusting IGDB not to
-  // repeat an entry is safe — this list is generated, and one duplicate would
-  // be a unique violation that fails the entire page.
   const seenSimilar = new Set<string>();
 
   const page: MappedPage = {
@@ -89,8 +83,6 @@ export function mapGames(raw: unknown[]): MappedPage {
     }
 
     for (const similarId of game.similar_games ?? []) {
-      // A game inside its own Similar Games row reads as a bug, and IGDB's
-      // generated list does not rule it out.
       if (similarId === game.id) continue;
 
       const key = `${game.id}:${similarId}`;

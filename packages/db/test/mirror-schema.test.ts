@@ -42,8 +42,6 @@ test("the trigram index exists on games.name", async () => {
 });
 
 test("parent_game_id is a soft reference with no foreign key", async () => {
-  // A DLC can arrive in a sync page before its parent game does. An FK here
-  // would reject the row and fail the page.
   await db.insert(games).values({
     id: 9999,
     name: "Blood and Wine",

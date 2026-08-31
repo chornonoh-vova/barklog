@@ -8,7 +8,6 @@ import { syncAll } from "./sync.js";
 
 const env = parseEnv(process.env);
 
-// Before anything else logs: a record written before this lands nowhere.
 await configureLogging({ service: "worker", level: env.LOG_LEVEL });
 const log = getLogger(["worker"]);
 

@@ -34,8 +34,6 @@ test("a level below the threshold is dropped", async () => {
 });
 
 test("an implicit context reaches every record inside it", () => {
-  // This is the whole reason for contextLocalStorage: the traceId in the API and
-  // the runId in the worker are set once and never passed as an argument again.
   withContext({ runId: "run-1" }, () => {
     getLogger(["test"]).info("Started.");
     getLogger(["test", "deep"]).warn("Something odd.");

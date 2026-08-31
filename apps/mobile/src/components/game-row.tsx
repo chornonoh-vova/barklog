@@ -7,12 +7,8 @@ import { Type } from "@/theme";
 
 const COVER_WIDTH = 44;
 
-/**
- * Memoized, and taking `id` rather than a prepared closure, because the lists
- * above it re-render on every pull-to-refresh and every keystroke. A per-item
- * `onPress={() => push(id)}` would hand each row a fresh function and defeat
- * the memo; one hoisted `onPress(id)` lets every visible row bail out.
- */
+/** Takes `id`, not a closure: a per-item `onPress={() => push(id)}` would hand
+ * each row a fresh function and defeat the memo. */
 export const GameRow = memo(function GameRow({
   id,
   title,

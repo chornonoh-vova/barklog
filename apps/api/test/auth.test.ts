@@ -28,14 +28,11 @@ test("everything else is 401 without a session", async () => {
 });
 
 test("the allowlist is by exact path, so no future /health-debug is public", async () => {
-  // Spec §8. A prefix allowlist is the mistake this test exists to prevent.
   expect((await callApi(harness.app, "/healthz/extra", { user: null })).status).toBe(401);
   expect((await callApi(harness.app, "/health-debug", { user: null })).status).toBe(401);
 });
 
 test("an authenticated request gets past auth and on to routing", async () => {
-  // Reaching the route's own 200 (an empty list, nothing seeded) is the proof
-  // that the 401 gate opened.
   expect((await callApi(harness.app, "/api/backlog")).status).toBe(200);
 });
 

@@ -40,7 +40,6 @@ test("an unknown route is a problem document, not Hono's default text", async ()
 
   expect(response.status).toBe(404);
   expect(response.headers.get("content-type")).toContain("application/problem+json");
-  // The title is the library's reason phrase, verbatim — see Step 7.
   expect(await response.json()).toMatchObject({
     type: "https://barklog.gg/problems/not-found",
     title: "Not Found",
@@ -132,16 +131,12 @@ test("an unhandled exception is a 500 that says nothing about the exception", as
     title: "Internal Server Error",
     status: 500,
     instance: "/boom",
-    // The library's fixed string, not the exception's message. It carries no
-    // information, which is the point (spec §11).
     detail: "An unexpected error occurred",
   });
   expect(JSON.stringify(body)).not.toContain("secret");
   expect(JSON.stringify(body)).not.toContain("postgres://");
   expect(body.stack).toBeUndefined();
   expect(body.traceId).toBeTruthy();
-  // The response is a fresh Response built by the renderer, so this only holds
-  // because `finalize` re-stamps the header.
   expect(response.headers.get("x-request-id")).toBe(body.traceId);
 
   await boom.close();
@@ -150,7 +145,6 @@ test("an unhandled exception is a 500 that says nothing about the exception", as
 test("a 5xx HTTPException loses its message on the way out", async () => {
   const boom = createTestApp();
   boom.app.get("/upstream", () => {
-    // Library default would put this message straight into `detail`.
     throw new HTTPException(503, { message: "pool exhausted at db-primary-3" });
   });
 
@@ -209,7 +203,6 @@ test("the log line for a bug carries the traceId the client was given", async ()
   const response = await callApi(boom.app, "/boom");
   const errorLine = logs.records.find((record) => record.category.includes("error"));
 
-  // This pairing is the only thing that makes a detail-less 500 debuggable.
   expect(errorLine?.properties).toMatchObject({
     message: "something broke",
     traceId: response.headers.get("x-request-id"),

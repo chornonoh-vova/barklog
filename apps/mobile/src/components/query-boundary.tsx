@@ -11,13 +11,9 @@ export function QueryBoundary<T>({
   children: (data: T) => ReactNode;
 }) {
   /**
-   * Data we already hold wins over an error, and this ordering is the whole
-   * point of the component. TanStack's result union has a
-   * `QueryObserverRefetchErrorResult` variant carrying `data` together with
-   * `isError: true` — a failed background refetch on a screen that already has
-   * content. Checking `isError` first would replace a list the user is reading
-   * with a full-screen error. It also gives `keepPreviousData` its behaviour
-   * for free.
+   * Data wins over an error, and the ordering is the point: a result can carry
+   * `data` with `isError: true` (a failed background refetch), and checking
+   * `isError` first would replace a list the user is reading with an error.
    */
   if (query.data !== undefined) return children(query.data);
 

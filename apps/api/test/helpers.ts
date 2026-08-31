@@ -13,21 +13,12 @@ import type { AppDeps, Db } from "../src/types.js";
 export const TEST_USER = "user_2testAAA";
 export const OTHER_USER = "user_2testBBB";
 
-/**
- * Stands in for Clerk. The suite is about what the API does with an identity,
- * not about how the identity was proven, and every alternative — a real Clerk
- * instance, a hand-signed JWT and a stub JWKS — buys nothing for it.
- */
 export const fakeAuthProvider: AuthProvider = {
   authenticate: (c) => c.req.header("X-Test-User") ?? null,
 };
 
-/**
- * Logging is configured here, at import time, rather than in `globalSetup`:
- * `globalSetup` runs in its own process, and LogTape's configuration is
- * process-global. Every test file imports this module, so every test file gets a
- * configured logger and a sink it can read back.
- */
+// Configured at import time, not in `globalSetup`: that runs in its own
+// process, and LogTape's configuration is process-global.
 export const logs = recordingSink();
 
 await configureLogging({ service: "api", level: "debug", sink: logs.sink });
@@ -49,7 +40,6 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     db,
     cache,
     auth: fakeAuthProvider,
-    // Production, so the header suite sees the full set including HSTS.
     production: true,
     ...overrides,
   });
@@ -70,17 +60,6 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
   };
 }
 
-/**
- * Every integration test calls the app through here. That is what makes spec
- * §11's "always a problem document" an invariant of the whole suite rather than
- * a handful of assertions: any request that ends 4xx or 5xx anywhere in these
- * tests fails here unless it carries the right media type.
- *
- * 304 is exempt by definition — it carries no body at all.
- *
- * `user` sets the header the fake authenticator of Task 7 reads. Pass
- * `user: null` to make an unauthenticated request.
- */
 export async function callApi(
   app: TestHarness["app"],
   path: string,
@@ -103,7 +82,6 @@ export async function callApi(
   return response;
 }
 
-/** Enough of a mirror row for a route test. Defaults are searchable and popular. */
 export async function seedGame(
   db: Db,
   game: {
@@ -137,7 +115,6 @@ export async function seedGame(
   });
 }
 
-/** Ids need not exist — that is the point. */
 export async function seedSimilar(db: Db, gameId: number, similarIds: number[]): Promise<void> {
   await db
     .insert(schema.gameSimilar)

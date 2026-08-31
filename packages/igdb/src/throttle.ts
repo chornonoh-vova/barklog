@@ -3,11 +3,7 @@ export interface ThrottleOptions {
   minIntervalMs: number;
 }
 
-/**
- * IGDB permits 4 requests per second with at most 8 open at once. This gates
- * both dimensions: a concurrency slot, and a start time at least
- * `minIntervalMs` after the previously scheduled start.
- */
+/** IGDB permits 4 requests per second, at most 8 open at once. */
 export function createThrottle(options: ThrottleOptions) {
   const waiting: Array<() => void> = [];
   let active = 0;

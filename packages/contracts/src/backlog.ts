@@ -1,10 +1,5 @@
 import * as v from "valibot";
 
-/**
- * The single source of truth for the status union. `packages/db` declares the
- * same list for its Postgres enum; `test/status-parity.test.ts` over there
- * fails if the two ever drift.
- */
 export const BACKLOG_STATUSES = ["waiting", "playing", "completed", "abandoned"] as const;
 export type BacklogStatus = (typeof BACKLOG_STATUSES)[number];
 
@@ -22,11 +17,6 @@ export const backlogListQuerySchema = v.object({
 });
 export type BacklogListQuery = v.InferOutput<typeof backlogListQuerySchema>;
 
-/**
- * Strict: an entry is exactly two fields, and `PUT` is a full replace, so an
- * unrecognised key is a client bug worth surfacing rather than dropping.
- * `rating: null` is the client clearing a rating it set earlier.
- */
 export const backlogUpsertSchema = v.strictObject({
   status: backlogStatusSchema,
   rating: v.optional(

@@ -2,14 +2,6 @@ import * as v from "valibot";
 
 const int = v.pipe(v.number(), v.integer());
 
-/**
- * IGDB omits absent fields rather than sending null, so every optional field is
- * `v.optional()` and the mapper is responsible for turning that into null.
- *
- * `v.object` strips unknown keys, which is deliberate: IGDB returns what the
- * field list asks for, and anything else — a deprecated `category`, a `checksum`
- * — must not reach a database row.
- */
 const referenceSchema = v.object({
   id: int,
   name: v.string(),

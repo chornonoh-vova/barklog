@@ -6,23 +6,13 @@ import { useState } from "react";
 import { Modal, Pressable, StyleSheet } from "react-native";
 
 /**
- * Not Clerk's `UserButton`. That is a native host view whose
- * `ClerkNativeHostingCoordinator.attach` finds its parent by walking up the
- * responder chain. From iOS 26, react-native-screens wraps header subviews in an
- * extra centering view that sits outside the screen's own view controller, so
- * the walk overshoots onto the `UINavigationController` — whose `children` are
- * its `viewControllers`, so `addChild` injects a phantom second controller and
- * wipes both the title and this toolbar item. iOS 18 has no wrapper and works,
- * which is the whole of the 18/26 split.
+ * Not Clerk's `UserButton`: it finds its parent by walking the responder chain,
+ * and from iOS 26 react-native-screens adds a wrapper view that makes the walk
+ * overshoot onto the `UINavigationController`, wiping the title and this item.
+ * iOS 18 has no wrapper — that is the whole of the 18/26 split.
  *
- * Presented rather than routed because Clerk dismisses its native view itself
- * and fires `onDismiss` afterwards, so a route-based profile calling
- * `router.back()` has nothing left to pop. Local state has no such edge, and it
- * keeps (tabs) the only root route, which is what lets the root layout be a
- * `Slot`.
- *
- * Tab titles stay inline rather than large: UIKit puts right bar items in the
- * compact row and a large title below, leaving the avatar floating above it.
+ * Presented, not routed: Clerk dismisses its own native view, so a routed
+ * profile calling `router.back()` has nothing left to pop.
  */
 export function ProfileToolbar() {
   const { user } = useUser();

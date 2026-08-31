@@ -17,7 +17,6 @@ test("applies defaults for the schedule", () => {
 });
 
 test("a missing secret fails at boot rather than on first use", () => {
-  // The process must refuse to start, not fail at midnight.
   expect(() => parseEnv({ ...VALID, IGDB_CLIENT_SECRET: undefined })).toThrow(/IGDB_CLIENT_SECRET/);
 });
 

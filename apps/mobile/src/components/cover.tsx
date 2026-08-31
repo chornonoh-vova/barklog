@@ -5,11 +5,6 @@ import { PlatformColor, StyleSheet, View } from "react-native";
 import { coverUrl, type CoverSize } from "@/igdb-image";
 import { COVER_ASPECT } from "@/theme";
 
-/**
- * Plain React Native, not `@expo/ui`: SwiftUI's `Image` has no remote-URL prop.
- * `expo-image` for its disk cache — a backlog re-opened five times a day should
- * not re-download the same 40 covers.
- */
 export function Cover({
   imageId,
   size,

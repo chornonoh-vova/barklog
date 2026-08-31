@@ -22,8 +22,6 @@ test("never runs more than `concurrency` tasks at once", async () => {
 });
 
 test("spaces starts by at least minIntervalMs", async () => {
-  // IGDB allows 4 requests/second. With 8 tasks at 20ms spacing the last one
-  // cannot start before 140ms have passed.
   const throttle = createThrottle({ concurrency: 4, minIntervalMs: 20 });
   const started = Date.now();
 

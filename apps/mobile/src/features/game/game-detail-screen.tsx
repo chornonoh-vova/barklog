@@ -14,12 +14,6 @@ import { screenshotUrl } from "@/igdb-image";
 
 const SHOT_WIDTH = 280;
 
-/**
- * `onOpenGame` rather than a path: typed routes make `Href` a union of
- * template-literal types, so each tab's route file builds its own literal push
- * and this screen stays ignorant of the router. Every tab has its own copy of
- * this route so a push stays inside the current tab.
- */
 export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => void }) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const gameId = Number(id);
