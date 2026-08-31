@@ -25,6 +25,19 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsWebUrlWithMaxCount": 1,
+              "supportsWebPageWithMaxCount": 1,
+              "supportsText": true
+            }
+          }
+        }
+      ],
       "@clerk/expo"
     ],
     "experiments": {

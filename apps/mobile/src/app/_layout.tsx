@@ -1,7 +1,7 @@
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { useColorScheme, View } from "react-native";
@@ -31,10 +31,16 @@ export default function RootLayout() {
             <View style={Screen.fill}>
               <OnboardingGate>
                 <AuthGate>
-                  {/* `Slot`, not `Stack`: (tabs) is the only root route, so a Stack
-                      would wrap the tab controller in a UINavigationController for
-                      nothing. */}
-                  <Slot />
+                  {/* `Stack`, not `Slot`: `/shared` is a sibling of `(tabs)` and
+                      must present *over* the tab controller. Under `Slot` it
+                      would replace it — the tabs would unmount, their stacks
+                      would be lost, and a dismiss would have nowhere to return
+                      to. The extra UINavigationController this costs is hidden
+                      by `headerShown: false`. */}
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="shared" options={{ presentation: "transparentModal" }} />
+                  </Stack>
                 </AuthGate>
               </OnboardingGate>
             </View>
