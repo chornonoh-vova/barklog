@@ -1,7 +1,7 @@
 import { ApiError, toApiError } from "./errors";
 
 export interface RequestOptions {
-  method?: "GET" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   query?: Record<string, string | number | undefined>;
   body?: unknown;
 }

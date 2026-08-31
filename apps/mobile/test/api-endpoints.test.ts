@@ -117,4 +117,29 @@ describe("createEndpoints", () => {
 
     expect(calls[0]).toEqual({ path: "/api/backlog/1942", options: { method: "DELETE" } });
   });
+
+  it("posts a share link to identify, with a default limit", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).identifyShare({
+      url: "https://www.youtube.com/watch?v=1vs0lLIRt7w",
+    });
+
+    expect(calls[0]).toEqual({
+      path: "/api/games/identify",
+      options: {
+        method: "POST",
+        body: { url: "https://www.youtube.com/watch?v=1vs0lLIRt7w", limit: 15 },
+      },
+    });
+  });
+
+  it("passes an explicit identify limit through", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).identifyShare({ url: "https://youtu.be/x", limit: 5 });
+
+    expect(calls[0]?.options).toEqual({
+      method: "POST",
+      body: { url: "https://youtu.be/x", limit: 5 },
+    });
+  });
 });

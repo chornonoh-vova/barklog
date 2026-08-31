@@ -17,6 +17,7 @@ import {
   type GameDetailResponse,
   type GameFeed,
   type GameListResponse,
+  type ShareIdentifyResponse,
 } from "@repo/contracts";
 import { Alert } from "react-native";
 
@@ -88,6 +89,23 @@ export function useSimilarGames(
   return useQuery({
     queryKey: keys.games.similar(id, limit),
     queryFn: () => api.similarGames(id, { limit }),
+  });
+}
+
+export function useIdentifyShare(url: string | null): UseQueryResult<ShareIdentifyResponse> {
+  const api = useApi();
+
+  return useQuery({
+    // `??` and `enabled` together: the key must be stable, and the query must
+    // not run before a payload has resolved.
+    queryKey: keys.games.identify(url ?? ""),
+    // `enabled` gates the call, so the empty-string fallback is never sent.
+    queryFn: () => api.identifyShare({ url: url ?? "" }),
+    enabled: url !== null,
+    // The server's answer for a given video is immutable for the life of its
+    // cache, and the `identify` rate limit is 10/min, so a refetch on focus
+    // would spend a request to learn nothing.
+    staleTime: Infinity,
   });
 }
 

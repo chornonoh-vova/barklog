@@ -54,4 +54,18 @@ describe("query keys", () => {
   it("is stable across calls", () => {
     expect(keys.games.detail(1)).toEqual(keys.games.detail(1));
   });
+
+  it("keys an identify by the shared url", () => {
+    expect(keys.games.identify("https://youtu.be/x")).toEqual([
+      "games",
+      "identify",
+      "https://youtu.be/x",
+    ]);
+  });
+
+  it("distinguishes two different shared urls", () => {
+    expect(keys.games.identify("https://youtu.be/a")).not.toEqual(
+      keys.games.identify("https://youtu.be/b"),
+    );
+  });
 });

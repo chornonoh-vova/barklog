@@ -1,4 +1,5 @@
 import {
+  IDENTIFY_LIMIT_DEFAULT,
   SEARCH_LIMIT_DEFAULT,
   SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
@@ -9,6 +10,7 @@ import {
   type GameDetailResponse,
   type GameFeed,
   type GameListResponse,
+  type ShareIdentifyResponse,
 } from "@repo/contracts";
 
 import type { Request } from "./client";
@@ -34,6 +36,12 @@ export function createEndpoints(request: Request) {
     similarGames: (id: number, input: { limit?: number } = {}) =>
       request<GameListResponse>(`/api/games/${id}/similar`, {
         query: { limit: input.limit ?? SIMILAR_LIMIT_DEFAULT },
+      }),
+
+    identifyShare: (input: { url: string; limit?: number }) =>
+      request<ShareIdentifyResponse>("/api/games/identify", {
+        method: "POST",
+        body: { url: input.url, limit: input.limit ?? IDENTIFY_LIMIT_DEFAULT },
       }),
 
     listBacklog: (input: { status?: BacklogStatus; sort?: BacklogSort } = {}) =>

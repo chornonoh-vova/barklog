@@ -10,6 +10,9 @@ export const keys = {
     // Not under `detail`: the backlog mutations invalidate that key, and an add
     // does not change what is similar to a game.
     similar: (id: number, limit: number) => ["games", "similar", id, limit] as const,
+    // Keyed by the shared url, not the video id: the app does not parse the
+    // url, and the server's answer is per-url anyway.
+    identify: (url: string) => ["games", "identify", url] as const,
   },
   backlog: {
     all: ["backlog"] as const,
