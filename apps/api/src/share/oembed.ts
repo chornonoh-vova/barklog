@@ -9,10 +9,14 @@ export interface VideoMeta {
 }
 
 /** The video is private, removed, or never existed. A 404 for the caller. */
-export class VideoGone extends Error {}
+export class VideoGone extends Error {
+  override readonly name = "VideoGone";
+}
 
 /** The metadata step failed and may succeed later. A 502 for the caller. */
-export class VideoMetaUnavailable extends Error {}
+export class VideoMetaUnavailable extends Error {
+  override readonly name = "VideoMetaUnavailable";
+}
 
 export const OEMBED_TIMEOUT_MS = 5_000;
 
@@ -29,7 +33,9 @@ const ENDPOINTS: Record<ShareProviderName, string> = {
  */
 const oembedSchema = v.object({
   title: v.pipe(v.string(), v.trim(), v.minLength(1)),
-  author_name: v.optional(v.pipe(v.string(), v.trim())),
+  // `nullish`, not `optional`: a `null` author_name in an otherwise valid
+  // 200 must not fail the whole schema and turn into a 502.
+  author_name: v.nullish(v.pipe(v.string(), v.trim())),
 });
 
 export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Promise<VideoMeta> {
@@ -64,6 +70,6 @@ export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Pr
 
   return {
     title: parsed.output.title,
-    author: author === undefined || author === "" ? null : author,
+    author: author === undefined || author === null || author === "" ? null : author,
   };
 }

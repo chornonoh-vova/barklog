@@ -19,6 +19,13 @@ const TIKTOK_SHORT_HOSTS = new Set(["vm.tiktok.com", "vt.tiktok.com"]);
 /** Three hops is generous for a link shortener and short enough to bound a loop. */
 export const MAX_REDIRECTS = 3;
 
+/**
+ * This is the SSRF-facing fetch — the target host is only allowlisted, not
+ * trusted — so a shortener that accepts the connection and stalls must not be
+ * allowed to hold the request open for undici's ~300s default.
+ */
+export const SHORT_LINK_TIMEOUT_MS = 5_000;
+
 function youtubeId(url: URL): string | null {
   const segments = url.pathname.split("/").filter((segment) => segment !== "");
 
@@ -88,6 +95,11 @@ export function parseShareUrl(input: string): Canonical {
  *    allowlist and https-only, so a redirect cannot walk off TikTok or downgrade;
  *  - `redirect: "manual"`, so undici never follows a hop we have not checked;
  *  - at most `MAX_REDIRECTS` hops, so a shortener loop terminates.
+ *
+ * A stalled or unreachable shortener and a hostile one both resolve to
+ * `unsupported` — the caller does not get to distinguish "down" from "gone"
+ * here, so a network failure, an abort, or an unparseable `Location` are all
+ * caught rather than left to escape as a raw throw.
  */
 export async function resolveShortLink(url: string, fetchImpl: typeof fetch): Promise<Canonical> {
   let current = url;
@@ -96,11 +108,27 @@ export async function resolveShortLink(url: string, fetchImpl: typeof fetch): Pr
     // Before the fetch, every time — including the caller's own URL.
     if (shareHostProvider(current) === null) return UNSUPPORTED;
 
-    const response = await fetchImpl(current, { method: "GET", redirect: "manual" });
+    let response: Response;
+    try {
+      response = await fetchImpl(current, {
+        method: "GET",
+        redirect: "manual",
+        signal: AbortSignal.timeout(SHORT_LINK_TIMEOUT_MS),
+      });
+    } catch {
+      return UNSUPPORTED;
+    }
+
+    if (response.status < 300 || response.status >= 400) return UNSUPPORTED;
+
     const location = response.headers.get("location");
     if (location === null) return UNSUPPORTED;
 
-    current = new URL(location, current).toString();
+    try {
+      current = new URL(location, current).toString();
+    } catch {
+      return UNSUPPORTED;
+    }
 
     const parsed = parseShareUrl(current);
     if (parsed.kind !== "shortLink") return parsed;

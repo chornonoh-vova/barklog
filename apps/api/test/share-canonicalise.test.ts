@@ -81,6 +81,20 @@ describe("resolveShortLink", () => {
     expect(result).toMatchObject({ kind: "video", ref: { videoId: "7123456789012345678" } });
   });
 
+  it("refuses to fetch a caller-supplied URL that is not on the allowlist", async () => {
+    const fetchImpl = vi.fn(async () =>
+      redirectTo("https://www.tiktok.com/@snam/video/7123456789012345678"),
+    ) as unknown as typeof fetch;
+
+    expect(await resolveShortLink("https://evil.test/x", fetchImpl)).toEqual({
+      kind: "unsupported",
+    });
+    // The bug this line prevents is an unchecked first fetch — hop 0 is the
+    // one case the tail `parseShareUrl` check below cannot cover, since it
+    // never runs until after a fetch has already happened.
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it("refuses a redirect that leaves the allowlisted hosts", async () => {
     const fetchImpl = vi.fn(async () =>
       redirectTo("https://evil.test/@snam/video/7123456789012345678"),
@@ -89,6 +103,7 @@ describe("resolveShortLink", () => {
     expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
       kind: "unsupported",
     });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
   it("refuses a downgrade to http", async () => {
@@ -99,6 +114,7 @@ describe("resolveShortLink", () => {
     expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
       kind: "unsupported",
     });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
   it("gives up after the hop cap rather than following a redirect loop", async () => {
@@ -116,6 +132,24 @@ describe("resolveShortLink", () => {
     const fetchImpl = vi.fn(
       async () => new Response(null, { status: 200 }),
     ) as unknown as typeof fetch;
+
+    expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
+      kind: "unsupported",
+    });
+  });
+
+  it("is unsupported, not a throw, when the fetch itself fails", async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    }) as unknown as typeof fetch;
+
+    expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
+      kind: "unsupported",
+    });
+  });
+
+  it("is unsupported, not a throw, when the Location header is not a usable URL", async () => {
+    const fetchImpl = vi.fn(async () => redirectTo("http://")) as unknown as typeof fetch;
 
     expect(await resolveShortLink("https://vm.tiktok.com/ZMabcdef/", fetchImpl)).toEqual({
       kind: "unsupported",

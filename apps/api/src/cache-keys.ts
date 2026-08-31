@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { GameFeed } from "@repo/contracts";
+import type { GameFeed, ShareProviderName } from "@repo/contracts";
 import { startOfUtcDay } from "@repo/db";
 
 export { SEARCH_VERSION_KEY } from "@repo/cache";
@@ -36,6 +36,6 @@ export function similarKey(version: number, gameId: number, limit: number): stri
 /** A published video's title effectively never changes. */
 export const OEMBED_TTL_SECONDS = 604_800;
 
-export function oembedKey(provider: string, videoId: string): string {
+export function oembedKey(provider: ShareProviderName, videoId: string): string {
   return `oembed:${provider}:${videoId}`;
 }

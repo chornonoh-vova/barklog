@@ -21,6 +21,7 @@ const cache = createCache(env.VALKEY_URL);
 
 // resolveShortLink and fetchMeta are wired to the real fetch; extractTitles
 // is not implemented yet (a later task's job) and no route calls it yet.
+// TODO(task-4): replace this stub with createShareProvider(env) from ./share/provider.js
 const shareProvider: ShareProvider = {
   resolveShortLink: (url) => resolveShortLink(url, fetch),
   fetchMeta: (ref) => fetchVideoMeta(ref, fetch),

@@ -52,6 +52,17 @@ it("asks TikTok's endpoint, and tolerates a missing author", async () => {
   expect(String(vi.mocked(fetchImpl).mock.calls[0]?.[0])).toContain("tiktok.com/oembed");
 });
 
+it("tolerates a null author_name, not just a missing one", async () => {
+  const fetchImpl = vi.fn(async () =>
+    json({ title: "beating this boss #residentevil", author_name: null }),
+  ) as unknown as typeof fetch;
+
+  expect(await fetchVideoMeta(TIKTOK, fetchImpl)).toEqual({
+    title: "beating this boss #residentevil",
+    author: null,
+  });
+});
+
 it.each([401, 403, 404])("treats %i as a gone video, not an outage", async (status) => {
   const fetchImpl = vi.fn(async () => json({}, status)) as unknown as typeof fetch;
 
