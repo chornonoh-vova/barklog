@@ -316,22 +316,49 @@ WHERE g.total_rating_count > 50
 The second number is the one that matters; global coverage across 373,590 mostly
 obscure games is a vanity metric.
 
+### Measured, 2026-08-31
+
+The backfill ran in 23.5 minutes (749 pages, 374,108 games) — IGDB time was the
+predicted ~3 minutes; the database writes dominated, as expected.
+
+| Metric | Result |
+|---|---|
+| Rows in `game_similar` | 3,155,422 |
+| Games covered | 315,597 of 374,110 — **84.4%** |
+| Games with `total_rating_count > 50` covered | 3,361 of 3,361 — **100%** |
+| Self-references | 0 |
+| Duplicate pairs | 0 |
+
+Coverage beat the estimate substantially: global coverage was expected to be
+poor enough to be worth dismissing, and is 84%. Among the games people actually
+open it is total. **The computed fallback in §12 is therefore not needed** — the
+condition that would have justified it does not exist.
+
+The zero self-references and zero duplicates across 3.1M rows confirm the two
+mapper guards in §4 hold at scale.
+
+Spot-check, The Witcher 3 (id 1942): Skyrim, Red Dead Redemption 2, Breath of
+the Wild, Dishonored, Batman: Arkham Knight, Shadow of Mordor, Dragon Age:
+Inquisition, The Witcher, Shadow of War, Kingdom Come: Deliverance. All
+`Main Game`, no DLC, no duplicates, and the original Witcher present — the kind
+of list genre-overlap scoring would not have produced.
+
 ## 11. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Coverage among popular games disappoints | Measured immediately after backfill by the second query in §10. The section renders nothing where data is missing, so a poor result is invisible rather than broken, and it is the trigger to revisit §12's computed fallback. |
+| ~~Coverage among popular games disappoints~~ | **Retired 2026-08-31.** Measured at 100% of games with `total_rating_count > 50` (§10). |
 | IGDB deprecates `similar_games` later | The nightly contract test fails the build on a dead field. Detection is automatic; the section then degrades to nothing. |
 | `--full` re-sync churn | Every write is an upsert, so the run is replay-safe by construction, and the advisory lock prevents overlap with the cron. |
 | IGDB's suggestions are occasionally odd | Accepted. It is the same source as every other field on the screen, and the alternative is a heuristic we would have to defend instead. |
 
 ## 12. Deferred
 
-- **Computed similarity as a fallback** where IGDB's list is empty: weighted
-  genre overlap with rarer genres counting for more, plus platform and developer
-  overlap, tuned by constants beside the existing search-ranking ones. Needs
-  reverse indexes on `game_genres.genre_id` and `game_companies.company_id`,
-  which do not exist today. Gated on the coverage measurement, not before.
+- ~~**Computed similarity as a fallback**~~ — **dropped, not deferred.** It was
+  gated on the coverage measurement, and §10 came back at 100% among games with
+  more than 50 ratings. There is no gap for it to fill, so the reverse indexes on
+  `game_genres.genre_id` and `game_companies.company_id` it would have needed
+  stay unbuilt. Revisit only if IGDB's coverage regresses.
 - **"More in this series"** from `parent_game`, and the `collections`,
   `remakes`, `remasters` and `ports` relations visible in IGDB's proto.
 - **"More from this developer"** from `game_companies`.

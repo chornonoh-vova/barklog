@@ -76,7 +76,7 @@
 
 **Background:** IGDB omits absent fields rather than sending `null`, so every optional field is `v.optional()` and the mapper turns absence into an empty list. `similar_games` is `repeated Game` in IGDB's proto; requested unexpanded it returns bare numeric ids, exactly as `parent_game` does.
 
-- [ ] **Step 1: Write the failing field-list test**
+- [x] **Step 1: Write the failing field-list test**
 
 Add to `packages/igdb/test/games-query.test.ts`:
 
@@ -90,7 +90,7 @@ test("the field list requests similar games as bare ids", () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing mapper tests**
+- [x] **Step 2: Write the failing mapper tests**
 
 Add to `packages/igdb/test/map.test.ts`:
 
@@ -129,12 +129,12 @@ test("an absent similar_games field yields no rows", () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `pnpm --filter @repo/igdb test`
 Expected: FAIL — `GAME_FIELDS` does not contain `similar_games`, and `page.gameSimilar` is `undefined`.
 
-- [ ] **Step 4: Add the field to the query**
+- [x] **Step 4: Add the field to the query**
 
 In `packages/igdb/src/games-query.ts`, add to `GAME_FIELDS` immediately after `"parent_game"`:
 
@@ -146,7 +146,7 @@ In `packages/igdb/src/games-query.ts`, add to `GAME_FIELDS` immediately after `"
   "similar_games",
 ```
 
-- [ ] **Step 5: Add the field to the schema**
+- [x] **Step 5: Add the field to the schema**
 
 In `packages/igdb/src/schemas.ts`, add to `igdbGameSchema` after `parent_game`:
 
@@ -155,7 +155,7 @@ In `packages/igdb/src/schemas.ts`, add to `igdbGameSchema` after `parent_game`:
   similar_games: v.optional(v.array(int)),
 ```
 
-- [ ] **Step 6: Add the mapper output**
+- [x] **Step 6: Add the mapper output**
 
 In `packages/igdb/src/map.ts`, add to the `MappedPage` interface after `gamePlatforms`:
 
@@ -194,17 +194,17 @@ And beside the other `[...map.values()]` assignments at the end:
   page.gameSimilar = [...gameSimilar.values()];
 ```
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 Run: `pnpm --filter @repo/igdb test`
 Expected: PASS, all tests including the pre-existing ones.
 
-- [ ] **Step 8: Verify types and lint**
+- [x] **Step 8: Verify types and lint**
 
 Run: `pnpm --filter @repo/igdb check-types && pnpm --filter @repo/igdb lint`
 Expected: no errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/igdb
@@ -231,7 +231,7 @@ without."
 
 **Background:** The sync paginates by ascending id (`gamesPageQuery` sorts `id asc`), so a page of low ids routinely names similar games with higher ids that have not been inserted yet. An FK on the target would reject those rows and fail the page. `games.parentGameId` already has this exact property and carries a comment plus a test saying so.
 
-- [ ] **Step 1: Write the failing soft-reference test**
+- [x] **Step 1: Write the failing soft-reference test**
 
 Add to `packages/db/test/mirror-schema.test.ts` (import `gameSimilar` from `../src/schema/index.js`):
 
@@ -267,12 +267,12 @@ test("game_similar cascades when its owning game is deleted", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pnpm --filter @repo/db test -t "soft reference with no foreign key"`
 Expected: FAIL — `gameSimilar` is not exported from the schema.
 
-- [ ] **Step 3: Add the table**
+- [x] **Step 3: Add the table**
 
 Append to `packages/db/src/schema/mirror.ts`:
 
@@ -299,7 +299,7 @@ export const gameSimilar = pgTable(
 );
 ```
 
-- [ ] **Step 4: Add the table to `truncateAll`**
+- [x] **Step 4: Add the table to `truncateAll`**
 
 In `packages/db/src/testing.ts`, add `game_similar` to the join-table line:
 
@@ -309,7 +309,7 @@ In `packages/db/src/testing.ts`, add `game_similar` to the join-table line:
 
 `ON DELETE cascade` from `games` would cover it, but that list is explicit and an omission surfaces later as cross-test bleed.
 
-- [ ] **Step 5: Generate the migration**
+- [x] **Step 5: Generate the migration**
 
 Run: `pnpm --filter @repo/db db:generate`
 
@@ -329,17 +329,17 @@ ALTER TABLE "game_similar" ADD CONSTRAINT "game_similar_game_id_games_id_fk" FOR
 
 Do not hand-edit the generated file, and do not rename it.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `pnpm --filter @repo/db test`
 Expected: PASS. Testcontainers applies the new migration automatically via `runMigrations` in `startPostgres`.
 
-- [ ] **Step 7: Verify types and lint**
+- [x] **Step 7: Verify types and lint**
 
 Run: `pnpm --filter @repo/db check-types && pnpm --filter @repo/db lint`
 Expected: no errors.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/db
@@ -364,7 +364,7 @@ on read instead."
 
 **Background:** Join rows are replaced wholesale — deleted for the page's games, then re-inserted — which is what makes a suggestion IGDB has dropped actually disappear, and what makes replaying a page a no-op. That replay property is what the sync's failure model depends on: a failed run does not advance the watermark, so the next run re-fetches the same range.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `apps/worker/test/persist.test.ts`, add `similar_games` to both `PAGE` entries so the existing replay and rollback tests cover the new rows too:
 
@@ -426,12 +426,12 @@ test("a similar game IGDB dropped disappears on re-sync", async () => {
 
 Add `eq` to the drizzle-orm import at the top of the file if it is not already there.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter worker test`
 Expected: FAIL — `game_similar` is empty because `persistPage` does not write it.
 
-- [ ] **Step 3: Add the delete**
+- [x] **Step 3: Add the delete**
 
 In `apps/worker/src/persist.ts`, alongside the other scoped deletes:
 
@@ -439,7 +439,7 @@ In `apps/worker/src/persist.ts`, alongside the other scoped deletes:
     await tx.delete(schema.gameSimilar).where(inArray(schema.gameSimilar.gameId, gameIds));
 ```
 
-- [ ] **Step 4: Add the insert**
+- [x] **Step 4: Add the insert**
 
 With the other guarded inserts:
 
@@ -449,17 +449,17 @@ With the other guarded inserts:
     }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter worker test`
 Expected: PASS, including the pre-existing "replaying the same page leaves the database identical" now that `snapshot()` covers `gameSimilar`.
 
-- [ ] **Step 6: Verify types and lint**
+- [x] **Step 6: Verify types and lint**
 
 Run: `pnpm --filter worker check-types && pnpm --filter worker lint`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/worker
@@ -483,7 +483,7 @@ suggestion IGDB dropped disappears and a replay stays a no-op."
 
 **Background:** `GAME_SUMMARY_COLUMNS` is the projection every list endpoint returns. `searchableType` is the module-level `inArray(games.gameTypeId, SEARCHABLE_GAME_TYPE_IDS)` constant — type 1 is DLC and must not surface. The `asc(games.id)` tiebreak gives a total order so a `LIMIT` cannot produce an unstable list.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `packages/db/test/games-queries.test.ts`. Import `similarGames` from `../src/queries/games.js`, and add this helper beside `seed`:
 
@@ -571,12 +571,12 @@ test("similar games carry the same projection as every other list", async () => 
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @repo/db test -t "similar"`
 Expected: FAIL — `similarGames` is not exported.
 
-- [ ] **Step 3: Implement the query**
+- [x] **Step 3: Implement the query**
 
 Append to `packages/db/src/queries/games.ts`. Add `gameSimilar` to the existing `schema/mirror.js` import list.
 
@@ -605,17 +605,17 @@ export async function similarGames(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter @repo/db test`
 Expected: PASS.
 
-- [ ] **Step 5: Verify types and lint**
+- [x] **Step 5: Verify types and lint**
 
 Run: `pnpm --filter @repo/db check-types && pnpm --filter @repo/db lint`
 Expected: no errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/db
@@ -640,7 +640,7 @@ join."
 
 **Background:** `integerFrom(min, max)` coerces with `Number` then validates, so junk becomes `NaN` and fails rather than silently falling back to the default. The cache key is version-prefixed because the worker calls `incr(SEARCH_VERSION_KEY)` at the end of every successful sync, which is what sweeps stale entries.
 
-- [ ] **Step 1: Write the failing contract tests**
+- [x] **Step 1: Write the failing contract tests**
 
 Add to `packages/contracts/test/contracts.test.ts` (follow the file's existing import and `describe` style):
 
@@ -661,12 +661,12 @@ test("a non-numeric similar-games limit is rejected, not defaulted", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @repo/contracts test`
 Expected: FAIL — `similarQuerySchema` is not exported.
 
-- [ ] **Step 3: Add the contract**
+- [x] **Step 3: Add the contract**
 
 Append to `packages/contracts/src/games.ts`:
 
@@ -684,12 +684,12 @@ export const similarQuerySchema = v.object({
 });
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter @repo/contracts test && pnpm --filter @repo/contracts check-types`
 Expected: PASS.
 
-- [ ] **Step 5: Add the cache key**
+- [x] **Step 5: Add the cache key**
 
 Append to `apps/api/src/cache-keys.ts`:
 
@@ -710,12 +710,12 @@ export function similarKey(version: number, gameId: number, limit: number): stri
 }
 ```
 
-- [ ] **Step 6: Verify types and lint**
+- [x] **Step 6: Verify types and lint**
 
 Run: `pnpm --filter api check-types && pnpm --filter api lint && pnpm --filter @repo/contracts lint`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/contracts apps/api/src/cache-keys.ts
@@ -742,7 +742,7 @@ sweeps it."
 
 `PUT /api/backlog/:gameId` already guards an unknown game with the same `gameExists` helper, so the 404 is an established pattern rather than a new one.
 
-- [ ] **Step 1: Add the seeding helper**
+- [x] **Step 1: Add the seeding helper**
 
 Append to `apps/api/test/helpers.ts`:
 
@@ -759,7 +759,7 @@ export async function seedSimilar(
 }
 ```
 
-- [ ] **Step 2: Write the failing route tests**
+- [x] **Step 2: Write the failing route tests**
 
 Add to `apps/api/test/games-routes.test.ts`, importing `seedSimilar` and `SIMILAR_TTL_SECONDS`/`similarKey` as needed:
 
@@ -884,12 +884,12 @@ test("the similar route is not shadowed by the :id catch-all", async () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `pnpm --filter api test -t "similar"`
 Expected: FAIL — the route does not exist, so requests fall through to the `/:id` handler or 404.
 
-- [ ] **Step 4: Implement the route**
+- [x] **Step 4: Implement the route**
 
 In `apps/api/src/routes/games.ts`, add `similarQuerySchema` to the `@repo/contracts` import, `gameExists` and `similarGames` to the `@repo/db` import, and `SIMILAR_TTL_SECONDS` + `similarKey` to the `../cache-keys.js` import.
 
@@ -934,17 +934,17 @@ Register **before** the `.get("/:id", ...)` handler:
       )
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter api test`
 Expected: PASS, including the whole pre-existing suite (the `invariants.test.ts` problem-document invariant covers the new 404 and 422 automatically).
 
-- [ ] **Step 6: Verify types and lint**
+- [x] **Step 6: Verify types and lint**
 
 Run: `pnpm --filter api check-types && pnpm --filter api lint`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/api
@@ -971,7 +971,7 @@ Existence check inside the cache loader so a 404 is never cached."
 
 **Background:** The query builder in `api/client.ts` drops `undefined` values. `keys.games.similar` deliberately does not nest under `keys.games.detail(id)`: the backlog mutations invalidate that key, and adding a game to your backlog does not change what is similar to it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `apps/mobile/test/api-keys.test.ts`:
 
@@ -1010,12 +1010,12 @@ Add to `apps/mobile/test/api-endpoints.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter mobile test`
 Expected: FAIL — `keys.games.similar` and `endpoints.similarGames` do not exist.
 
-- [ ] **Step 3: Add the endpoint**
+- [x] **Step 3: Add the endpoint**
 
 In `apps/mobile/src/api/endpoints.ts`, add `SIMILAR_LIMIT_DEFAULT` to the `@repo/contracts` import and, after `getGame`:
 
@@ -1026,7 +1026,7 @@ In `apps/mobile/src/api/endpoints.ts`, add `SIMILAR_LIMIT_DEFAULT` to the `@repo
       }),
 ```
 
-- [ ] **Step 4: Add the key**
+- [x] **Step 4: Add the key**
 
 In `apps/mobile/src/api/keys.ts`, inside the `games` namespace:
 
@@ -1039,7 +1039,7 @@ In `apps/mobile/src/api/keys.ts`, inside the `games` namespace:
     similar: (id: number, limit: number) => ["games", "similar", id, limit] as const,
 ```
 
-- [ ] **Step 5: Add the hook**
+- [x] **Step 5: Add the hook**
 
 In `apps/mobile/src/api/hooks.ts`, add `SIMILAR_LIMIT_DEFAULT` to the `@repo/contracts` import and, after `useGame`:
 
@@ -1059,17 +1059,17 @@ export function useSimilarGames(
 
 The client's default 60 s `staleTime` is deliberately left alone: the response carries `max-age=300`, so the HTTP layer absorbs repeat opens, and the relation only changes on a nightly sync.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `pnpm --filter mobile test`
 Expected: PASS.
 
-- [ ] **Step 7: Verify types and lint**
+- [x] **Step 7: Verify types and lint**
 
 Run: `pnpm --filter mobile check-types && pnpm --filter mobile lint`
 Expected: no errors.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/mobile/src/api apps/mobile/test
@@ -1105,7 +1105,7 @@ A `string`-typed base path interpolated into a template yields `` `${string}/${n
 
 `GameTile` is memoised on `onPress`, so the callback must be wrapped in `useCallback` or the memo is defeated on every render.
 
-- [ ] **Step 1: Create the section**
+- [x] **Step 1: Create the section**
 
 Create `apps/mobile/src/features/game/similar-games.tsx`:
 
@@ -1174,7 +1174,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 2: Wire it into the detail screen**
+- [x] **Step 2: Wire it into the detail screen**
 
 In `apps/mobile/src/features/game/game-detail-screen.tsx`, add the import:
 
@@ -1204,7 +1204,7 @@ Insert the section between `<DetailRows />` and `<IgdbAttribution />`:
             <IgdbAttribution slug={data.slug} />
 ```
 
-- [ ] **Step 3: Update the three route files**
+- [x] **Step 3: Update the three route files**
 
 `apps/mobile/src/app/(tabs)/(home)/game/[id].tsx`:
 
@@ -1257,17 +1257,17 @@ export default function SearchGameDetail() {
 }
 ```
 
-- [ ] **Step 4: Verify types**
+- [x] **Step 4: Verify types**
 
 Run: `pnpm --filter mobile check-types`
 Expected: no errors. **If a route push fails to type-check**, the literal has drifted from the generated union — read `apps/mobile/.expo/types/router.d.ts` and match it exactly rather than adding a cast.
 
-- [ ] **Step 5: Run the test suite and lint**
+- [x] **Step 5: Run the test suite and lint**
 
 Run: `pnpm --filter mobile test && pnpm --filter mobile lint`
 Expected: PASS. `test/smoke.test.ts` imports modules; it will catch a broken import path.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/mobile/src apps/mobile/test
@@ -1290,7 +1290,7 @@ typed routes make Href a union of template-literal types."
 - Consumes: everything above.
 - Produces: nothing code-facing.
 
-- [ ] **Step 1: Add the route to the README table**
+- [x] **Step 1: Add the route to the README table**
 
 In `README.md`, in the `apps/api` route table, immediately after the `GET /api/games/:id` row:
 
@@ -1298,7 +1298,7 @@ In `README.md`, in the `apps/api` route table, immediately after the `GET /api/g
 | `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12) |
 ```
 
-- [ ] **Step 2: Document the section in the mobile prose**
+- [x] **Step 2: Document the section in the mobile prose**
 
 In `README.md`, after the **Explore** paragraph in the `apps/mobile` section:
 
@@ -1313,50 +1313,50 @@ suggestions, so the feature was deployable before the backfill ran. Each tab's
 current tab.
 ```
 
-- [ ] **Step 3: Add the device check**
+- [x] **Step 3: Add the device check**
 
 Append to the checklist in `docs/mobile-device-verification.md` (match the file's existing checkbox format):
 
 ```markdown
-- [ ] **Similar games stay in their tab.** Open Explore → a popular game → a
+- [x] **Similar games stay in their tab.** Open Explore → a popular game → a
       game in its Similar Games row → another game in that one's row. The tab
       bar stays visible throughout and Explore stays selected. Back unwinds one
       level at a time.
-- [ ] **A game with no suggestions draws no section.** The IGDB attribution
+- [x] **A game with no suggestions draws no section.** The IGDB attribution
       follows the detail rows directly, with no empty heading above it.
-- [ ] **Tiles without cover art show the `gamecontroller` placeholder**, not a
+- [x] **Tiles without cover art show the `gamecontroller` placeholder**, not a
       blank or broken image.
 ```
 
-- [ ] **Step 4: Commit the docs**
+- [x] **Step 4: Commit the docs**
 
 ```bash
 git add README.md docs/mobile-device-verification.md
 git commit -m "docs: similar games route, section and device checks"
 ```
 
-- [ ] **Step 5: Apply the migration locally**
+- [x] **Step 5: Apply the migration locally**
 
 Run: `pnpm --filter @repo/db db:migrate`
 Expected: the `0004` migration applies. Requires the local Postgres from `deps.compose.yaml`.
 
-- [ ] **Step 6: Run the full verification suite**
+- [x] **Step 6: Run the full verification suite**
 
 Run: `pnpm turbo check-types lint test`
 Expected: everything passes. This is the gate before the backfill.
 
-- [ ] **Step 7: Confirm IGDB still accepts the field, live**
+- [x] **Step 7: Confirm IGDB still accepts the field, live**
 
 Run: `pnpm --filter @repo/igdb test:contract`
 Expected: PASS. This is the real confirmation that `similar_games` is not deprecated — it needs `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` in the root `.env`, and the suite skips silently without them. **If it fails with a 400, stop**: the field has been removed or renamed, and the spec's §11 risk row has fired.
 
-- [ ] **Step 8: Backfill**
+- [x] **Step 8: Backfill**
 
 Run: `pnpm --filter worker sync --full`
 
 Expected: roughly 748 pages of 500 at 4 requests per second — about three minutes of IGDB time, longer with the database writes. The advisory lock means this cannot collide with the nightly cron. Every write is an upsert, so an interrupted run is safe to repeat.
 
-- [ ] **Step 9: Measure coverage**
+- [x] **Step 9: Measure coverage**
 
 Run against the mirror:
 
@@ -1375,7 +1375,7 @@ SELECT count(*) FROM games WHERE total_rating_count > 50;
 
 Record both ratios in the PR description. **The second ratio is the one that matters** — global coverage across 373,590 mostly obscure games is a vanity metric. If popular-game coverage disappoints, that is the trigger to revisit the computed fallback in spec §12, and not before.
 
-- [ ] **Step 10: Sanity-check a real game**
+- [x] **Step 10: Sanity-check a real game**
 
 ```sql
 SELECT g.name, g.total_rating_count
