@@ -37,3 +37,9 @@ test("the log levels are LogTape's, so `warn` is a boot failure", () => {
 test("a missing Anthropic key stops the process at boot, since every share would degrade", () => {
   expect(() => parseEnv({ ...VALID, ANTHROPIC_API_KEY: undefined })).toThrow(/ANTHROPIC_API_KEY/);
 });
+
+test("an IDENTIFY_MODEL outside the verified picklist stops the process at boot, not with a silent fail-soft extraction", () => {
+  expect(() => parseEnv({ ...VALID, IDENTIFY_MODEL: "claude-haiku-4-5" })).toThrow(
+    /IDENTIFY_MODEL/,
+  );
+});

@@ -4,6 +4,18 @@ import * as v from "valibot";
 
 const required = v.pipe(v.string(), v.minLength(1));
 
+/**
+ * Models `extract.ts`'s request shape is verified to work on: `thinking: {
+ * type: "disabled" }` is accepted, and structured outputs via
+ * `output_config.format` are supported. Anything else — including
+ * claude-haiku-4-5, where thinking-disabled is undocumented, and
+ * claude-fable-5, where it 400s — routes silently onto the fail-soft path,
+ * which is the `maxItems` incident again. Extend this list only once both
+ * properties are confirmed in current Anthropic documentation for the
+ * candidate model.
+ */
+const IDENTIFY_MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8"] as const;
+
 const envSchema = v.object({
   PORT: v.optional(integerFrom(1, 65_535), 3000),
   DATABASE_URL: required,
@@ -11,7 +23,7 @@ const envSchema = v.object({
   CLERK_SECRET_KEY: required,
   CLERK_PUBLISHABLE_KEY: required,
   ANTHROPIC_API_KEY: required,
-  IDENTIFY_MODEL: v.optional(required, "claude-sonnet-5"),
+  IDENTIFY_MODEL: v.optional(v.picklist(IDENTIFY_MODELS), "claude-sonnet-5"),
   NODE_ENV: v.optional(v.picklist(["development", "test", "production"]), "development"),
   LOG_LEVEL: v.optional(v.picklist(LOG_LEVELS), "info"),
 });
