@@ -32,14 +32,14 @@ export default function SharedIndex() {
 
   return (
     <>
-      <Stack.Title large>Shared</Stack.Title>
+      <Stack.Title>Shared</Stack.Title>
 
       {/* A toolbar button, not `Stack.Screen.BackButton`: this is the root of a
           modal with nothing behind it to pop to, and leaving needs to clear the
           payload as well as navigate. */}
-      <Stack.Toolbar placement="left">
+      <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          icon="chevron.left"
+          icon="xmark"
           accessibilityLabel="Back to home"
           onPress={goHome}
         >
