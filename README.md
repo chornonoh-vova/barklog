@@ -130,6 +130,22 @@ which the trigram search index depends on.
 > volume mounts `/var/lib/postgresql`, **not** `/var/lib/postgresql/data`. The
 > older path makes the image refuse to start.
 
+### Seeding the games mirror
+
+The API never calls IGDB. Everything is served from our own Postgres, populated
+by the worker. Create a Twitch application at
+<https://dev.twitch.tv/console/apps> to get `IGDB_CLIENT_ID` and
+`IGDB_CLIENT_SECRET`, then:
+
+```sh
+pnpm --filter worker sync --full   # full seed: ~700 requests, a few minutes
+pnpm --filter worker sync          # incremental: only what changed
+pnpm --filter worker dev           # schedule the nightly run (SYNC_CRON)
+```
+
+A failed run does not advance the watermark, so the next run simply re-fetches
+the same range. Every write is an upsert, which makes replaying a range safe.
+
 ## Deployment
 
 Pushing to `main` runs `.github/workflows/images.yml`, which verifies the
@@ -188,22 +204,6 @@ Set the deploy environment in Dokploy: `DATABASE_URL`, `CLERK_SECRET_KEY`,
 `IGDB_CLIENT_SECRET` are required; `IMAGE_TAG`, `LOG_LEVEL`,
 `IDENTIFY_MODEL`, `SYNC_CRON`, and `SYNC_TZ` are optional and default to the
 values in each app's env schema.
-
-### Seeding the games mirror
-
-The API never calls IGDB. Everything is served from our own Postgres, populated
-by the worker. Create a Twitch application at
-<https://dev.twitch.tv/console/apps> to get `IGDB_CLIENT_ID` and
-`IGDB_CLIENT_SECRET`, then:
-
-```sh
-pnpm --filter worker sync --full   # full seed: ~700 requests, a few minutes
-pnpm --filter worker sync          # incremental: only what changed
-pnpm --filter worker dev           # schedule the nightly run (SYNC_CRON)
-```
-
-A failed run does not advance the watermark, so the next run simply re-fetches
-the same range. Every write is an upsert, which makes replaying a range safe.
 
 ## Testing
 
