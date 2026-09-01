@@ -19,9 +19,14 @@ allowBuilds:
   # Postinstall only prints a sponsorship/donation banner; declined — no functional impact.
   browser-tabs-lock: false
   core-js: false
-  # Native binding used by `ws` for faster UTF-8 validation; declined so installs need
-  # no C++ toolchain. `ws` falls back to its pure-JS validator when unavailable.
+  # Native bindings used by `ws` for faster UTF-8 validation and frame masking;
+  # declined so installs need no C++ toolchain. `ws` falls back to its pure-JS
+  # implementations when they are unavailable. Both reach us only through
+  # apps/mobile (@expo/cli), so neither appears in the pruned lockfile the
+  # Dockerfile installs from — but leaving either undecided makes a fresh
+  # `pnpm install --frozen-lockfile` exit 1, which would fail CI.
   utf-8-validate: false
+  bufferutil: false
 
 minimumReleaseAgeExclude:
   # expo-secure-store@57.0.2 was published within pnpm 11's default cooling-off
