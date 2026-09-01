@@ -1,0 +1,97 @@
+# The production stack for the Dokploy-managed VPS: the API, the worker and
+# Valkey, running images published by .github/workflows/images.yml.
+#
+# Postgres is NOT here — it lives on PlanetScale and is reached over the
+# network. For local development use `pnpm deps:up`, which runs
+# deps.compose.yaml (Postgres and Valkey only) and leaves the apps on the host.
+#
+# Rollback: set IMAGE_TAG=sha-abc1234 in Dokploy and redeploy. No file edit,
+# no rebuild.
+name: barklog
+
+services:
+  # Runs to completion before api or worker start, on every deploy. A failed
+  # migration therefore blocks the deploy rather than starting the apps against
+  # a schema they do not match.
+  migrate:
+    image: ghcr.io/chornonoh-vova/barklog-migrate:${IMAGE_TAG:-main}
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?required — PlanetScale connection string, include sslmode=require}
+
+  api:
+    image: ghcr.io/chornonoh-vova/barklog-api:${IMAGE_TAG:-main}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+    # No `ports:` anywhere in this file. Traefik reaches the API over
+    # dokploy-network; add api.barklog.gg to this service in Dokploy's Domains
+    # tab and it injects the routing labels and provisions the certificate.
+    expose:
+      - "3000"
+    networks:
+      - default
+      - dokploy-network
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      VALKEY_URL: redis://valkey:6379
+      DATABASE_URL: ${DATABASE_URL:?required — PlanetScale connection string, include sslmode=require}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?required}
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:?required}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?required}
+      IDENTIFY_MODEL: ${IDENTIFY_MODEL:-claude-sonnet-5}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    healthcheck:
+      # /healthz, not /readyz. Readiness folds in PlanetScale and Valkey
+      # reachability, so a transient blip would mark the container unhealthy and
+      # invite a restart loop for a condition the API is built to survive and
+      # report. wget is busybox's, already in the alpine base.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    image: ghcr.io/chornonoh-vova/barklog-worker:${IMAGE_TAG:-main}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+    # Default network only: nothing outside the project can reach it.
+    environment:
+      NODE_ENV: production
+      VALKEY_URL: redis://valkey:6379
+      DATABASE_URL: ${DATABASE_URL:?required — PlanetScale connection string, include sslmode=require}
+      IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:?required}
+      IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:?required}
+      SYNC_CRON: "${SYNC_CRON:-0 0 * * *}"
+      SYNC_TZ: ${SYNC_TZ:-UTC}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # No healthcheck: the worker runs a cron schedule and serves nothing to
+    # probe. It relies on restart: unless-stopped.
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    restart: unless-stopped
+    # Persistence off: this holds a cache and rate-limit counters, all of which
+    # are reconstructible. Same reasoning as deps.compose.yaml.
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  # Created by Dokploy; Traefik is attached to it.
+  dokploy-network:
+    external: true
