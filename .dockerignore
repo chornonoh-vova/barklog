@@ -12,15 +12,20 @@ out
 .github
 docs
 
-# Every local secret file. The build reads none of them.
+# Every local secret file. The build reads none of them. .dockerignore
+# patterns are not recursive, so both the root form and the **/ form are
+# needed to catch apps/api/.env and apps/worker/.env as well as the root one.
 .env
 .env.*
-apps/*/.env
-apps/*/.env.*
+**/.env
+**/.env.*
 
 .DS_Store
+**/.DS_Store
 coverage
+**/coverage
 .expo
+**/.expo
 .superpowers
 
 # NOTE: apps/mobile is deliberately NOT excluded. `turbo prune` reads the whole
