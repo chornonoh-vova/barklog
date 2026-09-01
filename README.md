@@ -130,6 +130,65 @@ which the trigram search index depends on.
 > volume mounts `/var/lib/postgresql`, **not** `/var/lib/postgresql/data`. The
 > older path makes the image refuse to start.
 
+## Deployment
+
+Pushing to `main` runs `.github/workflows/images.yml`, which verifies the
+workspace (`build`, `lint`, `check-types`, `test`) and then publishes three
+images to the GitHub Container Registry:
+
+```
+ghcr.io/chornonoh-vova/barklog-api
+ghcr.io/chornonoh-vova/barklog-worker
+ghcr.io/chornonoh-vova/barklog-migrate
+```
+
+Each is tagged `main`, `sha-<short>`, and `latest`. All three come from the
+same root `Dockerfile` — `docker build --target api|worker|migrate .` — over a
+single `turbo prune`d install, so `apps/mobile`'s Expo dependencies never enter
+the build.
+
+Nothing deploys automatically. `compose.yaml` describes the VPS stack and
+Dokploy pulls when you press Deploy. That stack is the API, the worker, and
+Valkey; Postgres is external and lives on PlanetScale. Only the API is
+reachable from outside — the file publishes no host ports at all, and
+`api.barklog.gg` is attached to the `api` service in Dokploy's Domains tab,
+which injects the Traefik labels and provisions the certificate.
+
+Migrations run as a one-shot `migrate` service that both apps wait on with
+`service_completed_successfully`, so a failed migration blocks the deploy
+instead of starting an app against a schema it does not match.
+
+To roll back, set `IMAGE_TAG=sha-abc1234` in Dokploy's environment and
+redeploy. There is no file to edit and nothing to rebuild.
+
+> A bare `docker compose up` in this repository now starts the **production**
+> stack, because `compose.yaml` is the file Compose picks up by default. Local
+> development is `pnpm deps:up`, which passes `-f deps.compose.yaml`
+> explicitly.
+
+### Before the first deploy
+
+Three things live outside this repository and need doing once.
+
+Set each of the three GHCR packages to Public. The repository is public, so
+this costs nothing and saves storing registry credentials in Dokploy. Left
+private, the VPS needs a pull secret.
+
+Confirm the PlanetScale role may create extensions. `@repo/db`'s migration
+runner executes `CREATE EXTENSION IF NOT EXISTS pg_trgm`, because drizzle-kit
+does not generate extension statements and the trigram search index depends on
+it. If the role cannot, the `migrate` service fails and the deploy halts.
+
+Put `sslmode=require` in `DATABASE_URL`. `createDb` passes the connection
+string straight to `pg.Pool`, which reads `sslmode` from the URL, so TLS is a
+property of the secret rather than of the code.
+
+Set the deploy environment in Dokploy: `DATABASE_URL`, `CLERK_SECRET_KEY`,
+`CLERK_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY`, `IGDB_CLIENT_ID`, and
+`IGDB_CLIENT_SECRET` are required; `IMAGE_TAG`, `LOG_LEVEL`,
+`IDENTIFY_MODEL`, `SYNC_CRON`, and `SYNC_TZ` are optional and default to the
+values in each app's env schema.
+
 ### Seeding the games mirror
 
 The API never calls IGDB. Everything is served from our own Postgres, populated
