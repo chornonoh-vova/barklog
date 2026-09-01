@@ -93,10 +93,14 @@ scope of its own.
   `packages/db/src/migrate.ts` resolves `../drizzle` relative to its own
   compiled location, so the SQL has to sit beside `dist/`. All three targets
   inherit the directory; only `migrate` reads it.
-- **Symlinks must survive the copy.** pnpm's hoisted linker places real
-  packages in `/app/node_modules` and relative symlinks for `@repo/*` pointing
-  into `packages/`. `COPY` preserves symlinks, and both ends of each link land
-  in `runtime-base`, so resolution holds. Copying only one end would break it.
+- **The whole dependency tree must be copied, not just the root.** pnpm's
+  hoisted linker puts the real packages in `/app/node_modules` as ordinary
+  directories, but the `@repo/*` links live in per-project directories —
+  `apps/api/node_modules/@repo/db -> ../../../../packages/db`, and likewise for
+  `apps/worker` and `packages/igdb`. There is no `/app/node_modules/@repo`.
+  `runtime-base` therefore copies the entire `/app` tree from `prod-deps`;
+  copying `/app/node_modules` alone would leave those links behind and every
+  `@repo` import would fail to resolve.
 - **Containers run as the image's `node` user**, not root.
 - **The turbo version is pinned twice.** The `pruner` stage invokes
   `pnpm dlx turbo@2.10.11`, duplicating the pin in the root `package.json`.

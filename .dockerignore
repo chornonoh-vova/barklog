@@ -1,0 +1,28 @@
+# Keeps the pruner stage's `COPY . .` cheap and, more importantly, keeps
+# developer .env files out of the build context.
+
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+**/.turbo
+out
+.git
+.github
+docs
+
+# Every local secret file. The build reads none of them.
+.env
+.env.*
+apps/*/.env
+apps/*/.env.*
+
+.DS_Store
+coverage
+.expo
+.superpowers
+
+# NOTE: apps/mobile is deliberately NOT excluded. `turbo prune` reads the whole
+# workspace to rewrite the lockfile, and an importer present in pnpm-lock.yaml
+# with no package.json on disk makes the pruned output inconsistent.
