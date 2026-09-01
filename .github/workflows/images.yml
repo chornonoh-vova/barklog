@@ -58,6 +58,36 @@ jobs:
       # so the expensive work happens exactly once. A matrix would run those
       # stages three times in parallel and contend over the cache.
 
+      # migrate publishes first, then api, then worker. Each push is
+      # independent, so a failure partway through this sequence — a registry
+      # hiccup, a runner OOM, a change that only breaks one target — leaves
+      # the three :main tags at different commits. Publishing migrate first
+      # means that failure mode is a new schema running old code, which
+      # additive Drizzle migrations tolerate; publishing it last would risk
+      # the opposite, old schema against new code, which they do not.
+
+      - id: meta-migrate
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/barklog-migrate
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: migrate
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-migrate.outputs.tags }}
+          labels: ${{ steps.meta-migrate.outputs.labels }}
+          cache-from: type=gha,scope=barklog
+          cache-to: type=gha,scope=barklog,mode=max
+          # Single-platform build: an attestation would add the unknown/unknown
+          # manifest entry that clutters GHCR's package UI.
+          provenance: false
+
       - id: meta-api
         uses: docker/metadata-action@v5
         with:
@@ -76,8 +106,6 @@ jobs:
           labels: ${{ steps.meta-api.outputs.labels }}
           cache-from: type=gha,scope=barklog
           cache-to: type=gha,scope=barklog,mode=max
-          # Single-platform build: an attestation would add the unknown/unknown
-          # manifest entry that clutters GHCR's package UI.
           provenance: false
 
       - id: meta-worker
@@ -96,26 +124,6 @@ jobs:
           push: true
           tags: ${{ steps.meta-worker.outputs.tags }}
           labels: ${{ steps.meta-worker.outputs.labels }}
-          cache-from: type=gha,scope=barklog
-          cache-to: type=gha,scope=barklog,mode=max
-          provenance: false
-
-      - id: meta-migrate
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/barklog-migrate
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: migrate
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-migrate.outputs.tags }}
-          labels: ${{ steps.meta-migrate.outputs.labels }}
           cache-from: type=gha,scope=barklog
           cache-to: type=gha,scope=barklog,mode=max
           provenance: false
