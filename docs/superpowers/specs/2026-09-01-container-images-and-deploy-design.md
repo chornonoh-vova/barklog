@@ -111,10 +111,11 @@ scope of its own.
 
 Excludes `node_modules`, `dist`, `.turbo`, `out`, `.git`, `.github`, `docs`,
 every `.env`/`.env.*` file, `.DS_Store`, `coverage`, `.expo`, and
-`.superpowers`. Because `.dockerignore` patterns are not recursive, each of
-these carries both its bare form and a `**/` form, so a nested match — say
-`apps/api/.env` or `packages/db/coverage` — is excluded as well as the
-root-level one. This keeps the pruner's `COPY . .` cheap and, more importantly,
+`.superpowers`. For nested matches, `node_modules`, `dist`, `.turbo`, `.env`,
+`.env.*`, `.DS_Store`, `coverage`, and `.expo` are listed in both bare and
+`**/` forms so they are excluded anywhere in the tree — not just at the root.
+The others (`out`, `.git`, `.github`, `docs`, `.superpowers`) are bare form
+only. This keeps the pruner's `COPY . .` cheap and, more importantly,
 keeps developer secrets out of the build context.
 
 `apps/mobile` is deliberately **not** excluded. `turbo prune` reads the whole
@@ -219,18 +220,23 @@ service's `environment:` above — not `${PORT:-3000}`. The two are hardcoded
 together on purpose: Dokploy's environment cannot desync a value that isn't
 read from it.
 
-Deliberately not `/readyz`, though not for the reason it might seem.
+Deliberately not `/readyz`, though not for the reason it might seem at first.
 Compose's `restart:` policies trigger on container exit, never on health
 status — health-gated restarting is Swarm behaviour, not Compose's — so a
 failing healthcheck here has no remediation path regardless of which path is
 probed; it is purely observational. The real reasons are that Traefik's
-Docker provider does not consult container health when routing, so a
-readiness check would gate no traffic, and that if Dokploy runs
-`up -d --wait`, a `/readyz` check would fail the whole deploy on a transient
-PlanetScale blip the API is built to survive and report. The corollary:
-nothing in this stack gates traffic on readiness, so Traefik will route to
-the API during its first seconds after start and while its dependencies are
-down.
+Docker provider _does_ act on container health: with the default
+`allowEmptyServices: false`, unhealthy containers drop from the load balancer
+entirely (requests get 404), or with `allowEmptyServices: true`, Traefik
+keeps an empty server entry (requests get 503). So a `/readyz` check would
+gate traffic on the API's dependencies — a PlanetScale blip would remove it
+from routing, giving callers a bare 404 or 503 instead of the API's own
+structured problem-details response naming which dependency is down. `/healthz`
+keeps the container in the load balancer and lets the API report dependency
+trouble in its format. Additionally, if Dokploy runs `up -d --wait`, a
+`/readyz` check would fail the whole deploy on a transient blip the API is
+built to survive and report. Traffic gates on liveness, not readiness, so
+Traefik routes to the API while it is alive and its dependencies are down.
 
 `worker` gets no healthcheck — it runs a cron schedule and serves nothing to
 probe. It relies on `restart: unless-stopped`.

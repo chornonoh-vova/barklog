@@ -67,14 +67,13 @@ services:
       # remediation path: Compose's restart: policies trigger on container
       # exit, never on health status, so a failing healthcheck here does not
       # get anything restarted (that behaviour is Swarm's, not Compose's).
-      # /readyz would still be the wrong check to publish, for two reasons.
-      # Traefik's Docker provider does not consult container health when
-      # routing, so a readiness probe would gate no traffic. And if Dokploy
-      # ever runs `up -d --wait`, a /readyz check would fail the whole deploy
-      # on a transient PlanetScale blip the API is built to survive and
-      # report. Corollary: nothing here gates traffic on readiness, so
-      # Traefik will route to the API during its first seconds and while its
-      # dependencies are down. wget is busybox's, already in the alpine base.
+      # /readyz would still be wrong. Traefik's Docker provider acts on
+      # container health, dropping unhealthy containers from the load
+      # balancer — so /readyz would gate traffic on dependencies, giving bare
+      # 404s instead of the API's own structured 503. /healthz keeps the
+      # container routable and lets the API report its troubles. If Dokploy
+      # runs `up -d --wait`, /readyz would also fail the whole deploy on
+      # transient blips the API survives. wget is busybox's, in alpine base.
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1"]
       interval: 15s
       timeout: 5s
