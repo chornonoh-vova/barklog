@@ -1,0 +1,118 @@
+name: Images
+
+# Publishes the api, worker and migrate images to GHCR. Dokploy is not
+# notified: deploys stay deliberate, so you press Deploy in its UI when you
+# want a new build live.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Two merges in quick succession must not race over the :main tag.
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # build first: check-types and the test suites resolve @repo/* through
+      # each package's built .d.ts.
+      - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm check-types
+      # The suites start Postgres and Valkey through Testcontainers on the
+      # runner's Docker daemon. No secrets: the only credential-dependent test
+      # is packages/igdb's contract test, which has its own config and its own
+      # scheduled workflow.
+      - run: pnpm test
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The three builds are sequential and share one cache scope on purpose.
+      # The second and third hit cache for the pruner, deps and builder stages,
+      # so the expensive work happens exactly once. A matrix would run those
+      # stages three times in parallel and contend over the cache.
+
+      - id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/barklog-api
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha,scope=barklog
+          cache-to: type=gha,scope=barklog,mode=max
+          # Single-platform build: an attestation would add the unknown/unknown
+          # manifest entry that clutters GHCR's package UI.
+          provenance: false
+
+      - id: meta-worker
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/barklog-worker
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: worker
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-worker.outputs.tags }}
+          labels: ${{ steps.meta-worker.outputs.labels }}
+          cache-from: type=gha,scope=barklog
+          cache-to: type=gha,scope=barklog,mode=max
+          provenance: false
+
+      - id: meta-migrate
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/barklog-migrate
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: migrate
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-migrate.outputs.tags }}
+          labels: ${{ steps.meta-migrate.outputs.labels }}
+          cache-from: type=gha,scope=barklog
+          cache-to: type=gha,scope=barklog,mode=max
+          provenance: false
