@@ -15,14 +15,30 @@ services:
   # a schema they do not match.
   migrate:
     image: ghcr.io/chornonoh-vova/barklog-migrate:${IMAGE_TAG:-main}
+    # Compose's default pull_policy is `missing`. Every GHCR service here pins
+    # the mutable ${IMAGE_TAG:-main} tag, so the tag string never changes
+    # between deploys and `docker compose up -d` would otherwise have no
+    # reason to pull — and if the local image ID is unchanged, it does not
+    # recreate the container, it merely restarts the exited one, re-running
+    # the OLD binary. `always` makes "migrations apply on every deploy" a
+    # property of this file rather than something that depends on Dokploy
+    # separately running `docker compose pull`.
+    pull_policy: always
     restart: "no"
     environment:
       DATABASE_URL: ${DATABASE_URL:?required — PlanetScale connection string, include sslmode=require}
 
   api:
     image: ghcr.io/chornonoh-vova/barklog-api:${IMAGE_TAG:-main}
+    pull_policy: always # see migrate's comment above
     restart: unless-stopped
     init: true
+    # 15s: comfortably past the 10s force-exit timer apps/api/src/index.ts
+    # arms on SIGTERM, which is exactly Docker's default 10s stop timeout — at
+    # the default grace period, SIGKILL could land the instant the graceful
+    # path (draining the server, closing the DB pool and cache client)
+    # completes, or before it does.
+    stop_grace_period: 15s
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -47,10 +63,18 @@ services:
       IDENTIFY_MODEL: ${IDENTIFY_MODEL:-claude-sonnet-5}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     healthcheck:
-      # /healthz, not /readyz. Readiness folds in PlanetScale and Valkey
-      # reachability, so a transient blip would mark the container unhealthy and
-      # invite a restart loop for a condition the API is built to survive and
-      # report. wget is busybox's, already in the alpine base.
+      # /healthz, not /readyz — and this is purely observational, not a
+      # remediation path: Compose's restart: policies trigger on container
+      # exit, never on health status, so a failing healthcheck here does not
+      # get anything restarted (that behaviour is Swarm's, not Compose's).
+      # /readyz would still be the wrong check to publish, for two reasons.
+      # Traefik's Docker provider does not consult container health when
+      # routing, so a readiness probe would gate no traffic. And if Dokploy
+      # ever runs `up -d --wait`, a /readyz check would fail the whole deploy
+      # on a transient PlanetScale blip the API is built to survive and
+      # report. Corollary: nothing here gates traffic on readiness, so
+      # Traefik will route to the API during its first seconds and while its
+      # dependencies are down. wget is busybox's, already in the alpine base.
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1"]
       interval: 15s
       timeout: 5s
@@ -59,8 +83,14 @@ services:
 
   worker:
     image: ghcr.io/chornonoh-vova/barklog-worker:${IMAGE_TAG:-main}
+    pull_policy: always # see migrate's comment above
     restart: unless-stopped
     init: true
+    # 30s: on SIGTERM the worker awaits task.stop(), which may be waiting out
+    # an in-flight sync page rather than resolving immediately. The default
+    # 10s grace period is enough for the idle case but not for one that lands
+    # mid-page.
+    stop_grace_period: 30s
     depends_on:
       migrate:
         condition: service_completed_successfully
