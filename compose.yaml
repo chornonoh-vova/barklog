@@ -63,17 +63,16 @@ services:
       IDENTIFY_MODEL: ${IDENTIFY_MODEL:-claude-sonnet-5}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     healthcheck:
-      # /healthz, not /readyz — and this is purely observational, not a
-      # remediation path: Compose's restart: policies trigger on container
-      # exit, never on health status, so a failing healthcheck here does not
-      # get anything restarted (that behaviour is Swarm's, not Compose's).
-      # /readyz would still be wrong. Traefik's Docker provider acts on
-      # container health, dropping unhealthy containers from the load
-      # balancer — so /readyz would gate traffic on dependencies, giving bare
-      # 404s instead of the API's own structured 503. /healthz keeps the
-      # container routable and lets the API report its troubles. If Dokploy
-      # runs `up -d --wait`, /readyz would also fail the whole deploy on
-      # transient blips the API survives. wget is busybox's, in alpine base.
+      # /healthz, not /readyz. A failing healthcheck restarts nothing here —
+      # Compose's restart: policies trigger on container exit, never on health
+      # status (health-gated restarts are Swarm's behaviour) — but it is not
+      # inert either: Traefik's Docker provider drops unhealthy containers from
+      # the load balancer. So /readyz would gate routing on dependencies, and a
+      # PlanetScale blip would give callers a bare 404 instead of the API's own
+      # structured 503 naming what is down. /healthz keeps the container
+      # routable and lets the API report its own trouble. If Dokploy runs
+      # `up -d --wait`, /readyz would also fail the whole deploy on a transient
+      # blip the API survives. wget is busybox's, in the alpine base.
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1"]
       interval: 15s
       timeout: 5s

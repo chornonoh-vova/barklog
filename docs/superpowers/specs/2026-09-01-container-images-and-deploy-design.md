@@ -223,8 +223,8 @@ read from it.
 Deliberately not `/readyz`, though not for the reason it might seem at first.
 Compose's `restart:` policies trigger on container exit, never on health
 status — health-gated restarting is Swarm behaviour, not Compose's — so a
-failing healthcheck here has no remediation path regardless of which path is
-probed; it is purely observational. The real reasons are that Traefik's
+failing healthcheck restarts nothing here regardless of which path is probed.
+It is not inert either, and that is the point: Traefik's
 Docker provider _does_ act on container health: with the default
 `allowEmptyServices: false`, unhealthy containers drop from the load balancer
 entirely (requests get 404), or with `allowEmptyServices: true`, Traefik
