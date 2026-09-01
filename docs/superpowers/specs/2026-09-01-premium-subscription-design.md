@@ -61,7 +61,7 @@ gives the slot back.
 | Decision | Choice | Why |
 | --- | --- | --- |
 | Free tier limit | 25 **unfinished** entries | `waiting` and `playing` count; `completed` and `abandoned` are free. Caps hoarding, not saving. Rewards the judge's verbs. |
-| Where the limit is enforced | `packages/db`, inside the upsert transaction | The count and the write must be atomic. A route-level check races. |
+| Where the limit is enforced | `apps/api`, inside a transaction it opens | The limit is a product rule, so it belongs in the API; `packages/db` stays queries and writes. The transaction is what keeps check-then-write atomic. |
 | Entitlement authority | The API, backed by Postgres | The API owns backlog writes, so the API must own the entitlement answer. |
 | Freshness | RevenueCat webhooks, plus an on-demand REST pull | Webhooks are fast but not synchronous; a user who just paid must not get a 402 on the next tap. |
 | Entitlement on device | `GET /api/me` | The UI must agree with the enforcer. `customerInfo` is a change *signal*, never the authority. |
@@ -123,25 +123,14 @@ Blocked when `delta > 0 && !premium && activeCount + delta > FREE_ACTIVE_SLOTS`.
 
 `DELETE` always lowers or holds the count, so it is never gated.
 
-### The arithmetic is declared twice, with a parity test
+### The arithmetic lives in `packages/contracts`
 
-The API's transaction and the app's proactive check must agree exactly — the
-failure mode is a button that lies: enabled on device, rejected by the server.
-
-But `@repo/contracts` is a **devDependency** of `packages/db`, not a runtime
-one. That is deliberate and load-bearing: it is why
-`packages/db/test/status-parity.test.ts` exists at all. `BACKLOG_STATUSES` is
-declared in both `packages/db/src/schema/backlog.ts` and
-`packages/contracts/src/backlog.ts`, and the parity test asserts they match.
-
-So this follows the established pattern rather than inventing a runtime
-dependency: declare the slot rules in both packages and extend the parity test
-to cover them.
+`slotDelta(from, to)` is pure and belongs to the shared domain contract, beside
+`BACKLOG_SORTS` and `RATING_MIN`/`RATING_MAX`. Both runtime consumers —
+`apps/api` and `apps/mobile` — already depend on `@repo/contracts`, so it is
+declared exactly once:
 
 ```ts
-// Identical in packages/db/src/schema/subscriptions.ts and
-// packages/contracts/src/subscription.ts. Guarded by status-parity.test.ts.
-
 export const FREE_ACTIVE_SLOTS = 25;
 
 export const SLOT_CONSUMING_STATUSES = ["waiting", "playing"] as const;
@@ -150,9 +139,15 @@ export const SLOT_CONSUMING_STATUSES = ["waiting", "playing"] as const;
 export function slotDelta(from: BacklogStatus | null, to: BacklogStatus): -1 | 0 | 1;
 ```
 
-`SUBSCRIPTION_STORES` and `PERIOD_TYPES` are duplicated on the same terms, for
-the same reason, and covered by the same test. Adding a status to one package
-and not the other must fail the build, not ship.
+`packages/db` never sees it. `@repo/contracts` is a **devDependency** there, not
+a runtime one — the deliberate boundary that `status-parity.test.ts` exists to
+police — and the db package has no business knowing what a slot is. §5 covers
+how the rule stays atomic without living in the data layer.
+
+`SUBSCRIPTION_STORES` and `PERIOD_TYPES` are the one unavoidable duplication:
+`pgEnum` needs the values in `packages/db`, and `MeResponse` needs the union in
+`packages/contracts`. That is precisely the `BACKLOG_STATUSES` situation, so
+they are declared in both and added to `status-parity.test.ts`.
 
 ## 4. Data model
 
@@ -201,17 +196,17 @@ export const subscriptionEvents = pgTable("subscription_events", {
 ### Entitlement is derived, never stored
 
 ```ts
-export async function getEntitlement(
-  db: Db,
-  userId: string,
-  // From AppDeps.production, inverted at the call site. packages/db has no
-  // notion of environment, and should not grow one.
-  options: { allowSandbox: boolean },
-): Promise<Entitlement | null>;
+// packages/db — returns the row, judges nothing.
+export async function getSubscription(db: Queryable, userId: string): Promise<SubscriptionRow | null>;
 
-// isPremium = row !== null
-//   && (row.expiresAt === null || row.expiresAt > now)
-//   && (!row.sandbox || allowSandbox)
+// apps/api/src/entitlement.ts — owns the policy.
+export function isPremium(
+  row: SubscriptionRow | null,
+  options: { now: Date; allowSandbox: boolean },
+): boolean;
+//   row !== null
+//   && (row.expiresAt === null || row.expiresAt > options.now)
+//   && (!row.sandbox || options.allowSandbox)
 ```
 
 A stored boolean goes stale the moment a subscription lapses without a webhook
@@ -219,8 +214,10 @@ arriving — expiry is the one state change RevenueCat cannot always push in
 time. Deriving it costs one comparison.
 
 The `sandbox` term matters: without it, anyone holding a sandbox receipt unlocks
-the production API. Passing `allowSandbox` rather than dropping sandbox rows
-keeps on-device testing working against a development API.
+the production API. `allowSandbox` comes from `AppDeps.production`, inverted at
+the call site — `packages/db` has no notion of environment and should not grow
+one. Keeping sandbox rows rather than dropping them keeps on-device testing
+working against a development API.
 
 Grace periods need no special handling: RevenueCat extends `expiration_at_ms`
 for App Store billing-retry, so a user in grace still reads as entitled through
@@ -238,43 +235,86 @@ Trial starts, conversions, cancellations and billing issues become queryable in
 Postgres for about fifteen lines of code. That is the difference between a
 `#BuildInPublic` post with numbers in it and one without.
 
-## 5. Enforcement in the query layer
+## 5. Enforcement — the API owns the rule, the transaction keeps it atomic
 
-`upsertBacklogEntry` in `packages/db/src/queries/backlog.ts` grows an optional
-limit and a blocked outcome:
+The limit is a product rule, so it lives in `apps/api`. `packages/db` stays what
+it is: queries and writes. But the check and the write must still be atomic —
+two concurrent adds at 24/25 must not both read 24 and both succeed.
+
+Both hold if the **API opens the transaction** and the db package supplies
+primitives to run inside it. `upsertBacklogEntry` keeps its current signature
+unchanged: no `activeLimit`, no `UpsertResult`, no knowledge of slots.
+
+### One widened type in `packages/db`
+
+Every query currently takes `db: Db`. They need to accept a transaction too,
+derived from drizzle rather than by naming its internal generics:
 
 ```ts
-export type UpsertResult =
-  | { ok: true; entry: BacklogEntry; created: boolean }
-  | { ok: false; activeCount: number; limit: number };
+type Db = NodePgDatabase<typeof schema>;
 
-export async function upsertBacklogEntry(
-  db: Db,
-  input: {
-    userId: string;
-    gameId: number;
-    status: BacklogStatusValue;
-    rating: number | null;
-    /** null = unlimited (premium). */
-    activeLimit: number | null;
-  },
-): Promise<UpsertResult>;
+/** `Db`, or the transaction handle `db.transaction()` hands its callback. */
+export type Queryable = Db | Parameters<Parameters<Db["transaction"]>[0]>[0];
 ```
 
-The whole thing runs in one transaction opening with `SELECT ... FOR UPDATE` on
-the `users` row:
+Then `db: Db` becomes `db: Queryable` across `queries/*.ts`. A mechanical
+change, and the only one the db package needs.
 
-1. Lock the user row. This serializes that user's backlog writes and nothing
-   else.
-2. Read the existing entry's status (or `null`).
-3. `slotDelta(from, to)`. If `≤ 0`, or `activeLimit === null`, skip to 5.
-4. Count active entries. If `count + delta > activeLimit`, return
-   `{ ok: false, … }` — the transaction commits having changed nothing.
-5. Upsert, return `{ ok: true, … }`.
+### Two new primitives, both dumb
 
-The check cannot live in the route: two concurrent adds at 24/25 would both read
-24 and both succeed. The row lock is the cheapest correct answer at this scale,
-and it also closes the share-extension-races-the-main-app case.
+```ts
+/** SELECT ... FOR UPDATE on the users row. Serializes one user's writes. */
+export async function lockUser(db: Queryable, userId: string): Promise<void>;
+
+/** The caller says which statuses to count. `packages/db` has no idea why. */
+export async function countBacklogEntriesByStatus(
+  db: Queryable,
+  userId: string,
+  statuses: readonly BacklogStatusValue[],
+): Promise<number>;
+```
+
+### The route
+
+```ts
+const outcome = await deps.db.transaction(async (tx) => {
+  await lockUser(tx, userId);
+
+  const existing = await getBacklogEntry(tx, userId, gameId);
+  const delta = slotDelta(existing?.status ?? null, status);
+
+  if (delta > 0) {
+    const subscription = await getSubscription(tx, userId);
+
+    if (!isPremium(subscription, { now: new Date(), allowSandbox: !deps.production })) {
+      const used = await countBacklogEntriesByStatus(tx, userId, SLOT_CONSUMING_STATUSES);
+
+      if (used + delta > FREE_ACTIVE_SLOTS) return { blocked: true as const, used };
+    }
+  }
+
+  return { blocked: false as const, ...(await upsertBacklogEntry(tx, { ... })) };
+});
+```
+
+`{ blocked: true }` returns from the transaction having written nothing; the
+route maps it to §6's 402.
+
+Three things this buys beyond correct layering:
+
+- **The fast path costs nothing.** The subscription read and the count happen
+  only when `delta > 0`. A status change, a rating edit, or completing a game
+  runs exactly the queries it runs today.
+- **The rule is readable in one place**, next to the route it governs, instead
+  of being a parameter threaded into a data-access function.
+- **The parity test stops growing.** `slotDelta` has one declaration.
+
+### The transaction discipline
+
+No external I/O inside the transaction — no RevenueCat call, no IGDB call. Every
+statement above is Postgres, and the lock is held for the span of a few
+indexed queries. `ensureUserMiddleware` already runs ahead of every mutating
+route, so `lockUser` always finds a row to lock.
 
 ## 6. API surface
 
@@ -491,15 +531,16 @@ above is a rejection if missing.
 
 | Path | What |
 | --- | --- |
-| `packages/contracts/src/subscription.ts` | `FREE_ACTIVE_SLOTS`, `SLOT_CONSUMING_STATUSES`, `slotDelta`, `SUBSCRIPTION_STORES`, `PERIOD_TYPES` |
+| `packages/contracts/src/subscription.ts` | `FREE_ACTIVE_SLOTS`, `SLOT_CONSUMING_STATUSES`, `slotDelta`, `SUBSCRIPTION_STORES`, `PERIOD_TYPES` — the only home for the slot rule |
 | `packages/contracts/src/revenuecat.ts` | webhook payload schema |
-| `packages/db/src/schema/subscriptions.ts` | both tables, both enums, `FREE_ACTIVE_SLOTS`, `slotDelta` |
-| `packages/db/src/queries/subscriptions.ts` | upsert from event, read entitlement, event log insert |
+| `packages/db/src/schema/subscriptions.ts` | both tables, both enums. No slot rule. |
+| `packages/db/src/queries/subscriptions.ts` | `getSubscription` (returns the row, judges nothing), upsert from event, event log insert |
 | `packages/db/drizzle/…` | generated migration |
 | `apps/api/src/routes/me.ts` | `GET /api/me` |
 | `apps/api/src/routes/subscription.ts` | `POST /api/subscription/refresh` |
 | `apps/api/src/routes/webhooks.ts` | `POST /webhooks/revenuecat` |
 | `apps/api/src/revenuecat.ts` | REST client, secret compare, event → row mapping |
+| `apps/api/src/entitlement.ts` | `isPremium(row, { now, allowSandbox })` — the policy, in the API |
 | `apps/mobile/src/purchases/provider.tsx` | configure / logIn / logOut / listener |
 | `apps/mobile/src/purchases/use-is-premium.ts` | `GET /api/me` hook |
 | `apps/mobile/src/app/paywall.tsx` | `RevenueCatUI.Paywall` in a sheet |
@@ -511,14 +552,17 @@ above is a rejection if missing.
 | `packages/contracts/src/index.ts` | re-export the two new modules |
 | `packages/contracts/src/wire.ts` | `MeResponse` — the sole declaration, beside `BacklogStatsWire` |
 | `packages/db/src/schema/index.ts` | export subscriptions schema |
-| `packages/db/src/queries/backlog.ts` | `upsertBacklogEntry` takes `activeLimit`, returns `UpsertResult`; add `countActiveEntries` |
-| `packages/db/src/index.ts` | export the new queries |
+| `packages/db/src/queries/backlog.ts` | `db: Db` → `db: Queryable` throughout; add `lockUser` and `countBacklogEntriesByStatus`. `upsertBacklogEntry` unchanged. |
+| `packages/db/src/index.ts` | export the new queries and `Queryable` |
+| `packages/db/test/status-parity.test.ts` | extend to `SUBSCRIPTION_STORES` and `PERIOD_TYPES` |
+| `packages/db/src/client.ts` | export the `Queryable` type |
+| `packages/db/src/queries/games.ts`, `sync-runs.ts` | `db: Db` → `db: Queryable` |
 | `apps/api/src/env.ts` | three RevenueCat vars |
 | `apps/api/src/types.ts` | `PUBLIC_PATHS`, `WEBHOOK_BODY_LIMIT_BYTES` |
 | `apps/api/src/problems.ts` | `SUBSCRIPTION_REQUIRED`, unprocessable-webhook type |
 | `apps/api/src/middleware/auth.ts` | `PUBLIC_PATHS` instead of `PROBE_PATHS` |
 | `apps/api/src/app.ts` | scoped body limits, three new routes |
-| `apps/api/src/routes/backlog.ts` | map `{ ok: false }` to a 402 problem |
+| `apps/api/src/routes/backlog.ts` | open the transaction, run the slot rule, map `{ blocked: true }` to a 402 problem |
 | `apps/api/src/rate-limits.ts` | a scope for `refresh` |
 | `apps/mobile/src/env.ts` | `EXPO_PUBLIC_REVENUECAT_IOS_KEY` |
 | `apps/mobile/package.json` | two RevenueCat packages |
@@ -541,16 +585,14 @@ above is a rejection if missing.
 
 ### `packages/db` (testcontainers, as existing)
 
-- Free user at 24/25: adding a 25th `waiting` succeeds; a 26th is blocked.
-- Two concurrent upserts at 24/25 — exactly one wins. Without the row lock this
-  test fails, which is the point of writing it.
-- `completed → waiting` at 25/25 is blocked; `waiting → completed` at 25/25
-  succeeds.
-- Rating-only change at 25/25 succeeds.
-- `activeLimit: null` ignores the cap entirely.
-- Parity: `FREE_ACTIVE_SLOTS`, `SLOT_CONSUMING_STATUSES`, `SUBSCRIPTION_STORES`
-  and `PERIOD_TYPES` match across `packages/db` and `packages/contracts`, and
-  `slotDelta` agrees on every input — extending `status-parity.test.ts`.
+- `getSubscription` returns the row verbatim, including expired and sandbox
+  rows — the judgement is not its job.
+- Parity: `SUBSCRIPTION_STORES` and `PERIOD_TYPES` match across `packages/db`
+  and `packages/contracts` — extending `status-parity.test.ts`. `slotDelta`
+  needs no parity test; it has one declaration.
+- `countBacklogEntriesByStatus` counts only the statuses it is given.
+- `lockUser` serializes: two concurrent transactions on one user do not
+  interleave their counts.
 - Same webhook event id twice → one `subscription_events` row, one upsert.
 - Stale `event_timestamp_ms` → row unchanged.
 - `sandbox: true` with `production: true` → `premium` false; with
@@ -558,6 +600,19 @@ above is a rejection if missing.
 - Expired `expiresAt` → `premium` false without any event arriving.
 
 ### `apps/api`
+
+The cap tests move here with the rule. These need a database, so they belong in
+`apps/api`'s integration suite against the same testcontainers helper:
+
+- Free user at 24/25: a 25th `waiting` succeeds; a 26th is blocked.
+- Two concurrent `PUT`s at 24/25 — exactly one wins. Without `lockUser` this
+  test fails, which is the point of writing it.
+- `completed → waiting` at 25/25 is blocked; `waiting → completed` at 25/25
+  succeeds.
+- Rating-only change at 25/25 succeeds.
+- Premium user at 25/25 is never blocked.
+- `isPremium` unit tests: expired, sandbox-in-production, sandbox-in-dev, null
+  `expiresAt`, no row.
 
 - `/webhooks/revenuecat` with no `Authorization` → 401; wrong secret → 401.
 - Reachable without a session token (proves the `PUBLIC_PATHS` wiring).
@@ -596,13 +651,16 @@ end to end.
 
 ## 10. Task order
 
-1. `packages/contracts` — `slotDelta`, `FREE_ACTIVE_SLOTS`, the duplicated
-   enums, `MeResponse` in `wire.ts`, tests.
-2. `packages/db` — schema, migration, subscription queries, `upsertBacklogEntry`
-   rework, the extended parity test, tests. **The cap works end to end after
-   this step**, provable without RevenueCat.
-3. `apps/api` — problem type, `PUBLIC_PATHS`, scoped body limits, 402 mapping in
-   the backlog route, `GET /api/me`. Still no RevenueCat.
+1. `packages/contracts` — `slotDelta`, `FREE_ACTIVE_SLOTS`,
+   `SLOT_CONSUMING_STATUSES`, the two duplicated enums, `MeResponse` in
+   `wire.ts`, tests.
+2. `packages/db` — the `Queryable` widening, schema, migration,
+   `getSubscription`, `lockUser`, `countBacklogEntriesByStatus`, the extended
+   parity test. No product rules land here.
+3. `apps/api` — `entitlement.ts`, the transaction and slot rule in the backlog
+   route, problem type, `PUBLIC_PATHS`, scoped body limits, `GET /api/me`.
+   **The cap works end to end after this step**, provable without RevenueCat by
+   inserting a `subscriptions` row by hand.
 4. `apps/api` — webhook route, REST client, `refresh`. Verified with
    RevenueCat's dashboard test event.
 5. `apps/mobile` — dependencies, dev build, `PurchasesProvider`, `useMe`.
