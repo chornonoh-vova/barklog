@@ -8,10 +8,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Two merges in quick succession must not race over the :main tag.
+# Publishing three images is not atomic; a run cancelled mid-sequence leaves
+# the three :main tags at different commits. Allow superseded runs to finish
+# rather than kill them. GitHub keeps at most one pending run per group, so the
+# queue cannot grow: a third push replaces the second while the first finishes.
 concurrency:
   group: images-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify:
