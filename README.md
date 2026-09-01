@@ -159,16 +159,21 @@ ghcr.io/chornonoh-vova/barklog-migrate
 ```
 
 Each is tagged `main`, `sha-<short>`, and `latest`. All three come from the
-same root `Dockerfile` — `docker build --target api|worker|migrate .` — over a
-single `turbo prune`d install, so `apps/mobile`'s Expo dependencies never enter
-the build.
+same root `Dockerfile` — `docker build --target api|worker|migrate .` — built
+from a single `turbo prune`d workspace: one `turbo prune` emits a subset
+lockfile and manifests, which two separate installs then consume (a full
+install for the build, a `--prod` install for the runtime image), so
+`apps/mobile`'s Expo dependencies never enter either one.
 
 Nothing deploys automatically. `compose.yaml` describes the VPS stack and
 Dokploy pulls when you press Deploy. That stack is the API, the worker, and
 Valkey; Postgres is external and lives on PlanetScale. Only the API is
 reachable from outside — the file publishes no host ports at all, and
 `api.barklog.gg` is attached to the `api` service in Dokploy's Domains tab,
-which injects the Traefik labels and provisions the certificate.
+which injects the Traefik labels and provisions the certificate. That is only
+true of the public internet: `api` also joins the shared `dokploy-network`, so
+any other container Dokploy puts on that network can reach `api:3000`
+directly, and vice versa.
 
 Migrations run as a one-shot `migrate` service that both apps wait on with
 `service_completed_successfully`, so a failed migration blocks the deploy
@@ -178,9 +183,14 @@ To roll back, set `IMAGE_TAG=sha-abc1234` in Dokploy's environment and
 redeploy. There is no file to edit and nothing to rebuild.
 
 > A bare `docker compose up` in this repository now starts the **production**
-> stack, because `compose.yaml` is the file Compose picks up by default. Local
-> development is `pnpm deps:up`, which passes `-f deps.compose.yaml`
-> explicitly.
+> stack, because `compose.yaml` is the file Compose picks up by default — and
+> the `${VAR:?required}` guards do not protect you here: a git-ignored root
+> `.env` exists in every checkout, so Compose fills every required variable
+> from it instead of failing. The result is a live production stack, using
+> your real third-party credentials and a `DATABASE_URL` pointing at your
+> local Postgres, pulling the GHCR images and running `migrate` against
+> whatever that URL reaches. Local development is `pnpm deps:up`, which passes
+> `-f deps.compose.yaml` explicitly.
 
 ### Before the first deploy
 
@@ -204,6 +214,17 @@ Set the deploy environment in Dokploy: `DATABASE_URL`, `CLERK_SECRET_KEY`,
 `IGDB_CLIENT_SECRET` are required; `IMAGE_TAG`, `LOG_LEVEL`,
 `IDENTIFY_MODEL`, `SYNC_CRON`, and `SYNC_TZ` are optional and default to the
 values in each app's env schema.
+
+### Seeding the games mirror in production
+
+The deployed `worker` container's entrypoint is the cron scheduler, not the
+CLI, and the API never calls IGDB — so after the first deploy the catalogue is
+empty until `SYNC_CRON` next fires. Run the same one-shot sync the CLI does,
+against the deployed image, to populate it immediately:
+
+```sh
+docker compose run --rm --no-deps worker node apps/worker/dist/cli.js --full
+```
 
 ## Testing
 

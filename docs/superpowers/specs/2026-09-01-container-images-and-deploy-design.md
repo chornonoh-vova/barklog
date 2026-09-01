@@ -35,14 +35,14 @@ compose stack that runs them on a Dokploy-managed VPS.
 
 ## 2. Decisions
 
-| Question | Decision |
-| --- | --- |
+| Question                | Decision                                                              |
+| ----------------------- | --------------------------------------------------------------------- |
 | Who applies migrations? | A one-shot `migrate` service in compose, which api and worker wait on |
-| Image layout | One `Dockerfile`, three published targets |
-| Build strategy | `turbo prune --docker`, one shared `deps`/`builder` pair |
-| Release trigger | Push to `main`; no webhook, deploys stay deliberate |
-| CI gate | `lint`, `check-types`, and `test` must pass before publish |
-| Ingress | Dokploy's Domains UI injects Traefik labels; compose carries none |
+| Image layout            | One `Dockerfile`, three published targets                             |
+| Build strategy          | `turbo prune --docker`, one shared `deps`/`builder` pair              |
+| Release trigger         | Push to `main`; no webhook, deploys stay deliberate                   |
+| CI gate                 | `lint`, `check-types`, and `test` must pass before publish            |
+| Ingress                 | Dokploy's Domains UI injects Traefik labels; compose carries none     |
 
 Two decisions deserve their reasoning recorded.
 
@@ -109,9 +109,19 @@ scope of its own.
 
 ### 3.2 `.dockerignore`
 
-`node_modules`, `dist`, `.turbo`, `.env`, and `.git`. This keeps the pruner's
-`COPY . .` cheap and, more importantly, keeps the developer's real `.env` out of
-the build context.
+Excludes `node_modules`, `dist`, `.turbo`, `out`, `.git`, `.github`, `docs`,
+every `.env`/`.env.*` file, `.DS_Store`, `coverage`, `.expo`, and
+`.superpowers`. Because `.dockerignore` patterns are not recursive, each of
+these carries both its bare form and a `**/` form, so a nested match — say
+`apps/api/.env` or `packages/db/coverage` — is excluded as well as the
+root-level one. This keeps the pruner's `COPY . .` cheap and, more importantly,
+keeps developer secrets out of the build context.
+
+`apps/mobile` is deliberately **not** excluded. `turbo prune` reads the whole
+workspace to rewrite the lockfile, and an importer present in
+`pnpm-lock.yaml` with no `package.json` on disk makes the pruned output
+inconsistent — so the mobile app's source has to stay in the build context
+even though none of it ends up in an image.
 
 ## 4. `.github/workflows/images.yml`
 
@@ -151,12 +161,12 @@ pull secret.
 
 Four services. Exactly one is reachable from outside the VPS.
 
-| Service | Image | Reachable from |
-| --- | --- | --- |
-| `migrate` | `barklog-migrate` | nothing; runs to completion and exits, `restart: "no"` |
-| `api` | `barklog-api` | Traefik only, over `dokploy-network`; `expose: 3000` |
-| `worker` | `barklog-worker` | the project's internal network only |
-| `valkey` | `valkey/valkey:9-alpine` | the project's internal network only |
+| Service   | Image                    | Reachable from                                         |
+| --------- | ------------------------ | ------------------------------------------------------ |
+| `migrate` | `barklog-migrate`        | nothing; runs to completion and exits, `restart: "no"` |
+| `api`     | `barklog-api`            | Traefik only, over `dokploy-network`; `expose: 3000`   |
+| `worker`  | `barklog-worker`         | the project's internal network only                    |
+| `valkey`  | `valkey/valkey:9-alpine` | the project's internal network only                    |
 
 The file declares no `ports:` at all. That single absence is what keeps the
 worker and Valkey off the host's public interface — they are addressable by
@@ -203,12 +213,24 @@ rebuild.
 
 ### 5.3 Health
 
-`api` gets a healthcheck against `/healthz` using busybox `wget`, with the port
-taken from `${PORT:-3000}` so it follows the app's own default.
+`api` gets a healthcheck against `/healthz` using busybox `wget`. The port is
+the literal `3000`, matching the literal `PORT: 3000` set in the same
+service's `environment:` above — not `${PORT:-3000}`. The two are hardcoded
+together on purpose: Dokploy's environment cannot desync a value that isn't
+read from it.
 
-Deliberately not `/readyz`: readiness folds in PlanetScale and Valkey
-reachability, so a transient database blip would mark the container unhealthy and
-invite a restart loop for a condition the API is designed to survive and report.
+Deliberately not `/readyz`, though not for the reason it might seem.
+Compose's `restart:` policies trigger on container exit, never on health
+status — health-gated restarting is Swarm behaviour, not Compose's — so a
+failing healthcheck here has no remediation path regardless of which path is
+probed; it is purely observational. The real reasons are that Traefik's
+Docker provider does not consult container health when routing, so a
+readiness check would gate no traffic, and that if Dokploy runs
+`up -d --wait`, a `/readyz` check would fail the whole deploy on a transient
+PlanetScale blip the API is built to survive and report. The corollary:
+nothing in this stack gates traffic on readiness, so Traefik will route to
+the API during its first seconds after start and while its dependencies are
+down.
 
 `worker` gets no healthcheck — it runs a cron schedule and serves nothing to
 probe. It relies on `restart: unless-stopped`.
