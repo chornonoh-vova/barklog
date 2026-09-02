@@ -28,6 +28,7 @@ export async function truncateAll(db: NodePgDatabase<typeof schema>): Promise<vo
   await db.execute(sql`
     TRUNCATE TABLE
       sync_runs,
+      subscription_events, subscriptions,
       backlog_entries, users,
       game_companies, game_platforms, game_genres, game_screenshots, game_similar,
       games, companies, platforms, genres, game_types

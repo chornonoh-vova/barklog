@@ -36,6 +36,13 @@
       "when": 1788176737364,
       "tag": "0004_graceful_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788362216666,
+      "tag": "0005_third_proteus",
+      "breakpoints": true
     }
   ]
 }
