@@ -472,7 +472,7 @@ autolinked, **no config plugin, no `expo-build-properties`, no static
 frameworks** — that requirement belongs to AdMob, which 1.0 does not ship. A new
 development build is needed, but the pod graph is not disturbed.
 
-`src/env.ts` gains `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, written inline and literal
+`src/env.ts` gains two keys, written inline and literal
 per the transform constraint documented in that file.
 
 ### Purchases provider
@@ -589,7 +589,7 @@ above is a rejection if missing.
 | `apps/api/src/app.ts`                                 | scoped body limits, three new routes                                                                                     |
 | `apps/api/src/routes/backlog.ts`                      | open the transaction, run the slot rule, map `{ blocked: true }` to a 402 problem                                        |
 | `apps/api/src/rate-limits.ts`                         | a scope for `refresh`                                                                                                    |
-| `apps/mobile/src/env.ts`                              | `EXPO_PUBLIC_REVENUECAT_IOS_KEY`                                                                                         |
+| `apps/mobile/src/env.ts`                              | `EXPO_PUBLIC_REVENUECAT_TEST_KEY` and `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, selected on `__DEV__`                            |
 | `apps/mobile/package.json`                            | two RevenueCat packages                                                                                                  |
 | `apps/mobile/src/app/_layout.tsx`                     | `PurchasesProvider`, paywall screen                                                                                      |
 | `apps/mobile/src/api/endpoints.ts`                    | `getMe`, `refreshSubscription`                                                                                           |

@@ -22,6 +22,10 @@
 - **`packages/db` holds no product rules.** No limits, no entitlement judgement, no knowledge of what a slot is.
 - **`@repo/contracts` is a devDependency of `packages/db`.** Never import it from `packages/db/src/**`.
 - **Package versions:** `react-native-purchases@^10.8.1`, `react-native-purchases-ui@^10.8.1`.
+- **Never ship the Test Store key.** RevenueCat's Test Store simulates purchases
+  and reports them as sandbox data; submitting an app configured with its key is
+  explicitly prohibited. `env.ts` selects on `__DEV__` so a release build cannot
+  reach it — do not move that choice into the provider or a `.env` file.
 - **Node `>=24`, pnpm 11.** Run commands from the repo root unless a step says otherwise.
 - **Prettier before every commit.** `npx prettier --write <files>`.
 - **Comment only what the code cannot say.** The snippets below carry the
@@ -2563,13 +2567,28 @@ export function identifyAction(
 In `apps/mobile/src/env.ts`, following the inline-literal rule documented there:
 
 ```ts
-export const REVENUECAT_IOS_KEY = requireEnv(
-  "EXPO_PUBLIC_REVENUECAT_IOS_KEY",
-  process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
-);
+/**
+ * RevenueCat warns in capitals never to submit an app configured with a Test
+ * Store key, so the choice is made here rather than left to a `.env` someone
+ * has to remember. Expo folds both `__DEV__` and the `process.env` reads at
+ * build time, so a release bundle contains neither the branch nor the test key.
+ */
+export const REVENUECAT_API_KEY = __DEV__
+  ? requireEnv("EXPO_PUBLIC_REVENUECAT_TEST_KEY", process.env.EXPO_PUBLIC_REVENUECAT_TEST_KEY)
+  : requireEnv("EXPO_PUBLIC_REVENUECAT_IOS_KEY", process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY);
 ```
 
-Add `EXPO_PUBLIC_REVENUECAT_IOS_KEY=` to `apps/mobile/.env.example`.
+Add both to `apps/mobile/.env.example`, with a comment saying which is which:
+
+```
+# RevenueCat — https://app.revenuecat.com, API keys
+# Test Store key. Used by development builds only; simulated purchases.
+EXPO_PUBLIC_REVENUECAT_TEST_KEY=
+# App Store key. Used by release builds. Never put the Test Store key here.
+EXPO_PUBLIC_REVENUECAT_IOS_KEY=
+```
+
+Set `EXPO_PUBLIC_REVENUECAT_IOS_KEY` as an EAS environment variable for the `production` profile so the release build has it.
 
 - [ ] **Step 6: Add the API endpoints and query keys**
 
@@ -2639,7 +2658,7 @@ import Purchases from "react-native-purchases";
 
 import { useApi } from "@/api/provider";
 import { keys } from "@/api/keys";
-import { REVENUECAT_IOS_KEY } from "@/env";
+import { REVENUECAT_API_KEY } from "@/env";
 
 import { identifyAction } from "./should-identify";
 
@@ -2651,7 +2670,7 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
   const previous = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    Purchases.configure({ apiKey: REVENUECAT_IOS_KEY });
+    Purchases.configure({ apiKey: REVENUECAT_API_KEY });
   }, []);
 
   useEffect(() => {
@@ -3203,11 +3222,13 @@ new wiring. Premium users see nothing."
 
 - [ ] **Step 1: Document the feature in the README**
 
-Add a `## Premium` section after the auth section, covering: the ten-unfinished-slot free tier and that finishing frees a slot; that there are no ads on any tier and this is deliberate; the `premium` entitlement; the two products; that entitlement is enforced in `apps/api` inside a transaction and the client never decides; the webhook at `/webhooks/revenuecat`; and the three new environment variables. Add `EXPO_PUBLIC_REVENUECAT_IOS_KEY` to the mobile env list already documented there.
+Add a `## Premium` section after the auth section, covering: the ten-unfinished-slot free tier and that finishing frees a slot; that there are no ads on any tier and this is deliberate; the `premium` entitlement; the two products; that entitlement is enforced in `apps/api` inside a transaction and the client never decides; the webhook at `/webhooks/revenuecat`; and the three new environment variables. Add both `EXPO_PUBLIC_REVENUECAT_TEST_KEY` and `EXPO_PUBLIC_REVENUECAT_IOS_KEY` to the mobile env list already documented there, saying plainly that the first is for development builds only and the second is what ships.
 
 - [ ] **Step 2: Write the device checklist**
 
 Create `docs/premium-device-verification.md`, in the style of `docs/mobile-device-verification.md`. It must state up front that StoreKit configuration files cannot be used — they bypass Apple's servers, so RevenueCat's server-side validation cannot see them — and that sandbox compresses a 1-week trial to about 3 minutes, which is what makes steps 4–6 feasible.
+
+It must also note that the fast loop is RevenueCat's **Test Store**, reached by the development build's `EXPO_PUBLIC_REVENUECAT_TEST_KEY`: no device account needed, correct prices, and renewals compressed to roughly 5 minutes weekly and an hour annually, auto-renewing five times before cancelling. Steps 5 and 6 are far quicker there than in Apple's sandbox, and Test Store purchases arrive as sandbox events — which `isPremium` grants — so they exercise the webhook, the `subscriptions` row and `/api/me` for real. Steps 1–4 and 7–10 should still be repeated against Apple's sandbox before submission, because only that path proves StoreKit itself works.
 
 Steps, each with an explicit expected result:
 
@@ -3257,7 +3278,11 @@ only appear on a shared device."
 
 Not code, and not optional — Apple reviews a first in-app purchase only alongside an app version, so none of this can follow the build.
 
-- [ ] RevenueCat: In-App Purchase Key (.p8) uploaded, entitlement `premium`, both products attached, a `default` offering, the Paywall built in the dashboard editor with all of §7's required elements.
+- [ ] RevenueCat: In-App Purchase Key (.p8) uploaded, then **Import** both products into the `Barklog (App Store)` app rather than adding them by hand — a mistyped identifier is the usual cause of "None of the products registered in the RevenueCat dashboard could be fetched from App Store Connect".
+- [ ] Both **App Store** products attached to `barklog_premium`, and a `default` offering whose packages point at them — not at the Test Store products, or a release build's paywall renders empty.
+- [ ] The 7-day introductory offer present on **both** subscriptions in App Store Connect. It lives there, not in RevenueCat, and the Test Store does not reproduce it.
+- [ ] The Paywall built in the dashboard editor with all of §7's required elements.
+- [ ] The release build verified to use `EXPO_PUBLIC_REVENUECAT_IOS_KEY` — check the EAS `production` profile's environment before the submission build, not after.
 - [ ] RevenueCat webhook pointed at `https://api.barklog.gg/webhooks/revenuecat` with its `Authorization` secret, and that secret plus `REVENUECAT_API_KEY` set in Dokploy's environment.
 - [ ] Terms of Use and Privacy Policy live on `barklog.gg` and linked from the paywall — Guideline 3.1.2 is the most common rejection for this shape of app.
 - [ ] EU DSA trader status declared, with a P.O. Box rather than a home address if you would rather not publish one. Apple verifies this, so it takes time.
