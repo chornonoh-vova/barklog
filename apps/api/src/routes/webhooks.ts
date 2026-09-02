@@ -61,41 +61,58 @@ export function webhookRoutes(deps: AppDeps) {
     async (c) => {
       const { event } = c.req.valid("json");
 
-      const isNew = await recordSubscriptionEvent(deps.db, {
-        id: event.id,
-        userId: event.app_user_id,
-        type: event.type,
-        payload: event,
+      // One transaction, because the recorded event id is the idempotency guard
+      // for everything below it. Committing the id before the effect it guards
+      // means a throw in `ensureUser` or `upsertSubscription` answers 500,
+      // RevenueCat retries, the retry finds the id already stored and answers
+      // 200 as a duplicate — and the subscription is never written. Rolling the
+      // event log back with the effect leaves the retry a genuinely unprocessed
+      // event.
+      const outcome = await deps.db.transaction(async (tx) => {
+        const isNew = await recordSubscriptionEvent(tx, {
+          id: event.id,
+          userId: event.app_user_id,
+          type: event.type,
+          payload: event,
+        });
+
+        // `ON CONFLICT DO NOTHING` wrote nothing, so this commits nothing —
+        // and it must stay a 200, or RevenueCat retries a delivery we have
+        // already applied.
+        if (!isNew) return "duplicate" as const;
+
+        const row = toSubscriptionRow(event);
+
+        // Recorded and genuinely processed: there is no subscription state in
+        // this payload to apply.
+        if (row === null) return "no-state" as const;
+
+        // A free user can buy Premium having sent nothing but GETs, so
+        // `ensureUserMiddleware` — which runs only for MUTATING_METHODS — may
+        // never have created their row, and the upsert's foreign key needs it.
+        // `app_user_id` comes from our own `Purchases.logIn(clerkUserId)` behind
+        // both webhook secrets, so creating the row here is exactly what the
+        // middleware does on a first write.
+        await ensureUser(tx, event.app_user_id);
+
+        // Unconditional: the upsert's WHERE clause drops stale events.
+        await upsertSubscription(tx, row);
+
+        return "applied" as const;
       });
 
-      if (!isNew) {
+      if (outcome === "duplicate") {
         log.info("Duplicate RevenueCat event {id} ignored", { id: event.id });
-        return c.body(null, 200);
       }
 
-      const row = toSubscriptionRow(event);
-
-      if (row === null) {
+      if (outcome === "no-state") {
         // The id, because a partial purchase payload lands here too: without it
         // a dropped purchase has nothing to trace it by.
         log.info("RevenueCat event {id} of type {type} carries no subscription state", {
           id: event.id,
           type: event.type,
         });
-        return c.body(null, 200);
       }
-
-      // A free user can buy Premium having sent nothing but GETs, so
-      // `ensureUserMiddleware` — which runs only for MUTATING_METHODS — may never
-      // have created their row. Answering 200 without it would consume the event
-      // id and discard the purchase, and the retry would hit the duplicate
-      // branch: permanently lost. `app_user_id` comes from our own
-      // `Purchases.logIn(clerkUserId)` behind both webhook secrets, so creating
-      // the row here is exactly what the middleware does on a first write.
-      await ensureUser(deps.db, event.app_user_id);
-
-      // Unconditional: the upsert's WHERE clause drops stale events.
-      await upsertSubscription(deps.db, row);
 
       return c.body(null, 200);
     },

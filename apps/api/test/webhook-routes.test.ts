@@ -1,7 +1,9 @@
 import { createHmac } from "node:crypto";
 
-import { ensureUser, getSubscription } from "@repo/db";
+import { ensureUser, getSubscription, schema } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
+
+import type { Db } from "../src/types.js";
 
 import {
   callApi,
@@ -59,6 +61,39 @@ const post = (
     user: null,
   };
 };
+
+/** Every `insert(subscriptions)` throws; every other call is delegated. */
+function failUpsert<T extends Pick<Db, "insert">>(handle: T): T {
+  return new Proxy(handle, {
+    get(target, prop, receiver) {
+      if (prop !== "insert") return Reflect.get(target, prop, receiver);
+
+      return (table: Parameters<Db["insert"]>[0]) => {
+        if (table === schema.subscriptions) {
+          throw new Error("the subscriptions upsert failed");
+        }
+
+        return target.insert(table);
+      };
+    },
+  });
+}
+
+/**
+ * The real db, except that the subscriptions upsert throws — inside a
+ * transaction or outside one, so the test measures the handler rather than the
+ * shape it happens to have. Everything else, the transaction itself included,
+ * is delegated: the rollback under test is Postgres's, not a stub's.
+ */
+function withFailingUpsert(db: Db): Db {
+  return new Proxy(failUpsert(db), {
+    get(target, prop, receiver) {
+      if (prop !== "transaction") return Reflect.get(target, prop, receiver);
+
+      return (run: Parameters<Db["transaction"]>[0]) => db.transaction((tx) => run(failUpsert(tx)));
+    },
+  });
+}
 
 beforeEach(async () => {
   await harness.reset();
@@ -303,4 +338,34 @@ test("the api body limit still applies to api routes", async () => {
   });
 
   expect(response.status).toBe(413);
+});
+
+// The record-and-apply must be one transaction. Committing the event id before
+// the effect it guards is F1's failure mode on the error path: the handler
+// 500s, RevenueCat retries, `isNew` is false, the duplicate branch answers 200,
+// and the purchase is lost for good.
+test("a failed apply leaves no event row, so the redelivery is processed and not swallowed", async () => {
+  const broken = createTestApp({ db: withFailingUpsert(harness.db) });
+
+  const failed = await callApi(broken.app, "/webhooks/revenuecat", post(event()));
+
+  expect(failed.status).toBe(500);
+  expect(await getSubscription(harness.db, TEST_USER)).toBeNull();
+
+  const rows = await harness.db.execute(
+    "select count(*)::int as total from subscription_events where id = 'rc_event_1'",
+  );
+  expect((rows.rows[0] as { total: number }).total).toBe(0);
+
+  // RevenueCat's retry, against a healthy api: the same event id must still be
+  // unprocessed, so the purchase lands.
+  const retry = await callApi(harness.app, "/webhooks/revenuecat", post(event()));
+
+  expect(retry.status).toBe(200);
+  expect(await getSubscription(harness.db, TEST_USER)).toMatchObject({
+    productId: "gg.barklog.app.premium.yearly",
+    lastEventAtMs: 2_000,
+  });
+
+  await broken.close();
 });
