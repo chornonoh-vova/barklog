@@ -7,11 +7,9 @@ import { useApi } from "@/api/provider";
 import { keys } from "@/api/keys";
 import { REVENUECAT_API_KEY } from "@/env";
 
+import { refreshSubscription } from "./refresh";
 import { identifyAction } from "./should-identify";
 import { entitlementChanged, PREMIUM_ENTITLEMENT } from "./should-refresh";
-
-const REFRESH_ATTEMPTS = 2;
-const REFRESH_RETRY_MS = 2_000;
 
 /** Keeps RevenueCat's App User ID equal to the Clerk `sub`, which is `users.id`. */
 export function PurchasesProvider({ children }: { children: ReactNode }) {
@@ -42,26 +40,7 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
     void Purchases.logIn(userId as string);
   }, [userId]);
 
-  const refresh = useCallback(async () => {
-    for (let attempt = 1; attempt <= REFRESH_ATTEMPTS; attempt += 1) {
-      try {
-        await api.refreshSubscription();
-        return;
-      } catch (error) {
-        // Never rethrow: this runs inside a native listener callback, where a
-        // rejection has nowhere to go. But never swallow it silently either —
-        // this is the recovery path when the webhook is delayed, so a failure
-        // here is why a paying user is still on the free tier.
-        if (__DEV__) {
-          console.warn(`refreshSubscription attempt ${attempt} failed`, error);
-        }
-
-        if (attempt < REFRESH_ATTEMPTS) {
-          await new Promise((resolve) => setTimeout(resolve, REFRESH_RETRY_MS));
-        }
-      }
-    }
-  }, [api]);
+  const refresh = useCallback(() => refreshSubscription(api), [api]);
 
   useEffect(() => {
     const listener = (customerInfo: CustomerInfo) => {
