@@ -793,3 +793,81 @@ Consequences of this decision, recorded so they are not rediscovered:
 | Webhook secrets leaking into logs                                                                                                                                                                                                                                                               | `honoLogger` does not log headers; do not add `Authorization` or `X-RevenueCat-Webhook-Signature` to any log context.                                                                                                                                    |
 | The HMAC signing secret is shown once at creation and cannot be retrieved                                                                                                                                                                                                                       | If it was not saved, rotate it in the dashboard rather than guessing.                                                                                                                                                                                    |
 | Trial abuse by Clerk account churn                                                                                                                                                                                                                                                              | Apple ties introductory-offer eligibility to the Apple ID, not our user id, so a new Clerk account gets no new trial. Accepted as-is.                                                                                                                    |
+
+## 13. Known remaining items
+
+Recorded at implementation close. None blocked the branch; all were reviewed and
+judged shippable. Kept here rather than in a scratch ledger because this is the
+maintained document.
+
+### One unresolved observation
+
+**A single concurrency-test failure in 44 runs**, observing `[201, 201]` where
+`[201, 402]` is required — both racers winning the last slot. Not reproduced in 43
+subsequent runs across five batches with fresh containers.
+
+A dedicated lock audit found no path where the lock is not held across the
+count→write span: all five transaction-body calls take `tx` rather than `deps.db`
+(the one mechanism that would reproduce it), `lockUser` is the first statement, the
+`users` row is committed by `ensureUserMiddleware` beforehand, isolation is READ
+COMMITTED, and `fileParallelism: false` rules out cross-file interference. A
+stale-module-graph hypothesis was considered and rejected: the failing run reported
+"162 passed | 1 failed", and a pre-edit route would have failed five other cap tests
+too.
+
+Unresolvable from the retained evidence. If it is real, the cost is bounded — a user
+occasionally holds 11 unfinished games; non-destructive, invisible, and detectable
+from the data later. `lockUser` now throws when it locks no row, which converts the
+whole "the lock wasn't held" class from silent to loud.
+
+### Deliberate, not oversights
+
+- **`subscription_events` has no index on `user_id`.** No production path reads the
+  table; `recordSubscriptionEvent` only inserts. Adding one would be YAGNI on a
+  table with no read path.
+- **`SUBSCRIPTION_STORES` and `PERIOD_TYPES` are declared twice** — `pgEnum` needs
+  the values in `packages/db`, the wire types need the union in
+  `packages/contracts`, and `@repo/contracts` is only a devDependency there.
+  `status-parity.test.ts` keeps them honest, exactly as it does `BACKLOG_STATUSES`.
+- **Two RevenueCat→`SubscriptionRow` mappers** with divergent field priority: the
+  webhook keys `willRenew` off `cancel_reason`, the REST client off
+  `unsubscribe_detected_at`, and only the REST path prioritises entitlement-level
+  `purchase_date`. The wire shapes genuinely differ (epoch-ms vs ISO strings); they
+  share the two lookup maps, which is all there is to unify. Worth consolidating if
+  a third caller appears.
+- **The paywall sheet closes before the unlock lands** (up to ~2s, no spinner).
+  Refresh-then-invalidate is the correct order — the alternative was faster at
+  showing the _wrong_ answer, since it invalidated against a row the webhook may not
+  have written. Awaiting inside the callback would hold the sheet open with no
+  feedback.
+- **An in-sheet purchase can spend two refreshes** — the listener's transition and
+  the sheet's callback. Bounded, user-initiated, well inside the 10/min limit, and
+  the redundancy is the point.
+- **`turbo.json` does not declare the `EXPO_PUBLIC_REVENUECAT_*` keys.** It does not
+  need to: turbo's Expo framework inference folds an `EXPO_PUBLIC_*` wildcard into
+  the env hash, so rotating a key does invalidate the build cache, and
+  `eslint-plugin-turbo` ships the same table, so the lint rule correctly does not
+  flag them. Verified by `turbo run build --dry=json --filter=mobile` reporting the
+  key under `environmentVariables.inferred`, with the build hash moving when its
+  value changes.
+
+### Worth a follow-up
+
+- **`refresh.ts` has no unit test.** `__DEV__` is undefined under the mobile vitest
+  setup, so testing it means adding config. Ten lines of retry-and-log whose only
+  failure mode is a missing dev-only warning.
+- **`backlog-screen.tsx` uses `useIsPremium()` for the slots label**, so a paying
+  user whose `/api/me` has 4xx'd sees "N of 10 spots used" indefinitely. It gates
+  nothing — the label is cosmetic — but rendering nothing on an unknown entitlement
+  would read better.
+- **`SlotConsumingStatus`** in `packages/contracts/src/subscription.ts` is an
+  exported type with no consumer anywhere. One line; delete when convenient.
+- **`gameExists` reads outside the transaction**, so a game deleted from the mirror
+  between that check and the write surfaces as a foreign-key 500 rather than a 404.
+  Pre-existing shape, vanishingly narrow.
+- **`withFailingUpsert`** in the webhook tests intercepts `insert` specifically. If
+  `upsertSubscription` ever moves off `.insert(...).onConflictDoUpdate(...)`, the
+  poison stops firing and the atomicity test passes vacuously.
+- **Customer Center must be configured in the RevenueCat dashboard**, or the star's
+  `presentCustomerCenter()` may present an empty sheet. Native failures there are
+  silent; the device checklist's step 11 is the only thing that catches it.
