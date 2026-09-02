@@ -1,4 +1,4 @@
-import { and, asc, avg, count, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, asc, avg, count, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 
 import type { Queryable } from "../client.js";
 import {
@@ -144,6 +144,30 @@ export async function upsertBacklogEntry(
   const { created, ...entry } = rows[0]!;
 
   return { entry, created };
+}
+
+/**
+ * Serialises one user's backlog writes for the rest of the transaction. Without
+ * it, two concurrent adds at 9/10 both read 9 and both succeed.
+ */
+export async function lockUser(db: Queryable, userId: string): Promise<void> {
+  await db.execute(sql`SELECT 1 FROM ${users} WHERE ${users.id} = ${userId} FOR UPDATE`);
+}
+
+export async function countBacklogEntriesByStatus(
+  db: Queryable,
+  userId: string,
+  statuses: readonly BacklogStatusValue[],
+): Promise<number> {
+  // Explicit, not incidental: a silent "everything" here would uncap the free tier.
+  if (statuses.length === 0) return 0;
+
+  const rows = await db
+    .select({ total: count() })
+    .from(backlogEntries)
+    .where(and(eq(backlogEntries.userId, userId), inArray(backlogEntries.status, [...statuses])));
+
+  return rows[0]?.total ?? 0;
 }
 
 export async function deleteBacklogEntry(

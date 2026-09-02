@@ -2,11 +2,13 @@ import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import {
+  countBacklogEntriesByStatus,
   deleteBacklogEntry,
   ensureUser,
   getBacklogEntry,
   getBacklogStats,
   listBacklog,
+  lockUser,
   upsertBacklogEntry,
 } from "../src/queries/backlog.js";
 import * as schema from "../src/schema/index.js";
@@ -200,4 +202,50 @@ test("stats for an empty backlog are zeroes and a null average", async () => {
     counts: { waiting: 0, playing: 0, completed: 0, abandoned: 0 },
     averageRating: null,
   });
+});
+
+test("countBacklogEntriesByStatus counts only the statuses it is given", async () => {
+  await upsertBacklogEntry(db, { userId: USER, gameId: 1, status: "waiting", rating: null });
+  await upsertBacklogEntry(db, { userId: USER, gameId: 2, status: "playing", rating: null });
+  await upsertBacklogEntry(db, { userId: USER, gameId: 3, status: "completed", rating: null });
+
+  expect(await countBacklogEntriesByStatus(db, USER, ["waiting", "playing"])).toBe(2);
+  expect(await countBacklogEntriesByStatus(db, USER, ["completed"])).toBe(1);
+  expect(await countBacklogEntriesByStatus(db, USER, ["abandoned"])).toBe(0);
+});
+
+test("countBacklogEntriesByStatus counts one user's entries only", async () => {
+  await upsertBacklogEntry(db, { userId: USER, gameId: 1, status: "waiting", rating: null });
+  await upsertBacklogEntry(db, { userId: OTHER, gameId: 2, status: "waiting", rating: null });
+
+  expect(await countBacklogEntriesByStatus(db, USER, ["waiting", "playing"])).toBe(1);
+});
+
+test("an empty status list counts nothing rather than everything", async () => {
+  await upsertBacklogEntry(db, { userId: USER, gameId: 1, status: "waiting", rating: null });
+
+  expect(await countBacklogEntriesByStatus(db, USER, [])).toBe(0);
+});
+
+test("lockUser serialises two transactions on the same user", async () => {
+  const order: string[] = [];
+
+  const first = db.transaction(async (tx) => {
+    await lockUser(tx, USER);
+    order.push("first-locked");
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    order.push("first-releasing");
+  });
+
+  // A beat, so the first transaction certainly holds the lock.
+  await new Promise((resolve) => setTimeout(resolve, 30));
+
+  const second = db.transaction(async (tx) => {
+    await lockUser(tx, USER);
+    order.push("second-locked");
+  });
+
+  await Promise.all([first, second]);
+
+  expect(order).toEqual(["first-locked", "first-releasing", "second-locked"]);
 });
