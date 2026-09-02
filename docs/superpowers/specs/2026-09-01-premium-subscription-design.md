@@ -27,7 +27,7 @@ Lewis Blogs Gaming)**, whose criterion is:
 That sentence constrains the monetization design more than any technical
 consideration does. Every verb it rewards — save, organize, complete, rate,
 share — is a verb a naive cap would tax. So the free tier limits **hoarding**,
-not saving: it caps how many *unfinished* games you may hold, and finishing one
+not saving: it caps how many _unfinished_ games you may hold, and finishing one
 gives the slot back.
 
 ### Goals
@@ -36,7 +36,9 @@ gives the slot back.
   unlock the API.
 - The free tier is fully usable. No gate stands between a new user and the
   four verbs above.
-- The cap is visible from the first session, never a surprise wall.
+- The cap is visible from the first add, never a surprise wall. At ten slots
+  this is not optional polish; it is what separates a rule from an ambush.
+- **No ads, on any tier, ever.** A stated product promise, not an omission.
 - Hitting the cap presents a dismissible offer, not a takeover.
 - Entitlement state lives in Postgres, so revenue is queryable for a
   `#BuildInPublic` post without opening the RevenueCat dashboard.
@@ -44,10 +46,8 @@ gives the slot back.
 
 ### Non-goals
 
-- **Ads.** Deferred to 1.1 — see §11. AdMob on iOS requires
-  `useFrameworks: "static"`, and flipping the pod graph before a first-ever
-  App Store review, alongside a share extension, `@expo/ui` and Clerk's native
-  views, is the most likely way to miss the deadline.
+- **Ads, permanently.** Not deferred — rejected as a product decision, and
+  turned into a selling point instead. See §11.
 - **Android.** `app.json` is `platforms: ["ios"]` and stays that way.
 - **A lifetime / non-consumable product.** Would improve the revenue mix, but
   adds a third product and an entitlement with no expiry to reason about.
@@ -58,26 +58,33 @@ gives the slot back.
 
 ## 2. Decisions
 
-| Decision | Choice | Why |
-| --- | --- | --- |
-| Free tier limit | 25 **unfinished** entries | `waiting` and `playing` count; `completed` and `abandoned` are free. Caps hoarding, not saving. Rewards the judge's verbs. |
-| Where the limit is enforced | `apps/api`, inside a transaction it opens | The limit is a product rule, so it belongs in the API; `packages/db` stays queries and writes. The transaction is what keeps check-then-write atomic. |
-| Entitlement authority | The API, backed by Postgres | The API owns backlog writes, so the API must own the entitlement answer. |
-| Freshness | RevenueCat webhooks, plus an on-demand REST pull | Webhooks are fast but not synchronous; a user who just paid must not get a 402 on the next tap. |
-| Entitlement on device | `GET /api/me` | The UI must agree with the enforcer. `customerInfo` is a change *signal*, never the authority. |
-| Products | Monthly $2.99, Yearly $19.99, one group | Minimum App Store Connect surface with a low-commitment entry point. |
-| Trial | 7-day introductory offer on both | Judging runs Oct 1–13. A 30-day trial started in September converts to first payment *after* judging closes, leaving zero revenue to report. |
-| Paywall UI | RevenueCat Paywalls v2 (`react-native-purchases-ui`) | Remotely editable after Sept 30 without a new build or review. The app ships once; judging happens afterwards. |
-| Paywall presentation | `pageSheet`, dismissible | A sheet reads as an offer; a `fullScreenModal` reads as a wall. That is the "chore" line. |
-| Entitlement identifier | `premium` | Not `ad_free`: ads arrive in 1.1 under the same entitlement. |
+| Decision                    | Choice                                               | Why                                                                                                                                                   |
+| --------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free tier limit             | 10 **unfinished** entries                            | `waiting` and `playing` count; `completed` and `abandoned` are free. Caps hoarding, not saving. Rewards the judge's verbs.                            |
+| Where the limit is enforced | `apps/api`, inside a transaction it opens            | The limit is a product rule, so it belongs in the API; `packages/db` stays queries and writes. The transaction is what keeps check-then-write atomic. |
+| Entitlement authority       | The API, backed by Postgres                          | The API owns backlog writes, so the API must own the entitlement answer.                                                                              |
+| Freshness                   | RevenueCat webhooks, plus an on-demand REST pull     | Webhooks are fast but not synchronous; a user who just paid must not get a 402 on the next tap.                                                       |
+| Entitlement on device       | `GET /api/me`                                        | The UI must agree with the enforcer. `customerInfo` is a change _signal_, never the authority.                                                        |
+| Products                    | Monthly $2.99, Yearly $19.99, one group              | Minimum App Store Connect surface with a low-commitment entry point.                                                                                  |
+| Trial                       | 7-day introductory offer on both                     | Judging runs Oct 1–13. A 30-day trial started in September converts to first payment _after_ judging closes, leaving zero revenue to report.          |
+| Paywall UI                  | RevenueCat Paywalls v2 (`react-native-purchases-ui`) | Remotely editable after Sept 30 without a new build or review. The app ships once; judging happens afterwards.                                        |
+| Paywall presentation        | `pageSheet`, dismissible                             | A sheet reads as an offer; a `fullScreenModal` reads as a wall. That is the "chore" line.                                                             |
+| Entitlement identifier      | `premium`                                            | Not `ad_free`, and not because ads are coming later — there are none. The entitlement grants unlimited slots, nothing more.                           |
 
 ### Rejected alternatives
 
-**A flat 10-entry cap** (the original proposal). An excited new user adds the
-games they are playing plus their bucket list in the *first* session, so 10 is
-consumed in about ninety seconds — a paywall before value, on the exact verb the
-judge scores. 25 unfinished slots is reached in session two or three, by
-someone who came back.
+**A flat 10-entry cap** (the original proposal). Ten _total_ entries is
+consumed in the first session and never recovers, because a finished game keeps
+occupying a slot forever — a paywall before value, on the exact verb the judge
+scores. Ten _unfinished_ slots is a different rule: it is reached quickly, but
+finishing a game always reopens the door, so the wall is never permanent and
+never punishes the behaviour the app exists to encourage.
+
+**Twenty-five unfinished slots** (the previous revision). More generous, and it
+delays the first paywall to session two or three. Ten was chosen instead to put
+the offer in front of engaged users sooner, accepting that some will meet it in
+session one. The mitigation is §7's slots indicator: the limit is visible from
+the first add, so meeting it is a rule, not an ambush.
 
 **Whole app behind a trial.** Simplest to enforce, strongest revenue signal, but
 a hard wall on day 8 for every user and nothing free for the judge to explore.
@@ -97,27 +104,27 @@ infrastructure, but it puts a third-party network hop and rate limit in front of
 Only `waiting` and `playing` occupy a slot.
 
 ```
-FREE TIER — 25 active slots
+FREE TIER — 10 active slots
 
-waiting     18  ● counts
-playing      4  ● counts
+waiting      7  ● counts
+playing      2  ● counts
 ─────────────────────────
 completed   31  ○ free
 abandoned    7  ○ free
 
-           22 / 25 used
+            9 / 10 used
 ```
 
 `PUT /api/backlog/:gameId` is an upsert that may raise, lower, or not move the
 active count. The limit applies to the **delta**, not the total:
 
-| From | To | Δ | Free user at 25/25 |
-| --- | --- | --- | --- |
-| — (new entry) | `waiting` / `playing` | +1 | blocked |
-| `completed` / `abandoned` | `waiting` / `playing` | +1 | blocked |
-| `waiting` | `playing` (or reverse) | 0 | allowed |
-| `waiting` / `playing` | `completed` / `abandoned` | −1 | allowed |
-| any | same status, rating changed | 0 | allowed |
+| From                      | To                          | Δ   | Free user at 10/10 |
+| ------------------------- | --------------------------- | --- | ------------------ |
+| — (new entry)             | `waiting` / `playing`       | +1  | blocked            |
+| `completed` / `abandoned` | `waiting` / `playing`       | +1  | blocked            |
+| `waiting`                 | `playing` (or reverse)      | 0   | allowed            |
+| `waiting` / `playing`     | `completed` / `abandoned`   | −1  | allowed            |
+| any                       | same status, rating changed | 0   | allowed            |
 
 Blocked when `delta > 0 && !premium && activeCount + delta > FREE_ACTIVE_SLOTS`.
 
@@ -131,7 +138,7 @@ Blocked when `delta > 0 && !premium && activeCount + delta > FREE_ACTIVE_SLOTS`.
 declared exactly once:
 
 ```ts
-export const FREE_ACTIVE_SLOTS = 25;
+export const FREE_ACTIVE_SLOTS = 10;
 
 export const SLOT_CONSUMING_STATUSES = ["waiting", "playing"] as const;
 
@@ -197,7 +204,10 @@ export const subscriptionEvents = pgTable("subscription_events", {
 
 ```ts
 // packages/db — returns the row, judges nothing.
-export async function getSubscription(db: Queryable, userId: string): Promise<SubscriptionRow | null>;
+export async function getSubscription(
+  db: Queryable,
+  userId: string,
+): Promise<SubscriptionRow | null>;
 
 // apps/api/src/entitlement.ts — owns the policy.
 export function isPremium(
@@ -239,7 +249,7 @@ Postgres for about fifteen lines of code. That is the difference between a
 
 The limit is a product rule, so it lives in `apps/api`. `packages/db` stays what
 it is: queries and writes. But the check and the write must still be atomic —
-two concurrent adds at 24/25 must not both read 24 and both succeed.
+two concurrent adds at 9/10 must not both read 9 and both succeed.
 
 Both hold if the **API opens the transaction** and the db package supplies
 primitives to run inside it. `upsertBacklogEntry` keeps its current signature
@@ -375,7 +385,7 @@ Three changes in `apps/api`:
    ```
 
    Separate because `PROBE_PATHS` also drives the `honoLogger` skip, and
-   webhook requests *should* be logged. The existing exact-path comment in
+   webhook requests _should_ be logged. The existing exact-path comment in
    `middleware/auth.ts` — a prefix allowlist would quietly make a future
    `/healthz-debug` public — applies unchanged.
 
@@ -397,14 +407,14 @@ Three changes in `apps/api`:
 
 Status codes are the contract with RevenueCat's retry machinery:
 
-| Case | Status | Why |
-| --- | --- | --- |
-| Applied | 200 | — |
-| Duplicate event id | 200 | Already handled. A non-2xx retries forever. |
-| Stale `event_timestamp_ms` | 200 | Deliberately ignored, not failed. |
-| Bad or missing secret | 401 | — |
-| Unparseable payload | 422 | New `UNPROCESSABLE_WEBHOOK` type, sibling to `UNPROCESSABLE_SHARE`. |
-| Unknown `app_user_id` | 200 | Event logged, `subscriptions` upsert skipped. `subscription_events.userId` is deliberately not a foreign key so this row can land — a webhook for a deleted user is not an error, and the log is where you find out it happened. |
+| Case                       | Status | Why                                                                                                                                                                                                                              |
+| -------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Applied                    | 200    | —                                                                                                                                                                                                                                |
+| Duplicate event id         | 200    | Already handled. A non-2xx retries forever.                                                                                                                                                                                      |
+| Stale `event_timestamp_ms` | 200    | Deliberately ignored, not failed.                                                                                                                                                                                                |
+| Bad or missing secret      | 401    | —                                                                                                                                                                                                                                |
+| Unparseable payload        | 422    | New `UNPROCESSABLE_WEBHOOK` type, sibling to `UNPROCESSABLE_SHARE`.                                                                                                                                                              |
+| Unknown `app_user_id`      | 200    | Event logged, `subscriptions` upsert skipped. `subscription_events.userId` is deliberately not a foreign key so this row can land — a webhook for a deleted user is not an error, and the log is where you find out it happened. |
 
 Payload validated by a valibot schema in
 `packages/contracts/src/revenuecat.ts`, behind Standard Schema like everything
@@ -437,7 +447,10 @@ REVENUECAT_API_KEY          # secret API key, for the refresh pull
 ```
 
 Mirrored in `.env.example` with the dashboard URL, following the existing
-commenting style.
+commenting style, and added to `compose.yaml`'s api service using the
+`${VAR:?message}` required-variable syntax that deploy design §5 established —
+so a missing secret fails at `compose up` naming the variable, rather than at
+the first webhook. The values themselves live in Dokploy's environment.
 
 ## 7. Mobile
 
@@ -476,11 +489,12 @@ consulted only as a change signal.
 
 ### Slots indicator
 
-`backlog-screen.tsx` already holds `useBacklogStats()`. Add a "22 / 25 spots"
-line for free users, with the mechanic stated where it is read — *finish a game
-to free a spot*. The cap being visible from the first session is what makes it a
-rule rather than an ambush, and that is the whole difference the judging
-criterion turns on.
+`backlog-screen.tsx` already holds `useBacklogStats()`. Add a "9 / 10 spots"
+line for free users, with the mechanic stated where it is read — _finish a game
+to free a spot_. At ten slots the indicator is load-bearing: a user who watches
+the counter fill understands the rule, while a user who meets an unannounced
+wall at their eleventh add experiences exactly the chore the judging criterion
+penalises.
 
 ### The paywall is a route, not a gate
 
@@ -529,52 +543,52 @@ above is a rejection if missing.
 
 ### New
 
-| Path | What |
-| --- | --- |
-| `packages/contracts/src/subscription.ts` | `FREE_ACTIVE_SLOTS`, `SLOT_CONSUMING_STATUSES`, `slotDelta`, `SUBSCRIPTION_STORES`, `PERIOD_TYPES` — the only home for the slot rule |
-| `packages/contracts/src/revenuecat.ts` | webhook payload schema |
-| `packages/db/src/schema/subscriptions.ts` | both tables, both enums. No slot rule. |
-| `packages/db/src/queries/subscriptions.ts` | `getSubscription` (returns the row, judges nothing), upsert from event, event log insert |
-| `packages/db/drizzle/…` | generated migration |
-| `apps/api/src/routes/me.ts` | `GET /api/me` |
-| `apps/api/src/routes/subscription.ts` | `POST /api/subscription/refresh` |
-| `apps/api/src/routes/webhooks.ts` | `POST /webhooks/revenuecat` |
-| `apps/api/src/revenuecat.ts` | REST client, secret compare, event → row mapping |
-| `apps/api/src/entitlement.ts` | `isPremium(row, { now, allowSandbox })` — the policy, in the API |
-| `apps/mobile/src/purchases/provider.tsx` | configure / logIn / logOut / listener |
-| `apps/mobile/src/purchases/use-is-premium.ts` | `GET /api/me` hook |
-| `apps/mobile/src/app/paywall.tsx` | `RevenueCatUI.Paywall` in a sheet |
+| Path                                          | What                                                                                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/contracts/src/subscription.ts`      | `FREE_ACTIVE_SLOTS`, `SLOT_CONSUMING_STATUSES`, `slotDelta`, `SUBSCRIPTION_STORES`, `PERIOD_TYPES` — the only home for the slot rule |
+| `packages/contracts/src/revenuecat.ts`        | webhook payload schema                                                                                                               |
+| `packages/db/src/schema/subscriptions.ts`     | both tables, both enums. No slot rule.                                                                                               |
+| `packages/db/src/queries/subscriptions.ts`    | `getSubscription` (returns the row, judges nothing), upsert from event, event log insert                                             |
+| `packages/db/drizzle/…`                       | generated migration                                                                                                                  |
+| `apps/api/src/routes/me.ts`                   | `GET /api/me`                                                                                                                        |
+| `apps/api/src/routes/subscription.ts`         | `POST /api/subscription/refresh`                                                                                                     |
+| `apps/api/src/routes/webhooks.ts`             | `POST /webhooks/revenuecat`                                                                                                          |
+| `apps/api/src/revenuecat.ts`                  | REST client, secret compare, event → row mapping                                                                                     |
+| `apps/api/src/entitlement.ts`                 | `isPremium(row, { now, allowSandbox })` — the policy, in the API                                                                     |
+| `apps/mobile/src/purchases/provider.tsx`      | configure / logIn / logOut / listener                                                                                                |
+| `apps/mobile/src/purchases/use-is-premium.ts` | `GET /api/me` hook                                                                                                                   |
+| `apps/mobile/src/app/paywall.tsx`             | `RevenueCatUI.Paywall` in a sheet                                                                                                    |
 
 ### Changed
 
-| Path | Change |
-| --- | --- |
-| `packages/contracts/src/index.ts` | re-export the two new modules |
-| `packages/contracts/src/wire.ts` | `MeResponse` — the sole declaration, beside `BacklogStatsWire` |
-| `packages/db/src/schema/index.ts` | export subscriptions schema |
-| `packages/db/src/queries/backlog.ts` | `db: Db` → `db: Queryable` throughout; add `lockUser` and `countBacklogEntriesByStatus`. `upsertBacklogEntry` unchanged. |
-| `packages/db/src/index.ts` | export the new queries and `Queryable` |
-| `packages/db/test/status-parity.test.ts` | extend to `SUBSCRIPTION_STORES` and `PERIOD_TYPES` |
-| `packages/db/src/client.ts` | export the `Queryable` type |
-| `packages/db/src/queries/games.ts`, `sync-runs.ts` | `db: Db` → `db: Queryable` |
-| `apps/api/src/env.ts` | three RevenueCat vars |
-| `apps/api/src/types.ts` | `PUBLIC_PATHS`, `WEBHOOK_BODY_LIMIT_BYTES` |
-| `apps/api/src/problems.ts` | `SUBSCRIPTION_REQUIRED`, unprocessable-webhook type |
-| `apps/api/src/middleware/auth.ts` | `PUBLIC_PATHS` instead of `PROBE_PATHS` |
-| `apps/api/src/app.ts` | scoped body limits, three new routes |
-| `apps/api/src/routes/backlog.ts` | open the transaction, run the slot rule, map `{ blocked: true }` to a 402 problem |
-| `apps/api/src/rate-limits.ts` | a scope for `refresh` |
-| `apps/mobile/src/env.ts` | `EXPO_PUBLIC_REVENUECAT_IOS_KEY` |
-| `apps/mobile/package.json` | two RevenueCat packages |
-| `apps/mobile/src/app/_layout.tsx` | `PurchasesProvider`, paywall screen |
-| `apps/mobile/src/api/endpoints.ts` | `getMe`, `refreshSubscription` |
-| `apps/mobile/src/api/keys.ts` | `keys.me()` |
-| `apps/mobile/src/api/hooks.ts` | `useMe`; 402 branch in `onError` |
-| `apps/mobile/src/api/error-copy.ts` | 402 case |
-| `apps/mobile/src/features/game/entry-actions.tsx` | proactive check |
-| `apps/mobile/src/features/backlog/backlog-screen.tsx` | slots indicator |
-| `.env.example` | the three API vars |
-| `README.md` | monetization section, new env vars |
+| Path                                                  | Change                                                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `packages/contracts/src/index.ts`                     | re-export the two new modules                                                                                            |
+| `packages/contracts/src/wire.ts`                      | `MeResponse` — the sole declaration, beside `BacklogStatsWire`                                                           |
+| `packages/db/src/schema/index.ts`                     | export subscriptions schema                                                                                              |
+| `packages/db/src/queries/backlog.ts`                  | `db: Db` → `db: Queryable` throughout; add `lockUser` and `countBacklogEntriesByStatus`. `upsertBacklogEntry` unchanged. |
+| `packages/db/src/index.ts`                            | export the new queries and `Queryable`                                                                                   |
+| `packages/db/test/status-parity.test.ts`              | extend to `SUBSCRIPTION_STORES` and `PERIOD_TYPES`                                                                       |
+| `packages/db/src/client.ts`                           | export the `Queryable` type                                                                                              |
+| `packages/db/src/queries/games.ts`, `sync-runs.ts`    | `db: Db` → `db: Queryable`                                                                                               |
+| `apps/api/src/env.ts`                                 | three RevenueCat vars                                                                                                    |
+| `apps/api/src/types.ts`                               | `PUBLIC_PATHS`, `WEBHOOK_BODY_LIMIT_BYTES`                                                                               |
+| `apps/api/src/problems.ts`                            | `SUBSCRIPTION_REQUIRED`, unprocessable-webhook type                                                                      |
+| `apps/api/src/middleware/auth.ts`                     | `PUBLIC_PATHS` instead of `PROBE_PATHS`                                                                                  |
+| `apps/api/src/app.ts`                                 | scoped body limits, three new routes                                                                                     |
+| `apps/api/src/routes/backlog.ts`                      | open the transaction, run the slot rule, map `{ blocked: true }` to a 402 problem                                        |
+| `apps/api/src/rate-limits.ts`                         | a scope for `refresh`                                                                                                    |
+| `apps/mobile/src/env.ts`                              | `EXPO_PUBLIC_REVENUECAT_IOS_KEY`                                                                                         |
+| `apps/mobile/package.json`                            | two RevenueCat packages                                                                                                  |
+| `apps/mobile/src/app/_layout.tsx`                     | `PurchasesProvider`, paywall screen                                                                                      |
+| `apps/mobile/src/api/endpoints.ts`                    | `getMe`, `refreshSubscription`                                                                                           |
+| `apps/mobile/src/api/keys.ts`                         | `keys.me()`                                                                                                              |
+| `apps/mobile/src/api/hooks.ts`                        | `useMe`; 402 branch in `onError`                                                                                         |
+| `apps/mobile/src/api/error-copy.ts`                   | 402 case                                                                                                                 |
+| `apps/mobile/src/features/game/entry-actions.tsx`     | proactive check                                                                                                          |
+| `apps/mobile/src/features/backlog/backlog-screen.tsx` | slots indicator                                                                                                          |
+| `.env.example`                                        | the three API vars                                                                                                       |
+| `README.md`                                           | monetization section, new env vars                                                                                       |
 
 ## 9. Testing
 
@@ -604,13 +618,13 @@ above is a rejection if missing.
 The cap tests move here with the rule. These need a database, so they belong in
 `apps/api`'s integration suite against the same testcontainers helper:
 
-- Free user at 24/25: a 25th `waiting` succeeds; a 26th is blocked.
-- Two concurrent `PUT`s at 24/25 — exactly one wins. Without `lockUser` this
+- Free user at 9/10: a 10th `waiting` succeeds; an 11th is blocked.
+- Two concurrent `PUT`s at 9/10 — exactly one wins. Without `lockUser` this
   test fails, which is the point of writing it.
-- `completed → waiting` at 25/25 is blocked; `waiting → completed` at 25/25
+- `completed → waiting` at 10/10 is blocked; `waiting → completed` at 10/10
   succeeds.
-- Rating-only change at 25/25 succeeds.
-- Premium user at 25/25 is never blocked.
+- Rating-only change at 10/10 succeeds.
+- Premium user at 10/10 is never blocked.
 - `isPremium` unit tests: expired, sandbox-in-production, sandbox-in-dev, null
   `expiresAt`, no row.
 
@@ -635,18 +649,18 @@ RevenueCat's server-side validation cannot see them. Sandbox compresses a 1-week
 trial to roughly 3 minutes, so trial → conversion → cancellation is watchable
 end to end.
 
-1. Fresh sandbox account, sign in, add 25 games, confirm the 26th presents the
+1. Fresh sandbox account, sign in, add 10 games, confirm the 11th presents the
    sheet.
-2. Purchase yearly. Confirm the sheet dismisses and the 26th add succeeds
-   *without* an app restart — this exercises the listener → refresh → invalidate
+2. Purchase yearly. Confirm the sheet dismisses and the 11th add succeeds
+   _without_ an app restart — this exercises the listener → refresh → invalidate
    chain.
 3. Confirm `subscriptions` and `subscription_events` rows landed.
 4. Let the trial lapse without cancelling; confirm renewal.
 5. Cancel; after expiry confirm the cap returns.
 6. Restore purchases on a second device, same Clerk account.
-7. Sign out, sign in as a different Clerk user; confirm premium does *not*
+7. Sign out, sign in as a different Clerk user; confirm premium does _not_
    carry over.
-8. Share a video into the app at 25/25; confirm the defensive path presents the
+8. Share a video into the app at 10/10; confirm the defensive path presents the
    sheet rather than an Alert.
 
 ## 10. Task order
@@ -672,59 +686,56 @@ Steps 1–3 depend on nothing external and can proceed while the App Store
 Connect agreements clear and the backend is being deployed. Step 4 is the first
 step that needs a public HTTPS URL.
 
-## 11. Deferred to 1.1 — ads
+## 11. Rejected — ads, and why their absence is the pitch
 
-Researched and deliberately postponed.
+Ads were researched in detail and rejected outright, not postponed. "No ads,
+ever, on any tier" is now a stated product promise and one of Premium's selling
+points: the free tier is not subsidised by the user's attention, and Premium is
+framed as supporting a solo developer rather than as buying your way out of an
+annoyance.
 
-**"RevenueCat Ads" is not an ad network.** It is an ad-revenue *tracking* layer,
-in public beta since 2026-03-25. Serving still happens through AdMob or
-AppLovin; RevenueCat hooks the impression-level revenue callbacks so ad revenue
-appears beside subscriptions in Charts. Entering the Catvertising Award
-therefore means two integrations, not one.
+That reframing is worth more here than the revenue would have been. General-
+interest banner eCPMs run roughly $0.20–$2, so at any plausible near-term scale
+the ad income is cents. Meanwhile the paywall gets an honest line that a
+competitor running AdMob cannot copy.
 
-Viability on this stack:
+The research, kept because it justifies the decision:
 
-- `react-native-google-mobile-ads` 16.5.0 (2026-08-18) has an Expo config
-  plugin and works under the New Architecture.
-- `react-native-purchases` 10.8.1 supports ad tracking; the manual `AdTracker`
-  path is required because AdMob's `loadAndTrack` convenience helpers are
-  iOS/Android-native only.
-- Impression-level revenue must be enabled in the AdMob account.
+- **"RevenueCat Ads" is not an ad network.** It is an ad-revenue _tracking_
+  layer, in public beta since 2026-03-25. Serving still happens through AdMob or
+  AppLovin; RevenueCat hooks the impression-level revenue callbacks so ad revenue
+  appears beside subscriptions in Charts. Entering the Catvertising Award would
+  have meant two integrations, not one.
+- `react-native-google-mobile-ads` 16.5.0 has an Expo config plugin and works
+  under the New Architecture, so it was viable.
+- AdMob's `loadAndTrack` convenience helpers are iOS/Android-native only, so
+  React Native requires the manual `AdTracker` path.
 - **AdMob on iOS wants `useFrameworks: "static"`.** With a share extension,
-  `@expo/ui` and Clerk's native views already in the build, this is the single
-  largest deadline risk in the project.
+  `@expo/ui` and Clerk's native views in the build, that was the single largest
+  technical risk in the project. Rejecting ads removes it permanently.
+- The original placement — a banner on the game detail screen, contextually
+  matched to the current game — was not achievable regardless. AdMob has no
+  game-title targeting; `contentUrl` and keywords are hints, not guarantees.
 
-The original proposal — a banner on the game detail screen, contextually
-related to the current game — does not survive contact with the details. AdMob
-has no game-title targeting; `contentUrl` and keywords are hints, not
-guarantees, so in practice hyper-casual banners land under the cover art. The
-detail screen is also the app's showcase (`hero.tsx`, `similar-games.tsx`) and
-the screen most likely to be screenshotted by a judge. And the Catvertising
-criterion is explicitly whether ads *"feel natural, useful, or additive rather
-than interruptive"* — which a banner nailed to the prettiest screen answers
-badly.
+Consequences of this decision, recorded so they are not rediscovered:
 
-The shape worth building instead, in 1.1: a **rewarded** ad offered *beside* the
-paywall at the cap — watch 30 seconds, free three slots. The ad then gives the
-user something, which answers the Catvertising criterion directly; rewarded
-eCPMs run an order of magnitude above banners; and the cap becomes a choice
-between two ways forward rather than a wall. Entitlement stays `premium`, so no
-migration.
-
-Banner revenue was also the weakest part of the original rationale: general-
-interest banner eCPMs run roughly $0.20–$2, which at hackathon scale is cents.
-The argument for ads is strategic, not financial.
+- The Catvertising Award ($20K/$10K/$5K) is out of reach. Accepted.
+- `apps/mobile` never takes an ad dependency, so the pod graph is never
+  disturbed and `expo-build-properties` is never needed.
+- The `premium` entitlement has exactly one meaning — unlimited slots — for the
+  life of the app.
 
 ## 12. Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| **No deployment configuration exists in this repo.** No Dockerfile, no host config; the API runs against `deps.compose.yaml` locally and `EXPO_PUBLIC_API_URL` points at a workstation. A published app cannot reach localhost, and neither can a webhook. | Being deployed in parallel with this work. Steps 1–3 do not depend on it. **This is the larger half of the remaining work; the subscription feature is the smaller half.** |
-| Empty production IGDB mirror — search returns nothing and `gameExists` rejects every backlog write | Run and *time* the initial sync early; it is paced by IGDB rate limits and cannot be compressed. |
-| Paid Apps agreement, tax and banking latency. Until active, products cannot be sold or sandbox-tested. | Start on day one. No workaround exists. |
-| First-ever App Store review with a first auto-renewable subscription; two passes is common | Submit by ~Sept 20, leaving ten days of buffer. If scope must be cut, cut the dog and all ad work — never the buffer. |
-| Guideline 3.1.2 rejection (missing price, trial terms, auto-renew text, EULA or privacy links) | §7's checklist, verified against the built paywall before submission. |
-| Each subscription product needs a paywall review screenshot that does not exist yet | Upload a placeholder at product creation; replace before submission. |
-| Judges need access; Offer Codes require the app to be live | Prepare the batch and redemption URL; generate the day approval lands. |
-| Webhook secret leaking into logs | `honoLogger` does not log headers; do not add the `Authorization` header to any log context. |
-| Trial abuse by Clerk account churn | Apple ties introductory-offer eligibility to the Apple ID, not our user id, so a new Clerk account gets no new trial. Accepted as-is. |
+| Risk                                                                                                                                                                                                                                                                                            | Mitigation                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~No deployment configuration~~                                                                                                                                                                                                                                                                 | **Resolved.** `api.barklog.gg` is live — `/readyz` reports postgres and valkey up, and the problem-details envelope renders. See `2026-09-01-container-images-and-deploy-design.md`. The webhook target is `https://api.barklog.gg/webhooks/revenuecat`. |
+| ~~Empty production IGDB mirror~~                                                                                                                                                                                                                                                                | **Resolved.** Initial sync completed in ~30 minutes.                                                                                                                                                                                                     |
+| ~~Paid Apps agreement latency~~                                                                                                                                                                                                                                                                 | **Resolved.** App Store Connect setup complete.                                                                                                                                                                                                          |
+| **The first in-app purchase must be reviewed together with an app version.** Apple will not review the subscription independently, so there is no "ship v1.0, add Premium in 1.1" fallback: the paywall must be in the first binary, and a subscription rejection rejects the whole submission. | The paywall is in scope for the first submission by design. Submit by ~Sept 20, leaving ten days of buffer. If scope must be cut, cut the dog — never the buffer.                                                                                        |
+| **EU DSA trader status must be declared even if the app is not sold in the EU.** Declaring as a trader publishes a contact address, phone and email on the EU product page.                                                                                                                     | Barklog has a subscription, so it is commercial and the hobbyist carve-out does not apply. Apple accepts a **P.O. Box** in place of a home address. Trader info is verified by Apple, which takes time — do it before submission, not after.             |
+| Guideline 3.1.2 rejection (missing price, trial terms, auto-renew text, EULA or privacy links)                                                                                                                                                                                                  | §7's checklist, verified against the built paywall before submission.                                                                                                                                                                                    |
+| Each subscription product needs a paywall review screenshot that does not exist yet                                                                                                                                                                                                             | Upload a placeholder at product creation; replace before submission.                                                                                                                                                                                     |
+| Judges need access; Offer Codes require the app to be live                                                                                                                                                                                                                                      | Prepare the batch and redemption URL; generate the day approval lands.                                                                                                                                                                                   |
+| Webhook secret leaking into logs                                                                                                                                                                                                                                                                | `honoLogger` does not log headers; do not add the `Authorization` header to any log context.                                                                                                                                                             |
+| Trial abuse by Clerk account churn                                                                                                                                                                                                                                                              | Apple ties introductory-offer eligibility to the Apple ID, not our user id, so a new Clerk account gets no new trial. Accepted as-is.                                                                                                                    |
