@@ -1,17 +1,14 @@
 import { and, asc, avg, count, desc, eq, sql, type SQL } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
+import type { Queryable } from "../client.js";
 import {
   BACKLOG_STATUSES,
   backlogEntries,
   users,
   type BacklogStatusValue,
 } from "../schema/backlog.js";
-import type * as schema from "../schema/index.js";
 import { games } from "../schema/mirror.js";
 import { GAME_SUMMARY_COLUMNS, type GameSummary } from "./games.js";
-
-type Db = NodePgDatabase<typeof schema>;
 
 export const BACKLOG_SORTS = ["updated_at", "added_at", "rating", "name"] as const;
 export type BacklogSort = (typeof BACKLOG_SORTS)[number];
@@ -51,12 +48,12 @@ const ORDER_BY: Record<BacklogSort, SQL> = {
   name: asc(games.name),
 };
 
-export async function ensureUser(db: Db, userId: string): Promise<void> {
+export async function ensureUser(db: Queryable, userId: string): Promise<void> {
   await db.insert(users).values({ id: userId }).onConflictDoNothing();
 }
 
 export async function getBacklogEntry(
-  db: Db,
+  db: Queryable,
   userId: string,
   gameId: number,
 ): Promise<BacklogEntry | null> {
@@ -70,7 +67,7 @@ export async function getBacklogEntry(
 }
 
 export async function listBacklog(
-  db: Db,
+  db: Queryable,
   options: { userId: string; status?: BacklogStatusValue; sort?: BacklogSort; limit?: number },
 ): Promise<BacklogListItem[]> {
   const filters = [eq(backlogEntries.userId, options.userId)];
@@ -85,7 +82,7 @@ export async function listBacklog(
     .limit(options.limit ?? BACKLOG_SOFT_CAP);
 }
 
-export async function getBacklogStats(db: Db, userId: string): Promise<BacklogStats> {
+export async function getBacklogStats(db: Queryable, userId: string): Promise<BacklogStats> {
   const [byStatus, aggregate] = await Promise.all([
     db
       .select({ status: backlogEntries.status, count: count() })
@@ -122,7 +119,7 @@ export async function getBacklogStats(db: Db, userId: string): Promise<BacklogSt
 /** `xmax = 0` distinguishes an insert from an `ON CONFLICT` update — a freshly
  * inserted row has no updating transaction id. It is the 201-vs-200 signal. */
 export async function upsertBacklogEntry(
-  db: Db,
+  db: Queryable,
   input: {
     userId: string;
     gameId: number;
@@ -149,7 +146,11 @@ export async function upsertBacklogEntry(
   return { entry, created };
 }
 
-export async function deleteBacklogEntry(db: Db, userId: string, gameId: number): Promise<boolean> {
+export async function deleteBacklogEntry(
+  db: Queryable,
+  userId: string,
+  gameId: number,
+): Promise<boolean> {
   const removed = await db
     .delete(backlogEntries)
     .where(and(eq(backlogEntries.userId, userId), eq(backlogEntries.gameId, gameId)))

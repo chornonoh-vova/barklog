@@ -1,8 +1,7 @@
 import { and, asc, desc, eq, gt, gte, inArray, isNotNull, lt, sql } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { alias } from "drizzle-orm/pg-core";
 
-import type * as schema from "../schema/index.js";
+import type { Queryable } from "../client.js";
 import {
   companies,
   gameCompanies,
@@ -15,8 +14,6 @@ import {
   genres,
   platforms,
 } from "../schema/mirror.js";
-
-type Db = NodePgDatabase<typeof schema>;
 
 /** Main Game, Standalone Expansion, Remake, Remaster, Expanded Game. */
 export const SEARCHABLE_GAME_TYPE_IDS = [0, 4, 8, 9, 10] as const;
@@ -84,7 +81,7 @@ export const GAME_SUMMARY_COLUMNS = {
  * connection clean.
  */
 export async function searchGames(
-  db: Db,
+  db: Queryable,
   options: { query: string; limit: number; offset: number },
 ): Promise<GameSummary[]> {
   const { query, limit, offset } = options;
@@ -114,7 +111,10 @@ export async function searchGames(
   });
 }
 
-export async function popularGames(db: Db, options: { limit: number }): Promise<GameSummary[]> {
+export async function popularGames(
+  db: Queryable,
+  options: { limit: number },
+): Promise<GameSummary[]> {
   return db
     .select(GAME_SUMMARY_COLUMNS)
     .from(games)
@@ -139,7 +139,7 @@ export function startOfUtcDay(now: Date): Date {
 const releaseFeedFilter = and(searchableType, isNotNull(games.coverImageId));
 
 export async function upcomingGames(
-  db: Db,
+  db: Queryable,
   options: { limit: number; now: Date },
 ): Promise<GameSummary[]> {
   return db
@@ -151,7 +151,7 @@ export async function upcomingGames(
 }
 
 export async function recentGames(
-  db: Db,
+  db: Queryable,
   options: { limit: number; now: Date },
 ): Promise<GameSummary[]> {
   const today = startOfUtcDay(options.now);
@@ -167,12 +167,12 @@ export async function recentGames(
     .limit(options.limit);
 }
 
-export async function gameExists(db: Db, gameId: number): Promise<boolean> {
+export async function gameExists(db: Queryable, gameId: number): Promise<boolean> {
   const rows = await db.select({ id: games.id }).from(games).where(eq(games.id, gameId)).limit(1);
   return rows.length > 0;
 }
 
-export async function getGameDetail(db: Db, gameId: number): Promise<GameDetail | null> {
+export async function getGameDetail(db: Queryable, gameId: number): Promise<GameDetail | null> {
   const parent = alias(games, "parent");
 
   const rows = await db
@@ -262,7 +262,7 @@ export async function getGameDetail(db: Db, gameId: number): Promise<GameDetail 
 }
 
 export async function similarGames(
-  db: Db,
+  db: Queryable,
   options: { gameId: number; limit: number },
 ): Promise<GameSummary[]> {
   return db

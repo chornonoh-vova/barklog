@@ -1,22 +1,19 @@
 import { desc, eq } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
-import type * as schema from "../schema/index.js";
+import type { Queryable } from "../client.js";
 import { syncRuns } from "../schema/sync.js";
-
-type Db = NodePgDatabase<typeof schema>;
 
 /** Overlap the watermark: IGDB's `updated_at` is second-resolution, so an
  * exact boundary can drop rows. */
 export const WATERMARK_OVERLAP_MS = 60_000;
 
-export async function startRun(db: Db): Promise<string> {
+export async function startRun(db: Queryable): Promise<string> {
   const [row] = await db.insert(syncRuns).values({}).returning({ id: syncRuns.id });
   return row!.id;
 }
 
 export async function finishRun(
-  db: Db,
+  db: Queryable,
   id: string,
   result: { watermark: Date; counts: Record<string, number> },
 ): Promise<void> {
@@ -31,14 +28,14 @@ export async function finishRun(
     .where(eq(syncRuns.id, id));
 }
 
-export async function failRun(db: Db, id: string, error: string): Promise<void> {
+export async function failRun(db: Queryable, id: string, error: string): Promise<void> {
   await db
     .update(syncRuns)
     .set({ status: "failed", finishedAt: new Date(), error })
     .where(eq(syncRuns.id, id));
 }
 
-export async function getWatermark(db: Db): Promise<Date | null> {
+export async function getWatermark(db: Queryable): Promise<Date | null> {
   const [row] = await db
     .select({ watermark: syncRuns.watermark })
     .from(syncRuns)
@@ -61,7 +58,7 @@ export interface SyncRunSummary {
   error: string | null;
 }
 
-export async function getLastRun(db: Db): Promise<SyncRunSummary | null> {
+export async function getLastRun(db: Queryable): Promise<SyncRunSummary | null> {
   const rows = await db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(1);
 
   return rows[0] ?? null;
