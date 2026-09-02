@@ -4,7 +4,10 @@ import { expect, test } from "vitest";
 import { slotsLabel } from "@/features/backlog/slots";
 
 const stats = (waiting: number, playing: number): BacklogStatsWire => ({
-  total: waiting + playing,
+  // `total` is every status summed, which is what getBacklogStats returns —
+  // and deliberately NOT waiting + playing, so a regression reading `total`
+  // instead of the two unfinished counts fails these tests.
+  total: waiting + playing + 12 + 3,
   counts: { waiting, playing, completed: 12, abandoned: 3 },
   averageRating: 7.5,
 });
