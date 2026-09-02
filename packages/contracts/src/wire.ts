@@ -1,4 +1,5 @@
 import type { BacklogStatus } from "./backlog.js";
+import type { PeriodType, SubscriptionStore } from "./subscription.js";
 
 export interface NamedRef {
   id: number;
@@ -69,4 +70,17 @@ export interface ProblemDocument {
   instance?: string;
   traceId?: string;
   errors?: { field: string; message: string }[];
+}
+
+export interface EntitlementWire {
+  productId: string;
+  store: SubscriptionStore;
+  periodType: PeriodType;
+  expiresAt: string | null;
+  willRenew: boolean;
+}
+
+export interface MeResponse {
+  premium: boolean;
+  entitlement: EntitlementWire | null;
 }
