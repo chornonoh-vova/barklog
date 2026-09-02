@@ -81,7 +81,10 @@ One-time setup:
    Team ID + bundle id) and enable **Apple** under SSO connections.
 3. Create `apps/mobile/.env` from `.env.example`. `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
    must be the same Clerk instance as the API's `CLERK_SECRET_KEY`, or every
-   request is a 401.
+   request is a 401. `EXPO_PUBLIC_REVENUECAT_TEST_KEY` is RevenueCat's Test
+   Store key — `src/env.ts` only reads it under `__DEV__`, so it never reaches
+   a release build. `EXPO_PUBLIC_REVENUECAT_IOS_KEY` is the App Store key that
+   every release build ships.
 
 Then:
 
@@ -210,10 +213,12 @@ string straight to `pg.Pool`, which reads `sslmode` from the URL, so TLS is a
 property of the secret rather than of the code.
 
 Set the deploy environment in Dokploy: `DATABASE_URL`, `CLERK_SECRET_KEY`,
-`CLERK_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY`, `IGDB_CLIENT_ID`, and
-`IGDB_CLIENT_SECRET` are required; `IMAGE_TAG`, `LOG_LEVEL`,
-`IDENTIFY_MODEL`, `SYNC_CRON`, and `SYNC_TZ` are optional and default to the
-values in each app's env schema.
+`CLERK_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY`, `IGDB_CLIENT_ID`,
+`IGDB_CLIENT_SECRET`, `REVENUECAT_WEBHOOK_SECRET`,
+`REVENUECAT_WEBHOOK_SIGNING_SECRET`, and `REVENUECAT_API_KEY` are required —
+the API's `env.ts` refuses to boot without any of them; `IMAGE_TAG`,
+`LOG_LEVEL`, `IDENTIFY_MODEL`, `SYNC_CRON`, and `SYNC_TZ` are optional and
+default to the values in each app's env schema.
 
 ### Seeding the games mirror in production
 
@@ -419,6 +424,48 @@ Apple flow internally, so nothing else needs to touch the config plugin.
 Declare any new `EXPO_PUBLIC_*` keys in `turbo.json` under the `dev` and
 `build` task `env` arrays, or `turbo/no-undeclared-env-vars` will flag them.
 
+## Premium
+
+A free backlog holds 10 unfinished games — `waiting` or `playing`. `completed`
+and `abandoned` don't count, so finishing or dropping a game frees the slot it
+held; the cap limits hoarding, not how much of the catalogue a user can work
+through. There are no ads on any tier, ever — not a placeholder for a later
+tier, a stated product decision, and the reason the app has no ad dependency
+and never needed `expo-build-properties` or static frameworks.
+
+Premium lifts the cap and does nothing else. It is the `barklog_premium`
+entitlement in RevenueCat, sold as two auto-renewing subscriptions, each with
+a 7-day introductory free trial:
+
+| Product                          | Price       |
+| -------------------------------- | ----------- |
+| `gg.barklog.app.premium.monthly` | $2.99/month |
+| `gg.barklog.app.premium.yearly`  | $19.99/year |
+
+The client never decides whether a user is premium — it reads `GET /api/me`.
+Enforcement lives in `apps/api`, inside the same transaction that writes a
+backlog entry: `lockUser` takes a `SELECT … FOR UPDATE` on the user row before
+the slot count is read, so a concurrent add can't slip past the cap between
+the check and the write. `packages/db` only supplies the primitives that
+query — it holds no product rules and makes no entitlement judgement.
+
+RevenueCat posts purchase and renewal events to `POST /webhooks/revenuecat`,
+which authenticates each delivery twice before touching the database: a
+constant-time comparison of the `Authorization` header against
+`REVENUECAT_WEBHOOK_SECRET`, then an HMAC-SHA256 check of
+`X-RevenueCat-Webhook-Signature` against `REVENUECAT_WEBHOOK_SIGNING_SECRET`,
+computed over `${t}.${rawBody}` — the raw request bytes, read before the
+validator parses them. Because a purchase can complete on device before its
+webhook lands, `POST /api/subscription/refresh` re-reads the subscriber from
+RevenueCat directly (using `REVENUECAT_API_KEY`) and closes that gap; the
+mobile `PurchasesProvider` calls it from `customerInfoUpdateListener` and then
+invalidates `GET /api/me`, so the unlock is immediate without waiting on the
+webhook.
+
+`docs/premium-device-verification.md` is the checklist for verifying all of
+this on a physical device — it can't be exercised by the test suite, because
+Apple only validates a real purchase against its own servers.
+
 ## apps/api
 
 ```
@@ -438,24 +485,28 @@ src/
 ```
 
 Every route needs a valid Clerk session token. The only public routes are
-`/healthz` and `/readyz`, allowlisted by exact path.
+`/healthz`, `/readyz`, and `/webhooks/revenuecat` — which carries its own
+authentication instead — allowlisted by exact path in `PUBLIC_PATHS`.
 
-| Route                                     | Notes                                                        |
-| ----------------------------------------- | ------------------------------------------------------------ |
-| `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars, `limit` ≤ 50, `offset` ≤ 200                  |
-| `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                                    |
-| `GET /api/games/upcoming?limit=`          | unreleased, soonest first                                    |
-| `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first               |
-| `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`                |
-| `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12) |
-| `POST /api/games/identify`                | `{url}`; YouTube or TikTok, returns ranked candidates        |
-| `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`                       |
-| `GET /api/backlog/stats`                  | counts per status plus average rating                        |
-| `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated            |
-| `DELETE /api/backlog/:gameId`             | `204`, or `404` if absent                                    |
-| `GET /api/sync/status`                    | the last sync run                                            |
-| `GET /healthz`                            | liveness, public, no I/O                                     |
-| `GET /readyz`                             | readiness, public, strict on Postgres and Valkey             |
+| Route                                     | Notes                                                         |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars, `limit` ≤ 50, `offset` ≤ 200                   |
+| `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                                     |
+| `GET /api/games/upcoming?limit=`          | unreleased, soonest first                                     |
+| `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first                |
+| `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`                 |
+| `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12)  |
+| `POST /api/games/identify`                | `{url}`; YouTube or TikTok, returns ranked candidates         |
+| `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`                        |
+| `GET /api/backlog/stats`                  | counts per status plus average rating                         |
+| `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated             |
+| `DELETE /api/backlog/:gameId`             | `204`, or `404` if absent                                     |
+| `GET /api/me`                             | `{premium, entitlement}` for the caller                       |
+| `POST /api/subscription/refresh`          | re-reads RevenueCat directly, then answers like `GET /api/me` |
+| `GET /api/sync/status`                    | the last sync run                                             |
+| `POST /webhooks/revenuecat`               | public; authenticated by secret + HMAC, not a session token   |
+| `GET /healthz`                            | liveness, public, no I/O                                      |
+| `GET /readyz`                             | readiness, public, strict on Postgres and Valkey              |
 
 Every non-2xx response is `application/problem+json` (RFC 9457). Type slugs and
 titles come from `hono-problem-details`, so a 413 is `content-too-large` and a
