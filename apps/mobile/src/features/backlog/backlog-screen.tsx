@@ -1,15 +1,24 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { PlatformColor, RefreshControl, SectionList, StyleSheet, Text, View } from "react-native";
+import {
+  PlatformColor,
+  Pressable,
+  RefreshControl,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import { useBacklog, useBacklogStats } from "@/api/hooks";
+import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
 import { GameRow } from "@/components/game-row";
 import { EmptyState } from "@/components/empty-state";
 import { LoadingState } from "@/components/query-states";
 import { QueryBoundary } from "@/components/query-boundary";
 import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toSections, type BacklogSection } from "@/features/backlog/sections";
+import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { rowSubtitle, statsLine } from "@/features/game/format";
 import { Screen, Type } from "@/theme";
@@ -32,6 +41,8 @@ export function BacklogScreen() {
   const backlog = useBacklog(filter);
   const stats = useBacklogStats();
   const router = useRouter();
+  const premium = useIsPremium();
+  const slots = slotsLabel(stats.data, premium);
 
   const openGame = useCallback((gameId: number) => router.push(`/game/${gameId}`), [router]);
 
@@ -70,6 +81,15 @@ export function BacklogScreen() {
     <View style={styles.header}>
       <StatusFilter value={filter} onChange={setFilter} />
       {stats.data ? <Text style={styles.stats}>{statsLine(stats.data)}</Text> : null}
+      {slots === null ? null : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${slots}. Tap to see Barklog Premium.`}
+          onPress={() => router.push("/paywall")}
+        >
+          <Text style={styles.slots}>{slots}</Text>
+        </Pressable>
+      )}
     </View>
   );
 
@@ -111,6 +131,12 @@ const styles = StyleSheet.create({
   stats: {
     ...Type.footnote,
     color: PlatformColor("secondaryLabel"),
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  slots: {
+    ...Type.footnote,
+    color: PlatformColor("link"),
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
