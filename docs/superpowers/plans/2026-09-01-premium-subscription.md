@@ -2313,6 +2313,7 @@ raising one does not let anyone POST a megabyte at a backlog write."
 - Create: `apps/api/src/routes/subscription.ts`
 - Modify: `apps/api/src/app.ts`, `apps/api/src/rate-limits.ts`, `apps/api/src/types.ts`, `apps/api/src/index.ts`
 - Modify: `apps/api/test/invariants.test.ts`, `apps/api/test/helpers.ts` (default `revenueCat` stub)
+- Modify: `apps/api/test/rate-limit.test.ts` — its first test asserts the **complete** `DEFAULT_RATE_LIMITS` object, so adding the `refresh` scope breaks it. Add `refresh: { limit: 10, windowSeconds: 60 }` to that expectation. Do not delete the assertion: asserting the whole object is what makes a silently-added or silently-changed limit fail the build.
 - Test: `apps/api/test/subscription-refresh.test.ts`
 
 **Interfaces:**
