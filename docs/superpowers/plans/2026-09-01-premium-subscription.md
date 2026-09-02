@@ -22,6 +22,9 @@
 - **`packages/db` holds no product rules.** No limits, no entitlement judgement, no knowledge of what a slot is.
 - **`@repo/contracts` is a devDependency of `packages/db`.** Never import it from `packages/db/src/**`.
 - **Package versions:** `react-native-purchases@^10.8.1`, `react-native-purchases-ui@^10.8.1`.
+- **Verify the HMAC over the raw body bytes.** RevenueCat signs
+  `${t}.${rawBody}`; re-serialising a parsed object changes the bytes and fails
+  every legitimate request. Read `c.req.text()` before the validator parses.
 - **Never ship the Test Store key.** RevenueCat's Test Store simulates purchases
   and reports them as sandbox data; submitting an app configured with its key is
   explicitly prohibited. `env.ts` selects on `__DEV__` so a release build cannot
@@ -1534,7 +1537,7 @@ pretending the user never subscribed."
 - Modify: `apps/api/src/types.ts` (`PUBLIC_PATHS`, `WEBHOOK_BODY_LIMIT_BYTES`)
 - Modify: `apps/api/src/middleware/auth.ts` (`PROBE_PATHS` → `PUBLIC_PATHS`)
 - Modify: `apps/api/src/app.ts` (scoped body limits, mount the route)
-- Modify: `apps/api/src/env.ts` (two secrets)
+- Modify: `apps/api/src/env.ts` (three secrets)
 - Modify: `apps/api/src/problems.ts` (`UNPROCESSABLE_WEBHOOK`)
 - Modify: `apps/api/test/invariants.test.ts` (type-URI list)
 - Modify: `.env.example`, `compose.yaml`
@@ -1543,7 +1546,7 @@ pretending the user never subscribed."
 **Interfaces:**
 
 - Consumes: `recordSubscriptionEvent`, `upsertSubscription` (Task 4).
-- Produces: `POST /webhooks/revenuecat`; `revenueCatEventSchema`; `toSubscriptionRow(event): SubscriptionRow | null`; `secretMatches(header, secret): boolean`; `PUBLIC_PATHS`.
+- Produces: `POST /webhooks/revenuecat`; `revenueCatEventSchema`; `toSubscriptionRow(event): SubscriptionRow | null`; `secretMatches(header, secret): boolean`; `signatureMatches(header, rawBody, secret): boolean`; `PUBLIC_PATHS`.
 
 - [ ] **Step 1: Write the payload schema**
 
@@ -1618,6 +1621,8 @@ Add `export * from "./revenuecat.js";` to `packages/contracts/src/index.ts`.
 Create `apps/api/test/webhook-routes.test.ts`:
 
 ```ts
+import { createHmac } from "node:crypto";
+
 import { getSubscription } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
@@ -1626,6 +1631,15 @@ import { callApi, createTestApp, TEST_USER } from "./helpers.js";
 const harness = createTestApp();
 
 const SECRET = "test-webhook-secret";
+const SIGNING_SECRET = "test-signing-secret";
+
+/** RevenueCat's scheme: HMAC-SHA256 over `${t}.${rawBody}`, hex. */
+function sign(rawBody: string, secret = SIGNING_SECRET): string {
+  const t = Math.floor(Date.now() / 1000);
+  const v1 = createHmac("sha256", secret).update(`${t}.${rawBody}`).digest("hex");
+
+  return `t=${t},v1=${v1}`;
+}
 
 const event = (overrides: Record<string, unknown> = {}) => ({
   event: {
@@ -1645,17 +1659,26 @@ const event = (overrides: Record<string, unknown> = {}) => ({
 
 const post = (
   body: unknown,
-  secret: string | null = SECRET,
-): RequestInit & { user?: string | null } => ({
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    ...(secret === null ? {} : { Authorization: secret }),
-  },
-  body: JSON.stringify(body),
-  // Not a session route, so no X-Test-User.
-  user: null,
-});
+  options: { secret?: string | null; signature?: string | null } = {},
+): RequestInit & { user?: string | null } => {
+  const { secret = SECRET, signature } = options;
+  // Signed over the exact bytes sent, which is what the route verifies.
+  const rawBody = JSON.stringify(body);
+
+  return {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(secret === null ? {} : { Authorization: secret }),
+      ...(signature === null
+        ? {}
+        : { "X-RevenueCat-Webhook-Signature": signature ?? sign(rawBody) }),
+    },
+    body: rawBody,
+    // Not a session route, so no X-Test-User.
+    user: null,
+  };
+};
 
 beforeEach(async () => {
   await harness.reset();
@@ -1686,15 +1709,83 @@ test("the webhook needs no session token, which is the whole point of PUBLIC_PAT
 });
 
 test("a missing secret is 401", async () => {
-  const response = await callApi(harness.app, "/webhooks/revenuecat", post(event(), null));
+  const response = await callApi(
+    harness.app,
+    "/webhooks/revenuecat",
+    post(event(), { secret: null }),
+  );
   expect(response.status).toBe(401);
 });
 
 test("a wrong secret is 401 and applies nothing", async () => {
-  const response = await callApi(harness.app, "/webhooks/revenuecat", post(event(), "nope"));
+  const response = await callApi(
+    harness.app,
+    "/webhooks/revenuecat",
+    post(event(), { secret: "nope" }),
+  );
 
   expect(response.status).toBe(401);
   expect(await getSubscription(harness.db, TEST_USER)).toBeNull();
+});
+
+test("a missing signature is 401, even with the right Authorization secret", async () => {
+  const response = await callApi(
+    harness.app,
+    "/webhooks/revenuecat",
+    post(event(), { signature: null }),
+  );
+
+  expect(response.status).toBe(401);
+  expect(await getSubscription(harness.db, TEST_USER)).toBeNull();
+});
+
+test("a signature from the wrong secret is 401", async () => {
+  const body = event();
+  const response = await callApi(harness.app, "/webhooks/revenuecat", {
+    ...post(body),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: SECRET,
+      "X-RevenueCat-Webhook-Signature": sign(JSON.stringify(body), "wrong-signing-secret"),
+    },
+  });
+
+  expect(response.status).toBe(401);
+});
+
+test("a tampered body is 401 — the signature covers the bytes, not just the headers", async () => {
+  const original = event();
+  const signature = sign(JSON.stringify(original));
+
+  // Same signature, different body: what an attacker replaying a captured
+  // delivery with an extended expiry would send.
+  const tampered = event({ expiration_at_ms: Date.parse("2099-01-01T00:00:00Z") });
+
+  const response = await callApi(harness.app, "/webhooks/revenuecat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: SECRET,
+      "X-RevenueCat-Webhook-Signature": signature,
+    },
+    body: JSON.stringify(tampered),
+    user: null,
+  });
+
+  expect(response.status).toBe(401);
+  expect(await getSubscription(harness.db, TEST_USER)).toBeNull();
+});
+
+test("a malformed signature header is 401, not a crash", async () => {
+  for (const signature of ["", "garbage", "t=123", "v1=abc", "t=,v1="]) {
+    const response = await callApi(
+      harness.app,
+      "/webhooks/revenuecat",
+      post(event(), { signature }),
+    );
+
+    expect(response.status, signature).toBe(401);
+  }
 });
 
 test("a redelivered event is 200 and applied once, so RevenueCat stops retrying", async () => {
@@ -1824,7 +1915,14 @@ test("the api body limit still applies to api routes", async () => {
 });
 ```
 
-`createTestApp` must supply the secret. In `apps/api/test/helpers.ts`, add `webhookSecret: SECRET` to the `createApp({...})` call and export `export const WEBHOOK_SECRET = "test-webhook-secret";`, then import it in the test instead of the local `SECRET` constant.
+`createTestApp` must supply both secrets. In `apps/api/test/helpers.ts`, export
+
+```ts
+export const WEBHOOK_SECRET = "test-webhook-secret";
+export const WEBHOOK_SIGNING_SECRET = "test-signing-secret";
+```
+
+and pass `webhookSecret: WEBHOOK_SECRET` and `webhookSigningSecret: WEBHOOK_SIGNING_SECRET` in the `createApp({...})` call, before `...overrides`. Import both in the test rather than redeclaring the local constants.
 
 - [ ] **Step 3: Run them to verify they fail**
 
@@ -1840,6 +1938,7 @@ In `apps/api/src/env.ts`, add to `envSchema`:
 
 ```ts
   REVENUECAT_WEBHOOK_SECRET: required,
+  REVENUECAT_WEBHOOK_SIGNING_SECRET: required,
   REVENUECAT_API_KEY: required,
 ```
 
@@ -1849,6 +1948,8 @@ In `.env.example`, following the existing comment style:
 # RevenueCat — https://app.revenuecat.com, Project settings
 # The Authorization header value you set on the webhook in RevenueCat's dashboard.
 REVENUECAT_WEBHOOK_SECRET=
+# HMAC signing secret. RevenueCat shows it once, at creation or rotation.
+REVENUECAT_WEBHOOK_SIGNING_SECRET=
 # Secret API key (v1), used to re-read a subscriber after a purchase.
 REVENUECAT_API_KEY=
 ```
@@ -1857,8 +1958,12 @@ In `compose.yaml`, in the api service's `environment:` block, matching the estab
 
 ```yaml
 REVENUECAT_WEBHOOK_SECRET: ${REVENUECAT_WEBHOOK_SECRET:?required}
+REVENUECAT_WEBHOOK_SIGNING_SECRET: ${REVENUECAT_WEBHOOK_SIGNING_SECRET:?required}
 REVENUECAT_API_KEY: ${REVENUECAT_API_KEY:?required}
 ```
+
+Indent these to match the block you are editing — the fence above is unindented
+only because Prettier formats fenced YAML.
 
 - [ ] **Step 5: Add `PUBLIC_PATHS` and the webhook body limit**
 
@@ -1875,7 +1980,7 @@ export const PUBLIC_PATHS: ReadonlySet<string> = new Set([...PROBE_PATHS, "/webh
 export const WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
 ```
 
-Add `webhookSecret: string;` to `AppDeps`.
+Add `webhookSecret: string;` and `webhookSigningSecret: string;` to `AppDeps`.
 
 - [ ] **Step 6: Switch the auth middleware to `PUBLIC_PATHS`**
 
@@ -1896,21 +2001,52 @@ if (PUBLIC_PATHS.has(c.req.path)) return next();
 Create `apps/api/src/revenuecat.ts`:
 
 ```ts
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { REVENUECAT_PERIOD_MAP, REVENUECAT_STORE_MAP, type RevenueCatEvent } from "@repo/contracts";
 import type { SubscriptionRow } from "@repo/db";
 
 /** Length check first: `timingSafeEqual` throws on a mismatch. */
+function constantTimeEquals(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export function secretMatches(header: string | undefined, secret: string): boolean {
+  return header !== undefined && constantTimeEquals(header, secret);
+}
+
+/**
+ * `X-RevenueCat-Webhook-Signature: t=<unix>,v1=<hmac_sha256_hex>`, computed over
+ * `${t}.${rawBody}`.
+ *
+ * `rawBody` must be the bytes as received. Re-serialising a parsed object
+ * changes them, and every legitimate request then fails — uniformly, so it
+ * reads as a wrong secret rather than a bytes problem.
+ */
+export function signatureMatches(
+  header: string | undefined,
+  rawBody: string,
+  secret: string,
+): boolean {
   if (header === undefined) return false;
 
-  const provided = Buffer.from(header);
-  const expected = Buffer.from(secret);
+  const parts = new Map(
+    header.split(",").map((part) => {
+      const index = part.indexOf("=");
+      return [part.slice(0, index).trim(), part.slice(index + 1).trim()] as const;
+    }),
+  );
 
-  if (provided.length !== expected.length) return false;
+  const timestamp = parts.get("t");
+  const provided = parts.get("v1");
+  if (timestamp === undefined || provided === undefined) return false;
 
-  return timingSafeEqual(provided, expected);
+  const expected = createHmac("sha256", secret).update(`${timestamp}.${rawBody}`).digest("hex");
+
+  return constantTimeEquals(provided, expected);
 }
 
 /** null when the event carries no subscription state — blanking a real purchase. */
@@ -1955,7 +2091,7 @@ import { getLogger } from "@logtape/logtape";
 import { Hono } from "hono";
 
 import { problems } from "../problems.js";
-import { secretMatches, toSubscriptionRow } from "../revenuecat.js";
+import { secretMatches, signatureMatches, toSubscriptionRow } from "../revenuecat.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
 /**
@@ -1971,6 +2107,23 @@ export function webhookRoutes(deps: AppDeps) {
       if (!secretMatches(c.req.header("Authorization"), deps.webhookSecret)) {
         throw problems.create("UNAUTHORIZED", {
           detail: "A valid webhook secret is required.",
+        });
+      }
+
+      // `text()` before the validator's `json()`: Hono caches the body and
+      // derives the parsed value from the cached text, so nothing is consumed
+      // twice — and the HMAC must see the bytes as received.
+      const rawBody = await c.req.text();
+
+      if (
+        !signatureMatches(
+          c.req.header("X-RevenueCat-Webhook-Signature"),
+          rawBody,
+          deps.webhookSigningSecret,
+        )
+      ) {
+        throw problems.create("UNAUTHORIZED", {
+          detail: "A valid webhook signature is required.",
         });
       }
 
@@ -2423,7 +2576,7 @@ In `apps/api/src/app.ts`, add the rate limiter before the general `/api/*` one a
     .route("/api/subscription", subscriptionRoutes(deps))
 ```
 
-In `apps/api/src/index.ts`, construct the real client from `env.REVENUECAT_API_KEY` and pass `revenueCat` and `webhookSecret: env.REVENUECAT_WEBHOOK_SECRET` into `createApp`.
+In `apps/api/src/index.ts`, construct the real client from `env.REVENUECAT_API_KEY` and pass `revenueCat`, `webhookSecret: env.REVENUECAT_WEBHOOK_SECRET` and `webhookSigningSecret: env.REVENUECAT_WEBHOOK_SIGNING_SECRET` into `createApp`.
 
 Add to `apps/api/test/invariants.test.ts`:
 
@@ -3283,7 +3436,8 @@ Not code, and not optional — Apple reviews a first in-app purchase only alongs
 - [ ] The 7-day introductory offer present on **both** subscriptions in App Store Connect. It lives there, not in RevenueCat, and the Test Store does not reproduce it.
 - [ ] The Paywall built in the dashboard editor with all of §7's required elements.
 - [ ] The release build verified to use `EXPO_PUBLIC_REVENUECAT_IOS_KEY` — check the EAS `production` profile's environment before the submission build, not after.
-- [ ] RevenueCat webhook pointed at `https://api.barklog.gg/webhooks/revenuecat` with its `Authorization` secret, and that secret plus `REVENUECAT_API_KEY` set in Dokploy's environment.
+- [ ] RevenueCat webhook pointed at `https://api.barklog.gg/webhooks/revenuecat` with its `Authorization` secret **and HMAC signing enabled**; that secret, the signing secret and `REVENUECAT_API_KEY` all set in Dokploy's environment. The signing secret is shown only once — if it was not saved, rotate it rather than guessing.
+- [ ] **Send test event** from the dashboard returns 200 and lands a `subscription_events` row. Do this before trusting the signature path: a raw-body mistake fails every delivery uniformly, so it reads as a wrong secret rather than a bytes problem.
 - [ ] Terms of Use and Privacy Policy live on `barklog.gg` and linked from the paywall — Guideline 3.1.2 is the most common rejection for this shape of app.
 - [ ] EU DSA trader status declared, with a P.O. Box rather than a home address if you would rather not publish one. Apple verifies this, so it takes time.
 - [ ] Each subscription's review screenshot replaced with the real paywall.

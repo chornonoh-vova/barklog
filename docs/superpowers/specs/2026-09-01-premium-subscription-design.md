@@ -412,9 +412,29 @@ Three changes in `apps/api`:
 
    Probes are GET-only, so nothing else needs a limit.
 
-3. **Its own authentication.** Constant-time compare of the `Authorization`
-   header against `REVENUECAT_WEBHOOK_SECRET`. Use `crypto.timingSafeEqual` on
-   equal-length buffers, after a length check.
+3. **Two independent checks.** A constant-time compare of the `Authorization`
+   header against `REVENUECAT_WEBHOOK_SECRET`, then an HMAC-SHA256 verification
+   of `X-RevenueCat-Webhook-Signature` (`t=<unix>,v1=<hex>`) computed over
+   `${t}.${rawBody}` with `REVENUECAT_WEBHOOK_SIGNING_SECRET`.
+
+   Both, not one. The `Authorization` value is a bearer secret: anyone who ever
+   sees it — a log, a proxy, an error report — can forge events forever, and a
+   forged event here is `upsertSubscription` with an expiry of the attacker's
+   choosing. HMAC changes the property from _knows a shared string_ to _can
+   prove this body came from RevenueCat_. The header check stays because it
+   rejects junk before we touch the body.
+
+   The HMAC must be computed over the bytes **as received**. Re-serialising a
+   parsed object changes them and fails every legitimate request — uniformly,
+   so it presents as a wrong secret rather than a bytes problem. Hono caches
+   request bodies and derives the parsed value from the cached text, so reading
+   `c.req.text()` before the validator runs consumes nothing twice.
+
+   Replay needs no separate defence: `subscription_events.id` is the RevenueCat
+   event id and the primary key, so a replayed delivery is a duplicate insert
+   that changes nothing. RevenueCat also recomputes `t` on every retry, so a
+   freshness window would be safe to add — it is simply not what is holding the
+   line.
 
 Status codes are the contract with RevenueCat's retry machinery:
 
@@ -453,8 +473,9 @@ throw problems.create("SUBSCRIPTION_REQUIRED", {
 `apps/api/src/env.ts` gains, all `required`:
 
 ```
-REVENUECAT_WEBHOOK_SECRET   # the Authorization value set on the webhook
-REVENUECAT_API_KEY          # secret API key, for the refresh pull
+REVENUECAT_WEBHOOK_SECRET           # the Authorization value set on the webhook
+REVENUECAT_WEBHOOK_SIGNING_SECRET   # HMAC secret, shown once at creation
+REVENUECAT_API_KEY                  # secret API key, for the refresh pull
 ```
 
 Mirrored in `.env.example` with the dashboard URL, following the existing
@@ -640,6 +661,10 @@ The cap tests move here with the rule. These need a database, so they belong in
   now, and `sandbox: true` (granted).
 
 - `/webhooks/revenuecat` with no `Authorization` → 401; wrong secret → 401.
+- Valid `Authorization` but missing, malformed, or wrong-secret signature → 401.
+- A body tampered after signing → 401, and no row written.
+- Valid `Authorization` but missing, malformed, or wrong-secret signature → 401.
+- A body tampered after signing → 401, and no row written.
 - Reachable without a session token (proves the `PUBLIC_PATHS` wiring).
 - `/api/me` without a token → 401.
 - Unknown `app_user_id` → 200, a `subscription_events` row, no `subscriptions` row.
@@ -748,5 +773,6 @@ Consequences of this decision, recorded so they are not rediscovered:
 | Guideline 3.1.2 rejection (missing price, trial terms, auto-renew text, EULA or privacy links)                                                                                                                                                                                                  | §7's checklist, verified against the built paywall before submission.                                                                                                                                                                                    |
 | Each subscription product needs a paywall review screenshot that does not exist yet                                                                                                                                                                                                             | Upload a placeholder at product creation; replace before submission.                                                                                                                                                                                     |
 | Judges need access; Offer Codes require the app to be live                                                                                                                                                                                                                                      | Prepare the batch and redemption URL; generate the day approval lands.                                                                                                                                                                                   |
-| Webhook secret leaking into logs                                                                                                                                                                                                                                                                | `honoLogger` does not log headers; do not add the `Authorization` header to any log context.                                                                                                                                                             |
+| Webhook secrets leaking into logs                                                                                                                                                                                                                                                               | `honoLogger` does not log headers; do not add `Authorization` or `X-RevenueCat-Webhook-Signature` to any log context.                                                                                                                                    |
+| The HMAC signing secret is shown once at creation and cannot be retrieved                                                                                                                                                                                                                       | If it was not saved, rotate it in the dashboard rather than guessing.                                                                                                                                                                                    |
 | Trial abuse by Clerk account churn                                                                                                                                                                                                                                                              | Apple ties introductory-offer eligibility to the Apple ID, not our user id, so a new Clerk account gets no new trial. Accepted as-is.                                                                                                                    |
