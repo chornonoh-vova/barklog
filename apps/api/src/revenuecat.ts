@@ -5,8 +5,17 @@ import type { SubscriptionRow } from "@repo/db";
 
 import type { RevenueCatClient } from "./types.js";
 
-/** Length check first: `timingSafeEqual` throws on a mismatch. */
+/**
+ * Length check first: `timingSafeEqual` throws on a mismatch. Empty rejected
+ * before that, because `timingSafeEqual` on two zero-length buffers returns
+ * true — so an empty secret would authenticate the empty `Authorization` header
+ * Hono hands back for a present-but-blank one. `env.ts` enforces `minLength(1)`,
+ * but `AppDeps.webhookSecret` is a plain string, so the invariant does not
+ * travel with the value.
+ */
 function constantTimeEquals(provided: string, expected: string): boolean {
+  if (provided.length === 0 || expected.length === 0) return false;
+
   const a = Buffer.from(provided);
   const b = Buffer.from(expected);
 

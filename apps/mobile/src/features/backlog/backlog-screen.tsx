@@ -83,6 +83,7 @@ export function BacklogScreen() {
       {stats.data ? <Text style={styles.stats}>{statsLine(stats.data)}</Text> : null}
       {slots === null ? null : (
         <Pressable
+          style={styles.slotsTarget}
           accessibilityRole="button"
           accessibilityLabel={`${slots}. Tap to see Barklog Premium.`}
           onPress={() => router.push("/paywall")}
@@ -134,12 +135,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  slots: {
-    ...Type.footnote,
-    color: PlatformColor("link"),
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
+  // A footnote line leaves this control about 26pt tall, and it is a real
+  // control on the most-visited screen, so it owes the 44pt minimum. A minimum
+  // rather than a fixed height, so a larger text size grows it instead of
+  // clipping.
+  slotsTarget: { minHeight: 44, justifyContent: "center" },
+  slots: { ...Type.footnote, color: PlatformColor("link"), paddingHorizontal: 16 },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

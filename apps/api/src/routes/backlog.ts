@@ -72,6 +72,11 @@ export function backlogRoutes(deps: AppDeps) {
         }
 
         const outcome = await deps.db.transaction(async (tx) => {
+          // The cap's whole mechanism, and it rests on READ COMMITTED: the row
+          // lock serialises the racers, and the per-statement snapshot means the
+          // loser's count below sees the winner's committed insert. Under
+          // REPEATABLE READ the count would reuse the pre-lock snapshot, both
+          // racers would read 9, and the cap would silently stop holding.
           await lockUser(tx, c.get("userId"));
 
           const existing = await getBacklogEntry(tx, c.get("userId"), gameId);

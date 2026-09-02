@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { createRevenueCatClient, PREMIUM_ENTITLEMENT } from "../src/revenuecat.js";
+import { createRevenueCatClient, PREMIUM_ENTITLEMENT, secretMatches } from "../src/revenuecat.js";
 
 const API_KEY = "sk_test_123";
 const APP_USER_ID = "user_2testAAA";
@@ -187,5 +187,25 @@ describe("createRevenueCatClient", () => {
     await expect(createRevenueCatClient(API_KEY).fetchSubscriber(APP_USER_ID)).rejects.toThrow(
       "RevenueCat answered 500",
     );
+  });
+});
+
+describe("secretMatches", () => {
+  test("the right secret matches", () => {
+    expect(secretMatches("shh", "shh")).toBe(true);
+  });
+
+  test("a wrong or absent secret does not", () => {
+    expect(secretMatches("nope", "shh")).toBe(false);
+    expect(secretMatches(undefined, "shh")).toBe(false);
+  });
+
+  // `timingSafeEqual` returns true for two zero-length buffers, so without the
+  // guard an empty configured secret would authenticate the empty string Hono
+  // hands back for a present-but-blank `Authorization` header.
+  test("empty never matches, in either position", () => {
+    expect(secretMatches("", "")).toBe(false);
+    expect(secretMatches("", "shh")).toBe(false);
+    expect(secretMatches("shh", "")).toBe(false);
   });
 });

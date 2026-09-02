@@ -249,3 +249,9 @@ test("lockUser serialises two transactions on the same user", async () => {
 
   expect(order).toEqual(["first-locked", "first-releasing", "second-locked"]);
 });
+
+// `FOR UPDATE` over zero rows locks nothing and raises nothing, so silence here
+// would look exactly like serialisation that is not happening.
+test("lockUser throws rather than silently locking nothing for an absent user", async () => {
+  await expect(lockUser(db, "user_2neverSeen")).rejects.toThrow("user_2neverSeen");
+});

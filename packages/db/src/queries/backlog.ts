@@ -149,9 +149,19 @@ export async function upsertBacklogEntry(
 /**
  * Serialises one user's backlog writes for the rest of the transaction. Without
  * it, two concurrent adds at 9/10 both read 9 and both succeed.
+ *
+ * Throws when the row is absent: `FOR UPDATE` over zero rows locks nothing and
+ * raises nothing, so a caller would get no serialisation and no signal that it
+ * had none.
  */
 export async function lockUser(db: Queryable, userId: string): Promise<void> {
-  await db.execute(sql`SELECT 1 FROM ${users} WHERE ${users.id} = ${userId} FOR UPDATE`);
+  const locked = await db.execute(
+    sql`SELECT 1 FROM ${users} WHERE ${users.id} = ${userId} FOR UPDATE`,
+  );
+
+  if (locked.rowCount === 0) {
+    throw new Error(`lockUser found no user ${userId} to lock`);
+  }
 }
 
 export async function countBacklogEntriesByStatus(
