@@ -10,6 +10,7 @@ import {
   type GameDetailResponse,
   type GameFeed,
   type GameListResponse,
+  type MeResponse,
   type ShareIdentifyResponse,
 } from "@repo/contracts";
 
@@ -59,6 +60,11 @@ export function createEndpoints(request: Request) {
 
     deleteBacklogEntry: (gameId: number) =>
       request<void>(`/api/backlog/${gameId}`, { method: "DELETE" }),
+
+    getMe: () => request<MeResponse>("/api/me"),
+
+    refreshSubscription: () =>
+      request<MeResponse>("/api/subscription/refresh", { method: "POST", body: {} }),
   };
 }
 

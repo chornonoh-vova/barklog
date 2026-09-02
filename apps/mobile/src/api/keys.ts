@@ -2,6 +2,8 @@ import type { BacklogSort, BacklogStatus, GameFeed } from "@repo/contracts";
 
 /** `stats` sits under `backlog` so one invalidation sweeps list and counts. */
 export const keys = {
+  /** Entitlement only — slot counts come from `backlog.stats`. */
+  me: () => ["me"] as const,
   games: {
     search: (q: string, limit: number, offset: number) =>
       ["games", "search", q, limit, offset] as const,

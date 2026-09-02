@@ -142,4 +142,21 @@ describe("createEndpoints", () => {
       body: { url: "https://youtu.be/x", limit: 5 },
     });
   });
+
+  it("reads the entitlement route", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).getMe();
+
+    expect(calls[0]).toEqual({ path: "/api/me", options: {} });
+  });
+
+  it("posts to refresh, because it makes the server re-read RevenueCat", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).refreshSubscription();
+
+    expect(calls[0]).toEqual({
+      path: "/api/subscription/refresh",
+      options: { method: "POST", body: {} },
+    });
+  });
 });

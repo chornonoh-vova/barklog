@@ -17,6 +17,7 @@ import {
   type GameDetailResponse,
   type GameFeed,
   type GameListResponse,
+  type MeResponse,
   type ShareIdentifyResponse,
 } from "@repo/contracts";
 import { Alert } from "react-native";
@@ -172,4 +173,15 @@ export function useDeleteBacklogEntry(gameId: number) {
     mutationFn: () => api.deleteBacklogEntry(gameId),
     entry: () => null,
   });
+}
+
+export function useMe(): UseQueryResult<MeResponse> {
+  const api = useApi();
+
+  return useQuery({ queryKey: keys.me(), queryFn: () => api.getMe() });
+}
+
+/** From the API, not `customerInfo`: the UI must agree with the enforcer. */
+export function useIsPremium(): boolean {
+  return useMe().data?.premium ?? false;
 }
