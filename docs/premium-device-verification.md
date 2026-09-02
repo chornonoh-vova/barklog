@@ -116,3 +116,7 @@ only Apple's sandbox proves the purchase sheet and product configuration.
 - [ ] **10. Airplane mode, at 10/10.** Expected: attempting an add shows the
       "You're offline" copy, not the paywall — a network failure must not be
       mistaken for a blocked slot.
+- [ ] **11. As the purchased premium account, open Home, Explore and Search.**
+      Expected: a star appears in the toolbar to the left of the avatar on all
+      three screens. Tap it. Expected: RevenueCat's Customer Center presents,
+      and Restore Purchases is reachable from within it.

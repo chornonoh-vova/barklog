@@ -4,6 +4,9 @@ import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { Modal, Pressable, StyleSheet } from "react-native";
+import RevenueCatUI from "react-native-purchases-ui";
+
+import { useIsPremium } from "@/api/hooks";
 
 /**
  * Not Clerk's `UserButton`: it finds its parent by walking the responder chain,
@@ -17,10 +20,24 @@ import { Modal, Pressable, StyleSheet } from "react-native";
 export function ProfileToolbar() {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
+  const premium = useIsPremium();
 
   return (
     <>
       <Stack.Toolbar placement="right">
+        {/* Restore purchases otherwise lives only on the paywall, which a
+            subscriber has no reason to open — Apple requires the path exist
+            somewhere. Customer Center gives it a home for premium users,
+            alongside manage, cancel and refund. Presented, not routed, for
+            the same reason as the profile view below: RevenueCat dismisses
+            its own native sheet, so there is nothing here to register or pop. */}
+        {premium ? (
+          <Stack.Toolbar.Button
+            icon="star.fill"
+            accessibilityLabel="Barklog Premium — manage subscription"
+            onPress={() => void RevenueCatUI.presentCustomerCenter()}
+          />
+        ) : null}
         <Stack.Toolbar.View>
           <Pressable
             accessibilityRole="button"
