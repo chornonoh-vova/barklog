@@ -965,7 +965,7 @@ Create `apps/api/test/backlog-cap.test.ts`:
 
 ```ts
 import { FREE_ACTIVE_SLOTS } from "@repo/contracts";
-import { upsertSubscription } from "@repo/db";
+import { ensureUser, upsertSubscription } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { callApi, createTestApp, seedGame, TEST_USER } from "./helpers.js";
@@ -1003,6 +1003,10 @@ async function fillSlots(): Promise<void> {
 
 beforeEach(async () => {
   await harness.reset();
+  // `subscriptions.user_id` references `users.id`, and grantPremium may run
+  // before any request has been made — `ensureUserMiddleware` has not created
+  // the row yet, so seed it here or the insert fails on the foreign key.
+  await ensureUser(harness.db, TEST_USER);
   for (let id = 1; id <= GAME_COUNT; id++) {
     await seedGame(harness.db, { id, name: `Game ${id}`, count: 100 });
   }
@@ -1325,7 +1329,7 @@ render without a second request."
 Create `apps/api/test/me-routes.test.ts`:
 
 ```ts
-import { upsertSubscription } from "@repo/db";
+import { ensureUser, upsertSubscription } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { callApi, createTestApp, TEST_USER } from "./helpers.js";
@@ -1334,6 +1338,9 @@ const harness = createTestApp();
 
 beforeEach(async () => {
   await harness.reset();
+  // `subscriptions.user_id` references `users.id`. These tests upsert before
+  // making any request, so `ensureUserMiddleware` has not created the row.
+  await ensureUser(harness.db, TEST_USER);
 });
 
 afterAll(async () => {
@@ -1394,6 +1401,7 @@ test("a lapsed subscription reports premium false but keeps the entitlement deta
 });
 
 test("one user's subscription never leaks into another's answer", async () => {
+  await ensureUser(harness.db, "user_2testBBB");
   await upsertSubscription(harness.db, {
     userId: TEST_USER,
     productId: "gg.barklog.app.premium.yearly",
@@ -1625,7 +1633,7 @@ Create `apps/api/test/webhook-routes.test.ts`:
 ```ts
 import { createHmac } from "node:crypto";
 
-import { getSubscription } from "@repo/db";
+import { ensureUser, getSubscription } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { callApi, createTestApp, TEST_USER } from "./helpers.js";
@@ -1684,7 +1692,7 @@ const post = (
 
 beforeEach(async () => {
   await harness.reset();
-  await harness.db.execute(`insert into users (id) values ('${TEST_USER}')`);
+  await ensureUser(harness.db, TEST_USER);
 });
 
 afterAll(async () => {
