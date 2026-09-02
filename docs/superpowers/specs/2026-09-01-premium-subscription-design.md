@@ -210,24 +210,35 @@ export async function getSubscription(
 ): Promise<SubscriptionRow | null>;
 
 // apps/api/src/entitlement.ts — owns the policy.
-export function isPremium(
-  row: SubscriptionRow | null,
-  options: { now: Date; allowSandbox: boolean },
-): boolean;
-//   row !== null
-//   && (row.expiresAt === null || row.expiresAt > options.now)
-//   && (!row.sandbox || options.allowSandbox)
+export function isPremium(row: SubscriptionRow | null, now: Date): boolean;
+//   row !== null && (row.expiresAt === null || row.expiresAt > now)
 ```
 
 A stored boolean goes stale the moment a subscription lapses without a webhook
 arriving — expiry is the one state change RevenueCat cannot always push in
 time. Deriving it costs one comparison.
 
-The `sandbox` term matters: without it, anyone holding a sandbox receipt unlocks
-the production API. `allowSandbox` comes from `AppDeps.production`, inverted at
-the call site — `packages/db` has no notion of environment and should not grow
-one. Keeping sandbox rows rather than dropping them keeps on-device testing
-working against a development API.
+### Sandbox purchases grant the entitlement
+
+`sandbox` is recorded but is **not** an input to `isPremium`. This is not a
+convenience; refusing sandbox entitlements in production is a known App Store
+rejection.
+
+App Review tests in-app purchases in Apple's **sandbox** environment against
+the **production** build. RevenueCat reports those with `environment: SANDBOX`.
+An entitlement check that rejected them would show the reviewer a successful
+purchase followed by an unchanged paywall — "purchased but content not
+unlocked", one of the most common RevenueCat-adjacent rejections.
+
+Granting them is also safe. Sandbox Apple Accounts are created only by us in
+App Store Connect, RevenueCat validates every receipt with Apple, and the
+webhook is authenticated by a shared secret. There is no user-reachable path to
+a sandbox receipt for this app, so there is nothing to defend against.
+
+What the column is actually for: excluding test purchases from revenue figures.
+Every `subscription_events` query that reports money must filter
+`sandbox = false`, or the `#BuildInPublic` numbers will include our own device
+testing.
 
 Grace periods need no special handling: RevenueCat extends `expiration_at_ms`
 for App Store billing-retry, so a user in grace still reads as entitled through
@@ -296,7 +307,7 @@ const outcome = await deps.db.transaction(async (tx) => {
   if (delta > 0) {
     const subscription = await getSubscription(tx, userId);
 
-    if (!isPremium(subscription, { now: new Date(), allowSandbox: !deps.production })) {
+    if (!isPremium(subscription, new Date())) {
       const used = await countBacklogEntriesByStatus(tx, userId, SLOT_CONSUMING_STATUSES);
 
       if (used + delta > FREE_ACTIVE_SLOTS) return { blocked: true as const, used };
@@ -554,7 +565,7 @@ above is a rejection if missing.
 | `apps/api/src/routes/subscription.ts`         | `POST /api/subscription/refresh`                                                                                                     |
 | `apps/api/src/routes/webhooks.ts`             | `POST /webhooks/revenuecat`                                                                                                          |
 | `apps/api/src/revenuecat.ts`                  | REST client, secret compare, event → row mapping                                                                                     |
-| `apps/api/src/entitlement.ts`                 | `isPremium(row, { now, allowSandbox })` — the policy, in the API                                                                     |
+| `apps/api/src/entitlement.ts`                 | `isPremium(row, now)` — the policy, in the API                                                                                       |
 | `apps/mobile/src/purchases/provider.tsx`      | configure / logIn / logOut / listener                                                                                                |
 | `apps/mobile/src/purchases/use-is-premium.ts` | `GET /api/me` hook                                                                                                                   |
 | `apps/mobile/src/app/paywall.tsx`             | `RevenueCatUI.Paywall` in a sheet                                                                                                    |
@@ -609,8 +620,8 @@ above is a rejection if missing.
   interleave their counts.
 - Same webhook event id twice → one `subscription_events` row, one upsert.
 - Stale `event_timestamp_ms` → row unchanged.
-- `sandbox: true` with `production: true` → `premium` false; with
-  `production: false` → true.
+- `sandbox: true` grants premium — the App Review path. A test asserting the
+  opposite would be asserting a rejection.
 - Expired `expiresAt` → `premium` false without any event arriving.
 
 ### `apps/api`
@@ -625,8 +636,8 @@ The cap tests move here with the rule. These need a database, so they belong in
   succeeds.
 - Rating-only change at 10/10 succeeds.
 - Premium user at 10/10 is never blocked.
-- `isPremium` unit tests: expired, sandbox-in-production, sandbox-in-dev, null
-  `expiresAt`, no row.
+- `isPremium` unit tests: no row, expired, `expiresAt` null, expiry exactly
+  now, and `sandbox: true` (granted).
 
 - `/webhooks/revenuecat` with no `Authorization` → 401; wrong secret → 401.
 - Reachable without a session token (proves the `PUBLIC_PATHS` wiring).
