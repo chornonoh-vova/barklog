@@ -83,7 +83,10 @@ export const PREMIUM_ENTITLEMENT = "barklog_premium";
 
 interface SubscriberResponse {
   subscriber?: {
-    entitlements?: Record<string, { product_identifier?: string; expires_date?: string | null }>;
+    entitlements?: Record<
+      string,
+      { product_identifier?: string; purchase_date?: string; expires_date?: string | null }
+    >;
     subscriptions?: Record<
       string,
       {
@@ -120,6 +123,10 @@ export function createRevenueCatClient(apiKey: string): RevenueCatClient {
       return {
         userId: appUserId,
         productId,
+        // Defaults for a promotional grant made in the RevenueCat dashboard,
+        // which carries an entitlement but no store subscription. The app is
+        // iOS-only, so app_store is the honest guess; "normal" is the period
+        // that does not claim a trial the user may not actually have.
         store:
           REVENUECAT_STORE_MAP[
             (subscription?.store?.toUpperCase() ?? "APP_STORE") as keyof typeof REVENUECAT_STORE_MAP
@@ -129,9 +136,17 @@ export function createRevenueCatClient(apiKey: string): RevenueCatClient {
             (subscription?.period_type?.toUpperCase() ??
               "NORMAL") as keyof typeof REVENUECAT_PERIOD_MAP
           ],
-        purchasedAt: new Date(subscription?.purchase_date ?? Date.now()),
+        // The entitlement's own purchase_date is the trustworthy source; a
+        // subscription block, when present, carries the same fact and is a
+        // fallback for older payloads. Never fabricate "purchased right now".
+        purchasedAt: new Date(
+          entitlement.purchase_date ?? subscription?.purchase_date ?? Date.now(),
+        ),
         expiresAt: entitlement.expires_date ? new Date(entitlement.expires_date) : null,
-        willRenew: !subscription?.unsubscribe_detected_at,
+        // Unknown renewal is treated as "will not renew": a false negative on
+        // the paywall is harmless, a false positive tells the app a lapsing
+        // subscription is healthy.
+        willRenew: subscription === undefined ? false : !subscription.unsubscribe_detected_at,
         sandbox: subscription?.is_sandbox ?? false,
         // The freshest answer available, so it must beat the staleness guard.
         lastEventAtMs: Date.now(),
