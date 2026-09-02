@@ -23,5 +23,12 @@ export function errorCopy(error: unknown): { title: string; description: string 
     };
   }
 
+  if (error.status === 402) {
+    return {
+      title: "Your backlog is full",
+      description: error.detail ?? "Finish a game to free a spot, or go Premium.",
+    };
+  }
+
   return { title: error.title, description: error.detail ?? "Please try again." };
 }

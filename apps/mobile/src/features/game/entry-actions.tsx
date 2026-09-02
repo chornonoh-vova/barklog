@@ -17,6 +17,7 @@ import {
   statusButtonSymbol,
   statusLabel,
 } from "@/features/game/format";
+import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 import { Brand } from "@/theme";
 import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
@@ -26,9 +27,15 @@ const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RA
 
 export function EntryActions({
   entry,
+  premium,
+  activeCount,
+  onBlocked,
   onUpsert,
 }: {
   entry: BacklogEntryWire | null;
+  premium: boolean;
+  activeCount: number | undefined;
+  onBlocked: () => void;
   onUpsert: (input: { status: BacklogStatus; rating: number | null }) => void;
 }) {
   const status = entry?.status ?? null;
@@ -77,9 +84,16 @@ export function EntryActions({
         >
           <Picker
             selection={status ?? ""}
-            onSelectionChange={(selection) =>
-              onUpsert({ status: selection as BacklogStatus, rating })
-            }
+            onSelectionChange={(selection) => {
+              const next = selection as BacklogStatus;
+
+              if (wouldExceedSlots({ premium, activeCount, from: status, to: next })) {
+                onBlocked();
+                return;
+              }
+
+              onUpsert({ status: next, rating });
+            }}
             modifiers={[pickerStyle("inline")]}
           >
             {STATUS_ORDER.map((value) => (

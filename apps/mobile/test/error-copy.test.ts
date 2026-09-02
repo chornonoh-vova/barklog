@@ -55,6 +55,20 @@ describe("errorCopy", () => {
     expect(copy.description).toBe("Game 999 is not in the mirror.");
   });
 
+  it("a 402 explains the slot mechanic rather than saying try again", () => {
+    const copy = errorCopy(
+      new ApiError({
+        status: 402,
+        type: "https://barklog.gg/problems/payment-required",
+        title: "Payment Required",
+        detail: "A free backlog holds 10 unfinished games.",
+      }),
+    );
+
+    expect(copy.title).toBe("Your backlog is full");
+    expect(copy.description).toContain("10 unfinished games");
+  });
+
   it("falls back to generic copy for a non-ApiError value", () => {
     expect(errorCopy(new Error("boom"))).toEqual({
       title: "Something went wrong",

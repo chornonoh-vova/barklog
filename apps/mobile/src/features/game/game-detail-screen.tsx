@@ -1,8 +1,14 @@
 import { Image } from "expo-image";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { FlatList, PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
-import { useDeleteBacklogEntry, useGame, useUpsertBacklogEntry } from "@/api/hooks";
+import {
+  useBacklogStats,
+  useDeleteBacklogEntry,
+  useGame,
+  useIsPremium,
+  useUpsertBacklogEntry,
+} from "@/api/hooks";
 import { QueryBoundary } from "@/components/query-boundary";
 import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";
@@ -20,6 +26,12 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const game = useGame(gameId);
   const upsert = useUpsertBacklogEntry(gameId);
   const remove = useDeleteBacklogEntry(gameId);
+  const router = useRouter();
+  const premium = useIsPremium();
+  const stats = useBacklogStats();
+  // The cap counts unfinished games only, so this is the number the rule uses.
+  const activeCount =
+    stats.data === undefined ? undefined : stats.data.counts.waiting + stats.data.counts.playing;
 
   return (
     <>
@@ -46,7 +58,13 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
           >
             <Hero game={data} />
 
-            <EntryActions entry={data.backlogEntry} onUpsert={(input) => upsert.mutate(input)} />
+            <EntryActions
+              entry={data.backlogEntry}
+              premium={premium}
+              activeCount={activeCount}
+              onBlocked={() => router.push("/paywall")}
+              onUpsert={(input) => upsert.mutate(input)}
+            />
 
             {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
 

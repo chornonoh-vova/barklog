@@ -20,9 +20,11 @@ import {
   type MeResponse,
   type ShareIdentifyResponse,
 } from "@repo/contracts";
+import { router } from "expo-router";
 import { Alert } from "react-native";
 
 import { errorCopy } from "./error-copy";
+import { isApiError } from "./errors";
 import { keys } from "./keys";
 import { useApi } from "./provider";
 
@@ -140,6 +142,13 @@ function useBacklogEntryMutation<TInput>(
       if (context?.previous) {
         queryClient.setQueryData(keys.games.detail(gameId), context.previous);
       }
+
+      // No Alert: a sheet plus an alert is two dismissals for one event.
+      if (isApiError(error) && error.status === 402) {
+        router.push("/paywall");
+        return;
+      }
+
       alertOnMutationError(error);
     },
 
