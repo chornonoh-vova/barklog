@@ -58,18 +58,18 @@ gives the slot back.
 
 ## 2. Decisions
 
-| Decision                    | Choice                                               | Why                                                                                                                                                   |
-| --------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free tier limit             | 10 **unfinished** entries                            | `waiting` and `playing` count; `completed` and `abandoned` are free. Caps hoarding, not saving. Rewards the judge's verbs.                            |
-| Where the limit is enforced | `apps/api`, inside a transaction it opens            | The limit is a product rule, so it belongs in the API; `packages/db` stays queries and writes. The transaction is what keeps check-then-write atomic. |
-| Entitlement authority       | The API, backed by Postgres                          | The API owns backlog writes, so the API must own the entitlement answer.                                                                              |
-| Freshness                   | RevenueCat webhooks, plus an on-demand REST pull     | Webhooks are fast but not synchronous; a user who just paid must not get a 402 on the next tap.                                                       |
-| Entitlement on device       | `GET /api/me`                                        | The UI must agree with the enforcer. `customerInfo` is a change _signal_, never the authority.                                                        |
-| Products                    | Monthly $2.99, Yearly $19.99, one group              | Minimum App Store Connect surface with a low-commitment entry point.                                                                                  |
-| Trial                       | 7-day introductory offer on both                     | Judging runs Oct 1–13. A 30-day trial started in September converts to first payment _after_ judging closes, leaving zero revenue to report.          |
-| Paywall UI                  | RevenueCat Paywalls v2 (`react-native-purchases-ui`) | Remotely editable after Sept 30 without a new build or review. The app ships once; judging happens afterwards.                                        |
-| Paywall presentation        | `pageSheet`, dismissible                             | A sheet reads as an offer; a `fullScreenModal` reads as a wall. That is the "chore" line.                                                             |
-| Entitlement identifier      | `premium`                                            | Not `ad_free`, and not because ads are coming later — there are none. The entitlement grants unlimited slots, nothing more.                           |
+| Decision                    | Choice                                               | Why                                                                                                                                                                      |
+| --------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Free tier limit             | 10 **unfinished** entries                            | `waiting` and `playing` count; `completed` and `abandoned` are free. Caps hoarding, not saving. Rewards the judge's verbs.                                               |
+| Where the limit is enforced | `apps/api`, inside a transaction it opens            | The limit is a product rule, so it belongs in the API; `packages/db` stays queries and writes. The transaction is what keeps check-then-write atomic.                    |
+| Entitlement authority       | The API, backed by Postgres                          | The API owns backlog writes, so the API must own the entitlement answer.                                                                                                 |
+| Freshness                   | RevenueCat webhooks, plus an on-demand REST pull     | Webhooks are fast but not synchronous; a user who just paid must not get a 402 on the next tap.                                                                          |
+| Entitlement on device       | `GET /api/me`                                        | The UI must agree with the enforcer. `customerInfo` is a change _signal_, never the authority.                                                                           |
+| Products                    | Monthly $2.99, Yearly $19.99, one group              | Minimum App Store Connect surface with a low-commitment entry point.                                                                                                     |
+| Trial                       | 7-day introductory offer on both                     | Judging runs Oct 1–13. A 30-day trial started in September converts to first payment _after_ judging closes, leaving zero revenue to report.                             |
+| Paywall UI                  | RevenueCat Paywalls v2 (`react-native-purchases-ui`) | Remotely editable after Sept 30 without a new build or review. The app ships once; judging happens afterwards.                                                           |
+| Paywall presentation        | `pageSheet`, dismissible                             | A sheet reads as an offer; a `fullScreenModal` reads as a wall. That is the "chore" line.                                                                                |
+| Entitlement identifier      | `barklog_premium`                                    | As created in RevenueCat, display name "Barklog Premium". Not `ad_free`, and not because ads are coming later — there are none. It grants unlimited slots, nothing more. |
 
 ### Rejected alternatives
 
@@ -733,8 +733,8 @@ Consequences of this decision, recorded so they are not rediscovered:
 - The Catvertising Award ($20K/$10K/$5K) is out of reach. Accepted.
 - `apps/mobile` never takes an ad dependency, so the pod graph is never
   disturbed and `expo-build-properties` is never needed.
-- The `premium` entitlement has exactly one meaning — unlimited slots — for the
-  life of the app.
+- The `barklog_premium` entitlement has exactly one meaning — unlimited slots —
+  for the life of the app.
 
 ## 12. Risks
 

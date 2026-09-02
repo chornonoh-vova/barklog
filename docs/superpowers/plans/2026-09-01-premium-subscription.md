@@ -14,7 +14,7 @@
 
 - **Branch:** `feat/premium-subscription`, already rebased on `main`. Do not create another.
 - **Free tier limit:** `FREE_ACTIVE_SLOTS = 10`. Only `waiting` and `playing` consume a slot.
-- **Entitlement identifier:** `premium`, exactly. Not `ad_free`.
+- **Entitlement identifier:** `barklog_premium`, exactly — as created in RevenueCat. Display name "Barklog Premium". Not `premium`, not `ad_free`.
 - **No ad dependencies, ever.** Do not add `react-native-google-mobile-ads`, `expo-build-properties`, or `useFrameworks: "static"`. See spec §11.
 - **Sandbox purchases grant the entitlement.** `sandbox` is never an input to `isPremium`. Refusing them fails App Review. See spec §4.
 - **Validation is valibot behind Standard Schema.** One library. Never add zod.
@@ -24,6 +24,13 @@
 - **Package versions:** `react-native-purchases@^10.8.1`, `react-native-purchases-ui@^10.8.1`.
 - **Node `>=24`, pnpm 11.** Run commands from the repo root unless a step says otherwise.
 - **Prettier before every commit.** `npx prettier --write <files>`.
+- **Comment only what the code cannot say.** The snippets below carry the
+  comments this feature needs and no more. Keep a comment when it records a
+  _why_ that a later reader would otherwise undo — an ordering guard, a `>=`
+  that looks like a typo, a deliberate omission. Delete anything restating the
+  signature or narrating the next line, and do not add JSDoc to a function
+  whose name and types already say it. If you find yourself explaining _what_
+  the code does, the code needs the change, not a comment.
 
 ---
 
@@ -109,10 +116,7 @@ Create `packages/contracts/src/subscription.ts`:
 ```ts
 import type { BacklogStatus } from "./backlog.js";
 
-/**
- * How many *unfinished* games a free backlog holds. Completing or abandoning a
- * game returns its slot, so the free tier caps hoarding rather than saving.
- */
+/** Unfinished games only — completing or abandoning one returns its slot. */
 export const FREE_ACTIVE_SLOTS = 10;
 
 export const SLOT_CONSUMING_STATUSES = ["waiting", "playing"] as const;
@@ -124,11 +128,8 @@ function consumesSlot(status: BacklogStatus | null): boolean {
 }
 
 /**
- * −1, 0 or +1: how a status transition moves the active count. `from` is null
- * for a game not yet in the backlog.
- *
- * The cap is applied to this, never to the total: an upsert that finishes a
- * game must succeed at 10/10, and one that reopens a finished game must not.
+ * The cap applies to this, never to the total: finishing a game must succeed at
+ * 10/10, and reopening one must not. `from` is null for a game not yet added.
  */
 export function slotDelta(from: BacklogStatus | null, to: BacklogStatus): -1 | 0 | 1 {
   const before = consumesSlot(from);
@@ -139,12 +140,7 @@ export function slotDelta(from: BacklogStatus | null, to: BacklogStatus): -1 | 0
   return after ? 1 : -1;
 }
 
-/**
- * Duplicated from `packages/db/src/schema/subscriptions.ts` because `pgEnum`
- * needs the values there and the wire types need the union here.
- * `status-parity.test.ts` keeps the two honest — the same arrangement
- * `BACKLOG_STATUSES` already lives under.
- */
+/** Duplicated in the db schema, where `pgEnum` needs the values. See status-parity. */
 export const SUBSCRIPTION_STORES = ["app_store", "play_store", "stripe", "promotional"] as const;
 export type SubscriptionStore = (typeof SUBSCRIPTION_STORES)[number];
 
@@ -167,7 +163,6 @@ export interface EntitlementWire {
 
 export interface MeResponse {
   premium: boolean;
-  /** null when the user has never subscribed, or the subscription has lapsed. */
   entitlement: EntitlementWire | null;
 }
 ```
@@ -237,13 +232,9 @@ In `packages/db/src/client.ts`, after the `Database` interface:
 
 ```ts
 /**
- * A `NodePgDatabase`, or the transaction handle `db.transaction()` hands its
- * callback. Derived from drizzle's own signature rather than by naming its
- * internal `PgTransaction` generics, which change between minor versions.
- *
- * Every query takes this so callers can compose several into one transaction —
- * the API needs check-then-write to be atomic without `packages/db` knowing
- * what is being checked.
+ * A `NodePgDatabase` or a transaction handle, so callers can compose queries
+ * into one transaction. Derived from drizzle's own signature rather than naming
+ * `PgTransaction`'s generics, which move between minor versions.
  */
 export type Queryable =
   | NodePgDatabase<typeof schema>
@@ -366,7 +357,7 @@ import { bigint, boolean, jsonb, pgEnum, pgTable, text, timestamp } from "drizzl
 
 import { users } from "./backlog.js";
 
-/** Duplicated in `packages/contracts/src/subscription.ts` — see the parity test. */
+/** Duplicated in `packages/contracts` — see the parity test. */
 export const SUBSCRIPTION_STORES = ["app_store", "play_store", "stripe", "promotional"] as const;
 export type SubscriptionStoreValue = (typeof SUBSCRIPTION_STORES)[number];
 
@@ -376,11 +367,6 @@ export type PeriodTypeValue = (typeof PERIOD_TYPES)[number];
 export const subscriptionStore = pgEnum("subscription_store", SUBSCRIPTION_STORES);
 export const periodType = pgEnum("subscription_period_type", PERIOD_TYPES);
 
-/**
- * Current state, one row per user, upserted from RevenueCat. Entitlement is
- * derived from `expiresAt` rather than stored: a boolean would go stale the
- * moment a subscription lapses without a webhook arriving.
- */
 export const subscriptions = pgTable("subscriptions", {
   // The Clerk `sub`, which is also the RevenueCat App User ID — so no mapping.
   userId: text("user_id")
@@ -390,35 +376,22 @@ export const subscriptions = pgTable("subscriptions", {
   store: subscriptionStore("store").notNull(),
   periodType: periodType("period_type").notNull(),
   purchasedAt: timestamp("purchased_at", { withTimezone: true }).notNull(),
-  // null means never expires. Absence is lifetime, not unknown.
+  // null is a lifetime entitlement, not an unknown expiry.
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   willRenew: boolean("will_renew").notNull(),
-  /**
-   * Recorded, but never an input to entitlement: App Review purchases run in
-   * Apple's sandbox against the production build, so refusing them would show
-   * a reviewer a successful purchase and an unchanged paywall. This column
-   * exists so revenue queries can filter our own device testing out.
-   */
+  // Never an input to entitlement — see isPremium. It exists so revenue
+  // queries can filter our own device testing out.
   sandbox: boolean("sandbox").notNull(),
-  /**
-   * `event_timestamp_ms` of the event that produced this row. RevenueCat
-   * retries and can deliver out of order; without this guard a retried
-   * INITIAL_PURCHASE landing after a CANCELLATION resurrects a dead
-   * subscription.
-   */
+  // Ordering guard: RevenueCat retries and can deliver out of order, so a
+  // retried INITIAL_PURCHASE after a CANCELLATION must not resurrect the row.
   lastEventAtMs: bigint("last_event_at_ms", { mode: "number" }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/**
- * Append-only. The RevenueCat event id is the primary key, so
- * `ON CONFLICT DO NOTHING` *is* the idempotency check — there is no separate
- * dedupe table.
- */
 export const subscriptionEvents = pgTable("subscription_events", {
+  // The RevenueCat event id, so ON CONFLICT DO NOTHING is the idempotency check.
   id: text("id").primaryKey(),
-  // Deliberately not a foreign key: an event for a user we have never seen, or
-  // one already deleted, is worth logging rather than rejecting.
+  // Not a foreign key: an event for an unknown or deleted user is worth logging.
   userId: text("user_id").notNull(),
   type: text("type").notNull(),
   payload: jsonb("payload").notNull(),
@@ -557,7 +530,7 @@ test("lockUser serialises two transactions on the same user", async () => {
     order.push("first-releasing");
   });
 
-  // Started after a beat so the first transaction is certain to hold the lock.
+  // A beat, so the first transaction certainly holds the lock.
   await new Promise((resolve) => setTimeout(resolve, 30));
 
   const second = db.transaction(async (tx) => {
@@ -587,29 +560,19 @@ Append to `packages/db/src/queries/backlog.ts`:
 
 ```ts
 /**
- * Takes a row-level lock on the user for the rest of the transaction, so one
- * user's backlog writes serialise against each other and nothing else.
- *
- * The API's free-tier check reads a count and then writes; without this, two
- * concurrent adds at 9/10 both read 9 and both succeed. `ensureUserMiddleware`
- * runs ahead of every mutating route, so there is always a row to lock.
+ * Serialises one user's backlog writes for the rest of the transaction. Without
+ * it, two concurrent adds at 9/10 both read 9 and both succeed.
  */
 export async function lockUser(db: Queryable, userId: string): Promise<void> {
   await db.execute(sql`SELECT 1 FROM ${users} WHERE ${users.id} = ${userId} FOR UPDATE`);
 }
 
-/**
- * How many of this user's entries hold one of `statuses`. The caller says
- * which statuses matter; this package has no opinion about why.
- */
 export async function countBacklogEntriesByStatus(
   db: Queryable,
   userId: string,
   statuses: readonly BacklogStatusValue[],
 ): Promise<number> {
-  // `inArray` with an empty list generates `false`, but be explicit: an empty
-  // list must count nothing, and a silent "everything" here would uncap the
-  // free tier.
+  // Explicit, not incidental: a silent "everything" here would uncap the free tier.
   if (statuses.length === 0) return 0;
 
   const rows = await db
@@ -774,10 +737,7 @@ export interface SubscriptionRow {
   lastEventAtMs: number;
 }
 
-/**
- * The stored row, verbatim — expired and sandbox rows included. Whether it
- * grants anything is a product decision, and lives in `apps/api`.
- */
+/** Verbatim, expired and sandbox rows included — judging it belongs in apps/api. */
 export async function getSubscription(
   db: Queryable,
   userId: string,
@@ -802,10 +762,8 @@ export async function getSubscription(
 }
 
 /**
- * Replaces the user's row, unless the stored one was produced by a strictly
- * newer event. `>=` rather than `>` on the incoming timestamp: a redelivery of
- * the newest event must still apply, since a partially-applied write is
- * indistinguishable from none.
+ * Refuses to apply behind a newer event. `>=`, not `>`: a redelivery of the
+ * newest event must still apply, since a partial write looks like none.
  */
 export async function upsertSubscription(db: Queryable, row: SubscriptionRow): Promise<void> {
   await db
@@ -828,11 +786,7 @@ export async function upsertSubscription(db: Queryable, row: SubscriptionRow): P
     });
 }
 
-/**
- * Appends to the log. Returns false when this event id was already stored,
- * which is the webhook's idempotency check — the primary key does the work, so
- * there is no dedupe table and no read-before-write race.
- */
+/** False when the event id was already stored — the webhook's idempotency check. */
 export async function recordSubscriptionEvent(
   db: Queryable,
   event: { id: string; userId: string; type: string; payload: unknown },
@@ -979,19 +933,9 @@ Create `apps/api/src/entitlement.ts`:
 import type { SubscriptionRow } from "@repo/db";
 
 /**
- * Whether a stored subscription grants `premium` right now.
- *
- * Derived rather than stored: expiry is the one state change RevenueCat cannot
- * always push in time, so a persisted boolean would keep a lapsed user premium
- * until a webhook happened to arrive.
- *
- * `sandbox` is deliberately absent. App Review tests purchases in Apple's
- * sandbox environment against the production build, so refusing sandbox
- * entitlements would show a reviewer a completed purchase and an unchanged
- * paywall — the "purchased but content not unlocked" rejection. It is safe
- * besides: sandbox Apple Accounts exist only in our App Store Connect account,
- * RevenueCat validates every receipt with Apple, and the webhook is
- * authenticated.
+ * `sandbox` is deliberately absent: App Review buys in Apple's sandbox against
+ * the production build, so refusing those entitlements shows a reviewer a
+ * completed purchase and an unchanged paywall — a documented rejection.
  */
 export function isPremium(row: SubscriptionRow | null, now: Date): boolean {
   if (row === null) return false;
@@ -1027,7 +971,6 @@ const put = (body: unknown): RequestInit => ({
   body: JSON.stringify(body),
 });
 
-/** One more game than the cap, so the boundary is always reachable. */
 const GAME_COUNT = FREE_ACTIVE_SLOTS + 2;
 
 async function grantPremium(): Promise<void> {
@@ -1044,7 +987,6 @@ async function grantPremium(): Promise<void> {
   });
 }
 
-/** Fills the free tier to exactly `FREE_ACTIVE_SLOTS` unfinished games. */
 async function fillSlots(): Promise<void> {
   for (let id = 1; id <= FREE_ACTIVE_SLOTS; id++) {
     const response = await callApi(harness.app, `/api/backlog/${id}`, put({ status: "waiting" }));
@@ -1198,8 +1140,7 @@ test("two concurrent adds at the boundary cannot both win", async () => {
     await callApi(harness.app, `/api/backlog/${id}`, put({ status: "waiting" }));
   }
 
-  // One slot left, two racers. Without lockUser both read the same count and
-  // both commit, leaving the user one over the cap.
+  // One slot, two racers. Without lockUser both read the same count and commit.
   const [first, second] = await Promise.all([
     callApi(harness.app, `/api/backlog/${FREE_ACTIVE_SLOTS}`, put({ status: "waiting" })),
     callApi(harness.app, `/api/backlog/${FREE_ACTIVE_SLOTS + 1}`, put({ status: "waiting" })),
@@ -1249,16 +1190,13 @@ In `apps/api/src/routes/backlog.ts`, replace the body of the `.put("/:gameId", �
 
 ```ts
 const outcome = await deps.db.transaction(async (tx) => {
-  // Serialises this user's backlog writes for the rest of the
-  // transaction. Without it, two concurrent adds at 9/10 both read 9.
   await lockUser(tx, c.get("userId"));
 
   const existing = await getBacklogEntry(tx, c.get("userId"), gameId);
   const delta = slotDelta(existing?.status ?? null, status);
 
-  // Only a transition that consumes a slot can be blocked, so
-  // finishing a game, re-rating one, or logging something already
-  // completed costs no extra queries at all.
+  // Only a slot-consuming transition can be blocked, so finishing or
+  // re-rating a game costs no extra queries.
   if (delta > 0) {
     const subscription = await getSubscription(tx, c.get("userId"));
 
@@ -1514,17 +1452,11 @@ import { isPremium } from "../entitlement.js";
 import { toEntitlement } from "../serialize.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
-/**
- * The one call the app renders entitlement from. Slot counts deliberately live
- * on `GET /api/backlog/stats`, which already returns per-status counts and is
- * already invalidated by every backlog mutation — a second source for the same
- * number would be a second thing to keep fresh.
- */
 export function meRoutes(deps: AppDeps) {
   return new Hono<AppEnv>().get("/", async (c) => {
     const row = await getSubscription(deps.db, c.get("userId"));
 
-    // `no-store`, not `no-cache`: this gates a paid feature, so a stale
+    // no-store, not no-cache: this gates a paid feature, so a stale
     // revalidation is worse than a round trip.
     c.header("Cache-Control", "private, no-store");
 
@@ -1618,7 +1550,7 @@ import * as v from "valibot";
 
 import { PERIOD_TYPES, SUBSCRIPTION_STORES } from "./subscription.js";
 
-/** Uppercase on the wire; our enums are lowercase. */
+/** Uppercase on the wire; our enums are lowercase — hence the maps below. */
 export const REVENUECAT_STORES = [
   "APP_STORE",
   "MAC_APP_STORE",
@@ -1630,9 +1562,8 @@ export const REVENUECAT_STORES = [
 export const REVENUECAT_PERIOD_TYPES = ["NORMAL", "TRIAL", "INTRO", "PROMOTIONAL"] as const;
 
 /**
- * `v.object`, not `v.strictObject`: RevenueCat adds fields to this payload
- * without warning, and a strict schema would turn every such addition into a
- * 422 and a retry storm.
+ * `v.object`, not `v.strictObject`: RevenueCat adds fields without warning, and
+ * a strict schema would turn every addition into a 422 and a retry storm.
  */
 export const revenueCatEventSchema = v.object({
   event: v.object({
@@ -1640,14 +1571,13 @@ export const revenueCatEventSchema = v.object({
     type: v.pipe(v.string(), v.minLength(1)),
     app_user_id: v.pipe(v.string(), v.minLength(1)),
     event_timestamp_ms: v.number(),
-    // Absent on some event types (TRANSFER, SUBSCRIBER_ALIAS).
+    // Absent on TRANSFER and SUBSCRIBER_ALIAS.
     product_id: v.optional(v.string()),
     store: v.optional(v.picklist(REVENUECAT_STORES)),
     period_type: v.optional(v.picklist(REVENUECAT_PERIOD_TYPES)),
     purchased_at_ms: v.optional(v.number()),
     // null for a lifetime purchase.
     expiration_at_ms: v.optional(v.nullable(v.number())),
-    // Set when the user has turned auto-renew off.
     cancel_reason: v.optional(v.nullable(v.string())),
     environment: v.optional(v.picklist(["SANDBOX", "PRODUCTION"])),
   }),
@@ -1709,8 +1639,6 @@ const event = (overrides: Record<string, unknown> = {}) => ({
   },
 });
 
-// `RequestInit & { user }` because `callApi` takes that shape, and
-// `tsconfig.test.json` type-checks this file.
 const post = (
   body: unknown,
   secret: string | null = SECRET,
@@ -1721,7 +1649,7 @@ const post = (
     ...(secret === null ? {} : { Authorization: secret }),
   },
   body: JSON.stringify(body),
-  // The webhook is not a session route; no X-Test-User.
+  // Not a session route, so no X-Test-User.
   user: null,
 });
 
@@ -1866,7 +1794,7 @@ test("an event type carrying no product is logged without touching the row", asy
   );
 
   expect(transfer.status).toBe(200);
-  // The purchase row survives: a TRANSFER carries no product to replace it with.
+  // A TRANSFER carries no product, so the purchase row survives.
   expect(await getSubscription(harness.db, TEST_USER)).toMatchObject({
     productId: "gg.barklog.app.premium.yearly",
     lastEventAtMs: 2_000,
@@ -1934,17 +1862,12 @@ In `apps/api/src/types.ts`, below `PROBE_PATHS`:
 
 ```ts
 /**
- * Paths that need no session token. Kept separate from `PROBE_PATHS` rather
- * than merged into it: that set also drives the `honoLogger` skip, and webhook
- * requests should be logged.
+ * Separate from `PROBE_PATHS`, not merged into it: that set also drives the
+ * `honoLogger` skip, and webhook requests should be logged.
  */
 export const PUBLIC_PATHS: ReadonlySet<string> = new Set([...PROBE_PATHS, "/webhooks/revenuecat"]);
 
-/**
- * RevenueCat payloads carry subscriber attributes and can exceed the 16KB the
- * API routes allow. Scoped to `/webhooks/*` rather than raised globally, so
- * nobody can POST a megabyte at `PUT /api/backlog/:gameId`.
- */
+/** Scoped, not global: nobody should POST a megabyte at a backlog write. */
 export const WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
 ```
 
@@ -1974,11 +1897,7 @@ import { timingSafeEqual } from "node:crypto";
 import { REVENUECAT_PERIOD_MAP, REVENUECAT_STORE_MAP, type RevenueCatEvent } from "@repo/contracts";
 import type { SubscriptionRow } from "@repo/db";
 
-/**
- * Constant-time comparison of the webhook's `Authorization` header. The length
- * check comes first because `timingSafeEqual` throws on a length mismatch —
- * and a length difference is not a secret worth protecting.
- */
+/** Length check first: `timingSafeEqual` throws on a mismatch. */
 export function secretMatches(header: string | undefined, secret: string): boolean {
   if (header === undefined) return false;
 
@@ -1990,11 +1909,7 @@ export function secretMatches(header: string | undefined, secret: string): boole
   return timingSafeEqual(provided, expected);
 }
 
-/**
- * The subscription row an event implies, or null when the event carries no
- * subscription state to apply — TRANSFER and SUBSCRIBER_ALIAS have no product,
- * and inventing one would blank a real purchase.
- */
+/** null when the event carries no subscription state — blanking a real purchase. */
 export function toSubscriptionRow(event: RevenueCatEvent): SubscriptionRow | null {
   if (
     event.product_id === undefined ||
@@ -2016,8 +1931,7 @@ export function toSubscriptionRow(event: RevenueCatEvent): SubscriptionRow | nul
       event.expiration_at_ms === undefined || event.expiration_at_ms === null
         ? null
         : new Date(event.expiration_at_ms),
-    // RevenueCat sets cancel_reason when the user turns auto-renew off. The
-    // entitlement still stands until expiry — see isPremium.
+    // Auto-renew off. The entitlement still stands until expiry — see isPremium.
     willRenew: event.cancel_reason === undefined || event.cancel_reason === null,
     sandbox: event.environment === "SANDBOX",
     lastEventAtMs: event.event_timestamp_ms,
@@ -2041,10 +1955,8 @@ import { secretMatches, toSubscriptionRow } from "../revenuecat.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
 /**
- * Status codes here are a contract with RevenueCat's retry machinery: anything
- * but a 2xx is retried, so a duplicate, a stale event and an event for an
- * unknown user all answer 200. Only a bad secret (401) and an unparseable
- * payload (422) refuse.
+ * Status codes are a contract with RevenueCat's retries: anything but 2xx is
+ * retried, so duplicates, stale events and unknown users all answer 200.
  */
 export function webhookRoutes(deps: AppDeps) {
   const log = getLogger(["api", "revenuecat"]);
@@ -2087,15 +1999,13 @@ export function webhookRoutes(deps: AppDeps) {
         return c.body(null, 200);
       }
 
-      // The log is not foreign-keyed, so it kept the event; the row must not be
-      // written for a user we have never seen.
+      // The log kept the event; the row must not be written for an unknown user.
       if (!(await userExists(deps.db, event.app_user_id))) {
         log.warn("RevenueCat event for unknown user {userId}", { userId: event.app_user_id });
         return c.body(null, 200);
       }
 
-      // Stale events are dropped inside the upsert's WHERE clause, so this is
-      // unconditional by design.
+      // Unconditional: the upsert's WHERE clause drops stale events.
       await upsertSubscription(deps.db, row);
 
       return c.body(null, 200);
@@ -2312,7 +2222,6 @@ test("a refresh cannot be aimed at another user", async () => {
 
   await callApi(harness.app, "/api/subscription/refresh", post);
 
-  // The session's user id wins over anything the third party returned.
   expect(await getSubscription(harness.db, TEST_USER)).toMatchObject({ userId: TEST_USER });
   expect(await getSubscription(harness.db, "user_2testBBB")).toBeNull();
 });
@@ -2359,11 +2268,7 @@ Expected: FAIL — 404.
 In `apps/api/src/types.ts`:
 
 ```ts
-/**
- * Injected like `share`, so the suite needs no network. The v1 subscribers
- * endpoint returns the same entitlement shape the webhook carries, which is
- * why one mapping function serves both paths.
- */
+/** Injected like `share`, so the suite needs no network. */
 export interface RevenueCatClient {
   fetchSubscriber(appUserId: string): Promise<SubscriptionRow | null>;
 }
@@ -2378,8 +2283,7 @@ export type RateLimitScope = "search" | "identify" | "write" | "refresh" | "over
 ```
 
 ```ts
-  // Reaches a third party, and the client only needs it on a purchase or a
-  // restore — both rare, both user-initiated.
+  // Reaches a third party, and only a purchase or restore needs it.
   refresh: { limit: 10, windowSeconds: 60 },
 ```
 
@@ -2390,8 +2294,7 @@ Append to `apps/api/src/revenuecat.ts`:
 ```ts
 const SUBSCRIBERS_URL = "https://api.revenuecat.com/v1/subscribers";
 
-/** The `premium` entitlement's identifier in RevenueCat. */
-export const PREMIUM_ENTITLEMENT = "premium";
+export const PREMIUM_ENTITLEMENT = "barklog_premium";
 
 interface SubscriberResponse {
   subscriber?: {
@@ -2425,7 +2328,6 @@ export function createRevenueCatClient(apiKey: string): RevenueCatClient {
       const entitlement = body.subscriber?.entitlements?.[PREMIUM_ENTITLEMENT];
       const productId = entitlement?.product_identifier;
 
-      // No premium entitlement has ever been granted to this subscriber.
       if (entitlement === undefined || productId === undefined) return null;
 
       const subscription = body.subscriber?.subscriptions?.[productId];
@@ -2446,9 +2348,7 @@ export function createRevenueCatClient(apiKey: string): RevenueCatClient {
         expiresAt: entitlement.expires_date ? new Date(entitlement.expires_date) : null,
         willRenew: !subscription?.unsubscribe_detected_at,
         sandbox: subscription?.is_sandbox ?? false,
-        // A REST read is the freshest thing we have, so it must win over any
-        // webhook already applied — otherwise the upsert's staleness guard
-        // would discard the very answer the user is waiting for.
+        // The freshest answer available, so it must beat the staleness guard.
         lastEventAtMs: Date.now(),
       };
     },
@@ -2472,11 +2372,6 @@ import { problems } from "../problems.js";
 import { toEntitlement } from "../serialize.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
-/**
- * Closes the window between a purchase completing on device and its webhook
- * landing. Without it, the user who just paid can tap Add and get a 402 on the
- * transaction they just completed — the worst moment in the funnel.
- */
 export function subscriptionRoutes(deps: AppDeps) {
   const log = getLogger(["api", "revenuecat"]);
 
@@ -2496,8 +2391,7 @@ export function subscriptionRoutes(deps: AppDeps) {
     }
 
     if (fetched !== null) {
-      // The session's user id wins: never trust a third party's idea of who
-      // this row belongs to.
+      // The session's user id wins over the third party's.
       await upsertSubscription(deps.db, { ...fetched, userId });
     }
 
@@ -2649,12 +2543,9 @@ Create `apps/mobile/src/purchases/should-identify.ts`:
 export type IdentifyAction = "none" | "login" | "logout";
 
 /**
- * Whether RevenueCat's identity needs changing.
- *
- * `undefined` means Clerk has not resolved yet — distinct from `null`, which
- * means signed out. Treating them alike would log out during the window Clerk
- * takes to establish a session, detaching the entitlement mid-purchase. The
- * same distinction `should-clear-cache.ts` draws, for the same reason.
+ * `undefined` is Clerk unresolved, `null` is signed out. Treating them alike
+ * logs out mid session-establishment, detaching the entitlement mid-purchase —
+ * the same distinction `should-clear-cache.ts` draws.
  */
 export function identifyAction(
   previous: string | null | undefined,
@@ -2696,7 +2587,7 @@ with `type MeResponse` added to the `@repo/contracts` import.
 In `apps/mobile/src/api/keys.ts`, add a top-level key:
 
 ```ts
-  /** Entitlement only. Slot counts come from `backlog.stats`. */
+  /** Entitlement only — slot counts come from `backlog.stats`. */
   me: () => ["me"] as const,
 ```
 
@@ -2709,11 +2600,7 @@ export function useMe(): UseQueryResult<MeResponse> {
   return useQuery({ queryKey: keys.me(), queryFn: () => api.getMe() });
 }
 
-/**
- * The API enforces the cap, so the UI reads entitlement from the API. The
- * RevenueCat SDK's `customerInfo` is a change *signal* only — trusting it here
- * would ship buttons the server rejects.
- */
+/** From the API, not `customerInfo`: the UI must agree with the enforcer. */
 export function useIsPremium(): boolean {
   return useMe().data?.premium ?? false;
 }
@@ -2756,13 +2643,7 @@ import { REVENUECAT_IOS_KEY } from "@/env";
 
 import { identifyAction } from "./should-identify";
 
-/**
- * Configures RevenueCat once and keeps its App User ID equal to the Clerk
- * `sub` — which is also `users.id` on the server, so there is no mapping.
- *
- * Mounted inside `ClerkProvider` and outside the gates: configuration must
- * complete before any screen can present the paywall.
- */
+/** Keeps RevenueCat's App User ID equal to the Clerk `sub`, which is `users.id`. */
 export function PurchasesProvider({ children }: { children: ReactNode }) {
   const { userId } = useAuth({ treatPendingAsSignedOut: false });
   const queryClient = useQueryClient();
@@ -2951,15 +2832,8 @@ Create `apps/mobile/src/features/paywall/should-offer-paywall.ts`:
 import { FREE_ACTIVE_SLOTS, slotDelta, type BacklogStatus } from "@repo/contracts";
 
 /**
- * Whether a transition would be refused, so the app can offer the paywall
- * instead of firing a doomed mutation.
- *
- * Mirrors the server's rule via the same `slotDelta`, which is why it lives in
- * `@repo/contracts` — two implementations would drift, and the failure mode is
- * a button that lies.
- *
- * An unknown `activeCount` returns false on purpose: guessing would block a
- * legitimate add while stats are still loading. The 402 handler is the backstop.
+ * An unknown `activeCount` returns false on purpose: guessing would refuse a
+ * legitimate add while stats load, and the 402 handler is the backstop.
  */
 export function wouldExceedSlots(input: {
   premium: boolean;
@@ -2987,14 +2861,7 @@ import RevenueCatUI from "react-native-purchases-ui";
 
 import { keys } from "@/api/keys";
 
-/**
- * RevenueCat's hosted paywall, configured in their dashboard — so copy,
- * pricing emphasis and layout can change after the app ships, without a new
- * build or another App Store review.
- *
- * Presented as a `pageSheet` by `_layout.tsx`: a dismissible sheet reads as an
- * offer, where a full-screen takeover reads as a wall.
- */
+/** Presented as a `pageSheet` by `_layout.tsx` — an offer, not a wall. */
 export default function Paywall() {
   const queryClient = useQueryClient();
 
@@ -3088,9 +2955,7 @@ In `apps/mobile/src/api/hooks.ts`, change `useBacklogEntryMutation`'s `onError` 
         queryClient.setQueryData(keys.games.detail(gameId), context.previous);
       }
 
-      // An Alert plus a sheet would be two dismissals for one event. This is
-      // the backstop for paths the proactive check cannot see: the share
-      // extension, a stale slot count, or a race with another device.
+      // No Alert: a sheet plus an alert is two dismissals for one event.
       if (isApiError(error) && error.status === 402) {
         router.push("/paywall");
         return;
@@ -3244,14 +3109,7 @@ Create `apps/mobile/src/features/backlog/slots.ts`:
 ```ts
 import { FREE_ACTIVE_SLOTS, type BacklogStatsWire } from "@repo/contracts";
 
-/**
- * The free tier's remaining capacity, or null when there is nothing to say —
- * premium, or stats not loaded.
- *
- * Shown from the first add, not saved for the moment of refusal: at ten slots
- * the counter is what turns the cap into a rule the user already knows rather
- * than a wall they discover.
- */
+/** null when there is nothing to say — premium, or stats not loaded. */
 export function slotsLabel(stats: BacklogStatsWire | undefined, premium: boolean): string | null {
   if (premium || stats === undefined) return null;
 
