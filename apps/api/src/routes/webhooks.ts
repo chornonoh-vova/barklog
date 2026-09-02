@@ -1,7 +1,7 @@
 import { sValidator } from "@hono/standard-validator";
 import { getLogger } from "@logtape/logtape";
 import { revenueCatEventSchema } from "@repo/contracts";
-import { recordSubscriptionEvent, upsertSubscription, userExists } from "@repo/db";
+import { ensureUser, recordSubscriptionEvent, upsertSubscription } from "@repo/db";
 import { Hono } from "hono";
 import type { Context } from "hono";
 
@@ -20,7 +20,7 @@ function renderUnprocessable(c: Context) {
 
 /**
  * Status codes are a contract with RevenueCat's retries: anything but 2xx is
- * retried, so duplicates, stale events and unknown users all answer 200.
+ * retried, so duplicates and stale events answer 200 too.
  */
 export function webhookRoutes(deps: AppDeps) {
   const log = getLogger(["api", "revenuecat"]);
@@ -76,15 +76,23 @@ export function webhookRoutes(deps: AppDeps) {
       const row = toSubscriptionRow(event);
 
       if (row === null) {
-        log.info("RevenueCat event {type} carries no subscription state", { type: event.type });
+        // The id, because a partial purchase payload lands here too: without it
+        // a dropped purchase has nothing to trace it by.
+        log.info("RevenueCat event {id} of type {type} carries no subscription state", {
+          id: event.id,
+          type: event.type,
+        });
         return c.body(null, 200);
       }
 
-      // The log kept the event; the row must not be written for an unknown user.
-      if (!(await userExists(deps.db, event.app_user_id))) {
-        log.warn("RevenueCat event for unknown user {userId}", { userId: event.app_user_id });
-        return c.body(null, 200);
-      }
+      // A free user can buy Premium having sent nothing but GETs, so
+      // `ensureUserMiddleware` — which runs only for MUTATING_METHODS — may never
+      // have created their row. Answering 200 without it would consume the event
+      // id and discard the purchase, and the retry would hit the duplicate
+      // branch: permanently lost. `app_user_id` comes from our own
+      // `Purchases.logIn(clerkUserId)` behind both webhook secrets, so creating
+      // the row here is exactly what the middleware does on a first write.
+      await ensureUser(deps.db, event.app_user_id);
 
       // Unconditional: the upsert's WHERE clause drops stale events.
       await upsertSubscription(deps.db, row);

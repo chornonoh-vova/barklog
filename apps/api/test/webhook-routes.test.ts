@@ -230,7 +230,10 @@ test("a null expiration is stored as a lifetime entitlement", async () => {
   expect(await getSubscription(harness.db, TEST_USER)).toMatchObject({ expiresAt: null });
 });
 
-test("an event for an unknown user is 200, logged, and upserts nothing", async () => {
+// A free user can buy Premium having only ever sent GETs, so
+// `ensureUserMiddleware` has never created their row. Dropping the upsert here
+// would consume the event id and lose the purchase for good.
+test("an event for a user with no row yet creates the row and applies the purchase", async () => {
   const response = await callApi(
     harness.app,
     "/webhooks/revenuecat",
@@ -243,8 +246,16 @@ test("an event for an unknown user is 200, logged, and upserts nothing", async (
   );
   expect((rows.rows[0] as { total: number }).total).toBe(1);
 
-  const subs = await harness.db.execute("select count(*)::int as total from subscriptions");
-  expect((subs.rows[0] as { total: number }).total).toBe(0);
+  const users = await harness.db.execute(
+    "select count(*)::int as total from users where id = 'user_never_seen'",
+  );
+  expect((users.rows[0] as { total: number }).total).toBe(1);
+
+  expect(await getSubscription(harness.db, "user_never_seen")).toMatchObject({
+    productId: "gg.barklog.app.premium.yearly",
+    store: "app_store",
+    periodType: "trial",
+  });
 });
 
 test("an unparseable payload is 422, not a crash", async () => {

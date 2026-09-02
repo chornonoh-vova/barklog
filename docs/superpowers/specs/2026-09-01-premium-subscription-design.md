@@ -438,15 +438,28 @@ Three changes in `apps/api`:
 
 Status codes are the contract with RevenueCat's retry machinery:
 
-| Case                          | Status | Why                                                                                                                                                                                                                              |
-| ----------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Applied                       | 200    | —                                                                                                                                                                                                                                |
-| Duplicate event id            | 200    | Already handled. A non-2xx retries forever.                                                                                                                                                                                      |
-| Stale `event_timestamp_ms`    | 200    | Deliberately ignored, not failed.                                                                                                                                                                                                |
-| Bad or missing secret         | 401    | —                                                                                                                                                                                                                                |
-| Body is not parseable JSON    | 400    | Hono's validator throws `HTTPException(400)` before our invalid-hook can run, so this status was never ours to choose. Still a refusal, still a problem document. RevenueCat does not send malformed JSON.                       |
-| Well-formed JSON, wrong shape | 422    | New `UNPROCESSABLE_WEBHOOK` type, sibling to `UNPROCESSABLE_SHARE`.                                                                                                                                                              |
-| Unknown `app_user_id`         | 200    | Event logged, `subscriptions` upsert skipped. `subscription_events.userId` is deliberately not a foreign key so this row can land — a webhook for a deleted user is not an error, and the log is where you find out it happened. |
+| Case                          | Status | Why                                                                                                                                                                                                        |
+| ----------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Applied                       | 200    | —                                                                                                                                                                                                          |
+| Duplicate event id            | 200    | Already handled. A non-2xx retries forever.                                                                                                                                                                |
+| Stale `event_timestamp_ms`    | 200    | Deliberately ignored, not failed.                                                                                                                                                                          |
+| Bad or missing secret         | 401    | —                                                                                                                                                                                                          |
+| Body is not parseable JSON    | 400    | Hono's validator throws `HTTPException(400)` before our invalid-hook can run, so this status was never ours to choose. Still a refusal, still a problem document. RevenueCat does not send malformed JSON. |
+| Well-formed JSON, wrong shape | 422    | New `UNPROCESSABLE_WEBHOOK` type, sibling to `UNPROCESSABLE_SHARE`.                                                                                                                                        |
+| Unknown `app_user_id`         | 200    | Event logged, the `users` row created, subscription applied — see below.                                                                                                                                   |
+
+An `app_user_id` with no `users` row is usually a user who has not written yet,
+not a deleted one: `ensureUserMiddleware` runs only for `MUTATING_METHODS`, so
+someone who installs, signs in, browses with GETs and buys Premium from the
+slots counter has no row when their `INITIAL_PURCHASE` arrives. Skipping the
+upsert there loses the purchase permanently — the event id is already consumed,
+so RevenueCat's retry hits the duplicate branch and does nothing. The webhook is
+authenticated by two independent secrets and `app_user_id` comes from our own
+`Purchases.logIn(clerkUserId)`, so `ensureUser` here is exactly what the
+middleware would do on a first write. A genuinely deleted user ends up with an
+`{id, createdAt}` shell beside their subscription, which is more use to support
+than an orphaned entitlement. `subscription_events.userId` remains deliberately
+free of a foreign key, so the event row lands before any of this.
 
 Payload validated by a valibot schema in
 `packages/contracts/src/revenuecat.ts`, behind Standard Schema like everything
@@ -551,8 +564,10 @@ alongside `(tabs)` and `shared` in `app/_layout.tsx`:
 
 Both are needed. `onMutate` writes the entry optimistically, so a 402 without
 path 1 shows the game as added and then snaps it back. Path 1 removes the flash;
-path 2 catches races, stale clients, and the share-extension intake path which
-does not go through `entry-actions.tsx`.
+path 2 catches what path 1 cannot see: a stale `activeCount`, a cross-device
+race, or an old build. (Both intake paths do reach path 1 —
+`app/shared/game/[id].tsx` renders the same `GameDetailScreen`, so the share
+extension goes through `entry-actions.tsx` as well.)
 
 `api/error-copy.ts` gains a 402 case ahead of the fallback, so a cap hit never
 surfaces as "Please try again."
@@ -668,7 +683,8 @@ The cap tests move here with the rule. These need a database, so they belong in
 - A body tampered after signing → 401, and no row written.
 - Reachable without a session token (proves the `PUBLIC_PATHS` wiring).
 - `/api/me` without a token → 401.
-- Unknown `app_user_id` → 200, a `subscription_events` row, no `subscriptions` row.
+- Unknown `app_user_id` → 200, a `subscription_events` row, and a `users` row plus a
+  `subscriptions` row created, so a purchase made before the first write is not lost.
 - A 16KB+ webhook body succeeds; a 16KB+ body at `PUT /api/backlog/:gameId`
   still gets 413.
 - Blocked upsert → 402 carrying `activeCount` and `limit` extensions.
