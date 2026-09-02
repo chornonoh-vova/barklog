@@ -15,6 +15,7 @@ import { backlogRoutes } from "./routes/backlog.js";
 import { gamesRoutes } from "./routes/games.js";
 import { meRoutes } from "./routes/me.js";
 import { probeRoutes } from "./routes/probes.js";
+import { subscriptionRoutes } from "./routes/subscription.js";
 import { syncRoutes } from "./routes/sync.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 import {
@@ -99,6 +100,7 @@ export function createApp(deps: AppDeps) {
     .use("/api/games/search", rateLimit(deps.cache, "search", limits.search))
     .on(["POST"], "/api/games/identify", rateLimit(deps.cache, "identify", limits.identify))
     .on([...MUTATING_METHODS], "/api/backlog/*", rateLimit(deps.cache, "write", limits.write))
+    .on(["POST"], "/api/subscription/refresh", rateLimit(deps.cache, "refresh", limits.refresh))
     .use("/api/*", rateLimit(deps.cache, "overall", limits.overall))
     // Not `MUTATING_METHODS`: a `DELETE` sends no `Content-Type`, so it would
     // turn every delete into a 415.
@@ -108,6 +110,7 @@ export function createApp(deps: AppDeps) {
     .route("/api/me", meRoutes(deps))
     .route("/api/backlog", backlogRoutes(deps))
     .route("/api/sync", syncRoutes(deps))
+    .route("/api/subscription", subscriptionRoutes(deps))
     .route("/webhooks", webhookRoutes(deps))
     .route("/", probeRoutes(deps));
 

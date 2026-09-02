@@ -1,5 +1,5 @@
 import type { Cache } from "@repo/cache";
-import type { Database } from "@repo/db";
+import type { Database, SubscriptionRow } from "@repo/db";
 
 import type { AuthProvider } from "./middleware/auth.js";
 import type { RateLimits } from "./rate-limits.js";
@@ -47,11 +47,17 @@ export interface ShareProvider {
   extractTitles(meta: VideoMeta): Promise<string[]>;
 }
 
+/** Injected like `share`, so the suite needs no network. */
+export interface RevenueCatClient {
+  fetchSubscriber(appUserId: string): Promise<SubscriptionRow | null>;
+}
+
 export interface AppDeps {
   db: Db;
   cache: Cache;
   auth: AuthProvider;
   share: ShareProvider;
+  revenueCat: RevenueCatClient;
   webhookSecret: string;
   webhookSigningSecret: string;
   production?: boolean;

@@ -1,4 +1,4 @@
-export type RateLimitScope = "search" | "identify" | "write" | "overall";
+export type RateLimitScope = "search" | "identify" | "write" | "refresh" | "overall";
 
 export interface RateLimitRule {
   limit: number;
@@ -13,5 +13,7 @@ export const DEFAULT_RATE_LIMITS: RateLimits = {
   // LLM call, so it is the only route where a burst has a per-request cost.
   identify: { limit: 10, windowSeconds: 60 },
   write: { limit: 60, windowSeconds: 60 },
+  // Reaches a third party, and only a purchase or restore needs it.
+  refresh: { limit: 10, windowSeconds: 60 },
   overall: { limit: 300, windowSeconds: 60 },
 };

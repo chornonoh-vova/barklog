@@ -8,7 +8,7 @@ import { expect, inject } from "vitest";
 
 import { createApp } from "../src/app.js";
 import type { AuthProvider } from "../src/middleware/auth.js";
-import type { AppDeps, Db, ShareProvider } from "../src/types.js";
+import type { AppDeps, Db, RevenueCatClient, ShareProvider } from "../src/types.js";
 
 export const TEST_USER = "user_2testAAA";
 export const OTHER_USER = "user_2testBBB";
@@ -30,6 +30,12 @@ const unusedShareProvider: ShareProvider = {
   },
   extractTitles: () => {
     throw new Error("share.extractTitles was not stubbed for this test");
+  },
+};
+
+const unusedRevenueCat: RevenueCatClient = {
+  fetchSubscriber: () => {
+    throw new Error("revenueCat.fetchSubscriber was not stubbed for this test");
   },
 };
 
@@ -57,6 +63,7 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     cache,
     auth: fakeAuthProvider,
     share: unusedShareProvider,
+    revenueCat: unusedRevenueCat,
     production: true,
     webhookSecret: WEBHOOK_SECRET,
     webhookSigningSecret: WEBHOOK_SIGNING_SECRET,

@@ -46,6 +46,7 @@ test("AppType still exposes every route the mobile client calls", () => {
   expect(typeof client.api.backlog[":gameId"].$put).toBe("function");
   expect(typeof client.api.backlog[":gameId"].$delete).toBe("function");
   expect(typeof client.api.sync.status.$get).toBe("function");
+  expect(typeof client.api.subscription.refresh.$post).toBe("function");
 });
 
 test("every error the API can produce is a problem document", async () => {

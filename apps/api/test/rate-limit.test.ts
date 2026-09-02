@@ -21,6 +21,7 @@ test("the configured limits are the ones the spec states", () => {
     search: { limit: 30, windowSeconds: 60 },
     identify: { limit: 10, windowSeconds: 60 },
     write: { limit: 60, windowSeconds: 60 },
+    refresh: { limit: 10, windowSeconds: 60 },
     overall: { limit: 300, windowSeconds: 60 },
   });
 });

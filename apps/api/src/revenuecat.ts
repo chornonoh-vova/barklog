@@ -3,6 +3,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { REVENUECAT_PERIOD_MAP, REVENUECAT_STORE_MAP, type RevenueCatEvent } from "@repo/contracts";
 import type { SubscriptionRow } from "@repo/db";
 
+import type { RevenueCatClient } from "./types.js";
+
 /** Length check first: `timingSafeEqual` throws on a mismatch. */
 function constantTimeEquals(provided: string, expected: string): boolean {
   const a = Buffer.from(provided);
@@ -72,5 +74,68 @@ export function toSubscriptionRow(event: RevenueCatEvent): SubscriptionRow | nul
     willRenew: event.cancel_reason === undefined || event.cancel_reason === null,
     sandbox: event.environment === "SANDBOX",
     lastEventAtMs: event.event_timestamp_ms,
+  };
+}
+
+const SUBSCRIBERS_URL = "https://api.revenuecat.com/v1/subscribers";
+
+export const PREMIUM_ENTITLEMENT = "barklog_premium";
+
+interface SubscriberResponse {
+  subscriber?: {
+    entitlements?: Record<string, { product_identifier?: string; expires_date?: string | null }>;
+    subscriptions?: Record<
+      string,
+      {
+        store?: string;
+        period_type?: string;
+        purchase_date?: string;
+        expires_date?: string | null;
+        unsubscribe_detected_at?: string | null;
+        is_sandbox?: boolean;
+      }
+    >;
+  };
+}
+
+export function createRevenueCatClient(apiKey: string): RevenueCatClient {
+  return {
+    async fetchSubscriber(appUserId) {
+      const response = await fetch(`${SUBSCRIBERS_URL}/${encodeURIComponent(appUserId)}`, {
+        headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error(`RevenueCat answered ${response.status}`);
+      }
+
+      const body = (await response.json()) as SubscriberResponse;
+      const entitlement = body.subscriber?.entitlements?.[PREMIUM_ENTITLEMENT];
+      const productId = entitlement?.product_identifier;
+
+      if (entitlement === undefined || productId === undefined) return null;
+
+      const subscription = body.subscriber?.subscriptions?.[productId];
+
+      return {
+        userId: appUserId,
+        productId,
+        store:
+          REVENUECAT_STORE_MAP[
+            (subscription?.store?.toUpperCase() ?? "APP_STORE") as keyof typeof REVENUECAT_STORE_MAP
+          ],
+        periodType:
+          REVENUECAT_PERIOD_MAP[
+            (subscription?.period_type?.toUpperCase() ??
+              "NORMAL") as keyof typeof REVENUECAT_PERIOD_MAP
+          ],
+        purchasedAt: new Date(subscription?.purchase_date ?? Date.now()),
+        expiresAt: entitlement.expires_date ? new Date(entitlement.expires_date) : null,
+        willRenew: !subscription?.unsubscribe_detected_at,
+        sandbox: subscription?.is_sandbox ?? false,
+        // The freshest answer available, so it must beat the staleness guard.
+        lastEventAtMs: Date.now(),
+      };
+    },
   };
 }

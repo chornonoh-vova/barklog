@@ -7,6 +7,7 @@ import { configureLogging } from "@repo/logging";
 import { createApp } from "./app.js";
 import { clerkAuthProvider } from "./clerk.js";
 import { parseEnv } from "./env.js";
+import { createRevenueCatClient } from "./revenuecat.js";
 import { createShareProvider } from "./share/provider.js";
 
 const env = parseEnv(process.env);
@@ -22,6 +23,7 @@ const app = createApp({
   cache,
   auth: clerkAuthProvider(env),
   share: createShareProvider(env),
+  revenueCat: createRevenueCatClient(env.REVENUECAT_API_KEY),
   webhookSecret: env.REVENUECAT_WEBHOOK_SECRET,
   webhookSigningSecret: env.REVENUECAT_WEBHOOK_SIGNING_SECRET,
   production: env.NODE_ENV === "production",
