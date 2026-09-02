@@ -1540,6 +1540,8 @@ pretending the user never subscribed."
 - Modify: `apps/api/src/env.ts` (three secrets)
 - Modify: `apps/api/src/problems.ts` (`UNPROCESSABLE_WEBHOOK`)
 - Modify: `apps/api/test/invariants.test.ts` (type-URI list)
+- Modify: `apps/api/test/helpers.ts` (both webhook secrets on `createApp`)
+- Modify: `packages/db/src/queries/backlog.ts` (`userExists`)
 - Modify: `.env.example`, `compose.yaml`
 - Test: `apps/api/test/webhook-routes.test.ts`
 
@@ -2301,8 +2303,8 @@ raising one does not let anyone POST a megabyte at a backlog write."
 
 - Modify: `apps/api/src/revenuecat.ts` (add the REST fetch)
 - Create: `apps/api/src/routes/subscription.ts`
-- Modify: `apps/api/src/app.ts`, `apps/api/src/rate-limits.ts`, `apps/api/src/types.ts`
-- Modify: `apps/api/test/invariants.test.ts`
+- Modify: `apps/api/src/app.ts`, `apps/api/src/rate-limits.ts`, `apps/api/src/types.ts`, `apps/api/src/index.ts`
+- Modify: `apps/api/test/invariants.test.ts`, `apps/api/test/helpers.ts` (default `revenueCat` stub)
 - Test: `apps/api/test/subscription-refresh.test.ts`
 
 **Interfaces:**
