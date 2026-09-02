@@ -6,10 +6,11 @@ import {
   useBacklogStats,
   useDeleteBacklogEntry,
   useGame,
-  useIsPremium,
+  usePremium,
   useUpsertBacklogEntry,
 } from "@/api/hooks";
 import { QueryBoundary } from "@/components/query-boundary";
+import { activeSlotsUsed } from "@/features/backlog/slots";
 import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
@@ -27,11 +28,9 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const upsert = useUpsertBacklogEntry(gameId);
   const remove = useDeleteBacklogEntry(gameId);
   const router = useRouter();
-  const premium = useIsPremium();
+  const premium = usePremium();
   const stats = useBacklogStats();
-  // The cap counts unfinished games only, so this is the number the rule uses.
-  const activeCount =
-    stats.data === undefined ? undefined : stats.data.counts.waiting + stats.data.counts.playing;
+  const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
 
   return (
     <>

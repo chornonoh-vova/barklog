@@ -33,7 +33,7 @@ export function EntryActions({
   onUpsert,
 }: {
   entry: BacklogEntryWire | null;
-  premium: boolean;
+  premium: boolean | undefined;
   activeCount: number | undefined;
   onBlocked: () => void;
   onUpsert: (input: { status: BacklogStatus; rating: number | null }) => void;

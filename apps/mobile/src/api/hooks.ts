@@ -190,7 +190,19 @@ export function useMe(): UseQueryResult<MeResponse> {
   return useQuery({ queryKey: keys.me(), queryFn: () => api.getMe() });
 }
 
-/** From the API, not `customerInfo`: the UI must agree with the enforcer. */
+/**
+ * From the API, not `customerInfo`: the UI must agree with the enforcer.
+ * `undefined` is "not known yet", and it stays that way for the life of a
+ * screen if `/me` 4xxs — `query-client.ts` never retries those, so one 401
+ * during a Clerk token refresh is enough. A gating decision must therefore
+ * carry the unknown through rather than collapse it; see `wouldExceedSlots`.
+ */
+export function usePremium(): boolean | undefined {
+  return useMe().data?.premium;
+}
+
+/** Display only — an unknown entitlement shows the free-tier hint, which is
+ * wrong on screen but never refuses an action. Gating uses `usePremium`. */
 export function useIsPremium(): boolean {
-  return useMe().data?.premium ?? false;
+  return usePremium() ?? false;
 }

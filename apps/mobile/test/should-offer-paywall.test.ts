@@ -45,3 +45,14 @@ test("an unknown count does not guess — the server decides", () => {
     wouldExceedSlots({ premium: false, activeCount: undefined, from: null, to: "waiting" }),
   ).toBe(false);
 });
+
+test("an unknown entitlement does not guess either — a paying user is never refused", () => {
+  expect(
+    wouldExceedSlots({
+      premium: undefined,
+      activeCount: FREE_ACTIVE_SLOTS,
+      from: null,
+      to: "waiting",
+    }),
+  ).toBe(false);
+});
