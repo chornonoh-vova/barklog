@@ -29,6 +29,7 @@ export const problems = createProblemTypeRegistry({
   CONTENT_TOO_LARGE: definition(413),
   UNSUPPORTED_MEDIA_TYPE: definition(415),
   UNPROCESSABLE_SHARE: definition(422),
+  UNPROCESSABLE_WEBHOOK: definition(422),
   TOO_MANY_REQUESTS: definition(429),
   BAD_GATEWAY: definition(502),
   SERVICE_UNAVAILABLE: definition(503),

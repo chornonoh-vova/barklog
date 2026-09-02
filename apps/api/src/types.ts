@@ -11,6 +11,15 @@ export type Db = Database["db"];
 export const PROBE_PATHS: ReadonlySet<string> = new Set(["/healthz", "/readyz"]);
 
 /**
+ * Separate from `PROBE_PATHS`, not merged into it: that set also drives the
+ * `honoLogger` skip, and webhook requests should be logged.
+ */
+export const PUBLIC_PATHS: ReadonlySet<string> = new Set([...PROBE_PATHS, "/webhooks/revenuecat"]);
+
+/** Scoped, not global: nobody should POST a megabyte at a backlog write. */
+export const WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
+
+/**
  * One list for both the "write" rate-limit scope and `ensureUserMiddleware`, so
  * a new mutating route cannot reach one and escape the other.
  */
@@ -43,6 +52,8 @@ export interface AppDeps {
   cache: Cache;
   auth: AuthProvider;
   share: ShareProvider;
+  webhookSecret: string;
+  webhookSigningSecret: string;
   production?: boolean;
   rateLimits?: Partial<RateLimits>;
 }

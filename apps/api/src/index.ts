@@ -22,6 +22,8 @@ const app = createApp({
   cache,
   auth: clerkAuthProvider(env),
   share: createShareProvider(env),
+  webhookSecret: env.REVENUECAT_WEBHOOK_SECRET,
+  webhookSigningSecret: env.REVENUECAT_WEBHOOK_SIGNING_SECRET,
   production: env.NODE_ENV === "production",
 });
 

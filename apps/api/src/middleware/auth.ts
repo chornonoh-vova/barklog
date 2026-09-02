@@ -2,7 +2,7 @@ import { ensureUser } from "@repo/db";
 import type { Context, MiddlewareHandler } from "hono";
 
 import { problems } from "../problems.js";
-import { PROBE_PATHS, type AppEnv, type Db } from "../types.js";
+import { PUBLIC_PATHS, type AppEnv, type Db } from "../types.js";
 
 export type Authenticator = (c: Context) => Promise<string | null> | string | null;
 
@@ -15,7 +15,7 @@ export function requireAuth(authenticate: Authenticator): MiddlewareHandler<AppE
   return async (c, next) => {
     // By exact path: a prefix allowlist would quietly make a future
     // `/healthz-debug` public.
-    if (PROBE_PATHS.has(c.req.path)) return next();
+    if (PUBLIC_PATHS.has(c.req.path)) return next();
 
     const userId = await authenticate(c);
     if (!userId) {

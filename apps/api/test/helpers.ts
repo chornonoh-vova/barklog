@@ -13,6 +13,9 @@ import type { AppDeps, Db, ShareProvider } from "../src/types.js";
 export const TEST_USER = "user_2testAAA";
 export const OTHER_USER = "user_2testBBB";
 
+export const WEBHOOK_SECRET = "test-webhook-secret";
+export const WEBHOOK_SIGNING_SECRET = "test-signing-secret";
+
 export const fakeAuthProvider: AuthProvider = {
   authenticate: (c) => c.req.header("X-Test-User") ?? null,
 };
@@ -55,6 +58,8 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     auth: fakeAuthProvider,
     share: unusedShareProvider,
     production: true,
+    webhookSecret: WEBHOOK_SECRET,
+    webhookSigningSecret: WEBHOOK_SIGNING_SECRET,
     ...overrides,
   });
 

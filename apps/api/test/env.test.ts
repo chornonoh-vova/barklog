@@ -8,6 +8,9 @@ const VALID = {
   CLERK_SECRET_KEY: "sk_test_x",
   CLERK_PUBLISHABLE_KEY: "pk_test_x",
   ANTHROPIC_API_KEY: "sk-ant-test-x",
+  REVENUECAT_WEBHOOK_SECRET: "rc-webhook-x",
+  REVENUECAT_WEBHOOK_SIGNING_SECRET: "rc-signing-x",
+  REVENUECAT_API_KEY: "sk-rc-test-x",
 };
 
 test("defaults fill in everything that is optional", () => {

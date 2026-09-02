@@ -16,7 +16,14 @@ import { gamesRoutes } from "./routes/games.js";
 import { meRoutes } from "./routes/me.js";
 import { probeRoutes } from "./routes/probes.js";
 import { syncRoutes } from "./routes/sync.js";
-import { MUTATING_METHODS, PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
+import { webhookRoutes } from "./routes/webhooks.js";
+import {
+  MUTATING_METHODS,
+  PROBE_PATHS,
+  WEBHOOK_BODY_LIMIT_BYTES,
+  type AppDeps,
+  type AppEnv,
+} from "./types.js";
 
 const passthrough: MiddlewareHandler = (_c, next) => next();
 
@@ -61,7 +68,7 @@ export function createApp(deps: AppDeps) {
       }),
     )
     .use(
-      "*",
+      "/api/*",
       bodyLimit({
         maxSize: BODY_LIMIT_BYTES,
         onError: (c) =>
@@ -69,6 +76,19 @@ export function createApp(deps: AppDeps) {
             c,
             problems.create("CONTENT_TOO_LARGE", {
               detail: `Request body must be at most ${BODY_LIMIT_BYTES} bytes.`,
+            }),
+          ),
+      }),
+    )
+    .use(
+      "/webhooks/*",
+      bodyLimit({
+        maxSize: WEBHOOK_BODY_LIMIT_BYTES,
+        onError: (c) =>
+          renderProblem(
+            c,
+            problems.create("CONTENT_TOO_LARGE", {
+              detail: `Request body must be at most ${WEBHOOK_BODY_LIMIT_BYTES} bytes.`,
             }),
           ),
       }),
@@ -88,6 +108,7 @@ export function createApp(deps: AppDeps) {
     .route("/api/me", meRoutes(deps))
     .route("/api/backlog", backlogRoutes(deps))
     .route("/api/sync", syncRoutes(deps))
+    .route("/webhooks", webhookRoutes(deps))
     .route("/", probeRoutes(deps));
 
   app.notFound(notFoundHandler);

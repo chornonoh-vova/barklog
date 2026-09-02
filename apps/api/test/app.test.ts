@@ -102,7 +102,7 @@ test("HSTS is omitted outside production, where it would be meaningless", async 
 });
 
 test("a body over the limit is 413, before any handler sees it", async () => {
-  const response = await callApi(harness.app, "/nope", {
+  const response = await callApi(harness.app, "/api/backlog/1", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ padding: "x".repeat(BODY_LIMIT_BYTES) }),

@@ -52,6 +52,12 @@ export async function ensureUser(db: Queryable, userId: string): Promise<void> {
   await db.insert(users).values({ id: userId }).onConflictDoNothing();
 }
 
+export async function userExists(db: Queryable, userId: string): Promise<boolean> {
+  const rows = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
+
+  return rows.length > 0;
+}
+
 export async function getBacklogEntry(
   db: Queryable,
   userId: string,
