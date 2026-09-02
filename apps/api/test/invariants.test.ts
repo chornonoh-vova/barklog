@@ -120,6 +120,7 @@ test("the registry's type URIs are the library's slugs", () => {
   expect(problems.types().map((key) => problems.get(key).type)).toEqual([
     "https://barklog.gg/problems/unauthorized",
     "https://barklog.gg/problems/not-found",
+    "https://barklog.gg/problems/payment-required",
     "https://barklog.gg/problems/content-too-large",
     "https://barklog.gg/problems/unsupported-media-type",
     "https://barklog.gg/problems/unprocessable-content",

@@ -25,6 +25,7 @@ function definition(status: number) {
 export const problems = createProblemTypeRegistry({
   UNAUTHORIZED: definition(401),
   NOT_FOUND: definition(404),
+  SUBSCRIPTION_REQUIRED: definition(402),
   CONTENT_TOO_LARGE: definition(413),
   UNSUPPORTED_MEDIA_TYPE: definition(415),
   UNPROCESSABLE_SHARE: definition(422),

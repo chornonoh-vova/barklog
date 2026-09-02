@@ -1,15 +1,27 @@
 import { sValidator } from "@hono/standard-validator";
-import { backlogListQuerySchema, backlogUpsertSchema, gameIdPathSchema } from "@repo/contracts";
 import {
+  FREE_ACTIVE_SLOTS,
+  SLOT_CONSUMING_STATUSES,
+  backlogListQuerySchema,
+  backlogUpsertSchema,
+  gameIdPathSchema,
+  slotDelta,
+} from "@repo/contracts";
+import {
+  countBacklogEntriesByStatus,
   deleteBacklogEntry,
   gameExists,
+  getBacklogEntry,
   getBacklogStats,
+  getSubscription,
   listBacklog,
+  lockUser,
   upsertBacklogEntry,
 } from "@repo/db";
 import { Hono } from "hono";
 
 import { sha1 } from "../cache-keys.js";
+import { isPremium } from "../entitlement.js";
 import { onInvalid, problems } from "../problems.js";
 import { toBacklogEntry, toBacklogListItem } from "../serialize.js";
 import type { AppDeps, AppEnv } from "../types.js";
@@ -59,14 +71,48 @@ export function backlogRoutes(deps: AppDeps) {
           });
         }
 
-        const { entry, created } = await upsertBacklogEntry(deps.db, {
-          userId: c.get("userId"),
-          gameId,
-          status,
-          rating: rating ?? null,
+        const outcome = await deps.db.transaction(async (tx) => {
+          await lockUser(tx, c.get("userId"));
+
+          const existing = await getBacklogEntry(tx, c.get("userId"), gameId);
+          const delta = slotDelta(existing?.status ?? null, status);
+
+          // Only a slot-consuming transition can be blocked, so finishing or
+          // re-rating a game costs no extra queries.
+          if (delta > 0) {
+            const subscription = await getSubscription(tx, c.get("userId"));
+
+            if (!isPremium(subscription, new Date())) {
+              const activeCount = await countBacklogEntriesByStatus(
+                tx,
+                c.get("userId"),
+                SLOT_CONSUMING_STATUSES,
+              );
+
+              if (activeCount + delta > FREE_ACTIVE_SLOTS) {
+                return { blocked: true as const, activeCount };
+              }
+            }
+          }
+
+          const { entry, created } = await upsertBacklogEntry(tx, {
+            userId: c.get("userId"),
+            gameId,
+            status,
+            rating: rating ?? null,
+          });
+
+          return { blocked: false as const, entry, created };
         });
 
-        return c.json(toBacklogEntry(entry), created ? 201 : 200);
+        if (outcome.blocked) {
+          throw problems.create("SUBSCRIPTION_REQUIRED", {
+            detail: `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games. Finish one to free a spot, or subscribe for unlimited.`,
+            extensions: { activeCount: outcome.activeCount, limit: FREE_ACTIVE_SLOTS },
+          });
+        }
+
+        return c.json(toBacklogEntry(outcome.entry), outcome.created ? 201 : 200);
       },
     )
     .delete("/:gameId", sValidator("param", gameIdPathSchema, onInvalid), async (c) => {
