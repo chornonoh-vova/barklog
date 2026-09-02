@@ -1,10 +1,17 @@
 import type {
   BacklogEntryWire,
   BacklogListItemWire,
+  EntitlementWire,
   GameDetailWire,
   GameSummaryWire,
 } from "@repo/contracts";
-import type { BacklogEntry, BacklogListItem, GameDetail, GameSummary } from "@repo/db";
+import type {
+  BacklogEntry,
+  BacklogListItem,
+  GameDetail,
+  GameSummary,
+  SubscriptionRow,
+} from "@repo/db";
 
 export type {
   BacklogEntryWire,
@@ -55,4 +62,14 @@ export function toBacklogEntry(entry: BacklogEntry): BacklogEntryWire {
 
 export function toBacklogListItem(item: BacklogListItem): BacklogListItemWire {
   return { ...toBacklogEntry(item), game: toGameSummary(item.game) };
+}
+
+export function toEntitlement(row: SubscriptionRow): EntitlementWire {
+  return {
+    productId: row.productId,
+    store: row.store,
+    periodType: row.periodType,
+    expiresAt: row.expiresAt === null ? null : row.expiresAt.toISOString(),
+    willRenew: row.willRenew,
+  };
 }

@@ -40,6 +40,7 @@ test("AppType still exposes every route the mobile client calls", () => {
   expect(typeof client.api.games.upcoming.$get).toBe("function");
   expect(typeof client.api.games.recent.$get).toBe("function");
   expect(typeof client.api.games[":id"].$get).toBe("function");
+  expect(typeof client.api.me.$get).toBe("function");
   expect(typeof client.api.backlog.$get).toBe("function");
   expect(typeof client.api.backlog.stats.$get).toBe("function");
   expect(typeof client.api.backlog[":gameId"].$put).toBe("function");

@@ -13,6 +13,7 @@ import { apiErrorHandler, notFoundHandler, problems, renderProblem } from "./pro
 import { DEFAULT_RATE_LIMITS } from "./rate-limits.js";
 import { backlogRoutes } from "./routes/backlog.js";
 import { gamesRoutes } from "./routes/games.js";
+import { meRoutes } from "./routes/me.js";
 import { probeRoutes } from "./routes/probes.js";
 import { syncRoutes } from "./routes/sync.js";
 import { MUTATING_METHODS, PROBE_PATHS, type AppDeps, type AppEnv } from "./types.js";
@@ -84,6 +85,7 @@ export function createApp(deps: AppDeps) {
     .on(["PUT", "POST", "PATCH"], "/api/*", requireJson())
     .on([...MUTATING_METHODS], "/api/*", ensureUserMiddleware(deps.db))
     .route("/api/games", gamesRoutes(deps))
+    .route("/api/me", meRoutes(deps))
     .route("/api/backlog", backlogRoutes(deps))
     .route("/api/sync", syncRoutes(deps))
     .route("/", probeRoutes(deps));
