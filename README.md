@@ -421,8 +421,12 @@ exists.
 There is no `expo-apple-authentication` dependency: `<AuthView />` runs the
 Apple flow internally, so nothing else needs to touch the config plugin.
 
-Declare any new `EXPO_PUBLIC_*` keys in `turbo.json` under the `dev` and
-`build` task `env` arrays, or `turbo/no-undeclared-env-vars` will flag them.
+New `EXPO_PUBLIC_*` keys need no `turbo.json` entry. Turbo infers the framework
+as `expo` for this package and adds an `EXPO_PUBLIC_*` wildcard to the task's
+env hash, and `eslint-plugin-turbo` ships the same framework table — so the keys
+already invalidate the cache when their values change, and
+`turbo/no-undeclared-env-vars` does not flag them. Any key _without_ that prefix
+does have to be declared.
 
 ## Premium
 

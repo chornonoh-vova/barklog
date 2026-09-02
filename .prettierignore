@@ -6,4 +6,6 @@ dist
 build
 coverage
 apps/mobile/ios
+# Drizzle's generated snapshots — reformatting them is a ~157-line diff of noise.
+packages/db/drizzle
 apps/mobile/android
