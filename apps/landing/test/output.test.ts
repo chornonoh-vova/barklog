@@ -21,6 +21,12 @@ async function htmlFiles(dir: string = DIST): Promise<string[]> {
 /** A <script> with no src= and a non-empty body — what 'unsafe-inline' would be for. */
 const INLINE_SCRIPT = /<script(?![^>]*\ssrc=)[^>]*>[\s\S]*?<\/script>/i;
 const INLINE_STYLE = /<style[^>]*>[\s\S]*?<\/style>/i;
+// style-src has no 'unsafe-inline', and without a style-src-attr of its own
+// that blocks the style ATTRIBUTE too -- not just <style>. A blocked
+// style="fill: #fff" on an inlined SVG path silently falls back to the SVG
+// default of black, which is how Apple's badge once shipped as a black slab.
+// Leading \s so this can't match the <style> element itself.
+const INLINE_STYLE_ATTR = /\sstyle="/i;
 // Only <link>, <script> and <img> elements issue a subresource request — a
 // plain <a href> is navigation, not a fetch, so it is deliberately excluded.
 const SUBRESOURCE_TAG = /<(?:link|script|img)\b[^>]*>/gi;
@@ -37,6 +43,17 @@ test("no page carries an inline <style>", async () => {
     expect(
       INLINE_STYLE.test(html),
       `${path.relative(DIST, file)} has an inline <style>. Check build.inlineStylesheets in astro.config.mjs — an inline style forces style-src 'unsafe-inline'.`,
+    ).toBe(false);
+  }
+});
+
+test("no element carries a style attribute", async () => {
+  for (const file of await htmlFiles()) {
+    const html = await readFile(file, "utf8");
+
+    expect(
+      INLINE_STYLE_ATTR.test(html),
+      `${path.relative(DIST, file)} has a style="" attribute, which style-src 'self' blocks. On an SVG, use presentation attributes (fill="#fff") instead.`,
     ).toBe(false);
   }
 });
@@ -60,8 +77,11 @@ test("no page requests a third-party origin", async () => {
       .filter((url): url is string => url !== undefined)
       // <link rel="canonical"> is an absolute, same-origin URL (Astro.site) —
       // it isn't fetched by the browser and isn't third-party either way.
-      // No exemption for apps.apple.com: Apple's badge artwork is inlined from
-      // src/assets/app-store-badge.svg, so it costs no request. An allowance
+      // No exemption for apps.apple.com: Apple's badge artwork is inlined
+      // from src/assets/app-store-badge.svg -- the one copy of it, rendered
+      // as a component by AppStoreBadge.astro -- so it costs no request. The
+      // build also emits that file to /_astro/, unreferenced; inlining is what
+      // the page actually uses. An allowance
       // here would quietly re-permit hotlinking it.
       .filter((url) => !url.startsWith("https://barklog.gg/"));
 
