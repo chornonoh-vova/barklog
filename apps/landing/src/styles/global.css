@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Both faces are self-hosted, latin-subset variable woff2 committed under
-   src/assets/fonts (OFL 1.1 — see OFL.txt there). Never a Google Fonts or CDN
+   src/assets/fonts (OFL 1.1; the notice is published at public/fonts/OFL.txt). Never a Google Fonts or CDN
    <link>: the privacy policy promises every font comes from this server, and
    test/output.test.ts fails the build on any third-party subresource. Vite
    rewrites these relative URLs to the hashed files it emits, which is why
@@ -46,8 +46,9 @@
     color-scheme: dark;
   }
 
-  /* One rule for the whole page. Accent-bright clears 6.6:1 on both the ground
-     and the raised panels, so the ring stays visible wherever focus lands. */
+  /* One rule for the whole page. Accent-bright is 6.65:1 on the ground and
+     5.91:1 on the raised panels, so the ring stays visible wherever focus
+     lands. */
   :focus-visible {
     outline: 2px solid var(--color-accent-bright);
     outline-offset: 3px;

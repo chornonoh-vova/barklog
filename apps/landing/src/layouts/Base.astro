@@ -6,9 +6,12 @@ import "../styles/global.css";
 interface Props {
   title: string;
   description: string;
+  /** Off for pages that render in the system stack — a preload the page never
+      uses is dead bytes plus a console warning, not a free head start. */
+  preloadFonts?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, preloadFonts = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -23,8 +26,14 @@ const { title, description } = Astro.props;
         preload href carries Vite's content hash. crossorigin is required even
         same-origin: a font request is always CORS-mode, and without it the
         browser preloads the file twice. */}
-    <link rel="preload" as="font" type="font/woff2" href={archivo} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={sourceSerif} crossorigin />
+    {
+      preloadFonts && (
+        <>
+          <link rel="preload" as="font" type="font/woff2" href={archivo} crossorigin />
+          <link rel="preload" as="font" type="font/woff2" href={sourceSerif} crossorigin />
+        </>
+      )
+    }
   </head>
   <body class="font-body antialiased">
     <slot />

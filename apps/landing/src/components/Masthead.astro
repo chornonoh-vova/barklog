@@ -1,0 +1,34 @@
+---
+import { APP_STORE_URL } from "../config";
+---
+
+{/* A sibling of <main>, not a descendant: a <header> nested inside <main> is
+    not a banner landmark, and the wordmark would be announced as page content. */}
+<header class="border-b border-transparent">
+  <div class="mx-auto flex max-w-[70rem] items-center justify-between px-6 py-7 md:px-10">
+    <span class="flex items-center gap-2.5 font-display text-[1.0625rem] font-bold tracking-tight">
+      {/* The mark, and only the mark: Barklog has no dog in it anywhere else. */}
+      <svg
+        class="h-[1.35rem] w-[1.35rem] text-accent-bright"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <ellipse cx="6.1" cy="9.1" rx="2.1" ry="2.7" transform="rotate(-18 6.1 9.1)"></ellipse>
+        <ellipse cx="10.4" cy="6.6" rx="2.05" ry="2.85"></ellipse>
+        <ellipse cx="15" cy="6.6" rx="2.05" ry="2.85"></ellipse>
+        <ellipse cx="19.3" cy="9.1" rx="2.1" ry="2.7" transform="rotate(18 19.3 9.1)"></ellipse>
+        <path
+          d="M12.7 11.7c3.3 0 5.9 2.4 5.9 5 0 2.2-1.7 3.5-3.6 3.5-1 0-1.7-.4-2.5-.4s-1.5.4-2.5.4c-1.9 0-3.6-1.3-3.6-3.5 0-2.6 2.6-5 5-5z"
+        ></path>
+      </svg>
+      Barklog
+    </span>
+    <a
+      class="rounded-full font-display text-sm font-semibold text-ink-muted transition-colors hover:text-ink"
+      href={APP_STORE_URL}
+    >
+      App Store
+    </a>
+  </div>
+</header>

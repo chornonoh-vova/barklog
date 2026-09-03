@@ -5,6 +5,7 @@ import share from "../assets/screenshots/share.png";
 import Feature from "../components/Feature.astro";
 import Footer from "../components/Footer.astro";
 import Hero from "../components/Hero.astro";
+import Masthead from "../components/Masthead.astro";
 import Pricing from "../components/Pricing.astro";
 import Base from "../layouts/Base.astro";
 
@@ -47,6 +48,8 @@ const STATUSES = [
   title="Barklog — the games you meant to get back to"
   description="Barklog keeps your game backlog in one place: waiting, playing, completed, and abandoned. Free for ten unfinished games."
 >
+  <Masthead />
+
   <main>
     <Hero />
 
@@ -113,6 +116,7 @@ const STATUSES = [
       title="Share a video, get the game"
       image={share}
       alt="Barklog's share sheet result: a shared video at the top and, under it, the games it might be, each with its cover and release year, ready to pick."
+      flip
     >
       <p>
         You're watching a clip of some game you can't name. Share it to Barklog and it works out
@@ -130,7 +134,7 @@ const STATUSES = [
             class="rounded-sm text-accent-bright underline underline-offset-4"
             href="https://www.igdb.com"
             rel="noreferrer">IGDB</a
-          >, a games database its community maintains.
+          >, a games database maintained by its community.
         </p>
       </div>
     </section>

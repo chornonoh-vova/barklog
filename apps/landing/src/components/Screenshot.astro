@@ -7,20 +7,16 @@ interface Props {
   alt: string;
   /** The hero's device is above the fold, so it opts out of lazy loading. */
   eager?: boolean;
-  class?: string;
 }
 
-const { image, alt, eager = false, class: className = "" } = Astro.props;
+const { image, alt, eager = false } = Astro.props;
 ---
 
 {/* A device, not a card: one bezel, one inset highlight, one shadow to lift it
     off the ground. No notch, no drawn hardware — the screen is the subject. */}
 <div
-  class:list={[
-    "w-full max-w-[15.5rem] rounded-[2.4rem] border border-white/12 bg-ground-raised p-[7px]",
-    "shadow-[0_50px_90px_-40px_rgba(0,0,0,0.9)] sm:max-w-[17rem]",
-    className,
-  ]}
+  class="w-full max-w-[15.5rem] rounded-[2.4rem] border border-white/12 bg-ground-raised p-[7px]
+         shadow-[0_50px_90px_-40px_rgba(0,0,0,0.9)] sm:max-w-[17rem]"
 >
   <div class="overflow-hidden rounded-[1.95rem] ring-1 ring-white/8 ring-inset">
     <Image
