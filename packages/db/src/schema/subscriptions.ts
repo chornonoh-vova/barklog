@@ -36,8 +36,10 @@ export const subscriptions = pgTable("subscriptions", {
 export const subscriptionEvents = pgTable("subscription_events", {
   // The RevenueCat event id, so ON CONFLICT DO NOTHING is the idempotency check.
   id: text("id").primaryKey(),
-  // Not a foreign key: an event for an unknown or deleted user is worth logging.
-  userId: text("user_id").notNull(),
+  // Not a foreign key: an event for an unknown user is worth logging. Nullable
+  // because account deletion scrubs the identifier while keeping the row —
+  // revenue queries outlive the account. See queries/users.ts.
+  userId: text("user_id"),
   type: text("type").notNull(),
   payload: jsonb("payload").notNull(),
   receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),

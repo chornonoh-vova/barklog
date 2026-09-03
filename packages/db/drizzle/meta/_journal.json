@@ -43,6 +43,13 @@
       "when": 1788362216666,
       "tag": "0005_third_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788425737891,
+      "tag": "0006_perfect_justin_hammer",
+      "breakpoints": true
     }
   ]
 }

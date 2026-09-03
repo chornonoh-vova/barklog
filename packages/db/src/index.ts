@@ -4,5 +4,6 @@ export * from "./queries/sync-runs.js";
 export * from "./queries/games.js";
 export * from "./queries/backlog.js";
 export * from "./queries/subscriptions.js";
+export * from "./queries/users.js";
 export * as schema from "./schema/index.js";
 export { BACKLOG_STATUSES, type BacklogStatusValue } from "./schema/backlog.js";
