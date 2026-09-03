@@ -1,0 +1,73 @@
+---
+import backlog from "../assets/screenshots/backlog.png";
+import { APP_STORE_URL } from "../config";
+import Screenshot from "./Screenshot.astro";
+---
+
+<section class="relative isolate">
+  {/* Clipped by its own box rather than the section, so the device below can
+      still overhang on wide screens without being cut off. */}
+  <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[46rem] overflow-hidden">
+    <div class="hero-glow absolute -top-32 left-1/2 h-[46rem] w-[78rem] -translate-x-1/2"></div>
+  </div>
+
+  <div class="mx-auto max-w-[70rem] px-6 md:px-10">
+    <header class="flex items-center justify-between py-7">
+      <span class="flex items-center gap-2.5 font-display text-[1.0625rem] font-bold tracking-tight">
+        {/* The mark, and only the mark: Barklog has no dog in it anywhere else. */}
+        <svg
+          class="h-[1.35rem] w-[1.35rem] text-accent-bright"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <ellipse cx="6.1" cy="9.1" rx="2.1" ry="2.7" transform="rotate(-18 6.1 9.1)"></ellipse>
+          <ellipse cx="10.4" cy="6.6" rx="2.05" ry="2.85"></ellipse>
+          <ellipse cx="15" cy="6.6" rx="2.05" ry="2.85"></ellipse>
+          <ellipse cx="19.3" cy="9.1" rx="2.1" ry="2.7" transform="rotate(18 19.3 9.1)"></ellipse>
+          <path
+            d="M12.7 11.7c3.3 0 5.9 2.4 5.9 5 0 2.2-1.7 3.5-3.6 3.5-1 0-1.7-.4-2.5-.4s-1.5.4-2.5.4c-1.9 0-3.6-1.3-3.6-3.5 0-2.6 2.6-5 5-5z"
+          ></path>
+        </svg>
+        Barklog
+      </span>
+      <a
+        class="rounded-full font-display text-sm font-semibold text-ink-muted transition-colors hover:text-ink"
+        href={APP_STORE_URL}
+      >
+        App Store
+      </a>
+    </header>
+
+    <div class="grid gap-14 pt-8 pb-20 lg:grid-cols-12 lg:items-end lg:gap-8 lg:pt-16 lg:pb-24">
+      <div class="lg:col-span-7 lg:pb-6">
+        <h1
+          class="max-w-[15ch] font-display text-[clamp(2.65rem,7.4vw,4.9rem)] leading-[0.94] font-extrabold tracking-[-0.032em] text-balance"
+        >
+          Every game you meant to get back to.
+        </h1>
+        <p class="mt-8 max-w-[52ch] text-[1.1875rem] leading-[1.62] text-ink-muted">
+          Barklog keeps your backlog in one place: what you're playing, what's waiting, what you
+          finished, and what you gave up on. No spreadsheet, no shame.
+        </p>
+        <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+          <a
+            class="inline-flex items-center rounded-full bg-accent px-7 py-3.5 font-display text-[0.9375rem] font-bold text-ground transition-colors hover:bg-accent-bright"
+            href={APP_STORE_URL}
+          >
+            Download on the App Store
+          </a>
+          <p class="text-[0.9375rem] text-ink-muted">Free. Premium is optional.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-center lg:col-span-5 lg:justify-end">
+        <Screenshot
+          image={backlog}
+          alt="The Barklog backlog: a list of games, each row showing its cover, title and current status, with the games in progress at the top."
+          eager
+        />
+      </div>
+    </div>
+  </div>
+</section>

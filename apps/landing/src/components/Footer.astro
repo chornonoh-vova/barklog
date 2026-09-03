@@ -1,0 +1,18 @@
+---
+import { CONTACT_EMAIL } from "../config";
+---
+
+<footer class="border-t border-rule">
+  <div
+    class="mx-auto flex max-w-[70rem] flex-col gap-6 px-6 py-12 text-[0.9375rem] text-ink-muted md:px-10 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <p>Barklog, made by Volodymyr Chornonoh</p>
+    <nav class="flex flex-wrap items-center gap-x-7 gap-y-2 font-display text-sm">
+      <a class="rounded-sm transition-colors hover:text-ink" href="/terms">Terms</a>
+      <a class="rounded-sm transition-colors hover:text-ink" href="/privacy">Privacy</a>
+      <a class="rounded-sm transition-colors hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>
+        {CONTACT_EMAIL}
+      </a>
+    </nav>
+  </div>
+</footer>

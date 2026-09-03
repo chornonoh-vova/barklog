@@ -1,0 +1,44 @@
+---
+import type { ImageMetadata } from "astro";
+
+import Screenshot from "./Screenshot.astro";
+
+interface Props {
+  title: string;
+  eyebrow: string;
+  image: ImageMetadata;
+  alt: string;
+  /** Puts the device on the left, so consecutive sections don't march down one edge. */
+  flip?: boolean;
+}
+
+const { title, eyebrow, image, alt, flip = false } = Astro.props;
+---
+
+<section class="border-t border-rule py-20 md:py-28">
+  <div class="mx-auto grid max-w-[70rem] gap-14 px-6 md:px-10 lg:grid-cols-12 lg:items-center lg:gap-10">
+    <div class:list={["lg:col-span-6", flip && "lg:order-2 lg:col-start-7"]}>
+      <p class="flex items-center gap-3 font-display text-sm font-semibold text-accent-bright">
+        <span class="h-px w-7 bg-accent-bright/50"></span>
+        {eyebrow}
+      </p>
+      <h2
+        class="mt-5 max-w-[16ch] font-display text-[clamp(1.9rem,3.7vw,2.9rem)] leading-[1.04] font-bold tracking-[-0.022em]"
+      >
+        {title}
+      </h2>
+      <div class="mt-6 text-[1.0625rem] leading-[1.7] text-ink-muted [&>p]:max-w-[54ch]">
+        <slot />
+      </div>
+    </div>
+
+    <div
+      class:list={[
+        "flex justify-center lg:col-span-5",
+        flip ? "lg:order-1 lg:col-start-1 lg:justify-start" : "lg:col-start-8 lg:justify-end",
+      ]}
+    >
+      <Screenshot image={image} alt={alt} />
+    </div>
+  </div>
+</section>

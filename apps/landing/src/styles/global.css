@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+/* Both faces are self-hosted, latin-subset variable woff2 committed under
+   src/assets/fonts (OFL 1.1 — see OFL.txt there). Never a Google Fonts or CDN
+   <link>: the privacy policy promises every font comes from this server, and
+   test/output.test.ts fails the build on any third-party subresource. Vite
+   rewrites these relative URLs to the hashed files it emits, which is why
+   Base.astro imports the same two files to build its preload hrefs. */
+@font-face {
+  font-family: "Archivo";
+  src: url("../assets/fonts/archivo-latin-variable.woff2") format("woff2");
+  font-weight: 500 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("../assets/fonts/source-serif-4-latin-variable.woff2") format("woff2");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Tailwind 4 has no config file — this block is the design system. The two
    colours match the app: #0B1A3C is the splash background from app.json,
    #208AEF is Brand.tint from apps/mobile/src/theme.ts. */
@@ -11,6 +33,47 @@
   --color-accent: #208aef;
   --color-accent-bright: #4aa6ff;
 
-  --font-display: "Barklog Display", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Barklog Text", ui-sans-serif, system-ui, sans-serif;
+  /* Every hairline on the page. One value, so a divider never has to be
+     guessed at as a white/10 one-off. */
+  --color-rule: #1c3159;
+
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Source Serif 4", ui-serif, Georgia, serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  /* One rule for the whole page. Accent-bright clears 6.6:1 on both the ground
+     and the raised panels, so the ring stays visible wherever focus lands. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-bright);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /* Runs a row off the right edge instead of chopping it: the premium slots
+     have no last one, which is the point of the drawing. */
+  .fade-right {
+    mask-image: linear-gradient(to right, #000 55%, transparent 96%);
+  }
+
+  /* The page's only gradient, used once, behind the hero device. Written here
+     rather than as an arbitrary Tailwind value because a radial-gradient in a
+     class name is unreadable. */
+  .hero-glow {
+    background: radial-gradient(
+      55% 50% at 62% 38%,
+      color-mix(in oklab, var(--color-accent) 30%, transparent),
+      transparent 72%
+    );
+  }
 }

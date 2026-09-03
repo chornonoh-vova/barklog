@@ -1,0 +1,61 @@
+---
+/** Nine of the ten free slots drawn as taken, so the tenth reads as the last one. */
+const FILLED = 9;
+const FREE_SLOTS = 10;
+
+/** Enough slots to overflow the column at every breakpoint, so the row is
+    always cut off by the fade rather than ending. */
+const PREMIUM_SLOTS = 12;
+---
+
+<section class="border-t border-rule bg-ground-raised py-20 md:py-28">
+  <div class="mx-auto grid max-w-[70rem] gap-14 px-6 md:px-10 lg:grid-cols-12 lg:gap-10">
+    <div class="lg:col-span-6">
+      <p class="flex items-center gap-3 font-display text-sm font-semibold text-accent-bright">
+        <span class="h-px w-7 bg-accent-bright/50"></span>
+        Pricing
+      </p>
+      <h2
+        class="mt-5 font-display text-[clamp(1.9rem,3.7vw,2.9rem)] leading-[1.04] font-bold tracking-[-0.022em]"
+      >
+        Ten at a time, free
+      </h2>
+      <div class="mt-6 max-w-[54ch] text-[1.0625rem] leading-[1.7] text-ink-muted">
+        <p>
+          Barklog is free for ten unfinished games: the ones waiting, and the ones you're in the
+          middle of. Finish one, or admit you're done with it, and the spot comes back.
+        </p>
+        <p class="mt-4">Premium takes the cap off. That's the whole difference.</p>
+      </div>
+    </div>
+
+    {/* The rule, drawn. Hidden from assistive tech because the paragraph beside
+        it already says the same thing in words. */}
+    <div class="lg:col-span-5 lg:col-start-8" aria-hidden="true">
+      <p class="font-display text-sm font-semibold text-ink">Free</p>
+      <div class="mt-3 flex max-w-[18rem] flex-wrap gap-2.5">
+        {
+          Array.from({ length: FREE_SLOTS }, (_, index) => (
+            <span
+              class:list={[
+                "h-[3.1rem] w-[3.1rem] rounded-[0.45rem] border",
+                index < FILLED
+                  ? "border-accent/70 bg-accent/30"
+                  : "border-dashed border-ink-muted/45",
+              ]}
+            />
+          ))
+        }
+      </div>
+
+      <p class="mt-8 font-display text-sm font-semibold text-ink">Premium</p>
+      <div class="fade-right mt-3 flex gap-2.5 overflow-hidden">
+        {
+          Array.from({ length: PREMIUM_SLOTS }, () => (
+            <span class="h-[3.1rem] w-[3.1rem] shrink-0 rounded-[0.45rem] border border-accent/70 bg-accent/30" />
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
