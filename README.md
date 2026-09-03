@@ -204,7 +204,7 @@ redeploy. There is no file to edit and nothing to rebuild.
 
 Three things live outside this repository and need doing once.
 
-Set each of the three GHCR packages to Public. The repository is public, so
+Set each of the four GHCR packages to Public. The repository is public, so
 this costs nothing and saves storing registry credentials in Dokploy. Left
 private, the VPS needs a pull secret.
 

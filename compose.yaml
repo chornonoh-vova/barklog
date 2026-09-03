@@ -1,5 +1,6 @@
-# The production stack for the Dokploy-managed VPS: the API, the worker and
-# Valkey, running images published by .github/workflows/images.yml.
+# The production stack for the Dokploy-managed VPS: the API, the worker, the
+# landing site and Valkey, running images published by
+# .github/workflows/images.yml.
 #
 # Postgres is NOT here — it lives on PlanetScale and is reached over the
 # network. For local development use `pnpm deps:up`, which runs

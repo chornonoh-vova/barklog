@@ -1,6 +1,6 @@
 name: Images
 
-# Publishes the api, worker and migrate images to GHCR. Dokploy is not
+# Publishes the api, worker, migrate and landing images to GHCR. Dokploy is not
 # notified: deploys stay deliberate, so you press Deploy in its UI when you
 # want a new build live.
 on:
@@ -8,8 +8,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Publishing three images is not atomic; a run cancelled mid-sequence leaves
-# the three :main tags at different commits. Allow superseded runs to finish
+# Publishing four images is not atomic; a run cancelled mid-sequence leaves
+# the four :main tags at different commits. Allow superseded runs to finish
 # rather than kill them. GitHub keeps at most one pending run per group, so the
 # queue cannot grow: a third push replaces the second while the first finishes.
 concurrency:
