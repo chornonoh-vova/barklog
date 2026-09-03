@@ -1,31 +1,9 @@
 @import "tailwindcss";
-
-/* Both faces are self-hosted, latin-subset variable woff2 committed under
-   src/assets/fonts (OFL 1.1; the notice is published at public/fonts/OFL.txt). Never a Google Fonts or CDN
-   <link>: the privacy policy promises every font comes from this server, and
-   test/output.test.ts fails the build on any third-party subresource. Vite
-   rewrites these relative URLs to the hashed files it emits, which is why
-   Base.astro imports the same two files to build its preload hrefs. */
-@font-face {
-  font-family: "Archivo";
-  src: url("../assets/fonts/archivo-latin-variable.woff2") format("woff2");
-  font-weight: 500 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* "Barklog Serif", not "Source Serif 4": the shipped file is a latin subset,
-   which the OFL counts as a Modified Version, and Adobe reserves the font name
-   "Source". Condition 3 of the licence bars a reserved name from being what
-   identifies the font to a reader, and a CSS family name is exactly that.
-   public/fonts/OFL.txt carries the upstream notice and the attribution. */
-@font-face {
-  font-family: "Barklog Serif";
-  src: url("../assets/fonts/source-serif-4-latin-variable.woff2") format("woff2");
-  font-weight: 400 600;
-  font-style: normal;
-  font-display: swap;
-}
+/* Self-hosted, never a Google Fonts or CDN <link>: the privacy policy promises
+   every font comes from this server, and test/output.test.ts fails the build on
+   any third-party subresource. Fontsource splits Geist by unicode-range, so an
+   English reader fetches only the latin subset even though all five ship. */
+@import "@fontsource-variable/geist";
 
 /* Tailwind 4 has no config file — this block is the design system. The two
    colours match the app: #0B1A3C is the splash background from app.json,
@@ -42,8 +20,11 @@
      guessed at as a white/10 one-off. */
   --color-rule: #1c3159;
 
-  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Barklog Serif", ui-serif, Georgia, serif;
+  /* One family for the whole page. Both tokens resolve to it rather than
+     collapsing to a single token, so the display/body distinction stays a
+     seam the design can pull apart again without touching every component. */
+  --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {

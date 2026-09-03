@@ -1,28 +1,18 @@
-barklog.gg serves the two typefaces below under the SIL Open Font License,
-Version 1.1. Both files are Modified Versions: each is a latin subset of its
-upstream release, converted to woff2. The copyright notices below are the
-upstream ones, reproduced verbatim rather than summarised, because section 2
-of the licence requires the original notice to travel with the files. The full
-licence text follows them. The files themselves are committed at
-apps/landing/src/assets/fonts and served from /_astro with a content hash;
-this notice is published so that it accompanies them.
+barklog.gg serves Geist under the SIL Open Font License, Version 1.1. The
+files are the variable woff2 subsets published as @fontsource-variable/geist,
+built from Vercel's upstream release. They are served from /_astro with a
+content hash; this notice is published so that it accompanies them, as section
+2 of the licence requires.
 
-archivo-latin-variable.woff2 - Archivo, latin subset, weight axis 500-800.
-Upstream notice, from https://github.com/Omnibus-Type/Archivo/blob/master/OFL.txt:
+Geist declares no Reserved Font Name, so the CSS family name is the font's own
+name rather than a substitute.
 
-Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+What follows is the licence file distributed with those files, reproduced
+verbatim: the upstream copyright notice, then the full licence text.
 
-source-serif-4-latin-variable.woff2 - Source Serif 4, latin subset, optical
-size axis 8-60, weight axis 400-600.
-Upstream notice, from https://github.com/adobe-fonts/source-serif/blob/release/LICENSE.md:
+-----------------------------------------------------------
 
-Copyright 2014 - 2023 Adobe (http://www.adobe.com/), with Reserved Font Name ‘Source’. All Rights Reserved. Source is a trademark of Adobe in the United States and/or other countries.
-
-That notice reserves the font name "Source", and a latin subset is a Modified
-Version, so condition 3 of the licence forbids the reserved name from being
-what identifies the font to a reader. The site therefore declares the subset
-under its own CSS family name, "Barklog Serif"; the line above names the
-original as attribution only, which the licence permits.
+Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font) Geist-Italic[wght].ttf: Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
@@ -42,7 +32,7 @@ with others.
 
 The OFL allows the licensed fonts to be used, studied, modified and
 redistributed freely as long as they are not sold by themselves. The
-fonts, including any derivative works, can be bundled, embedded, 
+fonts, including any derivative works, can be bundled, embedded,
 redistributed and/or sold with any software provided that any reserved
 names are not used by derivative works. The fonts and derivatives,
 however, cannot be released under any other type of license. The

@@ -1,6 +1,5 @@
 ---
-import archivo from "../assets/fonts/archivo-latin-variable.woff2";
-import sourceSerif from "../assets/fonts/source-serif-4-latin-variable.woff2";
+import geistLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2";
 import "../styles/global.css";
 
 interface Props {
@@ -31,18 +30,13 @@ const { title, description, preloadFonts = true, canonical = true, motion = fals
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />}
-    {/* Same two files global.css declares @font-face for, imported here so the
-        preload href carries Vite's content hash. crossorigin is required even
-        same-origin: a font request is always CORS-mode, and without it the
-        browser preloads the file twice. */}
-    {
-      preloadFonts && (
-        <>
-          <link rel="preload" as="font" type="font/woff2" href={archivo} crossorigin />
-          <link rel="preload" as="font" type="font/woff2" href={sourceSerif} crossorigin />
-        </>
-      )
-    }
+    {/* The latin subset only. Fontsource ships five, each behind a
+        unicode-range, and preloading a subset this page's copy never triggers
+        would be dead bytes plus a console warning. Imported rather than
+        hardcoded so the href carries Vite's content hash. crossorigin is
+        required even same-origin: a font request is always CORS-mode, and
+        without it the browser preloads the file twice. */}
+    {preloadFonts && <link rel="preload" as="font" type="font/woff2" href={geistLatin} crossorigin />}
   </head>
   <body class="font-body antialiased">
     <slot />

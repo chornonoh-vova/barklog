@@ -64,10 +64,9 @@ test("every location block includes the security headers", async () => {
   for (const block of blocks) {
     // Anchored so a commented-out `# include ...security-headers.conf;`
     // cannot satisfy it.
-    expect(
-      block,
-      `a location block does not include security-headers.conf:\n${block}`,
-    ).toMatch(/^\s*include\s+\S*security-headers\.conf;/m);
+    expect(block, `a location block does not include security-headers.conf:\n${block}`).toMatch(
+      /^\s*include\s+\S*security-headers\.conf;/m,
+    );
   }
 });
 

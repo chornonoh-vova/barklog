@@ -1,6 +1,6 @@
 ---
 import backlog from "../assets/screenshots/backlog.png";
-import { APP_STORE_URL } from "../config";
+import AppStoreBadge from "./AppStoreBadge.astro";
 import Screenshot from "./Screenshot.astro";
 ---
 
@@ -25,13 +25,11 @@ import Screenshot from "./Screenshot.astro";
           Barklog keeps your backlog in one place: what you're playing, what's waiting, what you
           finished, and what you gave up on. No spreadsheet, no shame.
         </p>
-        <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
-          <a
-            class="inline-flex items-center rounded-full bg-accent px-7 py-3.5 font-display text-[0.9375rem] font-bold text-ground transition-colors hover:bg-accent-bright"
-            href={APP_STORE_URL}
-          >
-            Download on the App Store
-          </a>
+        {/* -ml-2.5 pulls the badge's own clear-space padding back to the text
+            grid, so the badge edge lines up with the copy above it rather than
+            the padding doing it. */}
+        <div class="mt-8 -ml-2.5 flex flex-wrap items-center gap-x-4 gap-y-3">
+          <AppStoreBadge />
           <p class="text-[0.9375rem] text-ink-muted">Free. Premium is optional.</p>
         </div>
       </div>

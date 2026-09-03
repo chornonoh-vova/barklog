@@ -60,9 +60,10 @@ test("no page requests a third-party origin", async () => {
       .filter((url): url is string => url !== undefined)
       // <link rel="canonical"> is an absolute, same-origin URL (Astro.site) —
       // it isn't fetched by the browser and isn't third-party either way.
-      .filter((url) => !url.startsWith("https://barklog.gg/"))
-      // The App Store badge is the one external subresource the plan allows.
-      .filter((url) => !url.startsWith("https://apps.apple.com/"));
+      // No exemption for apps.apple.com: Apple's badge artwork is inlined from
+      // src/assets/app-store-badge.svg, so it costs no request. An allowance
+      // here would quietly re-permit hotlinking it.
+      .filter((url) => !url.startsWith("https://barklog.gg/"));
 
     expect(external, `${path.relative(DIST, file)} loads a third-party resource`).toEqual([]);
   }

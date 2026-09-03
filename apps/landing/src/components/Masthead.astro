@@ -1,34 +1,32 @@
 ---
-import { APP_STORE_URL } from "../config";
+import { Image } from "astro:assets";
+
+import appIcon from "../assets/app-icon.png";
 ---
 
 {/* A sibling of <main>, not a descendant: a <header> nested inside <main> is
-    not a banner landmark, and the wordmark would be announced as page content. */}
+    not a banner landmark, and the wordmark would be announced as page content.
+
+    No App Store link here. Apple's marketing guidelines allow one App Store
+    badge per layout, and the hero carries the real one — a second link would
+    also compete with the badge it is meant to lead to. */}
 <header class="border-b border-transparent">
-  <div class="mx-auto flex max-w-[70rem] items-center justify-between px-6 py-7 md:px-10">
-    <span class="flex items-center gap-2.5 font-display text-[1.0625rem] font-bold tracking-tight">
-      {/* The mark, and only the mark: Barklog has no dog in it anywhere else. */}
-      <svg
-        class="h-[1.35rem] w-[1.35rem] text-accent-bright"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <ellipse cx="6.1" cy="9.1" rx="2.1" ry="2.7" transform="rotate(-18 6.1 9.1)"></ellipse>
-        <ellipse cx="10.4" cy="6.6" rx="2.05" ry="2.85"></ellipse>
-        <ellipse cx="15" cy="6.6" rx="2.05" ry="2.85"></ellipse>
-        <ellipse cx="19.3" cy="9.1" rx="2.1" ry="2.7" transform="rotate(18 19.3 9.1)"></ellipse>
-        <path
-          d="M12.7 11.7c3.3 0 5.9 2.4 5.9 5 0 2.2-1.7 3.5-3.6 3.5-1 0-1.7-.4-2.5-.4s-1.5.4-2.5.4c-1.9 0-3.6-1.3-3.6-3.5 0-2.6 2.6-5 5-5z"
-        ></path>
-      </svg>
+  <div class="mx-auto flex max-w-[70rem] items-center px-6 py-7 md:px-10">
+    <span class="flex items-center gap-3 font-display text-[1.0625rem] font-bold tracking-tight">
+      {/* The real app icon, not a mark drawn for the web, so what people see
+          here is what they tap in the App Store. Its artwork sits on the same
+          navy as the page, so the ring is what gives the tile an edge —
+          without it the dog appears to float. */}
+      <Image
+        class="h-12 w-12 rounded-[22%] ring-1 ring-rule"
+        src={appIcon}
+        alt=""
+        width={64}
+        height={64}
+        densities={[1, 2]}
+        loading="eager"
+      />
       Barklog
     </span>
-    <a
-      class="rounded-full font-display text-sm font-semibold text-ink-muted transition-colors hover:text-ink"
-      href={APP_STORE_URL}
-    >
-      App Store
-    </a>
   </div>
 </header>
