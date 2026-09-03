@@ -3,7 +3,12 @@ import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import { ensureUser } from "../src/queries/backlog.js";
-import { deleteUser, scrubSubscriptionEvents } from "../src/queries/users.js";
+import {
+  deleteUser,
+  isUserDeleted,
+  recordUserDeletion,
+  scrubSubscriptionEvents,
+} from "../src/queries/users.js";
 import * as schema from "../src/schema/index.js";
 import { truncateAll } from "../src/testing.js";
 
@@ -121,6 +126,30 @@ test("scrubSubscriptionEvents drops fields RevenueCat adds later", async () => {
   expect(rows[0].payload).not.toHaveProperty("transaction_id");
 });
 
+test("scrubSubscriptionEvents drops a kept field that was never sent", async () => {
+  // A lifetime purchase carries no `expiration_at_ms` at all, which is the
+  // case `jsonb_strip_nulls` is there for: the key must be absent, not null.
+  const lifetime: Record<string, unknown> = { ...rawEvent, id: "rc_event_lifetime" };
+  delete lifetime.expiration_at_ms;
+
+  await db.insert(schema.subscriptionEvents).values({
+    id: "rc_event_lifetime",
+    userId: USER,
+    type: "INITIAL_PURCHASE",
+    payload: lifetime,
+  });
+
+  await scrubSubscriptionEvents(db, USER);
+
+  const rows = await db
+    .select()
+    .from(schema.subscriptionEvents)
+    .where(eq(schema.subscriptionEvents.id, "rc_event_lifetime"));
+
+  expect(rows[0].payload).not.toHaveProperty("expiration_at_ms");
+  expect(rows[0].payload).toHaveProperty("purchased_at_ms", 1_000);
+});
+
 test("scrubSubscriptionEvents leaves other users alone", async () => {
   await ensureUser(db, "user_2otherBBB");
   await db.insert(schema.subscriptionEvents).values({
@@ -138,4 +167,20 @@ test("scrubSubscriptionEvents leaves other users alone", async () => {
     .where(eq(schema.subscriptionEvents.id, "rc_event_other"));
 
   expect(rows[0].userId).toBe("user_2otherBBB");
+});
+
+test("recordUserDeletion tombstones the id, and says so afterwards", async () => {
+  await expect(isUserDeleted(db, USER)).resolves.toBe(false);
+
+  await recordUserDeletion(db, USER);
+
+  await expect(isUserDeleted(db, USER)).resolves.toBe(true);
+  await expect(isUserDeleted(db, "user_2otherBBB")).resolves.toBe(false);
+});
+
+test("recordUserDeletion survives a redelivery", async () => {
+  await recordUserDeletion(db, USER);
+
+  await expect(recordUserDeletion(db, USER)).resolves.toBeUndefined();
+  expect(await db.select().from(schema.deletedUsers)).toHaveLength(1);
 });

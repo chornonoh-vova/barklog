@@ -24,6 +24,18 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * A tombstone, not a soft delete: the `users` row really is gone. It exists
+ * because deleting a Barklog account cannot cancel an App Store subscription,
+ * so RevenueCat keeps delivering renewals and expirations for the id — and the
+ * webhook's `ensureUser` would recreate the account the deletion removed. The
+ * id is all it holds; there is nothing else left to hold.
+ */
+export const deletedUsers = pgTable("deleted_users", {
+  id: text("id").primaryKey(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const backlogEntries = pgTable(
   "backlog_entries",
   {

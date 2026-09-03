@@ -72,7 +72,9 @@ export async function upsertSubscription(db: Queryable, row: SubscriptionRow): P
 /** False when the event id was already stored — the webhook's idempotency check. */
 export async function recordSubscriptionEvent(
   db: Queryable,
-  event: { id: string; userId: string; type: string; payload: unknown },
+  // Null for an event that arrived after the account was deleted: the row is
+  // kept for the revenue queries, without the person it belonged to.
+  event: { id: string; userId: string | null; type: string; payload: unknown },
 ): Promise<boolean> {
   const inserted = await db
     .insert(subscriptionEvents)

@@ -4,7 +4,10 @@ import { revenueCatEventSchema } from "@repo/contracts";
 import {
   deleteUser,
   ensureUser,
+  isUserDeleted,
   recordSubscriptionEvent,
+  recordUserDeletion,
+  scrubEventPayload,
   scrubSubscriptionEvents,
   upsertSubscription,
 } from "@repo/db";
@@ -77,6 +80,25 @@ export function webhookRoutes(deps: AppDeps) {
         // event log back with the effect leaves the retry a genuinely unprocessed
         // event.
         const outcome = await deps.db.transaction(async (tx) => {
+          // Deleting a Barklog account cannot cancel an App Store
+          // subscription, so RevenueCat keeps delivering renewals and
+          // expirations for an id whose account is gone. Taken through the
+          // path below, `ensureUser` would recreate the `users` row and the
+          // stored payload would carry the `app_user_id` the deletion was
+          // about — the deletion would quietly undo itself. Checked before the
+          // event is recorded, so it is written already scrubbed rather than
+          // written and then repaired.
+          if (await isUserDeleted(tx, event.app_user_id)) {
+            await recordSubscriptionEvent(tx, {
+              id: event.id,
+              userId: null,
+              type: event.type,
+              payload: scrubEventPayload(event),
+            });
+
+            return "deleted-user" as const;
+          }
+
           const isNew = await recordSubscriptionEvent(tx, {
             id: event.id,
             userId: event.app_user_id,
@@ -111,6 +133,15 @@ export function webhookRoutes(deps: AppDeps) {
 
         if (outcome === "duplicate") {
           log.info("Duplicate RevenueCat event {id} ignored", { id: event.id });
+        }
+
+        if (outcome === "deleted-user") {
+          // No `app_user_id`: the whole point of the branch is that we no
+          // longer keep it, and a log line is a place it would survive.
+          log.info("RevenueCat event {id} of type {type} belongs to a deleted account", {
+            id: event.id,
+            type: event.type,
+          });
         }
 
         if (outcome === "no-state") {
@@ -156,23 +187,32 @@ export function webhookRoutes(deps: AppDeps) {
 
       // Nothing to query without an id: answer like an unknown user rather
       // than let an absent id reach `deleteUser`.
-      if (!event.data.id) {
+      const userId = event.data.id;
+      if (!userId) {
         clerkLog.info("Clerk user.deleted event carried no user id");
 
         return c.body(null, 200);
       }
 
-      // One transaction: the scrub and the delete commit together, or Clerk's
-      // retry finds the account still whole.
-      const removed = await deps.db.transaction(async (tx) => {
-        await scrubSubscriptionEvents(tx, event.data.id);
+      // One transaction: the scrub, the tombstone and the delete commit
+      // together, or Clerk's retry finds the account still whole. The
+      // tombstone in particular must not outlive a rolled-back delete, or a
+      // live account would start losing its RevenueCat events.
+      const { scrubbed, removed } = await deps.db.transaction(async (tx) => {
+        const scrubbedCount = await scrubSubscriptionEvents(tx, userId);
+        await recordUserDeletion(tx, userId);
 
-        return deleteUser(tx, event.data.id);
+        return { scrubbed: scrubbedCount, removed: await deleteUser(tx, userId) };
       });
 
-      if (!removed) {
+      if (removed) {
+        clerkLog.info("Deleted user {userId}, scrubbing {scrubbed} subscription events", {
+          userId,
+          scrubbed,
+        });
+      } else {
         // A redelivery, or a user who never wrote anything. Neither is an error.
-        clerkLog.info("Clerk user.deleted for unknown user {userId}", { userId: event.data.id });
+        clerkLog.info("Clerk user.deleted for unknown user {userId}", { userId });
       }
 
       return c.body(null, 200);

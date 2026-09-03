@@ -62,7 +62,9 @@ export interface RevenueCatClient {
  */
 export interface ClerkWebhookEvent {
   type: string;
-  data: { id: string };
+  // Optional, because Clerk's own `DeletedObjectJSON` makes it so — and the
+  // route's guard on it is what keeps an empty id out of `deleteUser`.
+  data: { id?: string };
 }
 
 export interface AppDeps {

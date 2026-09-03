@@ -29,7 +29,7 @@ export async function truncateAll(db: NodePgDatabase<typeof schema>): Promise<vo
     TRUNCATE TABLE
       sync_runs,
       subscription_events, subscriptions,
-      backlog_entries, users,
+      backlog_entries, users, deleted_users,
       game_companies, game_platforms, game_genres, game_screenshots, game_similar,
       games, companies, platforms, genres, game_types
     RESTART IDENTITY CASCADE

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 
-import { ensureUser, getSubscription, schema } from "@repo/db";
+import { deleteUser, ensureUser, getSubscription, recordUserDeletion, schema } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import type { Db } from "../src/types.js";
@@ -368,4 +368,32 @@ test("a failed apply leaves no event row, so the redelivery is processed and not
   });
 
   await broken.close();
+});
+
+// Deleting a Barklog account cannot cancel the App Store subscription behind
+// it, so RevenueCat keeps delivering for the id long after the account is
+// gone. Applied as an ordinary event, `ensureUser` would recreate the `users`
+// row and the deletion would silently undo itself.
+test("an event for a deleted account is recorded without resurrecting it", async () => {
+  // What the Clerk webhook leaves behind: no user row, an id on the tombstone.
+  await deleteUser(harness.db, TEST_USER);
+  await recordUserDeletion(harness.db, TEST_USER);
+
+  const response = await callApi(
+    harness.app,
+    "/webhooks/revenuecat",
+    post(event({ id: "rc_event_after_deletion", type: "RENEWAL" })),
+  );
+
+  // 200, or RevenueCat retries a delivery we have already dealt with.
+  expect(response.status).toBe(200);
+  expect(await harness.db.select().from(schema.users)).toHaveLength(0);
+  expect(await harness.db.select().from(schema.subscriptions)).toHaveLength(0);
+
+  const rows = await harness.db.select().from(schema.subscriptionEvents);
+
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.userId).toBeNull();
+  expect(rows[0]!.payload).not.toHaveProperty("app_user_id");
+  expect(rows[0]!.payload).toHaveProperty("product_id", "gg.barklog.app.premium.yearly");
 });

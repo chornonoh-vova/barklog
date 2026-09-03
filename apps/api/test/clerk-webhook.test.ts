@@ -47,6 +47,17 @@ async function seed(): Promise<void> {
   await harness.db
     .insert(schema.backlogEntries)
     .values({ userId: TEST_USER, gameId: 1, status: "playing" });
+  await harness.db.insert(schema.subscriptions).values({
+    userId: TEST_USER,
+    productId: "gg.barklog.app.premium.yearly",
+    store: "app_store",
+    periodType: "trial",
+    purchasedAt: new Date(1_000),
+    expiresAt: new Date(5_000),
+    willRenew: true,
+    sandbox: false,
+    lastEventAtMs: 2_000,
+  });
   await harness.db.insert(schema.subscriptionEvents).values({
     id: "rc_event_1",
     userId: TEST_USER,
@@ -64,12 +75,22 @@ afterAll(async () => {
   await harness.close();
 });
 
-test("user.deleted removes the user and cascades the backlog", async () => {
+test("user.deleted removes the user and cascades the backlog and the subscription", async () => {
   const response = await callApi(harness.app, "/webhooks/clerk", post(deleted()));
 
   expect(response.status).toBe(200);
   expect(await harness.db.select().from(schema.users)).toHaveLength(0);
   expect(await harness.db.select().from(schema.backlogEntries)).toHaveLength(0);
+  expect(await harness.db.select().from(schema.subscriptions)).toHaveLength(0);
+});
+
+test("user.deleted tombstones the id", async () => {
+  await callApi(harness.app, "/webhooks/clerk", post(deleted()));
+
+  const rows = await harness.db.select().from(schema.deletedUsers);
+
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.id).toBe(TEST_USER);
 });
 
 test("the subscription event survives, scrubbed", async () => {

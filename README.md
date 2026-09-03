@@ -213,12 +213,14 @@ string straight to `pg.Pool`, which reads `sslmode` from the URL, so TLS is a
 property of the secret rather than of the code.
 
 Set the deploy environment in Dokploy: `DATABASE_URL`, `CLERK_SECRET_KEY`,
-`CLERK_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY`, `IGDB_CLIENT_ID`,
-`IGDB_CLIENT_SECRET`, `REVENUECAT_WEBHOOK_SECRET`,
+`CLERK_PUBLISHABLE_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `ANTHROPIC_API_KEY`,
+`IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`, `REVENUECAT_WEBHOOK_SECRET`,
 `REVENUECAT_WEBHOOK_SIGNING_SECRET`, and `REVENUECAT_API_KEY` are required —
-the API's `env.ts` refuses to boot without any of them; `IMAGE_TAG`,
-`LOG_LEVEL`, `IDENTIFY_MODEL`, `SYNC_CRON`, and `SYNC_TZ` are optional and
-default to the values in each app's env schema.
+the API's `env.ts` refuses to boot without any of them, and `compose.yaml`
+marks each `:?required`, so an unset one halts the deploy at interpolation
+rather than at boot; `IMAGE_TAG`, `LOG_LEVEL`, `IDENTIFY_MODEL`, `SYNC_CRON`,
+and `SYNC_TZ` are optional and default to the values in each app's env
+schema.
 
 ### Seeding the games mirror in production
 
