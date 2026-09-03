@@ -23,13 +23,4 @@ describe("sourceThumbSize", () => {
     expect(sourceThumbSize("youtube")).toEqual({ width: 100, height: 56 });
     expect(sourceThumbSize("tiktok")).toEqual({ width: 32, height: 56 });
   });
-
-  it("returns whole points, so the image never lands on a half-pixel edge", () => {
-    for (const provider of ["youtube", "tiktok"] as const) {
-      const { width, height } = sourceThumbSize(provider);
-
-      expect(Number.isInteger(width)).toBe(true);
-      expect(Number.isInteger(height)).toBe(true);
-    }
-  });
 });

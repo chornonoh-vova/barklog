@@ -30,9 +30,8 @@ export const UNREADABLE: EmptyStateContent = {
 };
 
 /**
- * Shown above the results list when the game could not be identified and the
- * matches below come from searching the video's raw title instead. Not an
- * `EmptyStateContent`: this sits above a non-empty list, not in place of one.
+ * Shown above the results when the game could not be identified and the
+ * matches come from searching the video's raw title instead.
  */
 export const TITLE_MATCH_NOTICE =
   "We couldn't tell which game this is, so these are matches for the video title instead.";

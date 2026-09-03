@@ -8,10 +8,6 @@ import { TITLE_MATCH_NOTICE } from "@/features/share/empty-states";
 import { sourceThumbSize } from "@/features/share/source-thumb";
 import { Type } from "@/theme";
 
-/**
- * The share screen's whole `ListHeaderComponent`, and the owner of its
- * padding, so the list stays responsible only for the list.
- */
 export function ShareHeader({
   source,
   identified,
@@ -44,22 +40,15 @@ export function ShareHeader({
 }
 
 /**
- * The cover, with the placeholder covering two cases rather than one: a
- * provider that gave no thumbnail, and a url that has since expired. TikTok's
- * is a signed CDN url with a lifetime shorter than `OEMBED_TTL_SECONDS`, so
- * `onError` is an ordinary outcome here, not an exceptional one.
- *
- * Both branches render at the same dimensions, so the row never shifts.
+ * TikTok's signed CDN url can expire inside `OEMBED_TTL_SECONDS`, so `onError`
+ * is an ordinary outcome here, not an exceptional one.
  */
 function SourceCover({ source }: { source: ShareSourceWire }) {
   const [failed, setFailed] = useState(false);
   const size = sourceThumbSize(source.provider);
 
-  // The title beside it says everything the cover says, so VoiceOver skips it.
-  //
-  // `== null`, not `===`: `request` casts rather than validates, so a
-  // `thumbnailUrl` absent from an older, not-yet-deployed API build arrives
-  // as `undefined`, not `null`. Both must fall through to the placeholder.
+  // `== null`, not `===`: responses are cast, not validated, so a field absent
+  // from an older API build arrives as `undefined`.
   if (source.thumbnailUrl == null || failed) {
     return (
       <View style={[styles.cover, styles.coverPlaceholder, size]} accessibilityElementsHidden>
@@ -86,18 +75,14 @@ function SourceCover({ source }: { source: ShareSourceWire }) {
 }
 
 /**
- * `opacity` sits on a child rather than the container because React Native
- * will not apply alpha to a `PlatformColor`, and `theme.ts` keeps
- * `Brand.tint` as the app's only hex literal. Border, glyph and fill are then
- * all the same dynamic colour, so all three track light and dark for free.
+ * The tint is a child view because React Native will not apply alpha to a
+ * `PlatformColor`, and `theme.ts` keeps hex literals out of the app.
  */
 function FallbackNotice() {
   return (
     <View style={styles.notice}>
       <View style={styles.noticeFill} />
-      {/* The glyph restates the copy, so VoiceOver reads the copy only — the same
-          call `components/empty-state.tsx` makes for its symbol. The prop sits on
-          a wrapper because it hides the elements *contained within* a view. */}
+      {/* Wrapped: the prop hides the elements *contained within* a view. */}
       <View accessibilityElementsHidden>
         <SymbolView
           name="exclamationmark.triangle.fill"

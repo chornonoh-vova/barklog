@@ -290,7 +290,7 @@ Boxes stay unticked here; the owner ticks them as each is verified.
       on a `fullScreenModal` root.
 - [ ] **49. The no-match state still shows the header.** Share a video whose
       game is not in the catalogue. Expect the question, source row and — if
-      the game could not be identified — the warning, all *above* the "No
+      the game could not be identified — the warning, all _above_ the "No
       match in the catalogue" state, with `Search Instead` still working from
       there. A clipped or zero-height empty state means
       `contentContainerStyle={Screen.listContent}` was dropped.

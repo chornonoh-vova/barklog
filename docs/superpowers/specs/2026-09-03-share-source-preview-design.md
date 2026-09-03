@@ -40,19 +40,19 @@ one wire field it requires.
 
 ## 2. Decisions
 
-| Question                             | Decision                                                                 |
-| ------------------------------------ | ------------------------------------------------------------------------ |
-| Where does the cover come from?       | `thumbnail_url` from the oEmbed response already being fetched            |
-| Wire shape                            | One field: `ShareSourceWire.thumbnailUrl: string \| null`                 |
-| Cover shape                           | Provider-aware aspect — 16:9 YouTube, 9:16 TikTok                        |
-| Cover size                            | Equal height across providers: 56pt, width from aspect                   |
-| Missing or failed cover               | A `play.rectangle.fill` placeholder at the same dimensions               |
-| Warning treatment                     | 1pt `systemOrange` border, `systemOrange` fill at `opacity: 0.12`        |
-| Warning copy colour                   | `PlatformColor("label")` — the orange is border and glyph only            |
-| No-match case                         | The header renders above the empty state, not instead of it              |
-| List structure                        | One `FlatList` with both a header and an empty component                 |
-| Title                                 | `<Stack.Title large>`                                                    |
-| Exit affordance                       | `Stack.Toolbar placement="right"`, icon-only `xmark`                     |
+| Question                        | Decision                                                          |
+| ------------------------------- | ----------------------------------------------------------------- |
+| Where does the cover come from? | `thumbnail_url` from the oEmbed response already being fetched    |
+| Wire shape                      | One field: `ShareSourceWire.thumbnailUrl: string \| null`         |
+| Cover shape                     | Provider-aware aspect — 16:9 YouTube, 9:16 TikTok                 |
+| Cover size                      | Equal height across providers: 56pt, width from aspect            |
+| Missing or failed cover         | A `play.rectangle.fill` placeholder at the same dimensions        |
+| Warning treatment               | 1pt `systemOrange` border, `systemOrange` fill at `opacity: 0.12` |
+| Warning copy colour             | `PlatformColor("label")` — the orange is border and glyph only    |
+| No-match case                   | The header renders above the empty state, not instead of it       |
+| List structure                  | One `FlatList` with both a header and an empty component          |
+| Title                           | `<Stack.Title large>`                                             |
+| Exit affordance                 | `Stack.Toolbar placement="right"`, icon-only `xmark`              |
 
 Five decisions deserve their reasoning recorded.
 
@@ -338,25 +338,25 @@ per `apps/mobile/AGENTS.md`.
 
 ### New
 
-| File                                                  | Purpose                                  |
-| ----------------------------------------------------- | ---------------------------------------- |
-| `apps/mobile/src/features/share/source-thumb.ts`      | Provider aspect and cover dimensions     |
-| `apps/mobile/src/features/share/share-header.tsx`     | Question, source row, warning            |
-| `apps/mobile/test/source-thumb.test.ts`               | Unit tests for the above                 |
+| File                                              | Purpose                              |
+| ------------------------------------------------- | ------------------------------------ |
+| `apps/mobile/src/features/share/source-thumb.ts`  | Provider aspect and cover dimensions |
+| `apps/mobile/src/features/share/share-header.tsx` | Question, source row, warning        |
+| `apps/mobile/test/source-thumb.test.ts`           | Unit tests for the above             |
 
 ### Changed
 
-| File                                              | Change                                            |
-| ------------------------------------------------- | ------------------------------------------------- |
-| `packages/contracts/src/share.ts`                 | `thumbnailUrl` on `ShareSourceWire`               |
-| `apps/api/src/share/oembed.ts`                    | Read and narrow `thumbnail_url`                   |
-| `apps/api/src/cache-keys.ts`                      | `oembedKey` gains a `v2` generation               |
-| `apps/api/src/routes/games.ts`                    | `thumbnailUrl` on the response body               |
-| `apps/api/test/share-oembed.test.ts`              | Thumbnail cases                                   |
-| `apps/api/test/identify-routes.test.ts`           | `thumbnailUrl` in the asserted body               |
-| `apps/mobile/src/features/share/share-screen.tsx` | One list; header extracted                        |
-| `apps/mobile/src/app/shared/index.tsx`            | Large title; right-placed close button            |
-| `docs/mobile-device-verification.md`              | Rewrite check 38; add checks 44 onward            |
+| File                                              | Change                                 |
+| ------------------------------------------------- | -------------------------------------- |
+| `packages/contracts/src/share.ts`                 | `thumbnailUrl` on `ShareSourceWire`    |
+| `apps/api/src/share/oembed.ts`                    | Read and narrow `thumbnail_url`        |
+| `apps/api/src/cache-keys.ts`                      | `oembedKey` gains a `v2` generation    |
+| `apps/api/src/routes/games.ts`                    | `thumbnailUrl` on the response body    |
+| `apps/api/test/share-oembed.test.ts`              | Thumbnail cases                        |
+| `apps/api/test/identify-routes.test.ts`           | `thumbnailUrl` in the asserted body    |
+| `apps/mobile/src/features/share/share-screen.tsx` | One list; header extracted             |
+| `apps/mobile/src/app/shared/index.tsx`            | Large title; right-placed close button |
+| `docs/mobile-device-verification.md`              | Rewrite check 38; add checks 44 onward |
 
 ## 10. Testing
 

@@ -3,6 +3,7 @@ import { afterAll, beforeEach, expect, test, vi } from "vitest";
 import { problems } from "../src/problems.js";
 import type { Canonical, VideoRef } from "../src/share/canonicalise.js";
 import type { VideoMeta } from "../src/share/oembed.js";
+import { oembedKey } from "../src/cache-keys.js";
 import { VideoGone, VideoMetaUnavailable } from "../src/share/oembed.js";
 import type { ShareProvider } from "../src/types.js";
 import { callApi, createTestApp, seedGame, type TestHarness } from "./helpers.js";
@@ -101,13 +102,12 @@ test("a video whose oEmbed carries no thumbnail still answers 200, with a null t
   await app.close();
 });
 
-test("a cached VideoMeta with no thumbnailUrl answers null, not a missing key", async () => {
+test("the response always carries thumbnailUrl, even for a cached VideoMeta without it", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
 
-  // Written by hand in the pre-`thumbnailUrl` shape, under the current
-  // generation's key, because `withCache` casts rather than validates.
+  // A shape `withCache` would hand back unvalidated, since it casts.
   await harness.cache.set(
-    "oembed:v2:youtube:1vs0lLIRt7w",
+    oembedKey("youtube", "1vs0lLIRt7w"),
     { title: META.title, author: META.author },
     60,
   );

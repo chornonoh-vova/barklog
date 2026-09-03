@@ -18,7 +18,7 @@
 - **The API suite needs Docker running.** `apps/api/vitest.config.ts` uses `globalSetup: ["./test/setup/containers.ts"]`.
 - **Mobile tests are pure-Node only.** All 25 files in `apps/mobile/test/` avoid react-native in their module graph. No render harness exists; do not add one in this plan.
 - **Copy is fixed.** `TITLE_MATCH_NOTICE` in `apps/mobile/src/features/share/empty-states.ts` is unchanged — `apps/mobile/test/share-empty-states.test.ts` asserts on it.
-- **`SymbolView` does accept `style` and accessibility props.** `expo-symbols`' `SymbolViewProps` is `{ ... } & ViewProps` (`node_modules/expo-symbols/build/SymbolModule.types.d.ts:62`), so it inherits both from `ViewProps`. It is still wrapped in a `View` here because `accessibilityElementsHidden` hides the elements *contained within* a view, not the view itself — the correct way to silence a leaf glyph for VoiceOver.
+- **`SymbolView` does accept `style` and accessibility props.** `expo-symbols`' `SymbolViewProps` is `{ ... } & ViewProps` (`node_modules/expo-symbols/build/SymbolModule.types.d.ts:62`), so it inherits both from `ViewProps`. It is still wrapped in a `View` here because `accessibilityElementsHidden` hides the elements _contained within_ a view, not the view itself — the correct way to silence a leaf glyph for VoiceOver.
 - **Fixed dimensions:** source thumbnail height is `56` for both providers; YouTube renders `100 x 56`, TikTok `32 x 56`.
 - **Branch:** `feat/share-source-preview`, already created, with the spec committed at `e45093c`.
 
@@ -26,17 +26,17 @@
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/contracts/src/share.ts` | `ShareSourceWire.thumbnailUrl` — the wire field |
-| `apps/api/src/share/oembed.ts` | Read `thumbnail_url` leniently, narrow it to an https url or `null` |
-| `apps/api/src/cache-keys.ts` | `oembedKey` gains a `v2` generation, because the cached `VideoMeta` shape changed |
-| `apps/api/src/routes/games.ts` | Put `thumbnailUrl` on the response body |
-| `apps/mobile/src/features/share/source-thumb.ts` | Pure: provider display aspect and cover dimensions |
-| `apps/mobile/src/features/share/share-header.tsx` | The whole `ListHeaderComponent`: question, source row, warning |
-| `apps/mobile/src/features/share/share-screen.tsx` | One `FlatList` with both a header and an empty component |
-| `apps/mobile/src/app/shared/index.tsx` | Large title, right-placed close button |
-| `docs/mobile-device-verification.md` | Rewrite check 38; add checks 44 onward |
+| File                                              | Responsibility                                                                    |
+| ------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `packages/contracts/src/share.ts`                 | `ShareSourceWire.thumbnailUrl` — the wire field                                   |
+| `apps/api/src/share/oembed.ts`                    | Read `thumbnail_url` leniently, narrow it to an https url or `null`               |
+| `apps/api/src/cache-keys.ts`                      | `oembedKey` gains a `v2` generation, because the cached `VideoMeta` shape changed |
+| `apps/api/src/routes/games.ts`                    | Put `thumbnailUrl` on the response body                                           |
+| `apps/mobile/src/features/share/source-thumb.ts`  | Pure: provider display aspect and cover dimensions                                |
+| `apps/mobile/src/features/share/share-header.tsx` | The whole `ListHeaderComponent`: question, source row, warning                    |
+| `apps/mobile/src/features/share/share-screen.tsx` | One `FlatList` with both a header and an empty component                          |
+| `apps/mobile/src/app/shared/index.tsx`            | Large title, right-placed close button                                            |
+| `docs/mobile-device-verification.md`              | Rewrite check 38; add checks 44 onward                                            |
 
 Tasks 1 and 2 are ordered by dependency: the mobile side cannot type-check against `thumbnailUrl` until the contract is built.
 
@@ -47,6 +47,7 @@ Tasks 1 and 2 are ordered by dependency: the mobile side cannot type-check again
 The contract field, the oEmbed read, the cache generation and the route body land together. They cannot be split: `VideoMeta.thumbnailUrl` is required, so the moment it exists, `const META: VideoMeta` in `apps/api/test/identify-routes.test.ts:12` is a type error and the route's `body.source` assertion is short a key. One task, one green suite.
 
 **Files:**
+
 - Modify: `packages/contracts/src/share.ts:63-68` (`ShareSourceWire`)
 - Modify: `apps/api/src/share/oembed.ts:6-9` (`VideoMeta`), `:36-41` (`oembedSchema`), `:68-71` (return)
 - Modify: `apps/api/src/cache-keys.ts:39-41` (`oembedKey`)
@@ -54,6 +55,7 @@ The contract field, the oEmbed read, the cache generation and the route body lan
 - Test: `apps/api/test/share-oembed.test.ts`, `apps/api/test/identify-routes.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces:
   - `ShareSourceWire.thumbnailUrl: string | null` (exported from `@repo/contracts`)
@@ -91,7 +93,7 @@ Then add `thumbnailUrl: null` to the expected object in the next two tests — `
 
 - [ ] **Step 2: Add the three lenient-parse tests**
 
-Append to `apps/api/test/share-oembed.test.ts`. Each one asserts the surrounding parse still *succeeds* — that is the whole point: a bad thumbnail must never turn a working identification into a 502.
+Append to `apps/api/test/share-oembed.test.ts`. Each one asserts the surrounding parse still _succeeds_ — that is the whole point: a bad thumbnail must never turn a working identification into a 502.
 
 ```ts
 it("drops a non-string thumbnail_url instead of failing the parse", async () => {
@@ -191,11 +193,11 @@ function httpsUrlOrNull(value: unknown): string | null {
 And extend the return at the end of `fetchVideoMeta`:
 
 ```ts
-  return {
-    title: parsed.output.title,
-    author: parsed.output.author_name || null,
-    thumbnailUrl: httpsUrlOrNull(parsed.output.thumbnail_url),
-  };
+return {
+  title: parsed.output.title,
+  author: parsed.output.author_name || null,
+  thumbnailUrl: httpsUrlOrNull(parsed.output.thumbnail_url),
+};
 ```
 
 - [ ] **Step 5: Run the oEmbed tests to verify they pass**
@@ -247,28 +249,28 @@ const META: VideoMeta = {
 In the first test, widen the body type and the assertion:
 
 ```ts
-  const body = (await response.json()) as {
-    source: {
-      provider: string;
-      videoId: string;
-      title: string;
-      author: string | null;
-      thumbnailUrl: string | null;
-    };
-    identified: boolean;
-    guesses: string[];
-    items: { id: number }[];
+const body = (await response.json()) as {
+  source: {
+    provider: string;
+    videoId: string;
+    title: string;
+    author: string | null;
+    thumbnailUrl: string | null;
   };
+  identified: boolean;
+  guesses: string[];
+  items: { id: number }[];
+};
 ```
 
 ```ts
-  expect(body.source).toEqual({
-    provider: "youtube",
-    videoId: "1vs0lLIRt7w",
-    title: META.title,
-    author: "Snamwiches",
-    thumbnailUrl: META.thumbnailUrl,
-  });
+expect(body.source).toEqual({
+  provider: "youtube",
+  videoId: "1vs0lLIRt7w",
+  title: META.title,
+  author: "Snamwiches",
+  thumbnailUrl: META.thumbnailUrl,
+});
 ```
 
 Then append two new tests. The second pins the `?? null` guard: `withCache` does no validation (`packages/cache/src/with-cache.ts:14` is an unchecked `cache.get<T>` cast), so a cache entry of the previous shape must still produce a `null` rather than a missing key.
@@ -336,20 +338,20 @@ export function oembedKey(provider: ShareProviderName, videoId: string): string 
 In `apps/api/src/routes/games.ts`, in the `ShareIdentifyResponse` body:
 
 ```ts
-      const body: ShareIdentifyResponse = {
-        source: {
-          provider: ref.provider,
-          videoId: ref.videoId,
-          title: meta.title,
-          author: meta.author,
-          // `?? null`: `withCache` casts rather than validates, so a cache
-          // entry written before this field existed arrives without it.
-          thumbnailUrl: meta.thumbnailUrl ?? null,
-        },
-        identified,
-        guesses,
-        items: mergeCandidates(results, limit),
-      };
+const body: ShareIdentifyResponse = {
+  source: {
+    provider: ref.provider,
+    videoId: ref.videoId,
+    title: meta.title,
+    author: meta.author,
+    // `?? null`: `withCache` casts rather than validates, so a cache
+    // entry written before this field existed arrives without it.
+    thumbnailUrl: meta.thumbnailUrl ?? null,
+  },
+  identified,
+  guesses,
+  items: mergeCandidates(results, limit),
+};
 ```
 
 - [ ] **Step 11: Run the whole API suite and the type-check**
@@ -376,10 +378,12 @@ git commit -m "feat(api): carry the video thumbnail url through identify"
 A pure module, so it tests in plain Node — the same structure and the same stated reason as `features/share/extract-url.ts` and `features/share/empty-states.ts`.
 
 **Files:**
+
 - Create: `apps/mobile/src/features/share/source-thumb.ts`
 - Test: `apps/mobile/test/source-thumb.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ShareProviderName` from `@repo/contracts` (type-only, so nothing is pulled in at runtime).
 - Produces: `sourceThumbSize(provider: ShareProviderName): { width: number; height: number }` — `{ width: 100, height: 56 }` for `"youtube"`, `{ width: 32, height: 56 }` for `"tiktok"`.
 
@@ -497,10 +501,12 @@ The new component and the screen that consumes it land together: a reviewer judg
 Read https://docs.expo.dev/versions/v57.0.0/sdk/router/stack before starting, per the global constraints.
 
 **Files:**
+
 - Create: `apps/mobile/src/features/share/share-header.tsx`
 - Modify: `apps/mobile/src/features/share/share-screen.tsx` (the `QueryBoundary` body, `:69-90`, and the `styles` block, `:93-98`)
 
 **Interfaces:**
+
 - Consumes: `sourceThumbSize` from Task 2; `ShareSourceWire` from `@repo/contracts` (Task 1); `TITLE_MATCH_NOTICE` and `noMatch` from `features/share/empty-states`.
 - Produces: `ShareHeader({ source, identified }: { source: ShareSourceWire; identified: boolean })`.
 
@@ -660,35 +666,33 @@ const styles = StyleSheet.create({
 In `apps/mobile/src/features/share/share-screen.tsx`, replace the `QueryBoundary` block (currently `:69-90`) with:
 
 ```tsx
-  return (
-    <QueryBoundary query={identify}>
-      {(data) => (
-        <FlatList
-          style={Screen.fill}
-          // Without `flexGrow: 1` the empty component is cloned into the
-          // content container with no height and gets clipped — see
-          // `theme.ts`. `backlog-screen.tsx` carries a header and an empty
-          // component the same way.
-          contentContainerStyle={Screen.listContent}
-          data={data.items}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          // Keeps the first row out from under the header, and lets the
-          // large title collapse on scroll.
-          contentInsetAdjustmentBehavior="automatic"
-          ListHeaderComponent={
-            <ShareHeader source={data.source} identified={data.identified} />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              {...noMatch(data.identified, data.guesses)}
-              action={{ label: "Search Instead", onPress: onSearch }}
-            />
-          }
-        />
-      )}
-    </QueryBoundary>
-  );
+return (
+  <QueryBoundary query={identify}>
+    {(data) => (
+      <FlatList
+        style={Screen.fill}
+        // Without `flexGrow: 1` the empty component is cloned into the
+        // content container with no height and gets clipped — see
+        // `theme.ts`. `backlog-screen.tsx` carries a header and an empty
+        // component the same way.
+        contentContainerStyle={Screen.listContent}
+        data={data.items}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        // Keeps the first row out from under the header, and lets the
+        // large title collapse on scroll.
+        contentInsetAdjustmentBehavior="automatic"
+        ListHeaderComponent={<ShareHeader source={data.source} identified={data.identified} />}
+        ListEmptyComponent={
+          <EmptyState
+            {...noMatch(data.identified, data.guesses)}
+            action={{ label: "Search Instead", onPress: onSearch }}
+          />
+        }
+      />
+    )}
+  </QueryBoundary>
+);
 ```
 
 - [ ] **Step 3: Fix the imports and delete the moved styles**
@@ -742,9 +746,11 @@ git commit -m "feat(mobile): source preview and fallback warning on the share sc
 ### Task 4: Large title and the close button
 
 **Files:**
+
 - Modify: `apps/mobile/src/app/shared/index.tsx:38-51`
 
 **Interfaces:**
+
 - Consumes: `goHome` — already defined in this file, and unchanged.
 - Produces: nothing other tasks read.
 
@@ -757,15 +763,17 @@ Read https://docs.expo.dev/versions/v57.0.0/sdk/router/stack and confirm three t
 Replace lines 38-51 of `apps/mobile/src/app/shared/index.tsx` with:
 
 ```tsx
-      <Stack.Title large>Shared</Stack.Title>
+<Stack.Title large>Shared</Stack.Title>;
 
-      {/* A toolbar button, not `Stack.Screen.BackButton`: this is the root of a
+{
+  /* A toolbar button, not `Stack.Screen.BackButton`: this is the root of a
           modal with nothing behind it to pop to, and leaving needs to clear the
           payload as well as navigate. Icon-only, like the `star.fill` button in
-          `components/profile-toolbar.tsx`. */}
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button icon="xmark" accessibilityLabel="Close" onPress={goHome} />
-      </Stack.Toolbar>
+          `components/profile-toolbar.tsx`. */
+}
+<Stack.Toolbar placement="right">
+  <Stack.Toolbar.Button icon="xmark" accessibilityLabel="Close" onPress={goHome} />
+</Stack.Toolbar>;
 ```
 
 Everything else in the file is unchanged, including the `goHome`/`search`/`openGame` callbacks and the long comment above `goHome` about `clear()` and `dismissTo`.
@@ -792,6 +800,7 @@ git commit -m "feat(mobile): large title and close button on the share screen"
 None of the visual work is unit-testable — `apps/mobile/test` has no render harness — so the checklist is where it gets verified. This is the same call recorded in `docs/superpowers/specs/2026-08-28-mobile-onboarding-design.md`.
 
 **Files:**
+
 - Modify: `docs/mobile-device-verification.md` — check 38, and the end of `## Share intent checks` (which currently ends at check 43)
 
 - [ ] **Step 1: Rewrite check 38**
@@ -838,7 +847,7 @@ Add at the end of `## Share intent checks`, after check 43:
       on a `fullScreenModal` root.
 - [ ] **49. The no-match state still shows the header.** Share a video whose
       game is not in the catalogue. Expect the question, source row and — if
-      the game could not be identified — the warning, all *above* the "No
+      the game could not be identified — the warning, all _above_ the "No
       match in the catalogue" state, with `Search Instead` still working from
       there. A clipped or zero-height empty state means
       `contentContainerStyle={Screen.listContent}` was dropped.

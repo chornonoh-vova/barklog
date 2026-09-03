@@ -45,19 +45,15 @@ export function ShareScreen({
     [onSelect],
   );
 
-  /**
-   * Four states, and the order matters. `isPending` has to come first: the
-   * settled branches below all read as terminal, and one of them would show on
-   * a share's first frame if pending were not checked ahead of them.
-   */
+  // `isPending` first: the settled branches below all read as terminal, and one
+  // would flash on a share's first frame if pending were checked after them.
   if (isPending) return <LoadingState />;
 
   if (error !== null) {
     return <EmptyState {...UNREADABLE} action={backToHome} />;
   }
 
-  // Without this branch the disabled query stays pending and the spinner never
-  // finishes.
+  // Without this branch the disabled query stays pending forever.
   if (url === null) {
     return <EmptyState {...NO_LINK} action={backToHome} />;
   }
@@ -67,20 +63,14 @@ export function ShareScreen({
       {(data) => (
         <FlatList
           style={Screen.fill}
-          // Without `flexGrow: 1` the empty component is cloned into the
-          // content container with no height and gets clipped — see
-          // `theme.ts`. `backlog-screen.tsx` carries a header and an empty
-          // component the same way.
+          // `flexGrow: 1`, or the empty component is clipped — see `theme.ts`.
           contentContainerStyle={Screen.listContent}
           data={data.items}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          // Keeps the first row out from under the header, and lets the
-          // large title collapse on scroll.
+          // Also what lets the large title collapse on scroll.
           contentInsetAdjustmentBehavior="automatic"
-          ListHeaderComponent={
-            <ShareHeader source={data.source} identified={data.identified} />
-          }
+          ListHeaderComponent={<ShareHeader source={data.source} identified={data.identified} />}
           ListEmptyComponent={
             <EmptyState
               {...noMatch(data.identified, data.guesses)}
