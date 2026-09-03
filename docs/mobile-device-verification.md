@@ -236,12 +236,13 @@ Boxes stay unticked here; the owner ticks them as each is verified.
       the candidate list; "No link in that share" for a photo or link-free text;
       and "No match in the catalogue" for a video whose game is not in the
       catalogue. The fourth, "Could not read that share", is item 42.
-- [ ] **38. The toolbar Home button returns to the Home tab and clears the
-      payload.** It is a `Stack.Toolbar` button rather than a system back
-      button, because a modal root has nothing behind it to pop to. Tap it,
-      then force-quit and relaunch: the share must **not** re-present, which is
-      the `clear()` call. Landing on Home rather than the tab the share
-      interrupted is intended — that is `dismissTo("/")`.
+- [ ] **38. The toolbar close button returns to the Home tab and clears the
+      payload.** It is a right-placed `Stack.Toolbar` button with an `xmark`
+      icon rather than a system back button, because a modal root has nothing
+      behind it to pop to. Tap it, then force-quit and relaunch: the share
+      must **not** re-present, which is the `clear()` call. Landing on Home
+      rather than the tab the share interrupted is intended — that is
+      `dismissTo("/")`. VoiceOver must announce it as "Close".
 - [ ] **39. Pick a candidate, then go back.** Selecting a row pushes
       `/shared/game/[id]` inside the modal, with the tab bar _not_ visible
       because the modal covers it. Back returns to the candidate list, still
@@ -258,3 +259,35 @@ Boxes stay unticked here; the owner ticks them as each is verified.
       mount should always resolve — but that reasoning is static, so share one
       video, go Home, and share the same video again. Expect candidates, not an
       empty or stuck screen.
+- [ ] **44. A YouTube share shows a wide cover with no black bars.** The
+      oEmbed thumbnail is `hqdefault.jpg` at 480x360 — 4:3, with letterbox
+      bars baked in — and it is rendered in a 100x56 box with
+      `contentFit="cover"`, which crops exactly the bars. Bars on screen mean
+      the aspect in `features/share/source-thumb.ts` is being ignored.
+- [ ] **45. A TikTok share shows a tall 32x56 cover.** Same row height as
+      item 44; only the width differs.
+- [ ] **46. A video with no thumbnail shows the placeholder, not a broken
+      image.** A `play.rectangle.fill` glyph at the same dimensions, so the
+      row does not shift. This is also what an expired TikTok signed url must
+      degrade to, via `onError` — hard to force on demand, so if a TikTok
+      share ever shows an empty box rather than the glyph, that is the bug.
+      With VoiceOver on, neither the placeholder nor a loaded cover may be
+      announced — the title beside it already carries that information, and
+      both are marked `accessibilityElementsHidden`.
+- [ ] **47. The fallback warning is legible in light and dark mode.** Share a
+      video whose game cannot be identified. Expect an orange-bordered box
+      with a faint orange fill and `label`-coloured copy. Toggle
+      Appearance in Control Center without leaving the screen: border, glyph
+      and fill must all follow, because all three are
+      `PlatformColor("systemOrange")`.
+- [ ] **48. The large title collapses on scroll inside the modal.** Share a
+      video with enough candidates to scroll. "Shared" must start large and
+      shrink into the navigation bar. This is what
+      `contentInsetAdjustmentBehavior="automatic"` buys, and it is untested
+      on a `fullScreenModal` root.
+- [ ] **49. The no-match state still shows the header.** Share a video whose
+      game is not in the catalogue. Expect the question, source row and — if
+      the game could not be identified — the warning, all *above* the "No
+      match in the catalogue" state, with `Search Instead` still working from
+      there. A clipped or zero-height empty state means
+      `contentContainerStyle={Screen.listContent}` was dropped.
