@@ -329,6 +329,14 @@ the workspace, so the new scripts are picked up with no workflow change.
 `packages/eslint-config` gains an `astro.js` flat config built on
 `eslint-plugin-astro`, exported alongside `base`, `expo` and `node`.
 
+**Pinned to `eslint-plugin-astro@^1.7.0`.** Every release from `2.0.0` onward
+peers on `eslint >= 10.0.0`, and this workspace is on `eslint ^9.39.5` — which
+upstream now publishes under the `maintenance` tag rather than `latest`.
+`1.7.0` peers on `>= 8.57.0` and is the newest release compatible with the
+workspace as it stands. Moving the repository to eslint 10 would unlock `^3`
+and is worth doing, but it is an workspace-wide upgrade touching four configs
+and every app, so it is a follow-up rather than a rider on this design.
+
 ## 12. Consequences and follow-ups
 
 - `PROBLEM_BASE` in `apps/api/src/problems.ts` points at

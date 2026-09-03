@@ -64,7 +64,7 @@ therefore survives with its `user_id` set to null and its payload reduced to
 the fields revenue queries actually read.
 
 The payload is rewritten to keep `product_id`, `store`, `period_type`,
-`purchased_at_ms`, `expires_at_ms` and `environment`, and to drop
+`purchased_at_ms`, `expiration_at_ms` and `environment`, and to drop
 `app_user_id`, `original_app_user_id`, `aliases`, `subscriber_attributes`, and
 every transaction, receipt and store-identifier field. The retained set is
 what a revenue query groups and filters on; the dropped set is what identifies
