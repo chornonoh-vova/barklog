@@ -60,6 +60,13 @@ export interface ShareSourceWire {
   videoId: string;
   title: string;
   author: string | null;
+  /**
+   * oEmbed's cover image. `null` when the provider omitted one or gave
+   * something that is not an https url. TikTok's is a signed CDN url that can
+   * expire inside `OEMBED_TTL_SECONDS`, so a load failure on the client is
+   * ordinary, not exceptional.
+   */
+  thumbnailUrl: string | null;
 }
 
 export interface ShareIdentifyResponse {

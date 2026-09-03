@@ -12,6 +12,7 @@ const RE2_URL = "https://www.youtube.com/watch?v=1vs0lLIRt7w";
 const META: VideoMeta = {
   title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
   author: "Snamwiches",
+  thumbnailUrl: "https://i.ytimg.com/vi/1vs0lLIRt7w/hqdefault.jpg",
 };
 
 function shareStub(overrides: Partial<ShareProvider> = {}): ShareProvider {
@@ -59,7 +60,13 @@ test("identifies the game, returning ranked candidates and the video it came fro
 
   const response = await identify({ url: RE2_URL });
   const body = (await response.json()) as {
-    source: { provider: string; videoId: string; title: string; author: string | null };
+    source: {
+      provider: string;
+      videoId: string;
+      title: string;
+      author: string | null;
+      thumbnailUrl: string | null;
+    };
     identified: boolean;
     guesses: string[];
     items: { id: number }[];
@@ -72,10 +79,44 @@ test("identifies the game, returning ranked candidates and the video it came fro
     videoId: "1vs0lLIRt7w",
     title: META.title,
     author: "Snamwiches",
+    thumbnailUrl: META.thumbnailUrl,
   });
   expect(body.identified).toBe(true);
   expect(body.guesses).toEqual(["Resident Evil 2"]);
   expect(body.items.map((item) => item.id)).toEqual([1, 2]);
+});
+
+test("a video whose oEmbed carries no thumbnail still answers 200, with a null thumbnailUrl", async () => {
+  await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
+
+  const app = createTestApp({
+    share: shareStub({ fetchMeta: async () => ({ ...META, thumbnailUrl: null }) }),
+  });
+
+  const response = await identifyOn(app.app);
+  const body = (await response.json()) as { source: { thumbnailUrl: string | null } };
+
+  expect(response.status).toBe(200);
+  expect(body.source.thumbnailUrl).toBeNull();
+  await app.close();
+});
+
+test("a cached VideoMeta with no thumbnailUrl answers null, not a missing key", async () => {
+  await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
+
+  // Written by hand in the pre-`thumbnailUrl` shape, under the current
+  // generation's key, because `withCache` casts rather than validates.
+  await harness.cache.set(
+    "oembed:v2:youtube:1vs0lLIRt7w",
+    { title: META.title, author: META.author },
+    60,
+  );
+
+  const response = await identify({ url: RE2_URL });
+  const body = (await response.json()) as { source: Record<string, unknown> };
+
+  expect(response.status).toBe(200);
+  expect(body.source).toHaveProperty("thumbnailUrl", null);
 });
 
 test("an unsupported host is 422, naming the url field", async () => {

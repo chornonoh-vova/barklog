@@ -37,7 +37,10 @@ export function similarKey(version: number, gameId: number, limit: number): stri
 export const OEMBED_TTL_SECONDS = 604_800;
 
 export function oembedKey(provider: ShareProviderName, videoId: string): string {
-  return `oembed:${provider}:${videoId}`;
+  // `v2`: the cached value is a `VideoMeta`, and it gained `thumbnailUrl`.
+  // Entries from the previous generation deserialise without it, and
+  // `withCache` casts rather than validates.
+  return `oembed:v2:${provider}:${videoId}`;
 }
 
 /**

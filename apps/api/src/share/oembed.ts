@@ -6,6 +6,8 @@ import type { VideoRef } from "./canonicalise.js";
 export interface VideoMeta {
   title: string;
   author: string | null;
+  /** oEmbed's cover image, or `null` when it gave nothing usable. */
+  thumbnailUrl: string | null;
 }
 
 /** The video is private, removed, or never existed. A 404 for the caller. */
@@ -36,7 +38,24 @@ const oembedSchema = v.object({
   // `nullish`, not `optional`: a `null` author_name in an otherwise valid
   // 200 must not fail the whole schema and turn into a 502.
   author_name: v.nullish(v.pipe(v.string(), v.trim())),
+  // `unknown`, narrowed by `httpsUrlOrNull` below rather than validated
+  // here, for the same reason: a malformed thumbnail is not worth a 502.
+  thumbnail_url: v.optional(v.unknown()),
 });
+
+/**
+ * Handed straight to the client to load, so anything that is not an https
+ * url is dropped rather than forwarded.
+ */
+function httpsUrlOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  try {
+    return new URL(value).protocol === "https:" ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Promise<VideoMeta> {
   const url = `${ENDPOINTS[ref.provider]}?url=${encodeURIComponent(ref.pageUrl)}&format=json`;
@@ -69,5 +88,6 @@ export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Pr
   return {
     title: parsed.output.title,
     author: parsed.output.author_name || null,
+    thumbnailUrl: httpsUrlOrNull(parsed.output.thumbnail_url),
   };
 }

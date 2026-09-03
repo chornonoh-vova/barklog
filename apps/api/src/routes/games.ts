@@ -233,6 +233,9 @@ export function gamesRoutes(deps: AppDeps) {
           videoId: ref.videoId,
           title: meta.title,
           author: meta.author,
+          // `?? null`: `withCache` casts rather than validates, so a cache
+          // entry written before this field existed arrives without it.
+          thumbnailUrl: meta.thumbnailUrl ?? null,
         },
         identified,
         guesses,

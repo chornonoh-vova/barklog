@@ -21,17 +21,19 @@ const json = (body: unknown, status = 200) =>
     headers: { "content-type": "application/json" },
   });
 
-it("asks YouTube's endpoint about the page URL and returns title and author", async () => {
+it("asks YouTube's endpoint about the page URL and returns title, author and thumbnail", async () => {
   const fetchImpl = vi.fn(async () =>
     json({
       title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
       author_name: "Snamwiches",
+      thumbnail_url: "https://i.ytimg.com/vi/1vs0lLIRt7w/hqdefault.jpg",
     }),
   ) as unknown as typeof fetch;
 
   expect(await fetchVideoMeta(YOUTUBE, fetchImpl)).toEqual({
     title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
     author: "Snamwiches",
+    thumbnailUrl: "https://i.ytimg.com/vi/1vs0lLIRt7w/hqdefault.jpg",
   });
 
   const [calledUrl] = vi.mocked(fetchImpl).mock.calls[0] ?? [];
@@ -48,6 +50,7 @@ it("asks TikTok's endpoint, and tolerates a missing author", async () => {
   expect(await fetchVideoMeta(TIKTOK, fetchImpl)).toEqual({
     title: "beating this boss #residentevil",
     author: null,
+    thumbnailUrl: null,
   });
   expect(String(vi.mocked(fetchImpl).mock.calls[0]?.[0])).toContain("tiktok.com/oembed");
 });
@@ -60,6 +63,7 @@ it("tolerates a null author_name, not just a missing one", async () => {
   expect(await fetchVideoMeta(TIKTOK, fetchImpl)).toEqual({
     title: "beating this boss #residentevil",
     author: null,
+    thumbnailUrl: null,
   });
 });
 
@@ -85,4 +89,44 @@ it("rejects an empty title, which TikTok returns for a removed video", async () 
   const fetchImpl = vi.fn(async () => json({ title: "   " })) as unknown as typeof fetch;
 
   await expect(fetchVideoMeta(TIKTOK, fetchImpl)).rejects.toThrow(VideoMetaUnavailable);
+});
+
+it("drops a non-string thumbnail_url instead of failing the parse", async () => {
+  const fetchImpl = vi.fn(async () =>
+    json({ title: "beating this boss #residentevil", thumbnail_url: { url: "nope" } }),
+  ) as unknown as typeof fetch;
+
+  expect(await fetchVideoMeta(TIKTOK, fetchImpl)).toEqual({
+    title: "beating this boss #residentevil",
+    author: null,
+    thumbnailUrl: null,
+  });
+});
+
+it("drops an unparseable thumbnail_url instead of failing the parse", async () => {
+  const fetchImpl = vi.fn(async () =>
+    json({ title: "beating this boss #residentevil", thumbnail_url: "not a url" }),
+  ) as unknown as typeof fetch;
+
+  expect(await fetchVideoMeta(TIKTOK, fetchImpl)).toEqual({
+    title: "beating this boss #residentevil",
+    author: null,
+    thumbnailUrl: null,
+  });
+});
+
+it("drops a non-https thumbnail_url, which is handed to the client to load", async () => {
+  const fetchImpl = vi.fn(async () =>
+    json({
+      title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
+      author_name: "Snamwiches",
+      thumbnail_url: "http://i.ytimg.com/vi/1vs0lLIRt7w/hqdefault.jpg",
+    }),
+  ) as unknown as typeof fetch;
+
+  expect(await fetchVideoMeta(YOUTUBE, fetchImpl)).toEqual({
+    title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
+    author: "Snamwiches",
+    thumbnailUrl: null,
+  });
 });
