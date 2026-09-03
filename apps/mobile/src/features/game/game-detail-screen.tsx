@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { FlatList, PlatformColor, ScrollView, StyleSheet, View } from "react-native";
+import { FlatList, PlatformColor, ScrollView, StyleSheet, View, Text } from "react-native";
 
 import {
   useBacklogStats,
@@ -18,6 +18,7 @@ import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { SimilarGames } from "@/features/game/similar-games";
 import { screenshotUrl } from "@/igdb-image";
+import { Type } from "@/theme";
 
 const SHOT_WIDTH = 280;
 
@@ -31,6 +32,10 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const premium = usePremium();
   const stats = useBacklogStats();
   const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
+
+  const screenshotsHeader = (
+    <Text style={styles.title}>Screenshots</Text>
+  );
 
   return (
     <>
@@ -75,6 +80,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
                 data={data.screenshots}
                 keyExtractor={(imageId) => imageId}
                 showsHorizontalScrollIndicator={false}
+                ListHeaderComponent={screenshotsHeader}
                 renderItem={({ item }) => (
                   <View style={styles.shot}>
                     <Image
@@ -103,6 +109,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
   shots: { marginBottom: 24 },
   shotsContent: { paddingHorizontal: 16, gap: 12 },
   shot: {

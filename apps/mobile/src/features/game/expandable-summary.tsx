@@ -10,6 +10,7 @@ export function ExpandableSummary({ summary }: { summary: string }) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Summary</Text>
       <Text style={styles.text} numberOfLines={expanded ? undefined : COLLAPSED_LINES}>
         {summary}
       </Text>
@@ -22,6 +23,7 @@ export function ExpandableSummary({ summary }: { summary: string }) {
 
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingVertical: 16, gap: 4 },
+  title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
   text: { ...Type.body, color: PlatformColor("label") },
   more: { ...Type.footnote, fontWeight: "700", color: PlatformColor("link") },
 });
