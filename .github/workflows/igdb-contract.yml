@@ -18,7 +18,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @repo/igdb build
+      # turbo, not `pnpm --filter ... build`: the contract test imports
+      # @repo/cache, which resolves through that package's built dist.
+      # `pnpm --filter` builds igdb alone; turbo's `^build` pulls the
+      # workspace dependency in with it.
+      - run: pnpm turbo run build --filter=@repo/igdb
       - run: pnpm --filter @repo/igdb test:contract
         env:
           IGDB_CLIENT_ID: ${{ secrets.IGDB_CLIENT_ID }}
