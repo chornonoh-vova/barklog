@@ -1,11 +1,55 @@
 ---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
 /** Nine of the ten free slots drawn as taken, so the tenth reads as the last one. */
 const FILLED = 9;
 const FREE_SLOTS = 10;
 
-/** Enough slots to overflow the column at every breakpoint, so the row is
-    always cut off by the fade rather than ending. */
-const PREMIUM_SLOTS = 12;
+/* Real covers, not placeholder squares: the slots are what a backlog looks
+   like, so drawing them empty made the diagram abstract for no reason. The
+   files are committed under src/assets/covers rather than loaded from
+   images.igdb.com — the privacy policy promises this site makes no
+   third-party requests, and test/output.test.ts fails the build on one.
+   They came from a real backlog, at t_cover_big (264x352, the 3:4 the app
+   uses in theme.ts). Game data and cover art are IGDB's, credited below the
+   feature sections. */
+const covers = import.meta.glob<ImageMetadata>("../assets/covers/*.jpg", {
+  eager: true,
+  import: "default",
+});
+
+/* Explicit rather than Object.values(): glob order is the filesystem's, and
+   these read better grouped than alphabetised. */
+const ORDER = [
+  "kingdom-come-deliverance-ii",
+  "baldurs-gate-iii",
+  "clair-obscur-expedition-33",
+  "hollow-knight-silksong",
+  "death-stranding-2-on-the-beach",
+  "black-myth-wukong",
+  "ghost-of-yotei",
+  "nier-automata",
+  "indiana-jones-and-the-great-circle",
+  "resident-evil-requiem",
+  "stellar-blade",
+  "kena-bridge-of-spirits",
+  "death-stranding",
+  "pragmata",
+  "kingdom-come-deliverance",
+  "007-first-light",
+  "kena-scars-of-kosmora",
+];
+
+const ART = ORDER.map((slug) => covers[`../assets/covers/${slug}.jpg`]).filter(
+  (cover): cover is ImageMetadata => cover !== undefined,
+);
+
+const free = ART.slice(0, FILLED);
+
+/* Rotated past the free row's nine, so the premium row does not open on the
+   same covers in the same order and read as a repeat of the row above it. */
+const premium = [...ART.slice(FILLED), ...ART.slice(0, FILLED)];
 ---
 
 <section class="border-t border-rule bg-ground-raised py-20 md:py-28" data-reveal>
@@ -29,29 +73,45 @@ const PREMIUM_SLOTS = 12;
     </div>
 
     {/* The rule, drawn. Hidden from assistive tech because the paragraph beside
-        it already says the same thing in words. */}
+        it already says the same thing in words — which is also why every cover
+        below carries an empty alt rather than a game title. */}
     <div class="lg:col-span-5 lg:col-start-8" aria-hidden="true">
       <p class="font-display text-sm font-semibold text-ink">Free</p>
       <div class="mt-3 flex max-w-[18rem] flex-wrap gap-2.5">
         {
-          Array.from({ length: FREE_SLOTS }, (_, index) => (
-            <span
-              class:list={[
-                "h-[3.1rem] w-[3.1rem] rounded-[0.45rem] border",
-                index < FILLED
-                  ? "border-accent/70 bg-accent/30"
-                  : "border-dashed border-ink-muted/45",
-              ]}
+          free.map((cover) => (
+            <Image
+              class="h-[4.15rem] w-[3.1rem] rounded-[0.45rem] object-cover ring-1 ring-white/10"
+              src={cover}
+              alt=""
+              width={124}
+              height={166}
+              loading="lazy"
             />
+          ))
+        }
+        {/* The tenth. Dashed and empty, because it is the one still going spare. */}
+        {
+          Array.from({ length: FREE_SLOTS - FILLED }, () => (
+            <span class="h-[4.15rem] w-[3.1rem] rounded-[0.45rem] border border-dashed border-ink-muted/45" />
           ))
         }
       </div>
 
       <p class="mt-8 font-display text-sm font-semibold text-ink">Premium</p>
+      {/* Runs off the right edge rather than ending: the point is that there is
+          no last slot. */}
       <div class="fade-right mt-3 flex gap-2.5 overflow-hidden">
         {
-          Array.from({ length: PREMIUM_SLOTS }, () => (
-            <span class="h-[3.1rem] w-[3.1rem] shrink-0 rounded-[0.45rem] border border-accent/70 bg-accent/30" />
+          premium.map((cover) => (
+            <Image
+              class="h-[4.15rem] w-[3.1rem] shrink-0 rounded-[0.45rem] object-cover ring-1 ring-white/10"
+              src={cover}
+              alt=""
+              width={124}
+              height={166}
+              loading="lazy"
+            />
           ))
         }
       </div>

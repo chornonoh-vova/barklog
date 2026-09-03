@@ -68,3 +68,45 @@ test("no page requests a third-party origin", async () => {
     expect(external, `${path.relative(DIST, file)} loads a third-party resource`).toEqual([]);
   }
 });
+
+test("the icon set is built, and every path the head names resolves", async () => {
+  const html = await readFile(path.join(DIST, "index.html"), "utf8");
+
+  // Browsers and iOS request some of these by convention rather than by
+  // following the link, so a rename breaks them with nothing to notice it.
+  const referenced = [...html.matchAll(/<link[^>]*\shref="(\/[^"]+\.(?:ico|png|webmanifest))"/g)]
+    .map((match) => match[1])
+    .filter((href): href is string => href !== undefined);
+
+  expect(referenced).toEqual(
+    expect.arrayContaining([
+      "/favicon.ico",
+      "/favicon-32.png",
+      "/favicon-16.png",
+      "/apple-touch-icon.png",
+      "/site.webmanifest",
+    ]),
+  );
+
+  for (const href of referenced) {
+    await expect(
+      readFile(path.join(DIST, href.slice(1))),
+      `${href} is linked from <head> but missing from the build`,
+    ).resolves.toBeDefined();
+  }
+});
+
+test("the web manifest is valid and its icons exist", async () => {
+  const manifest = JSON.parse(await readFile(path.join(DIST, "site.webmanifest"), "utf8")) as {
+    icons: { src: string }[];
+  };
+
+  expect(manifest.icons.length).toBeGreaterThan(0);
+
+  for (const icon of manifest.icons) {
+    await expect(
+      readFile(path.join(DIST, icon.src.slice(1))),
+      `${icon.src} is named in site.webmanifest but missing from the build`,
+    ).resolves.toBeDefined();
+  }
+});

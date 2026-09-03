@@ -30,6 +30,22 @@ const { title, description, preloadFonts = true, canonical = true, motion = fals
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />}
+
+    {/* Generated from the app's own icon (apps/mobile/assets/icon/icon.png),
+        so a bookmark or a home-screen tile shows the same thing as the App
+        Store listing. They live in public/ rather than going through
+        astro:assets because these paths have to stay stable — a browser asks
+        for /favicon.ico and an iOS home screen for /apple-touch-icon.png
+        without being told, so a content hash would break both. */}
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
+    {/* 180x180 and opaque, which is what iOS wants: it applies its own
+        rounding, so a pre-rounded or transparent tile comes out wrong. */}
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0b1a3c" />
+    <meta name="apple-mobile-web-app-title" content="Barklog" />
     {/* The latin subset only. Fontsource ships five, each behind a
         unicode-range, and preloading a subset this page's copy never triggers
         would be dead bytes plus a console warning. Imported rather than
