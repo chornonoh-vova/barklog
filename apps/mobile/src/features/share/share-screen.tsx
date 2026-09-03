@@ -1,6 +1,6 @@
 import type { GameSummaryWire } from "@repo/contracts";
 import { useCallback } from "react";
-import { FlatList, PlatformColor, StyleSheet, Text, View } from "react-native";
+import { FlatList } from "react-native";
 
 import { useIdentifyShare } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
@@ -8,8 +8,9 @@ import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
-import { NO_LINK, TITLE_MATCH_NOTICE, UNREADABLE, noMatch } from "@/features/share/empty-states";
-import { Screen, Type } from "@/theme";
+import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { ShareHeader } from "@/features/share/share-header";
+import { Screen } from "@/theme";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
@@ -63,39 +64,31 @@ export function ShareScreen({
 
   return (
     <QueryBoundary query={identify}>
-      {(data) =>
-        data.items.length === 0 ? (
-          <EmptyState
-            {...noMatch(data.identified, data.guesses)}
-            action={{ label: "Search Instead", onPress: onSearch }}
-          />
-        ) : (
-          <FlatList
-            style={Screen.fill}
-            data={data.items}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            // Keeps the first row out from under the header.
-            contentInsetAdjustmentBehavior="automatic"
-            ListHeaderComponent={
-              <View style={styles.header}>
-                <Text style={styles.question}>Which game is this?</Text>
-                <Text style={styles.source} numberOfLines={2}>
-                  {data.source.title}
-                </Text>
-                {data.identified ? null : <Text style={styles.notice}>{TITLE_MATCH_NOTICE}</Text>}
-              </View>
-            }
-          />
-        )
-      }
+      {(data) => (
+        <FlatList
+          style={Screen.fill}
+          // Without `flexGrow: 1` the empty component is cloned into the
+          // content container with no height and gets clipped — see
+          // `theme.ts`. `backlog-screen.tsx` carries a header and an empty
+          // component the same way.
+          contentContainerStyle={Screen.listContent}
+          data={data.items}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          // Keeps the first row out from under the header, and lets the
+          // large title collapse on scroll.
+          contentInsetAdjustmentBehavior="automatic"
+          ListHeaderComponent={
+            <ShareHeader source={data.source} identified={data.identified} />
+          }
+          ListEmptyComponent={
+            <EmptyState
+              {...noMatch(data.identified, data.guesses)}
+              action={{ label: "Search Instead", onPress: onSearch }}
+            />
+          }
+        />
+      )}
     </QueryBoundary>
   );
 }
-
-const styles = StyleSheet.create({
-  header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 2 },
-  question: { ...Type.headline, color: PlatformColor("label") },
-  source: { ...Type.subheadline, color: PlatformColor("secondaryLabel") },
-  notice: { ...Type.footnote, color: PlatformColor("secondaryLabel"), paddingTop: 4 },
-});
