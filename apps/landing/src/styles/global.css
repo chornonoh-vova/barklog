@@ -41,16 +41,6 @@
   --font-body: "Source Serif 4", ui-serif, Georgia, serif;
 }
 
-/* The pre-animation state for src/scripts/reveal.ts. Guarded behind
-   no-preference so a reduced-motion visitor never depends on JavaScript
-   having run in order to see the page — the hidden state simply never
-   applies for them. */
-@media (prefers-reduced-motion: no-preference) {
-  [data-reveal] {
-    opacity: 0;
-  }
-}
-
 @layer base {
   :root {
     color-scheme: dark;

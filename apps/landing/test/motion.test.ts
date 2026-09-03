@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "vitest";
 
@@ -10,15 +10,11 @@ test("the reveal script is bundled, not inline", async () => {
   expect(html).toMatch(/<script type="module" src="\/_astro\/[^"]+\.js"><\/script>/);
 });
 
-test("the bundle honours prefers-reduced-motion", async () => {
-  const assets = await readdir(path.join(DIST, "_astro"));
-  const scripts = assets.filter((name) => name.endsWith(".js"));
-  const sources = await Promise.all(
-    scripts.map((name) => readFile(path.join(DIST, "_astro", name), "utf8")),
-  );
-
-  expect(sources.some((source) => source.includes("prefers-reduced-motion"))).toBe(true);
-});
+// What used to live here — grepping a built bundle for the substring
+// "prefers-reduced-motion" — asserts nothing: it would still pass if the
+// value were computed and never used, which is exactly the bug that shipped.
+// test/reveal.test.ts exercises the script's actual behaviour instead: what
+// gets hidden, what's left alone, and that reduced motion is a true no-op.
 
 test("the legal pages still ship no script", async () => {
   for (const route of ["terms", "privacy"]) {
