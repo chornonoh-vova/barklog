@@ -44,7 +44,7 @@ function headerValue(text: string, name: string): string {
   const match = stripComments(text).match(re);
 
   expect(match, `no add_header for ${name}`).not.toBeNull();
-  return match![1];
+  return match![1]!;
 }
 
 /**

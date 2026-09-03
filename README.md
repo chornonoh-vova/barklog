@@ -12,6 +12,7 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 | `apps/mobile`                | Expo (SDK 57) app — expo-router native tabs, React Native lists with @expo/ui SwiftUI controls |
 | `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`                                          |
 | `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)                                    |
+| `apps/landing`               | Astro static marketing site + legal pages, served by nginx at `barklog.gg`                      |
 | `packages/db`                | Drizzle schema, migrations, connection factory                                                 |
 | `packages/cache`             | Fail-open Valkey wrapper                                                                       |
 | `packages/contracts`         | shared valibot request schemas, the backlog status union, and the shared HTTP wire contract    |
@@ -152,31 +153,35 @@ the same range. Every write is an upsert, which makes replaying a range safe.
 ## Deployment
 
 Pushing to `main` runs `.github/workflows/images.yml`, which verifies the
-workspace (`build`, `lint`, `check-types`, `test`) and then publishes three
+workspace (`build`, `lint`, `check-types`, `test`) and then publishes four
 images to the GitHub Container Registry:
 
 ```
 ghcr.io/chornonoh-vova/barklog-api
 ghcr.io/chornonoh-vova/barklog-worker
 ghcr.io/chornonoh-vova/barklog-migrate
+ghcr.io/chornonoh-vova/barklog-landing
 ```
 
-Each is tagged `main`, `sha-<short>`, and `latest`. All three come from the
-same root `Dockerfile` — `docker build --target api|worker|migrate .` — built
-from a single `turbo prune`d workspace: one `turbo prune` emits a subset
+Each is tagged `main`, `sha-<short>`, and `latest`. The first three come from
+the same root `Dockerfile` — `docker build --target api|worker|migrate .` —
+built from a single `turbo prune`d workspace: one `turbo prune` emits a subset
 lockfile and manifests, which two separate installs then consume (a full
 install for the build, a `--prod` install for the runtime image), so
-`apps/mobile`'s Expo dependencies never enter either one.
+`apps/mobile`'s Expo dependencies never enter either one. `landing` is built
+separately, from `apps/landing/Dockerfile`, published last so a failure there
+leaves the site at the previous commit rather than blocking the other three.
 
 Nothing deploys automatically. `compose.yaml` describes the VPS stack and
-Dokploy pulls when you press Deploy. That stack is the API, the worker, and
-Valkey; Postgres is external and lives on PlanetScale. Only the API is
-reachable from outside — the file publishes no host ports at all, and
-`api.barklog.gg` is attached to the `api` service in Dokploy's Domains tab,
-which injects the Traefik labels and provisions the certificate. That is only
-true of the public internet: `api` also joins the shared `dokploy-network`, so
-any other container Dokploy puts on that network can reach `api:3000`
-directly, and vice versa.
+Dokploy pulls when you press Deploy. That stack is the API, the worker, the
+landing site, and Valkey; Postgres is external and lives on PlanetScale. The
+API and the landing site are the only services reachable from outside — the
+file publishes no host ports at all, and `api.barklog.gg` and `barklog.gg` are
+attached to the `api` and `landing` services respectively in Dokploy's Domains
+tab, which injects the Traefik labels and provisions each certificate. That is
+only true of the public internet: `api` also joins the shared
+`dokploy-network`, so any other container Dokploy puts on that network can
+reach `api:3000` directly, and vice versa.
 
 Migrations run as a one-shot `migrate` service that both apps wait on with
 `service_completed_successfully`, so a failed migration blocks the deploy
@@ -231,6 +236,27 @@ against the deployed image, to populate it immediately:
 
 ```sh
 docker compose run --rm --no-deps worker node apps/worker/dist/cli.js --full
+```
+
+### Landing site
+
+`apps/landing` builds to static files served by nginx. `barklog.gg` is attached
+to the `landing` service in Dokploy's Domains tab, the same way
+`api.barklog.gg` is attached to `api`.
+
+It has its own `Dockerfile` rather than a target in the root one: that file
+builds three Node runtime images from a shared install, and this chain shares
+only the base stage.
+
+Two constraints are load-bearing and have tests behind them. `astro.config.mjs`
+sets `build.inlineStylesheets: "never"`, without which Astro inlines small
+stylesheets and forces `style-src 'unsafe-inline'`. And every nginx `location`
+block includes `snippets/security-headers.conf` explicitly, because
+`add_header` does not inherit into a block that declares its own.
+
+```sh
+pnpm --filter landing dev     # http://localhost:4321
+pnpm --filter landing build
 ```
 
 ## Testing

@@ -111,6 +111,25 @@ services:
     # No healthcheck: the worker runs a cron schedule and serves nothing to
     # probe. It relies on restart: unless-stopped.
 
+  landing:
+    image: ghcr.io/chornonoh-vova/barklog-landing:${IMAGE_TAG:-main}
+    pull_policy: always # see migrate's comment above
+    restart: unless-stopped
+    # No environment, and no depends_on: it is static files. It does not read
+    # the database, the cache, or anything else in this project, so a failed
+    # migration must not keep the marketing site down.
+    expose:
+      - "8080"
+    networks:
+      - default
+      - dokploy-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
   valkey:
     image: valkey/valkey:9-alpine
     restart: unless-stopped

@@ -127,3 +127,28 @@ jobs:
           cache-from: type=gha,scope=barklog
           cache-to: type=gha,scope=barklog,mode=max
           provenance: false
+
+      # Last in the sequence, and deliberately so: nothing depends on the
+      # landing image, so a failure here leaves the site at the previous
+      # commit — the harmless direction, unlike the migrate-first ordering
+      # reasoned about above.
+      - id: meta-landing
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/barklog-landing
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/landing/Dockerfile
+          target: landing
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-landing.outputs.tags }}
+          labels: ${{ steps.meta-landing.outputs.labels }}
+          cache-from: type=gha,scope=barklog
+          cache-to: type=gha,scope=barklog,mode=max
+          provenance: false
