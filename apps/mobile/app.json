@@ -7,12 +7,24 @@
     "icon": "./assets/icon/icon.png",
     "scheme": "barklog",
     "userInterfaceStyle": "automatic",
-    "platforms": ["ios"],
+    "platforms": [
+      "ios"
+    ],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
       "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
-      "associatedDomains": ["applinks:barklog.gg"]
+      "associatedDomains": [
+        "applinks:barklog.gg"
+      ],
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.gg.barklog.app",
+        ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "plugins": [
       "expo-router",
@@ -38,11 +50,42 @@
           }
         }
       ],
-      "@clerk/expo"
+      "@clerk/expo",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "expo-sharing-extension",
+                  "bundleIdentifier": "gg.barklog.app.expo-sharing-extension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.gg.barklog.app"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "ecbf8c87-dc5d-4811-8be3-e5cf0c781705"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ecbf8c87-dc5d-4811-8be3-e5cf0c781705"
+    },
+    "android": {}
   }
 }
