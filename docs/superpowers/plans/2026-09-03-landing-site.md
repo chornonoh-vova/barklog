@@ -658,7 +658,7 @@ import { CONTACT_EMAIL } from "../config";
     <li><strong>Anthropic</strong> — the video title and channel name described above.</li>
     <li><strong>PlanetScale</strong> — the database your backlog lives in.</li>
     <li><strong>IGDB and Twitch</strong> — game data. They receive nothing about you.</li>
-    <li><strong>Hetzner</strong> — the server the API and this site run on.</li>
+    <li><strong>Hostinger</strong> — the server the API and this site run on.</li>
   </ul>
   <p>
     Nobody's data is sold, and nobody gets it for advertising.
