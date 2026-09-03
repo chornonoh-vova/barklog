@@ -45,3 +45,10 @@ test("a malformed nested row is rejected, naming the path", () => {
 test("a non-integer id is rejected", () => {
   expect(v.safeParse(igdbGameSchema, { ...MINIMAL, id: 1.5 }).success).toBe(false);
 });
+
+test("themes parse as a bare id array", () => {
+  expect(v.parse(igdbGameSchema, { ...MINIMAL, themes: [1, 42] })).toEqual({
+    ...MINIMAL,
+    themes: [1, 42],
+  });
+});

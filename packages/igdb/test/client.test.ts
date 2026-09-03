@@ -1,7 +1,7 @@
 import { expect, test, vi } from "vitest";
 
-import { createIgdbClient } from "../src/client.js";
-import { gamesPageQuery } from "../src/games-query.js";
+import { createIgdbClient, PAGE_SIZE } from "../src/client.js";
+import { eroticGameIdsQuery, gamesPageQuery } from "../src/games-query.js";
 import { createThrottle } from "../src/throttle.js";
 
 const tokens = { get: async () => "tok_abc" };
@@ -99,4 +99,21 @@ test("the incremental query filters on updated_at in unix seconds", () => {
 
 test("keyset paging sorts by id so pages cannot overlap or skip", () => {
   expect(gamesPageQuery({ since: null, afterId: 0, limit: 500 })).toContain("sort id asc;");
+});
+
+test("eroticGameIds posts the sweep query to the games endpoint", async () => {
+  const fetchImpl = vi.fn(async () => jsonResponse([{ id: 123467 }, { id: 286990 }]));
+  const client = createIgdbClient({
+    clientId: "cid",
+    tokens,
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+    throttle: fastThrottle,
+  });
+
+  const rows = await client.eroticGameIds({ afterId: 0 });
+
+  const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+  expect(url).toBe("https://api.igdb.com/v4/games");
+  expect(init.body).toBe(eroticGameIdsQuery({ afterId: 0, limit: PAGE_SIZE }));
+  expect(rows).toEqual([{ id: 123467 }, { id: 286990 }]);
 });

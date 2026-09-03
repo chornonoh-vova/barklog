@@ -1,4 +1,4 @@
-import { gamesPageQuery } from "./games-query.js";
+import { eroticGameIdsQuery, gamesPageQuery } from "./games-query.js";
 import { createThrottle } from "./throttle.js";
 import type { TokenSource } from "./token.js";
 
@@ -8,6 +8,7 @@ export const PAGE_SIZE = 500;
 
 export interface IgdbClient {
   gamesPage(options: { since: Date | null; afterId: number }): Promise<unknown[]>;
+  eroticGameIds(options: { afterId: number }): Promise<unknown[]>;
 }
 
 export interface IgdbClientOptions {
@@ -59,5 +60,6 @@ export function createIgdbClient(options: IgdbClientOptions): IgdbClient {
 
   return {
     gamesPage: (o) => request("games", gamesPageQuery({ ...o, limit: PAGE_SIZE })),
+    eroticGameIds: (o) => request("games", eroticGameIdsQuery({ ...o, limit: PAGE_SIZE })),
   };
 }

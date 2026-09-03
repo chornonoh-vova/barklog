@@ -1,6 +1,7 @@
 import * as v from "valibot";
 
-import { igdbGameSchema } from "./schemas.js";
+import { EROTIC_THEME_ID } from "./erotic-theme.js";
+import { igdbGameIdSchema, igdbGameSchema } from "./schemas.js";
 
 export interface MappedPage {
   gameTypes: { id: number; name: string }[];
@@ -78,8 +79,10 @@ export function mapGames(raw: unknown[]): MappedPage {
       igdbUpdatedAt: seconds(game.updated_at),
     });
 
-    for (const shot of game.screenshots ?? []) {
-      page.screenshots.push({ gameId: game.id, imageId: shot.image_id });
+    if (!game.themes?.includes(EROTIC_THEME_ID)) {
+      for (const shot of game.screenshots ?? []) {
+        page.screenshots.push({ gameId: game.id, imageId: shot.image_id });
+      }
     }
 
     for (const similarId of game.similar_games ?? []) {
@@ -129,4 +132,9 @@ export function mapGames(raw: unknown[]): MappedPage {
   page.gameCompanies = [...gameCompanies.values()];
 
   return page;
+}
+
+/** The sweep's pages: `fields id;` rows, validated rather than cast. */
+export function mapGameIds(raw: unknown[]): number[] {
+  return raw.map((row) => v.parse(igdbGameIdSchema, row).id);
 }

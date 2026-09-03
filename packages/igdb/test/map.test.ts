@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 
-import { mapGames } from "../src/map.js";
+import * as v from "valibot";
+
+import { mapGameIds, mapGames } from "../src/map.js";
 
 const FULL_GAME = {
   id: 1942,
@@ -138,4 +140,61 @@ test("an absent similar_games field yields no rows", () => {
   const page = mapGames([{ id: 7, name: "Minimal", slug: "minimal", updated_at: 1700000000 }]);
 
   expect(page.gameSimilar).toEqual([]);
+});
+
+test("an erotic-tagged game contributes no screenshots", () => {
+  const page = mapGames([{ ...FULL_GAME, themes: [42] }]);
+
+  expect(page.screenshots).toEqual([]);
+});
+
+test("an erotic tag alongside other themes still drops the screenshots", () => {
+  const page = mapGames([{ ...FULL_GAME, themes: [1, 42, 17] }]);
+
+  expect(page.screenshots).toEqual([]);
+});
+
+test("an erotic-tagged game keeps its row, cover and summary", () => {
+  const page = mapGames([{ ...FULL_GAME, themes: [42] }]);
+
+  expect(page.games[0]).toMatchObject({
+    id: 1942,
+    name: "The Witcher 3: Wild Hunt",
+    summary: "A story-driven open world RPG.",
+    coverImageId: "co1wyy",
+  });
+  expect(page.gameGenres).toEqual([{ gameId: 1942, genreId: 12 }]);
+});
+
+test("themes other than erotic leave the screenshots alone", () => {
+  const page = mapGames([{ ...FULL_GAME, themes: [1, 17] }]);
+
+  expect(page.screenshots).toEqual([{ gameId: 1942, imageId: "sc6l7z" }]);
+});
+
+test("a game with no themes field keeps its screenshots", () => {
+  const page = mapGames([FULL_GAME]);
+
+  expect(page.screenshots).toEqual([{ gameId: 1942, imageId: "sc6l7z" }]);
+});
+
+test("one game's erotic tag does not suppress another game's screenshots", () => {
+  const page = mapGames([
+    { ...FULL_GAME, themes: [42] },
+    { ...FULL_GAME, id: 1943, slug: "clean", screenshots: [{ id: 11, image_id: "scclean" }] },
+  ]);
+
+  expect(page.screenshots).toEqual([{ gameId: 1943, imageId: "scclean" }]);
+});
+
+test("the sweep's id rows map to bare ids", () => {
+  expect(mapGameIds([{ id: 123467 }, { id: 286990 }])).toEqual([123467, 286990]);
+});
+
+test("an empty sweep page maps to no ids", () => {
+  expect(mapGameIds([])).toEqual([]);
+});
+
+test("a malformed sweep row is rejected loudly rather than silently dropped", () => {
+  expect(() => mapGameIds([{ id: "not-a-number" }])).toThrow(v.ValiError);
 });

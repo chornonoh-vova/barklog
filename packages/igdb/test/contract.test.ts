@@ -3,6 +3,7 @@ import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
 import { createIgdbClient } from "../src/client.js";
+import { mapGameIds } from "../src/map.js";
 import { igdbGameSchema } from "../src/schemas.js";
 import { createTokenSource } from "../src/token.js";
 
@@ -38,5 +39,17 @@ describe.runIf(clientId && clientSecret)("IGDB contract", () => {
     );
 
     expect(types.size).toBeGreaterThan(0);
+  });
+
+  /**
+   * A silent no-op is the failure mode that matters here: if the theme id or the
+   * `where` syntax ever stopped matching, the sweep would keep succeeding while
+   * cleaning nothing.
+   */
+  test("the erotic sweep still matches games", async () => {
+    const rows = await client.eroticGameIds({ afterId: 0 });
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(mapGameIds(rows).every((id) => Number.isInteger(id))).toBe(true);
   });
 });

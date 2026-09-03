@@ -2,6 +2,8 @@
  * Non-deprecated fields only — never add `category` or `status` back. The
  * nightly contract test fails the build if IGDB rejects anything here.
  */
+import { EROTIC_THEME_ID } from "./erotic-theme.js";
+
 export const GAME_FIELDS = [
   "id",
   "name",
@@ -13,6 +15,7 @@ export const GAME_FIELDS = [
   "total_rating_count",
   "parent_game",
   "similar_games",
+  "themes",
   "game_type.id",
   "game_type.type",
   "cover.image_id",
@@ -44,4 +47,23 @@ export function gamesPageQuery(options: GamesPageQueryOptions): string {
       : `where updated_at > ${Math.floor(options.since.getTime() / 1000)} & id > ${options.afterId};`;
 
   return [`fields ${GAME_FIELDS};`, where, "sort id asc;", `limit ${options.limit};`].join("\n");
+}
+
+export interface EroticGameIdsQueryOptions {
+  afterId: number;
+  limit: number;
+}
+
+/**
+ * Every erotic-tagged game, not just the ones IGDB still lists screenshots for:
+ * narrowing on `screenshots != null` would skip a game whose screenshot IGDB has
+ * already removed, stranding our mirrored copy of it forever.
+ */
+export function eroticGameIdsQuery(options: EroticGameIdsQueryOptions): string {
+  return [
+    "fields id;",
+    `where themes = (${EROTIC_THEME_ID}) & id > ${options.afterId};`,
+    "sort id asc;",
+    `limit ${options.limit};`,
+  ].join("\n");
 }

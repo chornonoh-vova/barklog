@@ -13,6 +13,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type pg from "pg";
 
 import { persistPage } from "./persist.js";
+import { sweepEroticScreenshots } from "./sweep.js";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -24,7 +25,10 @@ export interface SyncDeps {
   db: Db;
   pool: pg.Pool;
   cache: { incr(key: string): Promise<number | null> };
-  igdb: { gamesPage(options: { since: Date | null; afterId: number }): Promise<unknown[]> };
+  igdb: {
+    gamesPage(options: { since: Date | null; afterId: number }): Promise<unknown[]>;
+    eroticGameIds(options: { afterId: number }): Promise<unknown[]>;
+  };
 }
 
 export type SyncResult =
@@ -80,6 +84,10 @@ export async function syncAll(
         log.debug("Page {page}: {games} games.", { page: counts.pages, games: page.games.length });
         if (raw.length < PAGE_SIZE) break;
       }
+
+      // After the pages, and inside the try: a sweep that fails must fail the
+      // run rather than leave screenshots served with a success recorded.
+      counts.eroticScreenshotsRemoved = await sweepEroticScreenshots(deps);
 
       // `since` is the stored watermark minus the overlap; add it back, or the
       // watermark drifts backwards on every empty run.

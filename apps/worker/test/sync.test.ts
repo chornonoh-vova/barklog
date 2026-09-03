@@ -19,14 +19,20 @@ function game(id: number, updatedAt: number) {
   };
 }
 
-function stubIgdb(pages: unknown[][]) {
+function stubIgdb(pages: unknown[][], eroticIds: number[] = []) {
   const calls: { since: Date | null; afterId: number }[] = [];
   let index = 0;
+  let sweptOnce = false;
   return {
     calls,
     gamesPage: async (options: { since: Date | null; afterId: number }) => {
       calls.push(options);
       return pages[index++] ?? [];
+    },
+    eroticGameIds: async () => {
+      if (sweptOnce) return [];
+      sweptOnce = true;
+      return eroticIds.map((id) => ({ id }));
     },
   };
 }
@@ -114,6 +120,7 @@ test("a failing page marks the run failed and leaves the watermark alone", async
     gamesPage: vi.fn(async () => {
       throw new Error("IGDB returned 503");
     }),
+    eroticGameIds: async () => [],
   };
   const result = await syncAll({ db, pool, cache: stubCache(), igdb: broken });
 
@@ -133,6 +140,7 @@ test("a failed run does not bump search:ver", async () => {
     gamesPage: async () => {
       throw new Error("boom");
     },
+    eroticGameIds: async () => [],
   };
 
   await syncAll({ db, pool, cache, igdb: broken });
@@ -191,4 +199,69 @@ test("every line written during a run carries that run's id", async () => {
   expect(logs.records.length).toBeGreaterThan(0);
 
   await resetLogging();
+});
+
+test("a game IGDB re-tagged as erotic loses the screenshots an earlier run stored", async () => {
+  const withShots = {
+    ...game(700, 1755000000),
+    screenshots: [{ id: 10, image_id: "scdirty" }],
+  };
+
+  // Clean when the page was ingested, erotic by the time the sweep asks.
+  const result = await syncAll({
+    db,
+    pool,
+    cache: stubCache(),
+    igdb: stubIgdb([[withShots]], [700]),
+  });
+
+  expect(result).toMatchObject({ status: "success" });
+  expect(await db.select().from(schema.gameScreenshots)).toEqual([]);
+  expect(await db.select().from(schema.games)).toHaveLength(1);
+});
+
+test("the run records how many erotic screenshots the sweep removed", async () => {
+  const withShots = {
+    ...game(700, 1755000000),
+    screenshots: [{ id: 10, image_id: "scdirty" }],
+  };
+
+  const result = await syncAll({
+    db,
+    pool,
+    cache: stubCache(),
+    igdb: stubIgdb([[withShots]], [700]),
+  });
+
+  expect(result).toMatchObject({ counts: { eroticScreenshotsRemoved: 1 } });
+
+  const runs = await db.query.syncRuns.findMany();
+  expect(runs[0]!.counts).toMatchObject({ eroticScreenshotsRemoved: 1 });
+});
+
+test("a failing sweep fails the run rather than reporting success", async () => {
+  const igdb = {
+    gamesPage: async () => [game(1, 1755000000)],
+    eroticGameIds: async () => {
+      throw new Error("IGDB returned 503 during sweep");
+    },
+  };
+
+  const result = await syncAll({ db, pool, cache: stubCache(), igdb });
+
+  expect(result).toMatchObject({ status: "failed", error: expect.stringContaining("sweep") });
+});
+
+test("a failing sweep does not bump search:ver", async () => {
+  const cache = stubCache();
+  const igdb = {
+    gamesPage: async () => [game(1, 1755000000)],
+    eroticGameIds: async () => {
+      throw new Error("sweep exploded");
+    },
+  };
+
+  await syncAll({ db, pool, cache, igdb });
+
+  expect(cache.incremented).toEqual([]);
 });

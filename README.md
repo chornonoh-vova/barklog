@@ -581,7 +581,8 @@ src/
   env.ts      valibot-validated environment, parsed once at boot
   context.ts  wires db + cache + IGDB client into SyncDeps
   persist.ts  writes one IGDB page in a single transaction
-  sync.ts     syncAll() — advisory lock, watermark, page loop, bookkeeping
+  sweep.ts    clears mirrored screenshots for erotic-tagged games
+  sync.ts     syncAll() — advisory lock, watermark, page loop, sweep, bookkeeping
   cli.ts      one-shot run: `pnpm --filter worker sync [--full]`
   index.ts    node-cron scheduler (SYNC_CRON, SYNC_TZ)
 ```
@@ -589,3 +590,12 @@ src/
 The worker holds a Postgres advisory lock for the duration of a run, so a
 manual `sync` colliding with the nightly cron is skipped rather than run twice.
 Progress is recorded in the `sync_runs` table.
+
+Every run ends with a screenshot sweep. `mapGames` already drops screenshots for
+games carrying IGDB's "Erotic" theme, so they never reach Postgres — but the
+incremental loop only revisits games whose `updated_at` moved, which would leave
+a game IGDB re-tagged _after_ we synced it holding its screenshots forever. The
+sweep asks IGDB which games are erotic right now and deletes those rows, so the
+filter converges without a full resync. It touches `game_screenshots` and
+nothing else: games, covers, summaries and users' backlog entries all survive.
+A failed sweep fails the run, rather than recording success over served imagery.

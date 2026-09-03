@@ -173,3 +173,14 @@ test("a similar game IGDB dropped disappears on re-sync", async () => {
 
   expect(rows).toEqual([{ gameId: 1943, similarGameId: 1942 }]);
 });
+
+test("re-syncing a game that gained the erotic theme purges its stored screenshots", async () => {
+  await persistPage(db, mapGames(PAGE));
+  expect(await db.select().from(schema.gameScreenshots)).toHaveLength(1);
+
+  // IGDB still lists the screenshots; the theme is what suppresses them.
+  await persistPage(db, mapGames([{ ...PAGE[0]!, themes: [42] }]));
+
+  expect(await db.select().from(schema.gameScreenshots)).toHaveLength(0);
+  expect(await db.select().from(schema.games)).toHaveLength(2);
+});
