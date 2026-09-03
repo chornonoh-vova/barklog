@@ -41,7 +41,7 @@ export default function RootLayout() {
                     <Stack screenOptions={{ headerShown: false }}>
                       <Stack.Screen name="(tabs)" />
                       <Stack.Screen name="shared" options={{ presentation: "fullScreenModal" }} />
-                      <Stack.Screen name="paywall" options={{ presentation: "pageSheet" }} />
+                      <Stack.Screen name="paywall" options={{ presentation: "fullScreenModal" }} />
                     </Stack>
                   </AuthGate>
                 </OnboardingGate>
