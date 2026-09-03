@@ -19,8 +19,9 @@ import { CONTACT_EMAIL } from "../config";
     This site sets no cookies, runs no analytics, and makes no third-party requests: every font,
     style, and script it uses comes from your device or this server, never fetched from
     anywhere else. Nothing here tries to work out who you are. The web server keeps ordinary
-    access logs (IP address, page, timestamp) for a few weeks, to spot abuse; the API keeps the
-    same kind of logs, tagged with your account id where you're signed in, for the same reason.
+    access logs (IP address, page, timestamp) for a few weeks, to spot abuse. The API's request
+    logs don't carry your account id either — it only shows up in log lines about a specific
+    event, such as a failed subscription refresh or an account deletion.
   </p>
 
   <h2>What the app collects</h2>
