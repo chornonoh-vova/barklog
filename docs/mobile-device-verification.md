@@ -218,19 +218,21 @@ Boxes stay unticked here; the owner ticks them as each is verified.
 - [ ] **35. Signed-out cold install:** `AuthView` first, `/shared` after
       sign-in. The route is inside both gates, so a share must never show
       candidates to a signed-out user.
-- [ ] **36. The toolbar button dismisses the modal, and lands where its label
-      promises.** It reads "Home" with an `accessibilityLabel` of "Back to
-      home", so it should leave `/shared` and land on the **Home** tab. Reading
-      the router source says it may not: `dismissTo("/")` dispatches `POP_TO`,
+- [ ] **36. The toolbar button dismisses the modal, and lands where item 38
+      promises.** It is an icon-only `xmark` with an `accessibilityLabel` of
+      "Close", so the button itself no longer promises a destination — but the
+      destination question this item was written to settle is still open.
+      Reading the router source says `dismissTo("/")` dispatches `POP_TO`,
       which matches the root stack's `(tabs)` route **by name** and rebuilds it
       as `{ ...route, params }` — carrying the existing tab state across
       untouched — so a warm share should land back on whichever tab it
       interrupted. A cold share, where the tabs have no state yet, should
-      genuinely reach Home. Check both: start on Search, share a video, dismiss,
-      and note which tab you land on. **If it is Search rather than Home, the
-      button's two labels are wrong, not the behaviour** — tell the human before
-      changing anything, since they chose this affordance twice. Also confirm
-      the candidate list does not start underneath the header, which is what
+      genuinely reach Home. Check both: start on Search, share a video,
+      dismiss, and note which tab you land on. **If it is Search rather than
+      Home, it is item 38's claim that landing on Home is intended that is
+      wrong, not the behaviour** — tell the human before changing anything,
+      since they chose this affordance twice. Also confirm the candidate list
+      does not start underneath the header, which is what
       `contentInsetAdjustmentBehavior="automatic"` is for.
 - [ ] **37. Each of the four states renders.** Pending (a spinner, briefly);
       the candidate list; "No link in that share" for a photo or link-free text;
