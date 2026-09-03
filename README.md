@@ -510,28 +510,30 @@ src/
 ```
 
 Every route needs a valid Clerk session token. The only public routes are
-`/healthz`, `/readyz`, and `/webhooks/revenuecat` — which carries its own
-authentication instead — allowlisted by exact path in `PUBLIC_PATHS`.
+`/healthz`, `/readyz`, `/webhooks/revenuecat`, and `/webhooks/clerk` — the two
+webhooks each carrying their own authentication instead — allowlisted by exact
+path in `PUBLIC_PATHS`.
 
-| Route                                     | Notes                                                         |
-| ----------------------------------------- | ------------------------------------------------------------- |
-| `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars, `limit` ≤ 50, `offset` ≤ 200                   |
-| `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                                     |
-| `GET /api/games/upcoming?limit=`          | unreleased, soonest first                                     |
-| `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first                |
-| `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`                 |
-| `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12)  |
-| `POST /api/games/identify`                | `{url}`; YouTube or TikTok, returns ranked candidates         |
-| `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`                        |
-| `GET /api/backlog/stats`                  | counts per status plus average rating                         |
-| `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated             |
-| `DELETE /api/backlog/:gameId`             | `204`, or `404` if absent                                     |
-| `GET /api/me`                             | `{premium, entitlement}` for the caller                       |
-| `POST /api/subscription/refresh`          | re-reads RevenueCat directly, then answers like `GET /api/me` |
-| `GET /api/sync/status`                    | the last sync run                                             |
-| `POST /webhooks/revenuecat`               | public; authenticated by secret + HMAC, not a session token   |
-| `GET /healthz`                            | liveness, public, no I/O                                      |
-| `GET /readyz`                             | readiness, public, strict on Postgres and Valkey              |
+| Route                                     | Notes                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| `GET /api/games/search?q=&limit=&offset=` | `q` ≥ 2 chars, `limit` ≤ 50, `offset` ≤ 200                        |
+| `GET /api/games/popular?limit=`           | `limit` ≤ 50 (default 20)                                          |
+| `GET /api/games/upcoming?limit=`          | unreleased, soonest first                                          |
+| `GET /api/games/recent?limit=`            | released in the last 90 days, most rated first                     |
+| `GET /api/games/:id`                      | full details plus the caller's `backlogEntry`                      |
+| `GET /api/games/:id/similar?limit=`       | IGDB's `similar_games`, re-ranked; `limit` ≤ 50 (default 12)       |
+| `POST /api/games/identify`                | `{url}`; YouTube or TikTok, returns ranked candidates              |
+| `GET /api/backlog?status=&sort=`          | the caller's full list; `ETag` + `304`                             |
+| `GET /api/backlog/stats`                  | counts per status plus average rating                              |
+| `PUT /api/backlog/:gameId`                | `{status, rating?}`; `201` created, `200` updated                  |
+| `DELETE /api/backlog/:gameId`             | `204`, or `404` if absent                                          |
+| `GET /api/me`                             | `{premium, entitlement}` for the caller                            |
+| `POST /api/subscription/refresh`          | re-reads RevenueCat directly, then answers like `GET /api/me`      |
+| `GET /api/sync/status`                    | the last sync run                                                  |
+| `POST /webhooks/revenuecat`               | public; authenticated by secret + HMAC, not a session token        |
+| `POST /webhooks/clerk`                    | public; authenticated by `verifyClerkWebhook`, not a session token |
+| `GET /healthz`                            | liveness, public, no I/O                                           |
+| `GET /readyz`                             | readiness, public, strict on Postgres and Valkey                   |
 
 Every non-2xx response is `application/problem+json` (RFC 9457). Type slugs and
 titles come from `hono-problem-details`, so a 413 is `content-too-large` and a
