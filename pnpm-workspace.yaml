@@ -27,8 +27,16 @@ allowBuilds:
   # `pnpm install --frozen-lockfile` exit 1, which would fail CI.
   utf-8-validate: false
   bufferutil: false
+  # Tailwind 4's native engine and Astro's image pipeline. Both have native
+  # postinstall steps; leaving either undecided makes a fresh
+  # `pnpm install --frozen-lockfile` exit 1, which fails CI.
+  '@tailwindcss/oxide': true
+  sharp: true
 
 minimumReleaseAgeExclude:
   # expo-secure-store@57.0.2 was published within pnpm 11's default cooling-off
   # window, and it is the SDK-57-recommended version.
   - expo-secure-store@57.0.2
+  - framer-motion@13.2.0
+  - motion-dom@13.2.0
+  - motion@13.2.0

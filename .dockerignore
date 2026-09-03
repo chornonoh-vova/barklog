@@ -26,6 +26,8 @@ coverage
 **/coverage
 .expo
 **/.expo
+.astro
+**/.astro
 .superpowers
 
 # NOTE: apps/mobile is deliberately NOT excluded. `turbo prune` reads the whole

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Tailwind 4 has no config file — this block is the design system. The two
+   colours match the app: #0B1A3C is the splash background from app.json,
+   #208AEF is Brand.tint from apps/mobile/src/theme.ts. */
+@theme {
+  --color-ground: #0b1a3c;
+  --color-ground-raised: #12244d;
+  --color-ink: #f4f7fb;
+  --color-ink-muted: #9fb2d0;
+  --color-accent: #208aef;
+  --color-accent-bright: #4aa6ff;
+
+  --font-display: "Barklog Display", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Barklog Text", ui-sans-serif, system-ui, sans-serif;
+}
