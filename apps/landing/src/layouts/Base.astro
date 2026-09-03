@@ -9,9 +9,14 @@ interface Props {
   /** Off for pages that render in the system stack — a preload the page never
       uses is dead bytes plus a console warning, not a free head start. */
   preloadFonts?: boolean;
+  /** Off for pages with no [data-reveal] elements — shipping the reveal
+      script there would be dead bytes with nothing to observe. The legal
+      pages rely on this staying false: they ship zero JavaScript, and a test
+      asserts it. */
+  motion?: boolean;
 }
 
-const { title, description, preloadFonts = true } = Astro.props;
+const { title, description, preloadFonts = true, motion = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -37,5 +42,10 @@ const { title, description, preloadFonts = true } = Astro.props;
   </head>
   <body class="font-body antialiased">
     <slot />
+    {/* A bare <script> in an .astro file is bundled by Astro into an external
+        module, not inlined — test/output.test.ts's inline-script guard is
+        what confirms that, and it's the reason the legal pages can omit
+        script-src 'unsafe-inline' entirely in nginx's CSP. */}
+    {motion && <script>import "../scripts/reveal.ts";</script>}
   </body>
 </html>
