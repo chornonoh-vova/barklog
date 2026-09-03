@@ -33,10 +33,6 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const stats = useBacklogStats();
   const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
 
-  const screenshotsHeader = (
-    <Text style={styles.title}>Screenshots</Text>
-  );
-
   return (
     <>
       <Stack.Header transparent />
@@ -73,26 +69,28 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
             {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
 
             {data.screenshots.length === 0 ? null : (
-              <FlatList
-                horizontal
-                style={styles.shots}
-                contentContainerStyle={styles.shotsContent}
-                data={data.screenshots}
-                keyExtractor={(imageId) => imageId}
-                showsHorizontalScrollIndicator={false}
-                ListHeaderComponent={screenshotsHeader}
-                renderItem={({ item }) => (
-                  <View style={styles.shot}>
-                    <Image
-                      source={{ uri: screenshotUrl(item) }}
-                      style={StyleSheet.absoluteFill}
-                      contentFit="cover"
-                      transition={150}
-                      cachePolicy="disk"
-                    />
-                  </View>
-                )}
-              />
+              <View style={styles.shotsContainer}>
+                <Text style={styles.title}>Screenshots</Text>
+                <FlatList
+                  horizontal
+                  style={styles.shots}
+                  contentContainerStyle={styles.shotsContent}
+                  data={data.screenshots}
+                  keyExtractor={(imageId) => imageId}
+                  showsHorizontalScrollIndicator={false}
+                  renderItem={({ item }) => (
+                    <View style={styles.shot}>
+                      <Image
+                        source={{ uri: screenshotUrl(item) }}
+                        style={StyleSheet.absoluteFill}
+                        contentFit="cover"
+                        transition={150}
+                        cachePolicy="disk"
+                      />
+                    </View>
+                  )}
+                />
+              </View>
             )}
 
             <DetailRows game={data} />
@@ -110,6 +108,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
   title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
+  shotsContainer: { gap: 8 },
   shots: { marginBottom: 24 },
   shotsContent: { paddingHorizontal: 16, gap: 12 },
   shot: {

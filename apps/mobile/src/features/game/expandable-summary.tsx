@@ -22,8 +22,8 @@ export function ExpandableSummary({ summary }: { summary: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 16, paddingVertical: 16, gap: 4 },
-  title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
+  container: { paddingHorizontal: 16, paddingVertical: 16, gap: 8 },
+  title: { ...Type.headline, color: PlatformColor("label") },
   text: { ...Type.body, color: PlatformColor("label") },
   more: { ...Type.footnote, fontWeight: "700", color: PlatformColor("link") },
 });
