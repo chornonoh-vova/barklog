@@ -404,12 +404,12 @@ New checks under `## Share intent checks`, numbered 44 onward:
 
 ## 12. Consequences
 
-| Consequence                                                                 | Response                                                                                          |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| A TikTok signed url can expire inside the 7-day oEmbed TTL                  | The placeholder path in §6 catches it; it renders as a missing thumbnail does                     |
-| The `v2` key bump discards the existing oEmbed cache                        | One extra oEmbed call per video, once. The endpoint is cheap and unauthenticated                   |
-| A landscape or square TikTok is centre-cropped                              | Accepted in §2                                                                                    |
-| A 32pt-wide TikTok cover is small                                           | Accepted: equal height keeps the game results high on the screen, which matters more              |
-| The warning restates `noMatch` copy in the empty case                       | Accepted in §7                                                                                    |
-| Removing the left button removes the visible word "Home"                    | The close button carries `accessibilityLabel="Close"`; the destination is unchanged. Check 38     |
-| A large title on a modal root may not collapse as it does on a tab root     | Device check. `contentInsetAdjustmentBehavior="automatic"` is already in place                     |
+| Consequence                                                             | Response                                                                                                                                                                                           |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A TikTok signed url can expire inside the 7-day oEmbed TTL              | The placeholder path in §6 catches it; it renders as a missing thumbnail does. The expired url itself is what's cached, so every share of that video shows the placeholder for the rest of the TTL |
+| The `v2` key bump discards the existing oEmbed cache                    | One extra oEmbed call per video, once. The endpoint is cheap and unauthenticated                                                                                                                   |
+| A landscape or square TikTok is centre-cropped                          | Accepted in §2                                                                                                                                                                                     |
+| A 32pt-wide TikTok cover is small                                       | Accepted: equal height keeps the game results high on the screen, which matters more                                                                                                               |
+| The warning restates `noMatch` copy in the empty case                   | Accepted in §7                                                                                                                                                                                     |
+| Removing the left button removes the visible word "Home"                | The close button carries `accessibilityLabel="Close"`; the destination is unchanged. Check 38                                                                                                      |
+| A large title on a modal root may not collapse as it does on a tab root | Device check. `contentInsetAdjustmentBehavior="automatic"` is already in place                                                                                                                     |

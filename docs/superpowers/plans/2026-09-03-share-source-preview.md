@@ -18,7 +18,7 @@
 - **The API suite needs Docker running.** `apps/api/vitest.config.ts` uses `globalSetup: ["./test/setup/containers.ts"]`.
 - **Mobile tests are pure-Node only.** All 25 files in `apps/mobile/test/` avoid react-native in their module graph. No render harness exists; do not add one in this plan.
 - **Copy is fixed.** `TITLE_MATCH_NOTICE` in `apps/mobile/src/features/share/empty-states.ts` is unchanged — `apps/mobile/test/share-empty-states.test.ts` asserts on it.
-- **`SymbolView` takes no `style` and no accessibility props.** `expo-symbols`' `SymbolViewProps` is a plain object type — `name`, `size`, `tintColor`, `weight`, `scale`, `type`, `colors`, `resizeMode`, `fallback`, `animationSpec` — so it must be wrapped in a `View` to be positioned or hidden from VoiceOver.
+- **`SymbolView` does accept `style` and accessibility props.** `expo-symbols`' `SymbolViewProps` is `{ ... } & ViewProps` (`node_modules/expo-symbols/build/SymbolModule.types.d.ts:62`), so it inherits both from `ViewProps`. It is still wrapped in a `View` here because `accessibilityElementsHidden` hides the elements *contained within* a view, not the view itself — the correct way to silence a leaf glyph for VoiceOver.
 - **Fixed dimensions:** source thumbnail height is `56` for both providers; YouTube renders `100 x 56`, TikTok `32 x 56`.
 - **Branch:** `feat/share-source-preview`, already created, with the spec committed at `e45093c`.
 

@@ -269,10 +269,11 @@ Boxes stay unticked here; the owner ticks them as each is verified.
 - [ ] **45. A TikTok share shows a tall 32x56 cover.** Same row height as
       item 44; only the width differs.
 - [ ] **46. A video with no thumbnail shows the placeholder, not a broken
-      image.** A `play.rectangle.fill` glyph at the same dimensions, so the
-      row does not shift. This is also what an expired TikTok signed url must
-      degrade to, via `onError` — hard to force on demand, so if a TikTok
-      share ever shows an empty box rather than the glyph, that is the bug.
+      image.** A `play.rectangle.fill` glyph must appear at the same
+      dimensions the cover would have occupied, so the row does not shift.
+      This is also what an expired TikTok signed url must degrade to, via
+      `onError` — hard to force on demand, so if a TikTok share ever shows
+      no glyph where the cover should be, that is the bug.
       With VoiceOver on, neither the placeholder nor a loaded cover may be
       announced — the title beside it already carries that information, and
       both are marked `accessibilityElementsHidden`.

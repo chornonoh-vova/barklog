@@ -56,7 +56,11 @@ function SourceCover({ source }: { source: ShareSourceWire }) {
   const size = sourceThumbSize(source.provider);
 
   // The title beside it says everything the cover says, so VoiceOver skips it.
-  if (source.thumbnailUrl === null || failed) {
+  //
+  // `== null`, not `===`: `request` casts rather than validates, so a
+  // `thumbnailUrl` absent from an older, not-yet-deployed API build arrives
+  // as `undefined`, not `null`. Both must fall through to the placeholder.
+  if (source.thumbnailUrl == null || failed) {
     return (
       <View style={[styles.cover, styles.coverPlaceholder, size]} accessibilityElementsHidden>
         <SymbolView
@@ -91,12 +95,9 @@ function FallbackNotice() {
   return (
     <View style={styles.notice}>
       <View style={styles.noticeFill} />
-      {/* Wrapped in a `View` because `SymbolViewProps` is a plain object type
-          with no accessibility props of its own — putting
-          `accessibilityElementsHidden` on the `SymbolView` fails
-          `check-types`. The glyph restates the copy, so VoiceOver reads the
-          copy only: the same call `components/empty-state.tsx` makes for its
-          symbol. */}
+      {/* The glyph restates the copy, so VoiceOver reads the copy only — the same
+          call `components/empty-state.tsx` makes for its symbol. The prop sits on
+          a wrapper because it hides the elements *contained within* a view. */}
       <View accessibilityElementsHidden>
         <SymbolView
           name="exclamationmark.triangle.fill"
