@@ -43,6 +43,7 @@ actually works.
 | What is deleted?                  | `DELETE FROM users` — `backlog_entries` and `subscriptions` cascade |
 | `subscription_events`             | Retained, `user_id` nulled, payload stripped                     |
 | Idempotency                       | Deleting an absent row is a success, not an error                |
+| Deleted ids                       | A `deleted_users` tombstone, checked by the RevenueCat handler   |
 
 Two decisions deserve their reasoning recorded.
 
@@ -72,6 +73,24 @@ a person.
 
 This requires one schema change: `subscription_events.user_id` becomes
 nullable.
+
+**Added after the whole-branch review, not part of the original design.** §5 says
+deletion cannot cancel an App Store subscription, so RevenueCat keeps delivering
+`RENEWAL` and `EXPIRATION` events for a deleted `app_user_id`. The RevenueCat
+handler calls `ensureUser`, which recreated the `users` row and the subscription
+on the next renewal — the deletion silently reversed itself for exactly the
+population this section anticipates.
+
+A `deleted_users` tombstone closes it. The Clerk route writes it in the same
+transaction as the scrub and the delete; the RevenueCat handler checks it before
+recording anything, and for a tombstoned id records the event with a null
+`user_id` and a scrubbed payload, skipping `ensureUser` and `upsertSubscription`
+entirely. The delivery still answers 200, so RevenueCat does not retry.
+
+The keep-list consequently exists twice — as SQL in `scrubSubscriptionEvents`
+and as TypeScript for this path. They are not shared; a parity test asserts they
+produce the same key set, the same way `status-parity.test.ts` guards the
+duplicated status enums.
 
 ## 3. The route
 
@@ -163,6 +182,9 @@ The existing webhook suite is the template.
 
 - `subscription_events.user_id` becomes nullable, so every read of it must
   tolerate null. A Drizzle migration accompanies the change.
+- A `deleted_users` table is added, and the RevenueCat handler gains a branch it
+  did not have. Tombstones are retained indefinitely: the row is a Clerk `sub`
+  and a timestamp, and forgetting one would let the resurrection return.
 - The API gains its second webhook sender, and with it a second signing
   secret. `PUBLIC_PATHS` now allowlists two unauthenticated webhook paths
   rather than one, so its exact-match rule matters more than it did.
