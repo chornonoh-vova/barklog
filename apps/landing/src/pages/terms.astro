@@ -1,0 +1,86 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { CONTACT_EMAIL } from "../config";
+---
+
+<Legal
+  title="Terms & Conditions"
+  description="The terms you agree to when you use Barklog."
+  updated="3 September 2026"
+>
+  <p>
+    Barklog is made and run by Volodymyr Chornonoh, an individual developer based in Ukraine.
+    You can reach me at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. By using the
+    app you agree to what follows.
+  </p>
+
+  <h2>Using the app</h2>
+  <p>
+    You get a personal, non-transferable licence to use Barklog on devices you own. You keep
+    whatever you put into it — your backlog is yours.
+  </p>
+  <p>
+    Don't try to break the service, pull data out of it in bulk, or use it to do something
+    illegal. If you do, I may close your account.
+  </p>
+
+  <h2>Accounts</h2>
+  <p>
+    You need an account, handled by Clerk. You have to be at least 13. Keep your sign-in
+    details to yourself — anything done through your account is treated as done by you.
+  </p>
+
+  <h2>Barklog Premium</h2>
+  <p>
+    The free tier holds ten unfinished games at a time. Premium removes that cap. It's an
+    auto-renewing subscription sold through the App Store, which means Apple handles the
+    payment, the renewal, and the receipt — not me.
+  </p>
+  <p>
+    Your subscription renews until you cancel it, and you cancel it in your Apple subscription
+    settings. Refunds are Apple's to give; I can't issue one.
+  </p>
+  <p>
+    <strong>
+      Deleting your Barklog account does not cancel your subscription.
+    </strong>
+    Only Apple can do that. If you're subscribed and you delete your account, cancel through
+    Apple as well or you'll keep being billed.
+  </p>
+  <p>
+    If the price changes, the change applies to renewals after you've been told, never
+    retroactively.
+  </p>
+
+  <h2>Game data</h2>
+  <p>
+    Every cover, release date, platform and summary in Barklog comes from
+    <a href="https://www.igdb.com" rel="noreferrer">IGDB</a>, a games database maintained by its
+    community. It's theirs, not mine, and it's occasionally wrong or incomplete — Barklog
+    passes it along as it is.
+  </p>
+
+  <h2>What I don't promise</h2>
+  <p>
+    Barklog is provided as it is. I don't promise it will always be available, always be
+    correct, or never lose data, and I'm not liable for what follows from using it, as far as
+    Ukrainian law allows. Keep your own record of anything you'd be upset to lose.
+  </p>
+
+  <h2>Ending things</h2>
+  <p>
+    You can delete your account at any time from the profile screen in the app. I may suspend
+    or close an account that breaks these terms. If Barklog shuts down, I'll give notice in the
+    app before it happens.
+  </p>
+
+  <h2>Changes and law</h2>
+  <p>
+    I'll update these terms when the app changes, and the date at the top will tell you when.
+    Carrying on using Barklog after a change means you accept it.
+  </p>
+  <p>
+    These terms are governed by the law of Ukraine, and Ukrainian courts have jurisdiction over
+    any dispute.
+  </p>
+</Legal>

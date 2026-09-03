@@ -1,0 +1,93 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { CONTACT_EMAIL } from "../config";
+---
+
+<Legal
+  title="Privacy policy"
+  description="What Barklog collects, who it shares it with, and how to get rid of it."
+  updated="3 September 2026"
+>
+  <p>
+    Barklog is made and run by Volodymyr Chornonoh, an individual developer based in Ukraine.
+    This page says what the app collects, who else sees it, and how to delete it. Questions go
+    to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+  </p>
+
+  <h2>This website</h2>
+  <p>
+    This site sets no cookies, runs no analytics, and makes no third-party requests. The fonts
+    are served from this server. Nothing here tries to work out who you are. The web server
+    keeps ordinary access logs (IP address, page, timestamp) for a few weeks, to spot abuse.
+  </p>
+
+  <h2>What the app collects</h2>
+  <ul>
+    <li>Your account identifier, and whatever you gave Clerk to sign in with.</li>
+    <li>Your backlog: which games you added, their status, and any rating you gave them.</li>
+    <li>
+      Your subscription status — the product, whether it's a trial, and when it renews or
+      expires. Never your card details, which Barklog never sees.
+    </li>
+  </ul>
+  <p>
+    That's the lot. No location, no contacts, no photos, no advertising identifier, no
+    behavioural tracking.
+  </p>
+
+  <h2>Sharing a video</h2>
+  <p>
+    When you share a YouTube or TikTok video to Barklog, the app fetches that video's public
+    title and channel name and sends <em>only the title and channel name</em> to Anthropic,
+    which guesses which game it's about. The video itself never leaves the platform it's on,
+    and nothing identifying you is included in the request.
+  </p>
+
+  <h2>Who else handles your data</h2>
+  <ul>
+    <li><strong>Clerk</strong> — accounts and sign-in.</li>
+    <li><strong>RevenueCat</strong> — subscription state.</li>
+    <li><strong>Apple</strong> — the purchase itself, and billing.</li>
+    <li><strong>Anthropic</strong> — the video title and channel name described above.</li>
+    <li><strong>PlanetScale</strong> — the database your backlog lives in.</li>
+    <li><strong>IGDB and Twitch</strong> — game data. They receive nothing about you.</li>
+    <li><strong>Hetzner</strong> — the server the API and this site run on.</li>
+  </ul>
+  <p>
+    Nobody's data is sold, and nobody gets it for advertising.
+  </p>
+
+  <h2>How long it's kept</h2>
+  <p>
+    Your account and backlog stay until you delete them. Records of subscription payments are
+    kept longer for accounting, with your identifier removed from them when you delete your
+    account, so what remains can't be traced back to you.
+  </p>
+
+  <h2>Deleting everything</h2>
+  <p>
+    Open the profile screen in the app, tap your avatar, and choose to delete your account.
+    That removes your account, your backlog, and your subscription record. It happens
+    immediately and it can't be undone.
+  </p>
+  <p>
+    <strong>Deleting your account does not cancel an App Store subscription.</strong>
+    Cancel that in your Apple subscription settings, or you'll keep being billed.
+  </p>
+  <p>
+    If you'd rather ask me to do it, or you want a copy of what's stored about you, email
+    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and I'll deal with it within 30 days.
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    Barklog isn't for under-13s, and I don't knowingly keep data about them. If you think a
+    child has an account, email me and I'll remove it.
+  </p>
+
+  <h2>Changes</h2>
+  <p>
+    If this policy changes, the date at the top changes with it, and anything significant gets
+    a notice in the app.
+  </p>
+</Legal>

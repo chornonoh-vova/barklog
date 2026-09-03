@@ -1,0 +1,25 @@
+---
+import Base from "./Base.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  updated: string;
+}
+
+const { title, description, updated } = Astro.props;
+---
+
+<Base title={`${title} — Barklog`} description={description}>
+  <main
+    class="mx-auto max-w-[68ch] px-6 py-16 font-sans text-[15px] leading-relaxed
+           [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-semibold
+           [&_p]:mt-4 [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:mt-1
+           [&_a]:text-accent [&_a]:underline [&_a]:underline-offset-4"
+  >
+    <p><a href="/">← Barklog</a></p>
+    <h1 class="mt-8 text-3xl font-bold">{title}</h1>
+    <p class="mt-2 text-ink-muted">Last updated {updated}</p>
+    <slot />
+  </main>
+</Base>
