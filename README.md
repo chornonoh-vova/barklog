@@ -466,6 +466,27 @@ mobile `PurchasesProvider` calls it from `customerInfoUpdateListener` and then
 invalidates `GET /api/me`, so the unlock is immediate without waiting on the
 webhook.
 
+### Account deletion
+
+Deleting an account happens in Clerk's native profile view, which the app
+already presents from the profile toolbar. Clerk then sends `user.deleted` to
+`POST /webhooks/clerk`, and the API removes the `users` row — from which
+`backlog_entries` and `subscriptions` cascade — and scrubs the identifiers out
+of `subscription_events` while keeping the rows for revenue accounting.
+
+Two settings must be enabled in **each** Clerk instance, because production
+does not inherit them from development:
+
+1. The delete-account action in the user profile.
+2. A webhook endpoint at `https://api.barklog.gg/webhooks/clerk` subscribed to
+   `user.deleted`, whose signing secret becomes `CLERK_WEBHOOK_SIGNING_SECRET`.
+
+Verify against the instance's `/v1/environment` rather than assuming the
+setting carried over.
+
+Deleting an account does **not** cancel an App Store subscription. Only Apple
+can, from the user's own subscription settings.
+
 `docs/premium-device-verification.md` is the checklist for verifying all of
 this on a physical device — it can't be exercised by the test suite, because
 Apple only validates a real purchase against its own servers.

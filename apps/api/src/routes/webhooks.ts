@@ -1,7 +1,13 @@
 import { sValidator } from "@hono/standard-validator";
 import { getLogger } from "@logtape/logtape";
 import { revenueCatEventSchema } from "@repo/contracts";
-import { ensureUser, recordSubscriptionEvent, upsertSubscription } from "@repo/db";
+import {
+  deleteUser,
+  ensureUser,
+  recordSubscriptionEvent,
+  scrubSubscriptionEvents,
+  upsertSubscription,
+} from "@repo/db";
 import { Hono } from "hono";
 import type { Context } from "hono";
 
@@ -24,97 +30,151 @@ function renderUnprocessable(c: Context) {
  */
 export function webhookRoutes(deps: AppDeps) {
   const log = getLogger(["api", "revenuecat"]);
+  const clerkLog = getLogger(["api", "clerk"]);
 
-  return new Hono<AppEnv>().post(
-    "/revenuecat",
-    async (c, next) => {
-      if (!secretMatches(c.req.header("Authorization"), deps.webhookSecret)) {
-        throw problems.create("UNAUTHORIZED", {
-          detail: "A valid webhook secret is required.",
+  return new Hono<AppEnv>()
+    .post(
+      "/revenuecat",
+      async (c, next) => {
+        if (!secretMatches(c.req.header("Authorization"), deps.webhookSecret)) {
+          throw problems.create("UNAUTHORIZED", {
+            detail: "A valid webhook secret is required.",
+          });
+        }
+
+        // `text()` before the validator's `json()`: Hono caches the body and
+        // derives the parsed value from the cached text, so nothing is consumed
+        // twice — and the HMAC must see the bytes as received.
+        const rawBody = await c.req.text();
+
+        if (
+          !signatureMatches(
+            c.req.header("X-RevenueCat-Webhook-Signature"),
+            rawBody,
+            deps.webhookSigningSecret,
+          )
+        ) {
+          throw problems.create("UNAUTHORIZED", {
+            detail: "A valid webhook signature is required.",
+          });
+        }
+
+        return next();
+      },
+      sValidator("json", revenueCatEventSchema, (result, c) => {
+        if (!result.success) {
+          return renderUnprocessable(c);
+        }
+      }),
+      async (c) => {
+        const { event } = c.req.valid("json");
+
+        // One transaction, because the recorded event id is the idempotency guard
+        // for everything below it. Committing the id before the effect it guards
+        // means a throw in `ensureUser` or `upsertSubscription` answers 500,
+        // RevenueCat retries, the retry finds the id already stored and answers
+        // 200 as a duplicate — and the subscription is never written. Rolling the
+        // event log back with the effect leaves the retry a genuinely unprocessed
+        // event.
+        const outcome = await deps.db.transaction(async (tx) => {
+          const isNew = await recordSubscriptionEvent(tx, {
+            id: event.id,
+            userId: event.app_user_id,
+            type: event.type,
+            payload: event,
+          });
+
+          // `ON CONFLICT DO NOTHING` wrote nothing, so this commits nothing —
+          // and it must stay a 200, or RevenueCat retries a delivery we have
+          // already applied.
+          if (!isNew) return "duplicate" as const;
+
+          const row = toSubscriptionRow(event);
+
+          // Recorded and genuinely processed: there is no subscription state in
+          // this payload to apply.
+          if (row === null) return "no-state" as const;
+
+          // A free user can buy Premium having sent nothing but GETs, so
+          // `ensureUserMiddleware` — which runs only for MUTATING_METHODS — may
+          // never have created their row, and the upsert's foreign key needs it.
+          // `app_user_id` comes from our own `Purchases.logIn(clerkUserId)` behind
+          // both webhook secrets, so creating the row here is exactly what the
+          // middleware does on a first write.
+          await ensureUser(tx, event.app_user_id);
+
+          // Unconditional: the upsert's WHERE clause drops stale events.
+          await upsertSubscription(tx, row);
+
+          return "applied" as const;
         });
-      }
 
-      // `text()` before the validator's `json()`: Hono caches the body and
-      // derives the parsed value from the cached text, so nothing is consumed
-      // twice — and the HMAC must see the bytes as received.
-      const rawBody = await c.req.text();
+        if (outcome === "duplicate") {
+          log.info("Duplicate RevenueCat event {id} ignored", { id: event.id });
+        }
 
-      if (
-        !signatureMatches(
-          c.req.header("X-RevenueCat-Webhook-Signature"),
-          rawBody,
-          deps.webhookSigningSecret,
-        )
-      ) {
+        if (outcome === "no-state") {
+          // The id, because a partial purchase payload lands here too: without it
+          // a dropped purchase has nothing to trace it by.
+          log.info("RevenueCat event {id} of type {type} carries no subscription state", {
+            id: event.id,
+            type: event.type,
+          });
+        }
+
+        return c.body(null, 200);
+      },
+    )
+    .post("/clerk", async (c) => {
+      // `verifyWebhook` reads the request body, and the `/webhooks/*`
+      // bodyLimit middleware has already consumed `c.req.raw`'s stream by
+      // now. `c.req.text()` is served from Hono's cache, so re-wrapping it in
+      // a fresh Request is what lets the HMAC see the bytes as received.
+      const raw = await c.req.text();
+      const request = new Request(c.req.url, {
+        method: "POST",
+        headers: c.req.raw.headers,
+        body: raw,
+      });
+
+      let event;
+      try {
+        event = await deps.verifyClerkWebhook(request);
+      } catch {
         throw problems.create("UNAUTHORIZED", {
           detail: "A valid webhook signature is required.",
         });
       }
 
-      return next();
-    },
-    sValidator("json", revenueCatEventSchema, (result, c) => {
-      if (!result.success) {
-        return renderUnprocessable(c);
+      // 200, not 4xx: Clerk sends whatever the endpoint subscribes to, and a
+      // rejection would make it retry an event we simply do not act on.
+      if (event.type !== "user.deleted") {
+        clerkLog.info("Clerk event of type {type} ignored", { type: event.type });
+
+        return c.body(null, 200);
       }
-    }),
-    async (c) => {
-      const { event } = c.req.valid("json");
 
-      // One transaction, because the recorded event id is the idempotency guard
-      // for everything below it. Committing the id before the effect it guards
-      // means a throw in `ensureUser` or `upsertSubscription` answers 500,
-      // RevenueCat retries, the retry finds the id already stored and answers
-      // 200 as a duplicate — and the subscription is never written. Rolling the
-      // event log back with the effect leaves the retry a genuinely unprocessed
-      // event.
-      const outcome = await deps.db.transaction(async (tx) => {
-        const isNew = await recordSubscriptionEvent(tx, {
-          id: event.id,
-          userId: event.app_user_id,
-          type: event.type,
-          payload: event,
-        });
+      // Nothing to query without an id: answer like an unknown user rather
+      // than let an absent id reach `deleteUser`.
+      if (!event.data.id) {
+        clerkLog.info("Clerk user.deleted event carried no user id");
 
-        // `ON CONFLICT DO NOTHING` wrote nothing, so this commits nothing —
-        // and it must stay a 200, or RevenueCat retries a delivery we have
-        // already applied.
-        if (!isNew) return "duplicate" as const;
+        return c.body(null, 200);
+      }
 
-        const row = toSubscriptionRow(event);
+      // One transaction: the scrub and the delete commit together, or Clerk's
+      // retry finds the account still whole.
+      const removed = await deps.db.transaction(async (tx) => {
+        await scrubSubscriptionEvents(tx, event.data.id);
 
-        // Recorded and genuinely processed: there is no subscription state in
-        // this payload to apply.
-        if (row === null) return "no-state" as const;
-
-        // A free user can buy Premium having sent nothing but GETs, so
-        // `ensureUserMiddleware` — which runs only for MUTATING_METHODS — may
-        // never have created their row, and the upsert's foreign key needs it.
-        // `app_user_id` comes from our own `Purchases.logIn(clerkUserId)` behind
-        // both webhook secrets, so creating the row here is exactly what the
-        // middleware does on a first write.
-        await ensureUser(tx, event.app_user_id);
-
-        // Unconditional: the upsert's WHERE clause drops stale events.
-        await upsertSubscription(tx, row);
-
-        return "applied" as const;
+        return deleteUser(tx, event.data.id);
       });
 
-      if (outcome === "duplicate") {
-        log.info("Duplicate RevenueCat event {id} ignored", { id: event.id });
-      }
-
-      if (outcome === "no-state") {
-        // The id, because a partial purchase payload lands here too: without it
-        // a dropped purchase has nothing to trace it by.
-        log.info("RevenueCat event {id} of type {type} carries no subscription state", {
-          id: event.id,
-          type: event.type,
-        });
+      if (!removed) {
+        // A redelivery, or a user who never wrote anything. Neither is an error.
+        clerkLog.info("Clerk user.deleted for unknown user {userId}", { userId: event.data.id });
       }
 
       return c.body(null, 200);
-    },
-  );
+    });
 }
