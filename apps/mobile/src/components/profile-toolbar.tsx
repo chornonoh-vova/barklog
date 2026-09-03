@@ -56,7 +56,7 @@ export function ProfileToolbar() {
       <Modal
         visible={isOpen}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         onRequestClose={() => setIsOpen(false)}
       >
         <UserProfileView style={styles.profile} onDismiss={() => setIsOpen(false)} />
