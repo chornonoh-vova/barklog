@@ -14,7 +14,11 @@ export const PROBE_PATHS: ReadonlySet<string> = new Set(["/healthz", "/readyz"])
  * Separate from `PROBE_PATHS`, not merged into it: that set also drives the
  * `honoLogger` skip, and webhook requests should be logged.
  */
-export const PUBLIC_PATHS: ReadonlySet<string> = new Set([...PROBE_PATHS, "/webhooks/revenuecat"]);
+export const PUBLIC_PATHS: ReadonlySet<string> = new Set([
+  ...PROBE_PATHS,
+  "/webhooks/revenuecat",
+  "/webhooks/clerk",
+]);
 
 /** Scoped, not global: nobody should POST a megabyte at a backlog write. */
 export const WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
@@ -52,6 +56,15 @@ export interface RevenueCatClient {
   fetchSubscriber(appUserId: string): Promise<SubscriptionRow | null>;
 }
 
+/**
+ * The narrow slice of Clerk's `WebhookEvent` this app reads. Injected like
+ * `auth` and `share`, so the suite needs neither network nor a real secret.
+ */
+export interface ClerkWebhookEvent {
+  type: string;
+  data: { id: string };
+}
+
 export interface AppDeps {
   db: Db;
   cache: Cache;
@@ -60,6 +73,7 @@ export interface AppDeps {
   revenueCat: RevenueCatClient;
   webhookSecret: string;
   webhookSigningSecret: string;
+  verifyClerkWebhook: (request: Request) => Promise<ClerkWebhookEvent>;
   production?: boolean;
   rateLimits?: Partial<RateLimits>;
 }

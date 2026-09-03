@@ -39,6 +39,10 @@ const unusedRevenueCat: RevenueCatClient = {
   },
 };
 
+const unusedClerkWebhook: AppDeps["verifyClerkWebhook"] = () => {
+  throw new Error("verifyClerkWebhook was not stubbed for this test");
+};
+
 // Configured at import time, not in `globalSetup`: that runs in its own
 // process, and LogTape's configuration is process-global.
 export const logs = recordingSink();
@@ -67,6 +71,7 @@ export function createTestApp(overrides: Partial<AppDeps> = {}): TestHarness {
     production: true,
     webhookSecret: WEBHOOK_SECRET,
     webhookSigningSecret: WEBHOOK_SIGNING_SECRET,
+    verifyClerkWebhook: unusedClerkWebhook,
     ...overrides,
   });
 

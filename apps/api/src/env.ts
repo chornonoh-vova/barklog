@@ -29,6 +29,7 @@ const envSchema = v.object({
   VALKEY_URL: required,
   CLERK_SECRET_KEY: required,
   CLERK_PUBLISHABLE_KEY: required,
+  CLERK_WEBHOOK_SIGNING_SECRET: required,
   ANTHROPIC_API_KEY: required,
   REVENUECAT_WEBHOOK_SECRET: required,
   REVENUECAT_WEBHOOK_SIGNING_SECRET: required,
