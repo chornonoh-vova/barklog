@@ -16,9 +16,11 @@ import { CONTACT_EMAIL } from "../config";
 
   <h2>This website</h2>
   <p>
-    This site sets no cookies, runs no analytics, and makes no third-party requests. The fonts
-    are served from this server. Nothing here tries to work out who you are. The web server
-    keeps ordinary access logs (IP address, page, timestamp) for a few weeks, to spot abuse.
+    This site sets no cookies, runs no analytics, and makes no third-party requests: every font,
+    style, and script it uses comes from your device or this server, never fetched from
+    anywhere else. Nothing here tries to work out who you are. The web server keeps ordinary
+    access logs (IP address, page, timestamp) for a few weeks, to spot abuse; the API keeps the
+    same kind of logs, tagged with your account id where you're signed in, for the same reason.
   </p>
 
   <h2>What the app collects</h2>
@@ -37,10 +39,12 @@ import { CONTACT_EMAIL } from "../config";
 
   <h2>Sharing a video</h2>
   <p>
-    When you share a YouTube or TikTok video to Barklog, the app fetches that video's public
-    title and channel name and sends <em>only the title and channel name</em> to Anthropic,
-    which guesses which game it's about. The video itself never leaves the platform it's on,
-    and nothing identifying you is included in the request.
+    When you share a YouTube or TikTok video to Barklog, the API asks that platform's own
+    oEmbed service for the video's public title and channel name, passing nothing but the
+    video's URL — no cookie, account, or device information rides along. It sends
+    <em>only the title and channel name</em> to Anthropic, which guesses which game it's about.
+    The video itself never leaves the platform it's on, and nothing identifying you is included
+    in either request.
   </p>
 
   <h2>Who else handles your data</h2>
@@ -51,23 +55,29 @@ import { CONTACT_EMAIL } from "../config";
     <li><strong>Anthropic</strong> — the video title and channel name described above.</li>
     <li><strong>PlanetScale</strong> — the database your backlog lives in.</li>
     <li><strong>IGDB and Twitch</strong> — game data. They receive nothing about you.</li>
-    <li><strong>Hetzner</strong> — the server the API and this site run on.</li>
+    <li>
+      <strong>Expo</strong> — checks for app updates when Barklog launches. It sees your
+      device's IP address and the app's version, nothing more.
+    </li>
+    <li><strong>Hostinger</strong> — the server the API and this site run on.</li>
   </ul>
   <p>
-    Nobody's data is sold, and nobody gets it for advertising.
+    I don't sell your data, or use it for advertising.
   </p>
 
   <h2>How long it's kept</h2>
   <p>
     Your account and backlog stay until you delete them. Records of subscription payments are
     kept longer for accounting, with your identifier removed from them when you delete your
-    account, so what remains can't be traced back to you.
+    account, so what remains can't be traced back to you. One thing is kept on purpose: your
+    Clerk id and the date you deleted, on a short list with nothing else on it. Without that,
+    a renewal Apple sends after you've left would quietly recreate the account you just deleted.
   </p>
 
   <h2>Deleting everything</h2>
   <p>
-    Open the profile screen in the app, tap your avatar, and choose to delete your account.
-    That removes your account, your backlog, and your subscription record. It happens
+    Tap your avatar in the toolbar — it's there on every tab — and choose to delete your
+    account. That removes your account, your backlog, and your subscription record. It happens
     immediately and it can't be undone.
   </p>
   <p>
