@@ -4,6 +4,7 @@
 Outputs (relative to assets/icon/):
   Barklog.icon/   Icon Composer bundle - iOS 26 liquid glass (ios.icon)
   icon.png        1024 flat, opaque navy - root `icon` fallback
+  splash.png      1024 transparent - the `expo-splash-screen` image
 
 Re-run after replacing src/artwork.png:  python3 src/build_icon.py
 """
@@ -22,26 +23,30 @@ HALO = 10             # px of soft edge kept around the opaque bounds
 ALPHA_FLOOR = 24      # alpha below this is glow, not content
 
 
-def placed_artwork() -> Image.Image:
-    """Artwork trimmed to its real bounds and centred on a transparent 1024 canvas."""
+def trimmed_artwork() -> Image.Image:
+    """Artwork cropped to its real bounds, keeping a halo of soft edge."""
     art = Image.open(SRC).convert("RGBA")
     solid = art.getchannel("A").point(lambda v: 255 if v > ALPHA_FLOOR else 0).getbbox()
     x0, y0, x1, y1 = solid
     box = (max(0, x0 - HALO), max(0, y0 - HALO),
            min(art.width, x1 + HALO), min(art.height, y1 + HALO))
-    art = art.crop(box)
+    return art.crop(box)
 
-    scale = (CANVAS * FILL) / max(art.size)
+
+def placed(art: Image.Image, fill: float, y_bias: float) -> Image.Image:
+    """`art` scaled to span `fill` of a transparent 1024 canvas, nudged down by `y_bias`."""
+    scale = (CANVAS * fill) / max(art.size)
     art = art.resize((round(art.width * scale), round(art.height * scale)), Image.LANCZOS)
 
     layer = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
     layer.paste(art, ((CANVAS - art.width) // 2,
-                      (CANVAS - art.height) // 2 + round(CANVAS * Y_BIAS)))
+                      (CANVAS - art.height) // 2 + round(CANVAS * y_bias)))
     return layer
 
 
 def main() -> None:
-    layer = placed_artwork()
+    art = trimmed_artwork()
+    layer = placed(art, FILL, Y_BIAS)
 
     assets = BUNDLE / "Assets"
     assets.mkdir(parents=True, exist_ok=True)
@@ -50,6 +55,10 @@ def main() -> None:
     flat = Image.new("RGBA", (CANVAS, CANVAS), NAVY + (255,))
     flat.alpha_composite(layer)
     flat.convert("RGB").save(ROOT / "icon.png")
+
+    # The splash sits free on the navy, with no icon mask to inset for and no
+    # head-weight bias to correct: `imageWidth` in app.json does the framing.
+    placed(art, 1.0, 0.0).save(ROOT / "splash.png")
 
     r, g, b = (c / 255 for c in NAVY)
     manifest = {
@@ -64,7 +73,7 @@ def main() -> None:
         "supported-platforms": {"circles": ["watchOS"], "squares": "shared"},
     }
     (BUNDLE / "icon.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    print("wrote Barklog.icon/ and icon.png")
+    print("wrote Barklog.icon/, icon.png and splash.png")
 
 
 if __name__ == "__main__":

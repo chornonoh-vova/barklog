@@ -19,7 +19,7 @@
       ],
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.gg.barklog.app",
+          "group.gg.barklog.app"
         ]
       },
       "infoPlist": {
@@ -31,9 +31,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#0B1A3C",
+          "image": "./assets/icon/splash.png",
+          "imageWidth": 180
         }
       ],
       "expo-secure-store",
