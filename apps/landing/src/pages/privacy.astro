@@ -30,7 +30,11 @@ import { CONTACT_EMAIL } from "../config";
     <li>Your backlog: which games you added, their status, and any rating you gave them.</li>
     <li>
       Your subscription status — the product, whether it's a trial, and when it renews or
-      expires. Never your card details, which Barklog never sees.
+      expires. That summary is what the app shows you; the purchase events behind it are stored
+      in full, each one carrying your account identifier, the event's own id and type (a
+      renewal, a cancellation, an expiry), which store it came from, when the purchase was made,
+      any reason given for a cancellation, whether it was a live or a test purchase, and when
+      RevenueCat sent it. Never your card details, which Barklog never sees.
     </li>
   </ul>
   <p>
@@ -55,7 +59,11 @@ import { CONTACT_EMAIL } from "../config";
     <li><strong>Apple</strong> — the purchase itself, and billing.</li>
     <li><strong>Anthropic</strong> — the video title and channel name described above.</li>
     <li><strong>PlanetScale</strong> — the database your backlog lives in.</li>
-    <li><strong>IGDB and Twitch</strong> — game data. They receive nothing about you.</li>
+    <li>
+      <strong>IGDB and Twitch</strong> — game data, and the cover art and screenshots
+      themselves. Those load straight from their image server to your device, so they see your
+      IP address and which images it asks for, and nothing else.
+    </li>
     <li>
       <strong>Expo</strong> — checks for app updates when Barklog launches. It sees your
       device's IP address and the app's version, nothing more.

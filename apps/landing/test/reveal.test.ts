@@ -24,10 +24,12 @@ vi.mock("motion", () => ({
 let observed: HTMLElement[] = [];
 let unobserved: HTMLElement[] = [];
 let intersectionCallback: IntersectionObserverCallback | undefined;
+let rootMargin: string | undefined;
 
 class FakeIntersectionObserver {
-  constructor(callback: IntersectionObserverCallback) {
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
     intersectionCallback = callback;
+    rootMargin = options?.rootMargin;
   }
 
   observe(target: Element): void {
@@ -39,16 +41,16 @@ class FakeIntersectionObserver {
   }
 }
 
-function placeElement(top: number): HTMLElement {
+function placeElement(top: number, height = 100): HTMLElement {
   const el = document.createElement("section");
   el.dataset.reveal = "";
   vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
     top,
-    bottom: top + 100,
+    bottom: top + height,
     left: 0,
     right: 0,
     width: 0,
-    height: 100,
+    height,
     x: 0,
     y: 0,
     toJSON: () => ({}),
@@ -62,12 +64,39 @@ function stubReducedMotion(matches: boolean): void {
   window.matchMedia = vi.fn().mockReturnValue({ matches }) as unknown as typeof window.matchMedia;
 }
 
+/** jsdom's default, which the other tests are written against. */
+const JSDOM_VIEWPORT = 768;
+
+function setViewportHeight(height: number): void {
+  Object.defineProperty(window, "innerHeight", { value: height, configurable: true });
+}
+
+/**
+ * The geometry the browser would apply, done by hand because the observer here
+ * is a stub that does none. Returns whether an element of `elementHeight`
+ * sitting at the very bottom of the document intersects the root once
+ * `rootMargin`'s bottom component has shrunk it.
+ *
+ * At maximum scroll the last element's top rests at `viewport - elementHeight`
+ * and can get no higher, so it intersects only while the shrunken bottom edge
+ * stays below that.
+ */
+function revealsAtMaximumScroll(margin: string, viewport: number, elementHeight: number): boolean {
+  const bottom = margin.trim().split(/\s+/)[2] ?? "0px";
+  const value = Number.parseFloat(bottom);
+  const offset = bottom.endsWith("%") ? (viewport * value) / 100 : value;
+
+  return viewport - elementHeight < viewport + offset;
+}
+
 beforeEach(() => {
   vi.resetModules();
   document.body.innerHTML = "";
   observed = [];
   unobserved = [];
   intersectionCallback = undefined;
+  rootMargin = undefined;
+  setViewportHeight(JSDOM_VIEWPORT);
   vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver);
 });
 
@@ -111,4 +140,44 @@ test("a revealed section fires once, unobserves, and only touches opacity and tr
   expect(offscreen.style.transform).toBe("translateY(0)");
   // Nothing beyond opacity/transform was written to the element.
   expect(offscreen.getAttribute("style")).toBe("opacity: 1; transform: translateY(0);");
+});
+
+/**
+ * The second time this page has gone invisible, and the reason the assertion
+ * below is written against geometry rather than against a literal string: the
+ * first was CSS that hid every [data-reveal] unconditionally, the second a
+ * percentage rootMargin. Both failed only past some viewport height, which is
+ * why neither showed up on the machine that shipped it.
+ */
+test("the last element on the page still reveals on a very tall viewport", async () => {
+  stubReducedMotion(false);
+  // A portrait 1080x1920 monitor, or a 4K panel at 100%.
+  const VIEWPORT = 1920;
+  // The real footer, which is 150-175px however tall the viewport gets.
+  const FOOTER_HEIGHT = 160;
+
+  setViewportHeight(VIEWPORT);
+  const footer = placeElement(VIEWPORT + 400, FOOTER_HEIGHT);
+
+  await import("../src/scripts/reveal.ts");
+
+  expect(observed).toEqual([footer]);
+  expect(footer.style.opacity).toBe("0");
+
+  expect(
+    revealsAtMaximumScroll(rootMargin ?? "", VIEWPORT, FOOTER_HEIGHT),
+    `rootMargin ${JSON.stringify(rootMargin)} leaves a ${FOOTER_HEIGHT}px element that ` +
+      `reaches the bottom of a ${VIEWPORT}px viewport permanently unintersected, and so ` +
+      `permanently at opacity 0. A percentage rootMargin scales with the viewport while an ` +
+      `element's height does not, so -10% stops matching the footer once the viewport passes ` +
+      `ten times its height. Use a constant smaller than the shortest revealed element.`,
+  ).toBe(true);
+
+  // And having intersected, it is actually revealed.
+  intersectionCallback?.(
+    [{ isIntersecting: true, target: footer } as unknown as IntersectionObserverEntry],
+    new FakeIntersectionObserver(() => {}) as unknown as IntersectionObserver,
+  );
+
+  expect(footer.style.opacity).toBe("1");
 });

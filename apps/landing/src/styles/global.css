@@ -14,8 +14,13 @@
   font-display: swap;
 }
 
+/* "Barklog Serif", not "Source Serif 4": the shipped file is a latin subset,
+   which the OFL counts as a Modified Version, and Adobe reserves the font name
+   "Source". Condition 3 of the licence bars a reserved name from being what
+   identifies the font to a reader, and a CSS family name is exactly that.
+   public/fonts/OFL.txt carries the upstream notice and the attribution. */
 @font-face {
-  font-family: "Source Serif 4";
+  font-family: "Barklog Serif";
   src: url("../assets/fonts/source-serif-4-latin-variable.woff2") format("woff2");
   font-weight: 400 600;
   font-style: normal;
@@ -38,7 +43,7 @@
   --color-rule: #1c3159;
 
   --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-body: "Barklog Serif", ui-serif, Georgia, serif;
 }
 
 @layer base {

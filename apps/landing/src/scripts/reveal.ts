@@ -2,6 +2,7 @@ import { animate } from "motion";
 
 const DISTANCE = 16;
 const DURATION = 0.24;
+const BOTTOM_MARGIN = 64;
 
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -26,7 +27,15 @@ if (!reduced) {
         );
       }
     },
-    { rootMargin: "0px 0px -10% 0px" },
+    // A constant, never a percentage. A percentage rootMargin resolves against
+    // the viewport's height, but the elements it gates do not grow with it: the
+    // last element on the page can only ever reach `viewportHeight - its own
+    // height`, so a -10% bottom margin left the ~160px footer permanently
+    // unintersected — and so permanently at opacity 0, taking the only links to
+    // /terms and /privacy with it — on any viewport past ~1600px tall. 64px is
+    // below the height of the shortest thing carrying [data-reveal], so every
+    // one of them still clears the shrunken edge at maximum scroll.
+    { rootMargin: `0px 0px -${BOTTOM_MARGIN}px 0px` },
   );
 
   for (const target of targets) {

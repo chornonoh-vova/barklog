@@ -53,15 +53,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The three builds are sequential and share one cache scope on purpose.
+      # The first three builds are sequential and share one cache scope on
+      # purpose: migrate, api and worker all come out of the root Dockerfile.
       # The second and third hit cache for the pruner, deps and builder stages,
       # so the expensive work happens exactly once. A matrix would run those
-      # stages three times in parallel and contend over the cache.
+      # stages three times in parallel and contend over the cache. landing
+      # writes into the same cache scope but is built from its own Dockerfile,
+      # so its pruner, deps and builder stages are its own entries and it
+      # reuses nothing from the three above.
 
-      # migrate publishes first, then api, then worker. Each push is
-      # independent, so a failure partway through this sequence — a registry
+      # migrate publishes first, then api, then worker, then landing. Each
+      # push is independent, so a failure partway through this sequence — a registry
       # hiccup, a runner OOM, a change that only breaks one target — leaves
-      # the three :main tags at different commits. Publishing migrate first
+      # the four :main tags at different commits. Publishing migrate first
       # means that failure mode is a new schema running old code, which
       # additive Drizzle migrations tolerate; publishing it last would risk
       # the opposite, old schema against new code, which they do not.
