@@ -69,10 +69,6 @@ export function createTitleExtractor(options: {
       instructions: SYSTEM,
       input: `Video title: ${meta.title}${author}`,
       max_output_tokens: MAX_OUTPUT_TOKENS,
-      // The Responses API stores prompts for 30 days by default. The Anthropic
-      // API this replaced stored nothing, and the privacy policy promises the
-      // title and channel name go no further than the guess.
-      store: false,
       // Pinned rather than left to the model's default, which has changed
       // across generations. This is a sub-second classification over ~250
       // tokens and should not pay for reasoning; `env.ts` is what keeps the
