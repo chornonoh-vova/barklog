@@ -65,7 +65,7 @@ services:
       REVENUECAT_WEBHOOK_SECRET: ${REVENUECAT_WEBHOOK_SECRET:?required}
       REVENUECAT_WEBHOOK_SIGNING_SECRET: ${REVENUECAT_WEBHOOK_SIGNING_SECRET:?required}
       REVENUECAT_API_KEY: ${REVENUECAT_API_KEY:?required}
-      IDENTIFY_MODEL: ${IDENTIFY_MODEL}
+      IDENTIFY_MODEL: ${IDENTIFY_MODEL:-gpt-5.4-mini}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     healthcheck:
       # /healthz, not /readyz. A failing healthcheck restarts nothing here —
