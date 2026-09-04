@@ -12,7 +12,7 @@
     ],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "gg.barklog.app",
       "associatedDomains": [
         "applinks:barklog.gg"
