@@ -3,8 +3,13 @@ import astro from "eslint-plugin-astro";
 import { config as base } from "./base.js";
 
 /**
- * Pinned to eslint-plugin-astro ^1.7.0: every release from 2.0.0 peers on
- * eslint >= 10, and this workspace is on 9. Moving to eslint 10 unlocks ^3.
+ * eslint-plugin-astro ^3: peers on eslint >= 10, and parses with Astro's Rust
+ * compiler (astro-eslint-parser v3) rather than the JS one.
+ *
+ * v3 dropped astro/valid-compile and astro/no-omitted-end-tags from
+ * recommended; both are deprecated upstream. We do not re-enable them —
+ * `astro check` in this workspace's check-types task already reports compile
+ * errors, which is what valid-compile covered.
  *
  * @type {import("eslint").Linter.Config[]}
  */

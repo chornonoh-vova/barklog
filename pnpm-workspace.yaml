@@ -18,15 +18,38 @@ catalog:
   valibot: ^1.4.2
 
   # Toolchain, shared by every workspace
-  eslint: ^9.39.5
+  eslint: ^10.9.1
   typescript: ~6.0.3
   vitest: ^4.1.11
 
   # Dev-only, shared by a subset
   "@types/node": ^26.2.0
   "@types/pg": ^8.23.1
-  eslint-plugin-astro: ^1.7.0
+  eslint-plugin-astro: ^3.1.0
   tsx: ^4.23.12
+
+# apps/mobile cannot move to ESLint 10 yet. eslint-config-expo depends on
+# eslint-plugin-react, whose latest release (7.37.5, April 2025) peers on
+# eslint <= 9 and still calls context.getFilename()/getSourceCode()/getScope(),
+# all removed in ESLint 10. Loading any react/* rule throws:
+#   TypeError: contextOrFilename.getFilename is not a function
+# Tracked upstream at expo/expo#46717 and jsx-eslint/eslint-plugin-react#3977.
+# Mobile therefore stays on the EOL 9.x line until that lands; everything else
+# is on 10. Collapse this into the default catalog when it does.
+catalogs:
+  eslint9:
+    eslint: ^9.39.5
+
+# eslint-config-expo depends on @typescript-eslint/eslint-plugin ^8.59.0 of its
+# own. Without these, bumping the top-level typescript-eslint resolves a second
+# copy while expo keeps the older one, and flat config rejects two different
+# plugin objects registered under the same "@typescript-eslint" name:
+#   ConfigError: Key "plugins": Cannot redefine plugin "@typescript-eslint"
+# which fails apps/mobile's lint. Forcing one version restores the dedupe.
+# Drop these once eslint-config-expo's own range covers the version we use.
+overrides:
+  "@typescript-eslint/eslint-plugin": 8.69.0
+  "@typescript-eslint/parser": 8.69.0
 
 allowBuilds:
   esbuild: true
