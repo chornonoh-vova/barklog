@@ -33,7 +33,9 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
     entitled.current = undefined;
 
     if (action === "logout") {
-      void Purchases.logOut();
+      if (!Purchases.isAnonymous) {
+        void Purchases.logOut();
+      }
       return;
     }
 
