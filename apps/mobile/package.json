@@ -50,9 +50,9 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/react": "~19.2.2",
-    "eslint": "^9.39.5",
+    "eslint": "catalog:",
     "sf-symbols-typescript": "2.2.0",
-    "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

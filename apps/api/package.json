@@ -18,25 +18,25 @@
     "@hono/node-server": "^2.1.1",
     "@hono/standard-validator": "^0.2.3",
     "@logtape/hono": "^2.3.2",
-    "@logtape/logtape": "^2.3.2",
+    "@logtape/logtape": "catalog:",
     "@repo/cache": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/logging": "workspace:*",
     "@standard-schema/spec": "^1.1.0",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "catalog:",
     "hono": "^4.13.3",
     "hono-problem-details": "^0.11.0",
     "openai": "^7.9.0",
-    "valibot": "^1.4.2"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^26.2.0",
-    "eslint": "^9.39.5",
-    "tsx": "^4.23.12",
-    "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -6,6 +6,28 @@ packages:
 # https://docs.expo.dev/guides/monorepos/
 nodeLinker: hoisted
 
+# Versions shared by more than one workspace live here so a bump is a one-line
+# edit rather than a sweep across 12 manifests. Workspaces reference these with
+# "catalog:" in place of a range; pnpm resolves them at install time and fails
+# the install if a name is missing here, so a drifted copy cannot go unnoticed.
+catalog:
+  # Runtime, shared by api / worker / packages
+  "@logtape/logtape": ^2.3.2
+  drizzle-orm: ^0.45.2
+  pg: ^8.23.0
+  valibot: ^1.4.2
+
+  # Toolchain, shared by every workspace
+  eslint: ^9.39.5
+  typescript: ~6.0.3
+  vitest: ^4.1.11
+
+  # Dev-only, shared by a subset
+  "@types/node": ^26.2.0
+  "@types/pg": ^8.23.1
+  eslint-plugin-astro: ^1.7.0
+  tsx: ^4.23.12
+
 allowBuilds:
   esbuild: true
   unrs-resolver: true

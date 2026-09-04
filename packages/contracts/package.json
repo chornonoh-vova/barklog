@@ -18,13 +18,13 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "valibot": "^1.4.2"
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "eslint": "^9.39.5",
-    "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -4,6 +4,42 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@logtape/logtape':
+      specifier: ^2.3.2
+      version: 2.3.2
+    '@types/node':
+      specifier: ^26.2.0
+      version: 26.2.0
+    '@types/pg':
+      specifier: ^8.23.1
+      version: 8.23.1
+    drizzle-orm:
+      specifier: ^0.45.2
+      version: 0.45.2
+    eslint:
+      specifier: ^9.39.5
+      version: 9.39.5
+    eslint-plugin-astro:
+      specifier: ^1.7.0
+      version: 1.7.0
+    pg:
+      specifier: ^8.23.0
+      version: 8.23.0
+    tsx:
+      specifier: ^4.23.12
+      version: 4.23.12
+    typescript:
+      specifier: ~6.0.3
+      version: 6.0.3
+    valibot:
+      specifier: ^1.4.2
+      version: 1.4.2
+    vitest:
+      specifier: ^4.1.11
+      version: 4.1.11
+
 importers:
 
   .:
@@ -15,7 +51,7 @@ importers:
         specifier: ^2.10.11
         version: 2.10.11
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
 
   apps/api:
@@ -36,7 +72,7 @@ importers:
         specifier: ^2.3.2
         version: 2.3.2(@logtape/logtape@2.3.2)(hono@4.13.3)
       '@logtape/logtape':
-        specifier: ^2.3.2
+        specifier: 'catalog:'
         version: 2.3.2
       '@repo/cache':
         specifier: workspace:*
@@ -54,7 +90,7 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       drizzle-orm:
-        specifier: ^0.45.2
+        specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
       hono:
         specifier: ^4.13.3
@@ -66,7 +102,7 @@ importers:
         specifier: ^7.9.0
         version: 7.9.0(undici@8.10.0)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.4.3)
       valibot:
-        specifier: ^1.4.2
+        specifier: 'catalog:'
         version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@repo/eslint-config':
@@ -76,19 +112,19 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.2.0
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       tsx:
-        specifier: ^4.23.12
+        specifier: 'catalog:'
         version: 4.23.12
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   apps/landing:
@@ -113,10 +149,10 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       eslint-plugin-astro:
-        specifier: ^1.7.0
+        specifier: 'catalog:'
         version: 1.7.0(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)
       jsdom:
         specifier: ^30.0.1
@@ -128,10 +164,10 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   apps/mobile:
@@ -234,22 +270,22 @@ importers:
         specifier: ~19.2.2
         version: 19.2.18
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       sf-symbols-typescript:
         specifier: 2.2.0
         version: 2.2.0
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   apps/worker:
     dependencies:
       '@logtape/logtape':
-        specifier: ^2.3.2
+        specifier: 'catalog:'
         version: 2.3.2
       '@repo/cache':
         specifier: workspace:*
@@ -264,16 +300,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/logging
       drizzle-orm:
-        specifier: ^0.45.2
+        specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
       node-cron:
         specifier: ^4.6.0
         version: 4.6.0
       pg:
-        specifier: ^8.23.0
+        specifier: 'catalog:'
         version: 8.23.0
       valibot:
-        specifier: ^1.4.2
+        specifier: 'catalog:'
         version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@repo/eslint-config':
@@ -283,28 +319,28 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.2.0
       '@types/pg':
-        specifier: ^8.23.1
+        specifier: 'catalog:'
         version: 8.23.1
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       tsx:
-        specifier: ^4.23.12
+        specifier: 'catalog:'
         version: 4.23.12
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/cache:
     dependencies:
       '@logtape/logtape':
-        specifier: ^2.3.2
+        specifier: 'catalog:'
         version: 2.3.2
       iovalkey:
         specifier: ^0.4.0
@@ -320,22 +356,22 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0(supports-color@8.1.1)
       '@types/node':
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.2.0
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/contracts:
     dependencies:
       valibot:
-        specifier: ^1.4.2
+        specifier: 'catalog:'
         version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@repo/eslint-config':
@@ -345,22 +381,22 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/db:
     dependencies:
       drizzle-orm:
-        specifier: ^0.45.2
+        specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
       pg:
-        specifier: ^8.23.0
+        specifier: 'catalog:'
         version: 8.23.0
     devDependencies:
       '@repo/contracts':
@@ -376,25 +412,25 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0(supports-color@8.1.1)
       '@types/node':
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.2.0
       '@types/pg':
-        specifier: ^8.23.1
+        specifier: 'catalog:'
         version: 8.23.1
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       tsx:
-        specifier: ^4.23.12
+        specifier: 'catalog:'
         version: 4.23.12
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/eslint-config:
@@ -403,7 +439,7 @@ importers:
         specifier: ^9.39.5
         version: 9.39.5
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       eslint-config-expo:
         specifier: ^57.0.1
@@ -412,7 +448,7 @@ importers:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))
       eslint-plugin-astro:
-        specifier: ^1.7.0
+        specifier: 'catalog:'
         version: 1.7.0(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)
       eslint-plugin-turbo:
         specifier: ^2.10.11
@@ -421,7 +457,7 @@ importers:
         specifier: ^17.11.0
         version: 17.11.0
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       typescript-eslint:
         specifier: ^8.67.0
@@ -433,7 +469,7 @@ importers:
         specifier: workspace:*
         version: link:../cache
       valibot:
-        specifier: ^1.4.2
+        specifier: 'catalog:'
         version: 1.4.2(typescript@6.0.3)
     devDependencies:
       '@repo/eslint-config':
@@ -443,22 +479,22 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.2.0
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/logging:
     dependencies:
       '@logtape/logtape':
-        specifier: ^2.3.2
+        specifier: 'catalog:'
         version: 2.3.2
     devDependencies:
       '@repo/eslint-config':
@@ -468,16 +504,16 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.2.0
       eslint:
-        specifier: ^9.39.5
+        specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       typescript:
-        specifier: ~6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vitest:
-        specifier: ^4.1.11
+        specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/typescript-config: {}
