@@ -25,6 +25,7 @@
 ### Task 1: Nullable `user_id` and the deletion queries
 
 **Files:**
+
 - Modify: `packages/db/src/schema/subscriptions.ts`
 - Create: `packages/db/src/queries/users.ts`
 - Modify: `packages/db/src/index.ts`
@@ -32,6 +33,7 @@
 - Test: `packages/db/test/user-deletion.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Queryable` from `packages/db/src/client.js`; `users` from `schema/backlog.js`; `subscriptionEvents` from `schema/subscriptions.js`.
 - Produces:
   - `deleteUser(db: Queryable, userId: string): Promise<boolean>` — true when a row was deleted.
@@ -303,6 +305,7 @@ a drop-list would retain every one of them."
 ### Task 2: Environment and dependency plumbing
 
 **Files:**
+
 - Modify: `apps/api/src/env.ts`
 - Modify: `apps/api/src/types.ts`
 - Modify: `apps/api/src/clerk.ts`
@@ -313,6 +316,7 @@ a drop-list would retain every one of them."
 - Test: `apps/api/test/env.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ApiEnv` from Task 0 (existing), `AppDeps` from `apps/api/src/types.ts`.
 - Produces:
   - `type ClerkWebhookEvent = { type: string; data: { id: string } }`
@@ -376,7 +380,7 @@ export interface ClerkWebhookEvent {
 and inside `AppDeps`, below `webhookSigningSecret`:
 
 ```ts
-  verifyClerkWebhook: (request: Request) => Promise<ClerkWebhookEvent>;
+verifyClerkWebhook: (request: Request) => Promise<ClerkWebhookEvent>;
 ```
 
 - [ ] **Step 7: Add `/webhooks/clerk` to `PUBLIC_PATHS`**
@@ -450,7 +454,7 @@ CLERK_WEBHOOK_SIGNING_SECRET=
 In `compose.yaml`, in the `api` service's `environment` block, below `CLERK_PUBLISHABLE_KEY`:
 
 ```yaml
-      CLERK_WEBHOOK_SIGNING_SECRET: ${CLERK_WEBHOOK_SIGNING_SECRET:?required}
+CLERK_WEBHOOK_SIGNING_SECRET: ${CLERK_WEBHOOK_SIGNING_SECRET:?required}
 ```
 
 In `turbo.json`, add `"CLERK_WEBHOOK_SIGNING_SECRET"` to the `env` array of the `build`, `test`, `dev` and `start` tasks. All four — `turbo/no-undeclared-env-vars` is an error in this repo.
@@ -481,11 +485,13 @@ declare it rather than the reason not to."
 ### Task 3: The `user.deleted` route
 
 **Files:**
+
 - Modify: `apps/api/src/routes/webhooks.ts`
 - Modify: `README.md`
 - Test: `apps/api/test/clerk-webhook.test.ts`
 
 **Interfaces:**
+
 - Consumes: `deleteUser`, `scrubSubscriptionEvents` (Task 1); `AppDeps.verifyClerkWebhook`, `ClerkWebhookEvent`, `PUBLIC_PATHS` (Task 2).
 - Produces: `POST /webhooks/clerk`, answering 200 on every path except a failed verification, which is 400.
 
@@ -623,7 +629,13 @@ Expected: FAIL — every request 404s, because the route does not exist.
 In `apps/api/src/routes/webhooks.ts`, add these imports to the existing blocks:
 
 ```ts
-import { deleteUser, ensureUser, recordSubscriptionEvent, scrubSubscriptionEvents, upsertSubscription } from "@repo/db";
+import {
+  deleteUser,
+  ensureUser,
+  recordSubscriptionEvent,
+  scrubSubscriptionEvents,
+  upsertSubscription,
+} from "@repo/db";
 ```
 
 Then change `webhookRoutes` so the returned Hono instance chains a second route after the RevenueCat one. Add this `.post(...)` immediately after the existing `.post("/revenuecat", ...)` call's closing `)`:
@@ -678,8 +690,8 @@ Then change `webhookRoutes` so the returned Hono instance chains a second route 
 Rename the existing logger binding if needed: the function currently declares `const log = getLogger(["api", "revenuecat"]);`. Change it to two loggers so each route logs under its own category:
 
 ```ts
-  const log = getLogger(["api", "revenuecat"]);
-  const clerkLog = getLogger(["api", "clerk"]);
+const log = getLogger(["api", "revenuecat"]);
+const clerkLog = getLogger(["api", "clerk"]);
 ```
 
 and use `clerkLog` in the new handler.
@@ -756,22 +768,22 @@ Automated tests cover the route. These steps cover the parts they cannot.
 
 **Spec coverage:**
 
-| Spec section                                           | Task                          |
-| ------------------------------------------------------ | ----------------------------- |
-| §2 nullable `user_id`, keep-list scrub                 | Task 1 Steps 1, 5             |
-| §2 `DELETE FROM users`, cascade                        | Task 1 Step 5                 |
-| §2 idempotency for an absent user                      | Task 1 Step 3, Task 3 Step 1  |
-| §3 route shape, 200 on every non-verification path     | Task 3 Step 3                 |
-| §3.1 `PUBLIC_PATHS` entry                              | Task 2 Step 7                 |
-| §3.1 body re-wrap around the consumed stream           | Task 3 Step 3                 |
-| §3.1 injected verifier                                 | Task 2 Steps 6, 8, 10         |
-| §3.1 only `user.deleted` acts                          | Task 3 Steps 1, 3             |
-| §3.1 one transaction                                   | Task 3 Step 3                 |
-| §4 `CLERK_WEBHOOK_SIGNING_SECRET`, `@clerk/backend`    | Task 2 Steps 1–5, 11          |
-| §4.1 per-instance Clerk settings                       | Task 3 Step 6, Manual         |
-| §5 App Store cancellation warning                      | Task 3 Step 6; landing plan   |
-| §6 all six test cases                                  | Task 3 Step 1                 |
-| §7 nullable migration, readers tolerate null           | Task 1 Steps 2, 8             |
+| Spec section                                        | Task                         |
+| --------------------------------------------------- | ---------------------------- |
+| §2 nullable `user_id`, keep-list scrub              | Task 1 Steps 1, 5            |
+| §2 `DELETE FROM users`, cascade                     | Task 1 Step 5                |
+| §2 idempotency for an absent user                   | Task 1 Step 3, Task 3 Step 1 |
+| §3 route shape, 200 on every non-verification path  | Task 3 Step 3                |
+| §3.1 `PUBLIC_PATHS` entry                           | Task 2 Step 7                |
+| §3.1 body re-wrap around the consumed stream        | Task 3 Step 3                |
+| §3.1 injected verifier                              | Task 2 Steps 6, 8, 10        |
+| §3.1 only `user.deleted` acts                       | Task 3 Steps 1, 3            |
+| §3.1 one transaction                                | Task 3 Step 3                |
+| §4 `CLERK_WEBHOOK_SIGNING_SECRET`, `@clerk/backend` | Task 2 Steps 1–5, 11         |
+| §4.1 per-instance Clerk settings                    | Task 3 Step 6, Manual        |
+| §5 App Store cancellation warning                   | Task 3 Step 6; landing plan  |
+| §6 all six test cases                               | Task 3 Step 1                |
+| §7 nullable migration, readers tolerate null        | Task 1 Steps 2, 8            |
 
 No gaps. §7's reconciliation job is recorded in the spec as a follow-up, not a
 task, and is deliberately absent here.

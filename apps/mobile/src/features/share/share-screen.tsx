@@ -101,9 +101,9 @@ export function ShareScreen({
               secondaryAction={
                 data.basis === "none"
                   ? {
-                    label: "Open the Original Video",
-                    onPress: () => void openURL(data.source.pageUrl),
-                  }
+                      label: "Open the Original Video",
+                      onPress: () => void openURL(data.source.pageUrl),
+                    }
                   : undefined
               }
             />

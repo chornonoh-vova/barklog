@@ -5,9 +5,9 @@ import { MAX_GUESSES, parseExtraction } from "../src/share/extract.js";
 
 describe("parseExtraction", () => {
   it("reads the titles and the basis out of a well-formed response", () => {
-    expect(parseExtraction('{"titles":["Resident Evil 2","Resident Evil"],"basis":"title"}')).toEqual(
-      { titles: ["Resident Evil 2", "Resident Evil"], basis: "title" },
-    );
+    expect(
+      parseExtraction('{"titles":["Resident Evil 2","Resident Evil"],"basis":"title"}'),
+    ).toEqual({ titles: ["Resident Evil 2", "Resident Evil"], basis: "title" });
   });
 
   it("keeps a channel-derived answer distinct from a title-derived one", () => {

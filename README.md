@@ -12,7 +12,7 @@ Turborepo monorepo for the Barklog iOS app and its backend.
 | `apps/mobile`                | Expo (SDK 57) app — expo-router native tabs, React Native lists with @expo/ui SwiftUI controls |
 | `apps/api`                   | Hono HTTP API running on Node via `@hono/node-server`                                          |
 | `apps/worker`                | Nightly IGDB → Postgres sync (`node-cron` + a one-shot CLI)                                    |
-| `apps/landing`               | Astro static marketing site + legal pages, served by nginx at `barklog.gg`                      |
+| `apps/landing`               | Astro static marketing site + legal pages, served by nginx at `barklog.gg`                     |
 | `packages/db`                | Drizzle schema, migrations, connection factory                                                 |
 | `packages/cache`             | Fail-open Valkey wrapper                                                                       |
 | `packages/contracts`         | shared valibot request schemas, the backlog status union, and the shared HTTP wire contract    |

@@ -34,16 +34,16 @@ so Dokploy can attach the domain.
 
 ## 2. Decisions
 
-| Question              | Decision                                                        |
-| --------------------- | --------------------------------------------------------------- |
-| Framework             | Astro 7.2.10, `output: 'static'`, no UI framework                |
-| Styling               | Tailwind CSS 4.3.3 via `@tailwindcss/vite`                       |
-| Design tokens         | A `@theme` block in `src/styles/global.css` — no config file      |
-| Animation             | `motion` (Motion One vanilla build), scroll-triggered            |
-| Runtime image         | `nginxinc/nginx-unprivileged:alpine`, port 8080                  |
-| Dockerfile location   | `apps/landing/Dockerfile`, repository root as build context      |
-| Fonts                 | Self-hosted woff2, Latin subset                                  |
-| App Store URL         | One constant in `src/config.ts`, marked TODO until assigned      |
+| Question            | Decision                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| Framework           | Astro 7.2.10, `output: 'static'`, no UI framework            |
+| Styling             | Tailwind CSS 4.3.3 via `@tailwindcss/vite`                   |
+| Design tokens       | A `@theme` block in `src/styles/global.css` — no config file |
+| Animation           | `motion` (Motion One vanilla build), scroll-triggered        |
+| Runtime image       | `nginxinc/nginx-unprivileged:alpine`, port 8080              |
+| Dockerfile location | `apps/landing/Dockerfile`, repository root as build context  |
+| Fonts               | Self-hosted woff2, Latin subset                              |
+| App Store URL       | One constant in `src/config.ts`, marked TODO until assigned  |
 
 Three decisions deserve their reasoning recorded.
 
@@ -163,8 +163,8 @@ is the reference: "Games you gave up on. No judgement." Second person, present
 tense, concrete scenarios rather than abstract benefits, fragments allowed for
 emphasis, limits admitted rather than hidden.
 
-Banned outright: *seamlessly*, *effortlessly*, *powerful yet simple*,
-*revolutionize*, *elevate*, *unlock*, *supercharge*, *game-changer*, and
+Banned outright: _seamlessly_, _effortlessly_, _powerful yet simple_,
+_revolutionize_, _elevate_, _unlock_, _supercharge_, _game-changer_, and
 exclamation marks. The `humanizer` skill is run over the finished copy as a
 check, not as a substitute for writing it well.
 

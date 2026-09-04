@@ -27,9 +27,10 @@ function shareStub(overrides: Partial<ShareProvider> = {}): ShareProvider {
   };
 }
 
-const extractTitles = vi.fn(
-  async (): Promise<Extraction> => ({ titles: ["Resident Evil 2"], basis: "title" }),
-);
+const extractTitles = vi.fn(async (): Promise<Extraction> => ({
+  titles: ["Resident Evil 2"],
+  basis: "title",
+}));
 
 const harness = createTestApp({ share: shareStub({ extractTitles }) });
 

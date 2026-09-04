@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import { toShareSections } from "@/features/share/sections";
 
-const ITEMS = [{ id: 1, name: "Elden Ring" }, { id: 2, name: "Hades" }] as GameSummaryWire[];
+const ITEMS = [
+  { id: 1, name: "Elden Ring" },
+  { id: 2, name: "Hades" },
+] as GameSummaryWire[];
 
 describe("toShareSections", () => {
   it("labels a title-derived group as such", () => {

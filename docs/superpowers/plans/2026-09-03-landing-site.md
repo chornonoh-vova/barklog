@@ -16,9 +16,9 @@
 - **No `is:inline` scripts, no `<ViewTransitions />`, no `prefetch`, no JSON-LD.** All emit inline script, with the same consequence for `script-src`.
 - **Every nginx `location` block must `include` the security-headers snippet.** `add_header` does not inherit into a block that declares its own.
 - **No third-party requests at runtime.** Fonts are self-hosted. No analytics, no CDNs, no embeds. The Privacy policy asserts this.
-- **Copy voice:** second person, present tense, concrete over abstract. Banned: *seamlessly*, *effortlessly*, *powerful yet simple*, *revolutionize*, *elevate*, *unlock*, *supercharge*, *game-changer*, and exclamation marks.
+- **Copy voice:** second person, present tense, concrete over abstract. Banned: _seamlessly_, _effortlessly_, _powerful yet simple_, _revolutionize_, _elevate_, _unlock_, _supercharge_, _game-changer_, and exclamation marks.
 - **There is no dog companion.** No streaks, no scoring, no pet mechanic exists in the app. The dog is the mark. Copy must not imply a feature.
-- **Free tier is ten *active* slots** — `waiting` or `playing` only. Completing or abandoning returns the slot. From `FREE_ACTIVE_SLOTS` and `slotDelta` in `packages/contracts/src/subscription.ts`.
+- **Free tier is ten _active_ slots** — `waiting` or `playing` only. Completing or abandoning returns the slot. From `FREE_ACTIVE_SLOTS` and `slotDelta` in `packages/contracts/src/subscription.ts`.
 - **Operator:** Volodymyr Chornonoh, individual developer, Ukraine. **Contact:** `chernonog.vova@gmail.com`. **Governing law:** Ukraine.
 - Versions: `astro@^7.2.10`, `tailwindcss@^4.3.3`, `@tailwindcss/vite@^4.3.3`, `eslint-plugin-astro@^1.7.0` (v2+ peers eslint ≥10; this repo is on 9).
 
@@ -27,6 +27,7 @@
 ### Task 1: Scaffold the app, and guard the CSP invariants
 
 **Files:**
+
 - Create: `apps/landing/package.json`, `astro.config.mjs`, `tsconfig.json`, `eslint.config.js`, `vitest.config.ts`
 - Create: `apps/landing/src/styles/global.css`, `src/config.ts`, `src/layouts/Base.astro`, `src/pages/index.astro`, `src/pages/404.astro`
 - Create: `apps/landing/test/setup/build.ts`, `apps/landing/test/output.test.ts`
@@ -34,6 +35,7 @@
 - Modify: `packages/eslint-config/package.json`, `pnpm-workspace.yaml`, `.dockerignore`
 
 **Interfaces:**
+
 - Produces:
   - `APP_STORE_URL: string`, `CONTACT_EMAIL: string` from `apps/landing/src/config.ts`
   - `Base.astro` accepting props `{ title: string; description: string }`
@@ -107,11 +109,11 @@ Note there is no `@astrojs/tailwind` integration: that package peers on `astro ^
 In `pnpm-workspace.yaml`, add to `allowBuilds`:
 
 ```yaml
-  # Tailwind 4's native engine and Astro's image pipeline. Both have native
-  # postinstall steps; leaving either undecided makes a fresh
-  # `pnpm install --frozen-lockfile` exit 1, which fails CI.
-  '@tailwindcss/oxide': true
-  sharp: true
+# Tailwind 4's native engine and Astro's image pipeline. Both have native
+# postinstall steps; leaving either undecided makes a fresh
+# `pnpm install --frozen-lockfile` exit 1, which fails CI.
+"@tailwindcss/oxide": true
+sharp: true
 ```
 
 - [ ] **Step 4: Create the tsconfig and design tokens**
@@ -409,10 +411,12 @@ and this workspace is on 9."
 ### Task 2: Terms and Privacy
 
 **Files:**
+
 - Create: `apps/landing/src/layouts/Legal.astro`, `src/pages/terms.astro`, `src/pages/privacy.astro`
 - Test: `apps/landing/test/legal.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Base.astro`, `CONTACT_EMAIL` (Task 1).
 - Produces: `Legal.astro` accepting `{ title: string; description: string; updated: string }`; routes `/terms/` and `/privacy/`.
 
@@ -733,6 +737,7 @@ cancel an App Store subscription. It appears in both documents."
 ### Task 3: The root page
 
 **Files:**
+
 - Create: `apps/landing/src/components/Hero.astro`, `Feature.astro`, `Pricing.astro`, `Footer.astro`, `Screenshot.astro`
 - Create: `apps/landing/src/assets/screenshots/{backlog,game,explore,share}.png`
 - Create: `apps/landing/src/assets/fonts/` (chosen faces, woff2)
@@ -740,6 +745,7 @@ cancel an App Store subscription. It appears in both documents."
 - Test: `apps/landing/test/home.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Base.astro`, `APP_STORE_URL`, `CONTACT_EMAIL` (Task 1).
 - Produces: `Feature.astro` with props `{ title: string; eyebrow: string; image: ImageMetadata; alt: string; flip?: boolean }`.
 
@@ -850,33 +856,45 @@ Write `Screenshot.astro` (wraps `astro:assets`' `<Image>` in a device frame), `H
 The copy, which is the deliverable — use it verbatim:
 
 **Hero**
+
 > # Every game you meant to get back to.
+>
 > Barklog keeps your backlog in one place: what you're playing, what's waiting, what you finished, and what you gave up on. No spreadsheet, no shame.
 >
 > [Download on the App Store] · Free. Premium is optional.
 
 **Backlog** (eyebrow "Your backlog", screenshot `backlog.png`)
+
 > ## Four honest statuses
+>
 > Waiting, playing, completed, abandoned. Most trackers assume you'll finish everything. Barklog doesn't — abandoned is a real answer, and it's one tap away.
 
 **Explore** (eyebrow "Explore", screenshot `explore.png`, flipped)
+
 > ## Find the next one
+>
 > See what's popular, what's coming, and what just landed. Or search by name when you already know. Tap through to a game for its platforms, its summary, and what it's similar to.
 
 **Share** (eyebrow "Share a video", screenshot `share.png`)
+
 > ## Share a video, get the game
+>
 > You're watching a clip of some game you can't name. Share it to Barklog and it works out which game that is, then hands you the matches to pick from. It reads the video's title and channel name — not the video.
 
 **Pricing**
+
 > ## Ten at a time, free
+>
 > Barklog is free for ten unfinished games — the ones waiting and the one you're playing. Finish one, or admit you're done with it, and the spot comes back.
 >
 > Premium takes the cap off. That's the whole difference.
 
 **IGDB credit**
+
 > Game data by [IGDB](https://www.igdb.com) — covers, release dates, platforms and summaries, maintained by its community.
 
 **Footer**
+
 > Barklog · Made by Volodymyr Chornonoh
 > [Terms](/terms) · [Privacy](/privacy) · [chernonog.vova@gmail.com](mailto:…)
 
@@ -915,11 +933,13 @@ not have."
 ### Task 4: Motion
 
 **Files:**
+
 - Create: `apps/landing/src/scripts/reveal.ts`
 - Modify: `apps/landing/src/layouts/Base.astro`, components from Task 3
 - Test: `apps/landing/test/motion.test.ts`
 
 **Interfaces:**
+
 - Consumes: components from Task 3, which gain a `data-reveal` attribute.
 - Produces: a bundled module that animates `[data-reveal]` elements into view once.
 
@@ -1064,10 +1084,12 @@ The legal pages pass motion={false} and ship no script at all."
 ### Task 5: The container
 
 **Files:**
+
 - Create: `apps/landing/Dockerfile`, `apps/landing/nginx/default.conf`, `apps/landing/nginx/snippets/security-headers.conf`
 - Test: `apps/landing/test/nginx.test.ts`
 
 **Interfaces:**
+
 - Consumes: `apps/landing/dist/` from Task 1's build.
 - Produces: image target `landing`, listening on 8080, serving `/healthz`.
 
@@ -1328,9 +1350,11 @@ HSTS without preload: submission is effectively irreversible."
 ### Task 6: Deploy wiring
 
 **Files:**
+
 - Modify: `compose.yaml`, `.github/workflows/images.yml`, `README.md`
 
 **Interfaces:**
+
 - Consumes: the `landing` image target from Task 5.
 - Produces: `ghcr.io/chornonoh-vova/barklog-landing:${IMAGE_TAG}`, and a `landing` compose service.
 
@@ -1339,24 +1363,24 @@ HSTS without preload: submission is effectively irreversible."
 In `compose.yaml`, after the `worker` service and before `valkey`:
 
 ```yaml
-  landing:
-    image: ghcr.io/chornonoh-vova/barklog-landing:${IMAGE_TAG:-main}
-    pull_policy: always # see migrate's comment above
-    restart: unless-stopped
-    # No environment, and no depends_on: it is static files. It does not read
-    # the database, the cache, or anything else in this project, so a failed
-    # migration must not keep the marketing site down.
-    expose:
-      - "8080"
-    networks:
-      - default
-      - dokploy-network
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+landing:
+  image: ghcr.io/chornonoh-vova/barklog-landing:${IMAGE_TAG:-main}
+  pull_policy: always # see migrate's comment above
+  restart: unless-stopped
+  # No environment, and no depends_on: it is static files. It does not read
+  # the database, the cache, or anything else in this project, so a failed
+  # migration must not keep the marketing site down.
+  expose:
+    - "8080"
+  networks:
+    - default
+    - dokploy-network
+  healthcheck:
+    test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 5s
 ```
 
 Add `barklog.gg` to this service in Dokploy's Domains tab, exactly as `api.barklog.gg` is attached to `api`. No `ports:`, as everywhere else in the file.
@@ -1366,30 +1390,30 @@ Add `barklog.gg` to this service in Dokploy's Domains tab, exactly as `api.barkl
 In `.github/workflows/images.yml`, after the `meta-worker` build-push step, append:
 
 ```yaml
-      # Last in the sequence, and deliberately so: nothing depends on the
-      # landing image, so a failure here leaves the site at the previous
-      # commit — the harmless direction, unlike the migrate-first ordering
-      # reasoned about above.
-      - id: meta-landing
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/barklog-landing
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/landing/Dockerfile
-          target: landing
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-landing.outputs.tags }}
-          labels: ${{ steps.meta-landing.outputs.labels }}
-          cache-from: type=gha,scope=barklog
-          cache-to: type=gha,scope=barklog,mode=max
-          provenance: false
+# Last in the sequence, and deliberately so: nothing depends on the
+# landing image, so a failure here leaves the site at the previous
+# commit — the harmless direction, unlike the migrate-first ordering
+# reasoned about above.
+- id: meta-landing
+  uses: docker/metadata-action@v5
+  with:
+    images: ghcr.io/${{ github.repository_owner }}/barklog-landing
+    tags: |
+      type=ref,event=branch
+      type=sha,format=short
+      type=raw,value=latest,enable={{is_default_branch}}
+- uses: docker/build-push-action@v6
+  with:
+    context: .
+    file: apps/landing/Dockerfile
+    target: landing
+    platforms: linux/amd64
+    push: true
+    tags: ${{ steps.meta-landing.outputs.tags }}
+    labels: ${{ steps.meta-landing.outputs.labels }}
+    cache-from: type=gha,scope=barklog
+    cache-to: type=gha,scope=barklog,mode=max
+    provenance: false
 ```
 
 - [ ] **Step 3: Verify the whole workspace passes CI's gate**
@@ -1407,12 +1431,12 @@ Expected: all pass. This is exactly the `verify` job. A failure in `pnpm install
 In `README.md`, add a row to the "What's inside" table, keeping the column alignment:
 
 ```markdown
-| `apps/landing`               | Astro static marketing site + legal pages, served by nginx at `barklog.gg`                      |
+| `apps/landing` | Astro static marketing site + legal pages, served by nginx at `barklog.gg` |
 ```
 
 And a short section near the deployment notes:
 
-```markdown
+````markdown
 ### Landing site
 
 `apps/landing` builds to static files served by nginx. `barklog.gg` is attached
@@ -1433,7 +1457,9 @@ block includes `snippets/security-headers.conf` explicitly, because
 pnpm --filter landing dev     # http://localhost:4321
 pnpm --filter landing build
 ```
-```
+````
+
+````
 
 - [ ] **Step 5: Commit**
 
@@ -1448,7 +1474,7 @@ leaving code running against a schema it does not match.
 The compose service has no environment and no depends_on. It is static
 files, so a failed migration must not take the marketing site down with
 it."
-```
+````
 
 ---
 
@@ -1468,30 +1494,30 @@ it."
 
 **Spec coverage:**
 
-| Spec section                                          | Task                       |
-| ----------------------------------------------------- | -------------------------- |
-| §2 Astro 7, Tailwind 4 via `@tailwindcss/vite`        | Task 1 Steps 1, 2          |
-| §2 no `@astrojs/tailwind`                             | Task 1 Step 2 (comment)    |
-| §3 file layout                                        | Tasks 1–5                  |
-| §3.1 `inlineStylesheets: "never"`                     | Task 1 Step 2, guarded S6  |
-| §3.1 no inline script / view transitions / prefetch   | Task 1 Step 6, Task 4 S5   |
-| §3.1 `allowBuilds` for oxide and sharp                | Task 1 Step 3              |
-| §3.1 sharp on alpine                                  | Task 5 Step 7 (fallback)   |
-| §4 tokens in `@theme`, self-hosted fonts              | Task 1 Step 4, Task 3 S4   |
-| §4.1 motion rules, reduced-motion                     | Task 4 Steps 3, 4, 6       |
-| §5 page order                                         | Task 3 Step 5              |
-| §5.1 screenshot slots and placeholders                | Task 3 Step 1              |
-| §5.2 voice, banned words, no dog feature, real slots  | Task 3 Steps 5, 7; tests   |
-| §6.1 Terms contents                                   | Task 2 Step 4              |
-| §6.2 Privacy contents, both strong claims             | Task 2 Step 5, tests S1    |
-| §7 CSP and the header set                             | Task 5 Step 3              |
-| §7 HSTS without preload                               | Task 5 Steps 1, 3          |
-| §7.1 `add_header` inheritance trap                    | Task 5 Steps 1, 4          |
-| §8 nginx routing, caching, gzip, `/healthz`           | Task 5 Step 4              |
-| §9 Dockerfile stages                                  | Task 5 Step 6              |
-| §10 compose service                                   | Task 6 Step 1              |
-| §11 CI publish step, eslint config, pinned plugin     | Task 6 Step 2, Task 1 S9   |
-| §12 follow-ups                                        | Manual verification        |
+| Spec section                                         | Task                      |
+| ---------------------------------------------------- | ------------------------- |
+| §2 Astro 7, Tailwind 4 via `@tailwindcss/vite`       | Task 1 Steps 1, 2         |
+| §2 no `@astrojs/tailwind`                            | Task 1 Step 2 (comment)   |
+| §3 file layout                                       | Tasks 1–5                 |
+| §3.1 `inlineStylesheets: "never"`                    | Task 1 Step 2, guarded S6 |
+| §3.1 no inline script / view transitions / prefetch  | Task 1 Step 6, Task 4 S5  |
+| §3.1 `allowBuilds` for oxide and sharp               | Task 1 Step 3             |
+| §3.1 sharp on alpine                                 | Task 5 Step 7 (fallback)  |
+| §4 tokens in `@theme`, self-hosted fonts             | Task 1 Step 4, Task 3 S4  |
+| §4.1 motion rules, reduced-motion                    | Task 4 Steps 3, 4, 6      |
+| §5 page order                                        | Task 3 Step 5             |
+| §5.1 screenshot slots and placeholders               | Task 3 Step 1             |
+| §5.2 voice, banned words, no dog feature, real slots | Task 3 Steps 5, 7; tests  |
+| §6.1 Terms contents                                  | Task 2 Step 4             |
+| §6.2 Privacy contents, both strong claims            | Task 2 Step 5, tests S1   |
+| §7 CSP and the header set                            | Task 5 Step 3             |
+| §7 HSTS without preload                              | Task 5 Steps 1, 3         |
+| §7.1 `add_header` inheritance trap                   | Task 5 Steps 1, 4         |
+| §8 nginx routing, caching, gzip, `/healthz`          | Task 5 Step 4             |
+| §9 Dockerfile stages                                 | Task 5 Step 6             |
+| §10 compose service                                  | Task 6 Step 1             |
+| §11 CI publish step, eslint config, pinned plugin    | Task 6 Step 2, Task 1 S9  |
+| §12 follow-ups                                       | Manual verification       |
 
 No gaps. The spec's file layout names a `Reveal` component; the plan uses a
 `data-reveal` attribute driven by one module instead, which is the same
@@ -1499,7 +1525,7 @@ behaviour with one fewer wrapper.
 
 **Placeholder scan:** No `TBD`, no "similar to Task N", no "add error
 handling". The legal copy and the marketing copy are written out in full,
-because in this plan the copy *is* the deliverable. Two deliberately deferred
+because in this plan the copy _is_ the deliverable. Two deliberately deferred
 values are marked and have manual-verification entries: `APP_STORE_URL` and the
 four screenshots.
 

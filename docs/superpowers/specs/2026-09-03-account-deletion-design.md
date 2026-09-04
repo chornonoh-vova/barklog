@@ -35,15 +35,15 @@ actually works.
 
 ## 2. Decisions
 
-| Question                          | Decision                                                        |
-| --------------------------------- | --------------------------------------------------------------- |
-| Who initiates?                    | The user, in Clerk's native `UserProfileView`                    |
-| How does the API learn of it?     | A `user.deleted` webhook at `POST /webhooks/clerk`               |
-| Verification                      | `verifyWebhook` from `@clerk/backend/webhooks`, injected as a dep |
-| What is deleted?                  | `DELETE FROM users` — `backlog_entries` and `subscriptions` cascade |
-| `subscription_events`             | Retained, `user_id` nulled, payload stripped                     |
-| Idempotency                       | Deleting an absent row is a success, not an error                |
-| Deleted ids                       | A `deleted_users` tombstone, checked by the RevenueCat handler   |
+| Question                      | Decision                                                            |
+| ----------------------------- | ------------------------------------------------------------------- |
+| Who initiates?                | The user, in Clerk's native `UserProfileView`                       |
+| How does the API learn of it? | A `user.deleted` webhook at `POST /webhooks/clerk`                  |
+| Verification                  | `verifyWebhook` from `@clerk/backend/webhooks`, injected as a dep   |
+| What is deleted?              | `DELETE FROM users` — `backlog_entries` and `subscriptions` cascade |
+| `subscription_events`         | Retained, `user_id` nulled, payload stripped                        |
+| Idempotency                   | Deleting an absent row is a success, not an error                   |
+| Deleted ids                   | A `deleted_users` tombstone, checked by the RevenueCat handler      |
 
 Two decisions deserve their reasoning recorded.
 
@@ -118,11 +118,10 @@ anything but 2xx is retried, so duplicates and irrelevant event types answer
 - **Verification is injected, not imported at the call site.** `AppDeps` gains
   a `verifyClerkWebhook` member, mirroring `auth`, `share` and `revenueCat`.
   This is what keeps the suite free of network and of a real signing secret.
-- **Only `user.deleted` acts.** Every other event type is logged and answered
-  200. Clerk sends whatever the endpoint is subscribed to, and a 4xx on an
+- **Only `user.deleted` acts.** Every other event type is logged and answered 200. Clerk sends whatever the endpoint is subscribed to, and a 4xx on an
   unrecognised type would make Clerk retry it forever.
 - **One transaction.** The scrub of `subscription_events` and the `DELETE FROM
-  users` commit together, or neither does and Clerk's retry finds the account
+users` commit together, or neither does and Clerk's retry finds the account
   still whole.
 
 ## 4. Configuration
