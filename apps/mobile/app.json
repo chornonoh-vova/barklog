@@ -45,7 +45,8 @@
         }
       ],
       "@clerk/expo",
-      "expo-image"
+      "expo-image",
+      "./plugins/with-pods-uuid-collision-fix"
     ],
     "experiments": {
       "typedRoutes": true,
