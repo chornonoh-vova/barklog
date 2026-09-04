@@ -17,6 +17,7 @@ import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { SimilarGames } from "@/features/game/similar-games";
+import { useImageTransition } from "@/hooks/use-reduced-motion";
 import { screenshotUrl } from "@/igdb-image";
 import { Type } from "@/theme";
 
@@ -29,6 +30,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const upsert = useUpsertBacklogEntry(gameId);
   const remove = useDeleteBacklogEntry(gameId);
   const router = useRouter();
+  const transition = useImageTransition();
   const premium = usePremium();
   const stats = useBacklogStats();
   const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
@@ -84,7 +86,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
                         source={{ uri: screenshotUrl(item) }}
                         style={StyleSheet.absoluteFill}
                         contentFit="cover"
-                        transition={150}
+                        transition={transition}
                         cachePolicy="disk"
                       />
                     </View>

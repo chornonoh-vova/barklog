@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { PlatformColor, Pressable, StyleSheet, Text } from "react-native";
+import { PlatformColor, Pressable, StyleSheet, Text, useWindowDimensions } from "react-native";
 
 import { Cover } from "@/components/cover";
 import { Type } from "@/theme";
@@ -21,6 +21,14 @@ export const GameTile = memo(function GameTile({
   coverImageId: string | null;
   onPress: (id: number) => void;
 }) {
+  /* Both labels reserve a whole number of lines so tiles in a shelf line up,
+     and that reservation has to grow with Dynamic Type or the scaled text
+     clips inside it. `fontScale` here, not `PixelRatio.getFontScale()`: the
+     latter is read once and would not survive the setting changing while the
+     app is open. */
+  const { fontScale } = useWindowDimensions();
+  const line = TITLE_LINE * fontScale;
+
   return (
     <Pressable
       onPress={() => onPress(id)}
@@ -31,10 +39,10 @@ export const GameTile = memo(function GameTile({
       {/* `big`: at 100pt on a 3x screen the small transform's 180px is visibly soft. */}
       <Cover imageId={coverImageId} size="big" width={TILE_WIDTH} />
 
-      <Text style={styles.title} numberOfLines={2}>
+      <Text style={[styles.title, { lineHeight: line, height: line * 2 }]} numberOfLines={2}>
         {title}
       </Text>
-      <Text style={styles.subtitle} numberOfLines={1}>
+      <Text style={[styles.subtitle, { lineHeight: line, height: line }]} numberOfLines={1}>
         {subtitle ?? ""}
       </Text>
     </Pressable>
@@ -48,13 +56,9 @@ const styles = StyleSheet.create({
     ...Type.footnote,
     fontWeight: "600",
     color: PlatformColor("label"),
-    lineHeight: TITLE_LINE,
-    height: TITLE_LINE * 2,
   },
   subtitle: {
     ...Type.footnote,
     color: PlatformColor("secondaryLabel"),
-    lineHeight: TITLE_LINE,
-    height: TITLE_LINE,
   },
 });

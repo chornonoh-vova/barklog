@@ -72,8 +72,12 @@ import { CONTACT_EMAIL } from "../config";
       IP address and which images it asks for, and nothing else.
     </li>
     <li>
-      <strong>Expo</strong> — checks for app updates when Barklog launches. It sees your
-      device's IP address and the app's version, nothing more.
+      <strong>Expo</strong> — checks for app updates when Barklog launches. That check carries
+      your device's IP address, the app's version, and a random identifier the app makes for
+      itself the first time it runs. That identifier is not an advertising id and is not tied to
+      your account: deleting the app throws it away, and reinstalling makes a new one. If the app
+      crashed the last time you opened it, the error message from that crash rides along with the
+      next check, so a broken update can be spotted and pulled.
     </li>
     <li><strong>Hostinger</strong> — the server the API and this site run on.</li>
   </ul>

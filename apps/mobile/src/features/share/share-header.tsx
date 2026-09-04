@@ -6,6 +6,7 @@ import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { UNAVAILABLE_NOTICE } from "@/features/share/empty-states";
 import { sourceThumbSize } from "@/features/share/source-thumb";
+import { useImageTransition } from "@/hooks/use-reduced-motion";
 import { Type } from "@/theme";
 
 export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis: ShareBasis }) {
@@ -39,6 +40,7 @@ export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis:
  */
 function SourceCover({ source }: { source: ShareSourceWire }) {
   const [failed, setFailed] = useState(false);
+  const transition = useImageTransition();
   const size = sourceThumbSize(source.provider);
 
   // `== null`, not `===`: responses are cast, not validated, so a field absent
@@ -60,7 +62,7 @@ function SourceCover({ source }: { source: ShareSourceWire }) {
       source={{ uri: source.thumbnailUrl }}
       style={[styles.cover, size]}
       contentFit="cover"
-      transition={150}
+      transition={transition}
       cachePolicy="disk"
       onError={() => setFailed(true)}
       accessibilityElementsHidden
