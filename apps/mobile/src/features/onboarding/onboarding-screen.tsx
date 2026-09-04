@@ -5,6 +5,7 @@ import {
   Image,
   Label,
   Link,
+  RNHostView,
   Spacer,
   TabView,
   Text,
@@ -27,6 +28,8 @@ import {
 import { useState } from "react";
 import { StyleSheet } from "react-native";
 
+import { SYMBOL_SIZE } from "@/components/illustrations";
+import { Mascot } from "@/components/mascot";
 import { siteUrl } from "@/igdb-url";
 import { Brand } from "@/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
@@ -69,16 +72,26 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           {ONBOARDING_PAGES.map((page) => (
             <TabView.Tab key={page.id} value={page.id}>
               <VStack spacing={8} modifiers={[padding({ horizontal: 32 })]}>
-                <Image
-                  systemName={page.systemImage}
-                  size={52}
-                  modifiers={[
-                    foregroundStyle({ type: "hierarchical", style: "secondary" }),
-                    padding({ bottom: 4 }),
-                    // The symbol restates the title, so VoiceOver reads the copy only.
-                    accessibilityHidden(true),
-                  ]}
-                />
+                {page.illustration ? (
+                  // @expo/ui's `Image` takes an SF Symbol, an asset-catalog
+                  // symbol set, or a `file://` URI — never a bundled webp — so
+                  // the mascot comes in as a hosted react-native view instead.
+                  // `matchContents` is what lets this stack size to it.
+                  <RNHostView matchContents>
+                    <Mascot illustration={page.illustration} />
+                  </RNHostView>
+                ) : (
+                  <Image
+                    systemName={page.systemImage}
+                    size={SYMBOL_SIZE}
+                    modifiers={[
+                      foregroundStyle({ type: "hierarchical", style: "secondary" }),
+                      padding({ bottom: 4 }),
+                      // The symbol restates the title, so VoiceOver reads the copy only.
+                      accessibilityHidden(true),
+                    ]}
+                  />
+                )}
                 <Text
                   modifiers={[
                     font({ textStyle: "title2", weight: "bold" }),

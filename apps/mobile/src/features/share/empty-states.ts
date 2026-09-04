@@ -16,6 +16,7 @@ import type { EmptyStateContent } from "@/components/empty-state";
 export const NO_LINK: EmptyStateContent = {
   title: "No link in that share",
   systemImage: "link",
+  illustration: "share",
   description:
     "Barklog needs a YouTube or TikTok link. Share the video itself, not a screenshot of it.",
 };
@@ -28,6 +29,7 @@ export const NO_LINK: EmptyStateContent = {
 export const UNREADABLE: EmptyStateContent = {
   title: "Could not read that share",
   systemImage: "exclamationmark.triangle",
+  illustration: "share",
   description: "Barklog could not open what was shared. Try sharing the video again.",
 };
 
@@ -52,6 +54,7 @@ export function noMatch(basis: ShareBasis, guesses: string[]): EmptyStateContent
   return {
     title: "No match in the catalogue",
     systemImage: "magnifyingglass",
+    illustration: "share",
     description:
       basis === "none"
         ? "We could not tell which game this is, even from the channel. Open the original video to check."

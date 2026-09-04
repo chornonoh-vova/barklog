@@ -100,3 +100,22 @@ describe("nextPageId", () => {
     expect(nextPageId("no-such-page")).toBe("backlog");
   });
 });
+
+describe("onboarding illustrations", () => {
+  it("gives each feature page the mascot that matches it", () => {
+    const illustrationFor = (id: string) =>
+      ONBOARDING_PAGES.find((page) => page.id === id)?.illustration;
+
+    expect(illustrationFor("welcome")).toBe("default");
+    expect(illustrationFor("backlog")).toBe("backlog");
+    expect(illustrationFor("explore")).toBe("explore");
+    expect(illustrationFor("share")).toBe("share");
+  });
+
+  it("leaves the attribution page on its symbol, having no mascot for it", () => {
+    const page = ONBOARDING_PAGES.find((candidate) => candidate.id === IGDB_PAGE_ID);
+
+    expect(page?.illustration).toBeUndefined();
+    expect(page?.systemImage).toBe("books.vertical.fill");
+  });
+});

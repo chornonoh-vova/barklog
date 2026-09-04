@@ -15,14 +15,6 @@ const DEBOUNCE_MS = 400;
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
-const PROMPT = (
-  <EmptyState
-    title="Fetch a game"
-    systemImage="magnifyingglass"
-    description="Type a title. Two characters is enough to start."
-  />
-);
-
 export function SearchScreen({ query }: { query: string }) {
   const debounced = useDebounced(query.trim(), DEBOUNCE_MS);
   const search = useSearchGames(debounced);
@@ -43,32 +35,44 @@ export function SearchScreen({ query }: { query: string }) {
     [openGame],
   );
 
-  if (debounced.length < SEARCH_QUERY_MIN) return PROMPT;
+  if (query.length < SEARCH_QUERY_MIN) {
+    return (
+      <EmptyState
+        title="Fetch a game"
+        systemImage="magnifyingglass"
+        illustration="explore"
+        description="Type a title. Two characters is enough to start."
+        fullscreen
+      />
+    );
+  }
 
   return (
     <QueryBoundary query={search}>
-      {(data) =>
-        data.items.length === 0 ? (
-          <EmptyState
-            title="No games found"
-            systemImage="magnifyingglass"
-            description={`Nothing in the catalogue matches "${debounced}".`}
-          />
-        ) : (
-          <FlatList
-            style={styles.list}
-            data={data.items}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            keyboardDismissMode="on-drag"
-            contentInsetAdjustmentBehavior="automatic"
-          />
-        )
-      }
+      {(data) => (
+        <FlatList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          data={data.items}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          keyboardDismissMode="on-drag"
+          contentInsetAdjustmentBehavior="automatic"
+          ListEmptyComponent={
+            <EmptyState
+              title="No games found"
+              systemImage="magnifyingglass"
+              illustration="explore"
+              description={`Nothing in the catalogue matches "${debounced}".`}
+            />
+          }
+        />
+      )}
     </QueryBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   list: Screen.fill,
+  listContent: Screen.listContent,
 });

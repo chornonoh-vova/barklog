@@ -13,6 +13,7 @@ const EMPTY_CATALOGUE = (
   <EmptyState
     title="Nothing to sniff out yet"
     systemImage="safari"
+    illustration="explore"
     description="The catalogue is still syncing. Check back shortly."
   />
 );

@@ -20,6 +20,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry: () => 
       systemImage="exclamationmark.triangle"
       description={description}
       action={{ label: "Try Again", onPress: onRetry }}
+      fullscreen
     />
   );
 }

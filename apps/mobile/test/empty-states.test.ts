@@ -40,3 +40,21 @@ describe("EMPTY_FILTER", () => {
     expect(new Set(titles).size).toBe(titles.length);
   });
 });
+
+describe("backlog illustrations", () => {
+  it("gives the empty backlog the backlog mascot", () => {
+    expect(EMPTY_BACKLOG.illustration).toBe("backlog");
+  });
+
+  it("gives every status filter the backlog mascot", () => {
+    for (const status of BACKLOG_STATUSES) {
+      expect(EMPTY_FILTER[status].illustration, status).toBe("backlog");
+    }
+  });
+
+  it("keeps a symbol on every state, so a missing mascot still renders something", () => {
+    for (const state of [EMPTY_BACKLOG, ...BACKLOG_STATUSES.map((s) => EMPTY_FILTER[s])]) {
+      expect(state.systemImage).not.toBe("");
+    }
+  });
+});

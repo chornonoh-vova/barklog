@@ -1,10 +1,16 @@
 import type { SFSymbol } from "sf-symbols-typescript";
 
-/** No react-native or @expo/ui anywhere in this module's graph, so the copy is
- * testable in plain Node. */
+import type { IllustrationName } from "@/components/illustrations";
+
+/** No react-native or @expo/ui anywhere in this module's graph — both imports
+ * above are types, which erase at compile — so the copy is testable in plain
+ * Node. */
 export interface OnboardingPage {
   id: string;
+  /** Kept required alongside `illustration`: the attribution page has no mascot
+   * of its own and falls back to this. */
   systemImage: SFSymbol;
+  illustration?: IllustrationName;
   title: string;
   description: string;
 }
@@ -16,12 +22,14 @@ export const IGDB_PAGE_ID = "igdb";
 export const ONBOARDING_PAGES = [
   {
     id: "welcome",
+    illustration: "default",
     systemImage: "pawprint.fill",
     title: "Welcome to Barklog",
     description: "Barklog holds the games you're playing and the ones you keep meaning to start.",
   },
   {
     id: "backlog",
+    illustration: "backlog",
     systemImage: "checklist",
     title: "Managing your game backlog",
     description:
@@ -29,6 +37,7 @@ export const ONBOARDING_PAGES = [
   },
   {
     id: "explore",
+    illustration: "explore",
     systemImage: "sparkle.magnifyingglass",
     title: "Exploring games",
     description:
@@ -36,6 +45,7 @@ export const ONBOARDING_PAGES = [
   },
   {
     id: "share",
+    illustration: "share",
     systemImage: "square.and.arrow.up",
     title: "Share a video, pick the game",
     description:
@@ -43,6 +53,10 @@ export const ONBOARDING_PAGES = [
   },
   {
     id: IGDB_PAGE_ID,
+    // Spelled out rather than left off: `as const satisfies` keeps each page's
+    // literal shape, so a page missing the key would drop it from the union and
+    // put `page.illustration` out of reach at every call site.
+    illustration: undefined,
     systemImage: "books.vertical.fill",
     title: "All game data is powered by IGDB",
     description:

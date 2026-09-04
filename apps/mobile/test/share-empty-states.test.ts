@@ -75,3 +75,16 @@ describe("noMatch", () => {
     expect(new Set(titles).size).toBe(titles.length);
   });
 });
+
+describe("share illustrations", () => {
+  it("gives both share failure states the share mascot", () => {
+    expect(NO_LINK.illustration).toBe("share");
+    expect(UNREADABLE.illustration).toBe("share");
+  });
+
+  it("gives no-match the share mascot on every basis", () => {
+    for (const basis of ["title", "unavailable", "none"] as const) {
+      expect(noMatch(basis, ["Hollow Knight"]).illustration, basis).toBe("share");
+    }
+  });
+});

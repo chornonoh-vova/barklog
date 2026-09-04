@@ -71,6 +71,8 @@ export function BacklogScreen() {
       <EmptyState
         {...EMPTY_BACKLOG}
         action={{ label: "Find a Game", onPress: () => router.navigate("/search") }}
+        secondaryAction={{ label: "Or explore games", onPress: () => router.navigate("/explore") }}
+        fullscreen
       />
     );
   }
