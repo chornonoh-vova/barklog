@@ -1,15 +1,21 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
+import { useEffect } from "react";
 import RevenueCatUI from "react-native-purchases-ui";
 
 import { keys } from "@/api/keys";
 import { useApi } from "@/api/provider";
 import { refreshSubscription } from "@/purchases/refresh";
+import { markPaywallSeen } from "@/review/session";
 
 /** Presented as a `pageSheet` by `_layout.tsx` — an offer, not a wall. */
 export default function Paywall() {
   const queryClient = useQueryClient();
   const api = useApi();
+
+  // Marked here rather than at each `router.push("/paywall")`, so every route
+  // into the sheet counts — including ones added later.
+  useEffect(() => markPaywallSeen(), []);
 
   const settle = () => {
     // A purchase and a restore are the two moments the client knows something

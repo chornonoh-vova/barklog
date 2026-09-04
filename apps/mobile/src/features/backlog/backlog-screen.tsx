@@ -21,6 +21,7 @@ import { toSections, type BacklogSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { rowSubtitle, statsLine } from "@/features/game/format";
+import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 
 const keyExtractor = (item: BacklogListItemWire) => String(item.gameId);
@@ -43,6 +44,10 @@ export function BacklogScreen() {
   const router = useRouter();
   const premium = useIsPremium();
   const slots = slotsLabel(stats.data, premium);
+
+  // Home, after the stats land: the calmest moment the app has, and the only
+  // screen a user reaches without having just tapped something.
+  useReviewPrompt(stats.data?.counts.completed);
 
   const openGame = useCallback((gameId: number) => router.push(`/game/${gameId}`), [router]);
 
@@ -143,7 +148,11 @@ const styles = StyleSheet.create({
   // clipping.
   slotsTarget: { minHeight: 44, justifyContent: "center" },
   slots: { ...Type.footnote, color: PlatformColor("link"), paddingHorizontal: 16 },
-  sectionHeader: { ...SectionHeader.container, flexDirection: "row", justifyContent: "space-between" },
+  sectionHeader: {
+    ...SectionHeader.container,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   sectionTitle: SectionHeader.title,
   sectionCount: { ...Type.footnote, color: PlatformColor("tertiaryLabel") },
 });
