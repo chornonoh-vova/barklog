@@ -5,7 +5,7 @@ import { fetchVideoMeta } from "./oembed.js";
 
 /** The production wiring for the three impure edges. */
 export function createShareProvider(env: {
-  ANTHROPIC_API_KEY: string;
+  OPENAI_API_KEY: string;
   IDENTIFY_MODEL: string;
 }): ShareProvider {
   return {
@@ -13,7 +13,7 @@ export function createShareProvider(env: {
     resolveShortLink: (url) => resolveShortLink(url, fetch),
     fetchMeta: (ref) => fetchVideoMeta(ref, fetch),
     extractTitles: createTitleExtractor({
-      apiKey: env.ANTHROPIC_API_KEY,
+      apiKey: env.OPENAI_API_KEY,
       model: env.IDENTIFY_MODEL,
     }),
   };

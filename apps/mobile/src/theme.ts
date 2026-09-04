@@ -23,3 +23,20 @@ export const Screen = {
   fill: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
   listContent: { flexGrow: 1 },
 } as const;
+
+/** Shared by the two `SectionList` screens. Opaque, or sticky headers show the
+ * rows sliding under them. */
+export const SectionHeader = {
+  container: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 6,
+    backgroundColor: PlatformColor("systemBackground"),
+  },
+  title: {
+    ...Type.footnote,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+    color: PlatformColor("secondaryLabel"),
+  },
+} as const;

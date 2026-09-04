@@ -60,6 +60,8 @@ export interface ShareSourceWire {
   videoId: string;
   title: string;
   author: string | null;
+  /** The canonical video page, offered as the last resort when nothing could be identified. */
+  pageUrl: string;
   /**
    * oEmbed's cover image. `null` when the provider omitted one or gave
    * something that is not an https url. TikTok's is a signed CDN url that can
@@ -69,12 +71,24 @@ export interface ShareSourceWire {
   thumbnailUrl: string | null;
 }
 
+/** The tiers the extraction model chooses between. Drives its prompt and its schema. */
+export const EXTRACTED_BASES = ["title", "channel", "none"] as const;
+
+/**
+ * What the guesses were derived from, in descending confidence. `unavailable`
+ * is the route's own fail-soft marker for an extraction that threw, where
+ * `guesses` holds the raw video title rather than anything a model believed.
+ */
+export type ShareBasis = (typeof EXTRACTED_BASES)[number] | "unavailable";
+
 export interface ShareIdentifyResponse {
   source: ShareSourceWire;
+  /** Drives both the section header above the results and the empty-state copy. */
+  basis: ShareBasis;
   /**
-   * `false` when the game could not be identified from the video and
-   * `guesses` is just the raw video title used as a search query instead.
-   * Drives the fallback notice in the share screen.
+   * @deprecated Read `basis` instead. Kept for one release so an older app
+   * build, which treats an absent field as `false`, does not show the fallback
+   * notice on every result.
    */
   identified: boolean;
   /** What the extraction believed the game was called. Drives the empty-state copy. */

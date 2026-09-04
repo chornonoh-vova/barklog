@@ -1,20 +1,14 @@
-import type { ShareSourceWire } from "@repo/contracts";
+import type { ShareBasis, ShareSourceWire } from "@repo/contracts";
 import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 import { useState } from "react";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
-import { TITLE_MATCH_NOTICE } from "@/features/share/empty-states";
+import { UNAVAILABLE_NOTICE } from "@/features/share/empty-states";
 import { sourceThumbSize } from "@/features/share/source-thumb";
 import { Type } from "@/theme";
 
-export function ShareHeader({
-  source,
-  identified,
-}: {
-  source: ShareSourceWire;
-  identified: boolean;
-}) {
+export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis: ShareBasis }) {
   return (
     <View style={styles.header}>
       <Text style={styles.question}>Which game is this?</Text>
@@ -34,7 +28,7 @@ export function ShareHeader({
         </View>
       </View>
 
-      {identified ? null : <FallbackNotice />}
+      {basis === "unavailable" ? <FallbackNotice /> : null}
     </View>
   );
 }
@@ -90,7 +84,7 @@ function FallbackNotice() {
           tintColor={PlatformColor("systemOrange")}
         />
       </View>
-      <Text style={styles.noticeText}>{TITLE_MATCH_NOTICE}</Text>
+      <Text style={styles.noticeText}>{UNAVAILABLE_NOTICE}</Text>
     </View>
   );
 }

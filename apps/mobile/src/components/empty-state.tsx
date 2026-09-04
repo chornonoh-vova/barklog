@@ -22,12 +22,18 @@ export interface EmptyStateContent {
   description: string;
 }
 
+export interface EmptyStateAction {
+  label: string;
+  onPress: () => void;
+}
+
 export function EmptyState({
   title,
   systemImage,
   description,
   action,
-}: EmptyStateContent & { action?: { label: string; onPress: () => void } }) {
+  secondaryAction,
+}: EmptyStateContent & { action?: EmptyStateAction; secondaryAction?: EmptyStateAction }) {
   return (
     <Host style={styles.host} seedColor={Brand.tint}>
       <VStack spacing={8} modifiers={[padding({ horizontal: 32 })]}>
@@ -62,6 +68,13 @@ export function EmptyState({
               controlSize("large"),
               padding({ top: 12 }),
             ]}
+          />
+        ) : null}
+        {secondaryAction ? (
+          <Button
+            label={secondaryAction.label}
+            onPress={secondaryAction.onPress}
+            modifiers={[controlSize("large")]}
           />
         ) : null}
       </VStack>

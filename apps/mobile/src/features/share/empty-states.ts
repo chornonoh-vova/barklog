@@ -1,3 +1,5 @@
+import type { ShareBasis } from "@repo/contracts";
+
 import type { EmptyStateContent } from "@/components/empty-state";
 
 /**
@@ -30,27 +32,31 @@ export const UNREADABLE: EmptyStateContent = {
 };
 
 /**
- * Shown above the results when the game could not be identified and the
- * matches come from searching the video's raw title instead.
+ * Shown above the results on the `unavailable` basis only: extraction itself
+ * failed, so the matches come from searching the video's raw title instead.
  */
-export const TITLE_MATCH_NOTICE =
+export const UNAVAILABLE_NOTICE =
   "We couldn't tell which game this is, so these are matches for the video title instead.";
 
 /**
  * Reads as a sentence when the guesses are joined, not as a debug dump.
  *
- * `identified` gates which sentence is used, not just `guesses.length`: on
- * the fail-soft path `guesses` holds the video's raw title, not a game
- * title, so quoting it back as "we think this is about ..." would assert a
- * belief the server explicitly disclaimed.
+ * `basis` gates which sentence is used, not just `guesses.length`: on the
+ * `unavailable` path `guesses` holds the video's raw title, not a game title,
+ * so quoting it back as "we think this is about ..." would assert a belief the
+ * server explicitly disclaimed. `none` is the model's own dead end — it had
+ * the channel to go on and still could not tell — so it says so and leaves the
+ * original video as the way out.
  */
-export function noMatch(identified: boolean, guesses: string[]): EmptyStateContent {
+export function noMatch(basis: ShareBasis, guesses: string[]): EmptyStateContent {
   return {
     title: "No match in the catalogue",
     systemImage: "magnifyingglass",
     description:
-      !identified || guesses.length === 0
-        ? "We could not tell which game this video is about."
-        : `We think this is about ${guesses.join(" or ")}, but it is not in the catalogue yet.`,
+      basis === "none"
+        ? "We could not tell which game this is, even from the channel. Open the original video to check."
+        : basis === "unavailable" || guesses.length === 0
+          ? "We could not tell which game this video is about."
+          : `We think this is about ${guesses.join(" or ")}, but it is not in the catalogue yet.`,
   };
 }

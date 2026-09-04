@@ -8,6 +8,7 @@ import {
   shareIdentifySchema,
   similarQuerySchema,
   type GameFeed,
+  type ShareBasis,
   type ShareIdentifyResponse,
 } from "@repo/contracts";
 import {
@@ -195,18 +196,19 @@ export function gamesRoutes(deps: AppDeps) {
       // loader propagates uncached — the same property `/:id/similar` relies on
       // — so one transient failure cannot pin a degraded answer for 30 days.
       let guesses: string[];
-      let identified: boolean;
+      let basis: ShareBasis;
       try {
-        guesses = await withCache(
+        const extraction = await withCache(
           deps.cache,
           extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, ref.provider, ref.videoId),
           EXTRACT_TTL_SECONDS,
           () => deps.share.extractTitles(meta),
         );
-        identified = true;
+        guesses = extraction.titles;
+        basis = extraction.basis;
       } catch (error) {
         // Logged, not thrown: this is the one failure mode in the route that
-        // never reaches `apiErrorHandler`, so without a log line an Anthropic
+        // never reaches `apiErrorHandler`, so without a log line an OpenAI
         // outage degrades every identify response in complete silence.
         log.warn(
           "Extraction failed for {provider}:{videoId}, falling back to the raw title: {message}",
@@ -219,7 +221,7 @@ export function gamesRoutes(deps: AppDeps) {
         // Fail soft: the raw title is a worse query than an extracted one, but
         // it is a far better answer than an error page.
         guesses = [meta.title];
-        identified = false;
+        basis = "unavailable";
       }
 
       const version = await searchVersion();
@@ -233,11 +235,13 @@ export function gamesRoutes(deps: AppDeps) {
           videoId: ref.videoId,
           title: meta.title,
           author: meta.author,
+          pageUrl: ref.pageUrl,
           // `?? null`: `withCache` casts rather than validates, so a cache
           // entry written before this field existed arrives without it.
           thumbnailUrl: meta.thumbnailUrl ?? null,
         },
-        identified,
+        basis,
+        identified: basis !== "unavailable",
         guesses,
         items: mergeCandidates(results, limit),
       };

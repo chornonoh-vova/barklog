@@ -21,7 +21,7 @@ import { toSections, type BacklogSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { rowSubtitle, statsLine } from "@/features/game/format";
-import { Screen, Type } from "@/theme";
+import { Screen, SectionHeader, Type } from "@/theme";
 
 const keyExtractor = (item: BacklogListItemWire) => String(item.gameId);
 
@@ -141,19 +141,7 @@ const styles = StyleSheet.create({
   // clipping.
   slotsTarget: { minHeight: 44, justifyContent: "center" },
   slots: { ...Type.footnote, color: PlatformColor("link"), paddingHorizontal: 16 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 6,
-    backgroundColor: PlatformColor("systemBackground"),
-  },
-  sectionTitle: {
-    ...Type.footnote,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-    color: PlatformColor("secondaryLabel"),
-  },
+  sectionHeader: { ...SectionHeader.container, flexDirection: "row", justifyContent: "space-between" },
+  sectionTitle: SectionHeader.title,
   sectionCount: { ...Type.footnote, color: PlatformColor("tertiaryLabel") },
 });

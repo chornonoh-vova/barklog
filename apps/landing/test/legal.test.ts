@@ -31,7 +31,7 @@ test("the terms name the operator, the law, and Apple's role", async () => {
 test("the privacy policy names every processor", async () => {
   const html = await read("privacy");
 
-  for (const processor of ["Clerk", "RevenueCat", "Apple", "Anthropic", "PlanetScale", "IGDB"]) {
+  for (const processor of ["Clerk", "RevenueCat", "Apple", "OpenAI", "PlanetScale", "IGDB"]) {
     expect(html, `privacy policy does not mention ${processor}`).toContain(processor);
   }
 });
@@ -40,6 +40,6 @@ test("the privacy policy states the two strong claims", async () => {
   const html = await read("privacy");
 
   expect(html).toMatch(/no cookies/i);
-  // Only the video's title and channel name reach Anthropic.
+  // Only the video's title and channel name reach OpenAI.
   expect(html).toMatch(/title and channel name/i);
 });

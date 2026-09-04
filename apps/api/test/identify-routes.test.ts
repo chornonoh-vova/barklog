@@ -2,6 +2,7 @@ import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
 import { problems } from "../src/problems.js";
 import type { Canonical, VideoRef } from "../src/share/canonicalise.js";
+import type { Extraction } from "../src/share/extract.js";
 import type { VideoMeta } from "../src/share/oembed.js";
 import { oembedKey } from "../src/cache-keys.js";
 import { VideoGone, VideoMetaUnavailable } from "../src/share/oembed.js";
@@ -18,15 +19,17 @@ const META: VideoMeta = {
 
 function shareStub(overrides: Partial<ShareProvider> = {}): ShareProvider {
   return {
-    model: "claude-haiku-4-5",
+    model: "gpt-5.4-mini",
     resolveShortLink: async (): Promise<Canonical> => ({ kind: "unsupported" }),
     fetchMeta: async (_ref: VideoRef) => META,
-    extractTitles: async () => ["Resident Evil 2"],
+    extractTitles: async () => ({ titles: ["Resident Evil 2"], basis: "title" }),
     ...overrides,
   };
 }
 
-const extractTitles = vi.fn(async () => ["Resident Evil 2"]);
+const extractTitles = vi.fn(
+  async (): Promise<Extraction> => ({ titles: ["Resident Evil 2"], basis: "title" }),
+);
 
 const harness = createTestApp({ share: shareStub({ extractTitles }) });
 
@@ -66,8 +69,10 @@ test("identifies the game, returning ranked candidates and the video it came fro
       videoId: string;
       title: string;
       author: string | null;
+      pageUrl: string;
       thumbnailUrl: string | null;
     };
+    basis: string;
     identified: boolean;
     guesses: string[];
     items: { id: number }[];
@@ -80,8 +85,10 @@ test("identifies the game, returning ranked candidates and the video it came fro
     videoId: "1vs0lLIRt7w",
     title: META.title,
     author: "Snamwiches",
+    pageUrl: RE2_URL,
     thumbnailUrl: META.thumbnailUrl,
   });
+  expect(body.basis).toBe("title");
   expect(body.identified).toBe(true);
   expect(body.guesses).toEqual(["Resident Evil 2"]);
   expect(body.items.map((item) => item.id)).toEqual([1, 2]);
@@ -225,17 +232,60 @@ test("a failing extraction falls soft to the raw video title", async () => {
   const app = createTestApp({
     share: shareStub({
       extractTitles: async () => {
-        throw new Error("anthropic is down");
+        throw new Error("openai is down");
       },
     }),
   });
 
   const response = await identifyOn(app.app);
-  const body = (await response.json()) as { identified: boolean; guesses: string[] };
+  const body = (await response.json()) as {
+    basis: string;
+    identified: boolean;
+    guesses: string[];
+  };
 
   expect(response.status).toBe(200);
+  // `unavailable`, not `none`: the model never answered, so its tiers say nothing.
+  expect(body.basis).toBe("unavailable");
   expect(body.identified).toBe(false);
   expect(body.guesses).toEqual([META.title]);
+  await app.close();
+});
+
+test("a channel-derived extraction reaches the client as such, so it can say what it is guessing from", async () => {
+  await seedGame(harness.db, { id: 1, name: "Elden Ring", count: 5000 });
+
+  const app = createTestApp({
+    share: shareStub({
+      extractTitles: async () => ({ titles: ["Elden Ring"], basis: "channel" }),
+    }),
+  });
+
+  const response = await identifyOn(app.app);
+  const body = (await response.json()) as { basis: string; identified: boolean };
+
+  expect(body.basis).toBe("channel");
+  expect(body.identified).toBe(true);
+  await app.close();
+});
+
+test("an extraction that identified nothing is `none`, with the page url left to fall back on", async () => {
+  const app = createTestApp({
+    share: shareStub({ extractTitles: async () => ({ titles: [], basis: "none" }) }),
+  });
+
+  const response = await identifyOn(app.app);
+  const body = (await response.json()) as {
+    basis: string;
+    guesses: string[];
+    items: unknown[];
+    source: { pageUrl: string };
+  };
+
+  expect(body.basis).toBe("none");
+  expect(body.guesses).toEqual([]);
+  expect(body.items).toEqual([]);
+  expect(body.source.pageUrl).toBe(RE2_URL);
   await app.close();
 });
 
@@ -245,7 +295,7 @@ test("a failed extraction is not cached, so the next call retries it", async () 
     share: shareStub({
       extractTitles: async () => {
         calls += 1;
-        throw new Error("anthropic is down");
+        throw new Error("openai is down");
       },
     }),
   });

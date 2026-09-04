@@ -4,6 +4,7 @@ import type { Database, SubscriptionRow } from "@repo/db";
 import type { AuthProvider } from "./middleware/auth.js";
 import type { RateLimits } from "./rate-limits.js";
 import type { Canonical, VideoRef } from "./share/canonicalise.js";
+import type { Extraction } from "./share/extract.js";
 import type { VideoMeta } from "./share/oembed.js";
 
 export type Db = Database["db"];
@@ -48,7 +49,7 @@ export interface ShareProvider {
   model: string;
   resolveShortLink(url: string): Promise<Canonical>;
   fetchMeta(ref: VideoRef): Promise<VideoMeta>;
-  extractTitles(meta: VideoMeta): Promise<string[]>;
+  extractTitles(meta: VideoMeta): Promise<Extraction>;
 }
 
 /** Injected like `share`, so the suite needs no network. */

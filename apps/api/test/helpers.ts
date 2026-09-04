@@ -21,7 +21,7 @@ export const fakeAuthProvider: AuthProvider = {
 };
 
 const unusedShareProvider: ShareProvider = {
-  model: "claude-haiku-4-5",
+  model: "gpt-5.4-mini",
   resolveShortLink: () => {
     throw new Error("share.resolveShortLink was not stubbed for this test");
   },

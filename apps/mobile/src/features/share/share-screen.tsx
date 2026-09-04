@@ -1,6 +1,7 @@
 import type { GameSummaryWire } from "@repo/contracts";
-import { useCallback } from "react";
-import { FlatList } from "react-native";
+import { openURL } from "expo-linking";
+import { useCallback, useMemo } from "react";
+import { SectionList, StyleSheet, Text, View } from "react-native";
 
 import { useIdentifyShare } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
@@ -9,10 +10,21 @@ import { QueryBoundary } from "@/components/query-boundary";
 import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
 import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { toShareSections, type ShareSection } from "@/features/share/sections";
 import { ShareHeader } from "@/features/share/share-header";
-import { Screen } from "@/theme";
+import { Screen, SectionHeader } from "@/theme";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
+
+// Lowercase, deliberately not a component: `SectionList` calls this as a plain
+// function, and React Compiler would give a component a `useMemoCache` call
+// that then runs outside a render.
+const renderSectionHeader = ({ section }: { section: ShareSection }) =>
+  section.title === null ? null : (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+    </View>
+  );
 
 export function ShareScreen({
   url,
@@ -31,6 +43,14 @@ export function ShareScreen({
 }) {
   const identify = useIdentifyShare(url);
   const backToHome = { label: "Back to Home", onPress: onGoHome };
+
+  const sections = useMemo(
+    () =>
+      identify.data === undefined
+        ? []
+        : toShareSections(identify.data.basis, identify.data.items, identify.data.source.author),
+    [identify.data],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: GameSummaryWire }) => (
@@ -61,20 +81,30 @@ export function ShareScreen({
   return (
     <QueryBoundary query={identify}>
       {(data) => (
-        <FlatList
+        <SectionList
           style={Screen.fill}
           // `flexGrow: 1`, or the empty component is clipped — see `theme.ts`.
           contentContainerStyle={Screen.listContent}
-          data={data.items}
+          sections={sections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
           // Also what lets the large title collapse on scroll.
           contentInsetAdjustmentBehavior="automatic"
-          ListHeaderComponent={<ShareHeader source={data.source} identified={data.identified} />}
+          stickySectionHeadersEnabled
+          ListHeaderComponent={<ShareHeader source={data.source} basis={data.basis} />}
           ListEmptyComponent={
             <EmptyState
-              {...noMatch(data.identified, data.guesses)}
+              {...noMatch(data.basis, data.guesses)}
               action={{ label: "Search Instead", onPress: onSearch }}
+              secondaryAction={
+                data.basis === "none"
+                  ? {
+                      label: "Open the Original Video",
+                      onPress: () => void openURL(data.source.pageUrl),
+                    }
+                  : undefined
+              }
             />
           }
         />
@@ -82,3 +112,8 @@ export function ShareScreen({
     </QueryBoundary>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionHeader: SectionHeader.container,
+  sectionTitle: SectionHeader.title,
+});

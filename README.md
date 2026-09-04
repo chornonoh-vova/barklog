@@ -218,7 +218,7 @@ string straight to `pg.Pool`, which reads `sslmode` from the URL, so TLS is a
 property of the secret rather than of the code.
 
 Set the deploy environment in Dokploy: `DATABASE_URL`, `CLERK_SECRET_KEY`,
-`CLERK_PUBLISHABLE_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `ANTHROPIC_API_KEY`,
+`CLERK_PUBLISHABLE_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `OPENAI_API_KEY`,
 `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`, `REVENUECAT_WEBHOOK_SECRET`,
 `REVENUECAT_WEBHOOK_SIGNING_SECRET`, and `REVENUECAT_API_KEY` are required —
 the API's `env.ts` refuses to boot without any of them, and `compose.yaml`

@@ -47,7 +47,7 @@ import { CONTACT_EMAIL } from "../config";
     When you share a YouTube or TikTok video to Barklog, the API asks that platform's own
     oEmbed service for the video's public title and channel name, passing nothing but the
     video's URL — no cookie, account, or device information rides along. It sends
-    <em>only the title and channel name</em> to Anthropic, which guesses which game it's about.
+    <em>only the title and channel name</em> to OpenAI, which guesses which game it's about.
     The video itself never leaves the platform it's on, and nothing identifying you is included
     in either request.
   </p>
@@ -57,7 +57,7 @@ import { CONTACT_EMAIL } from "../config";
     <li><strong>Clerk</strong> — accounts and sign-in.</li>
     <li><strong>RevenueCat</strong> — subscription state.</li>
     <li><strong>Apple</strong> — the purchase itself, and billing.</li>
-    <li><strong>Anthropic</strong> — the video title and channel name described above.</li>
+    <li><strong>OpenAI</strong> — the video title and channel name described above.</li>
     <li><strong>PlanetScale</strong> — the database your backlog lives in.</li>
     <li>
       <strong>IGDB and Twitch</strong> — game data, and the cover art and screenshots
