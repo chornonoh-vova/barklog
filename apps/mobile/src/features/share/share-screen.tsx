@@ -97,12 +97,13 @@ export function ShareScreen({
             <EmptyState
               {...noMatch(data.basis, data.guesses)}
               action={{ label: "Search Instead", onPress: onSearch }}
+              // The last resort: nothing was identified, so hand the video back.
               secondaryAction={
                 data.basis === "none"
                   ? {
-                      label: "Open the Original Video",
-                      onPress: () => void openURL(data.source.pageUrl),
-                    }
+                    label: "Open the Original Video",
+                    onPress: () => void openURL(data.source.pageUrl),
+                  }
                   : undefined
               }
             />

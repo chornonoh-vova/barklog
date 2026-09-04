@@ -6,6 +6,7 @@ import type { GameSummaryWire, ShareBasis } from "@repo/contracts";
  * plain Node.
  */
 export interface ShareSection {
+  /** `null` renders no header — see `toShareSections` on why `unavailable` gets none. */
   title: string | null;
   data: GameSummaryWire[];
 }
@@ -28,9 +29,9 @@ export function toShareSections(
       : basis === "channel"
         ? (author ?? "This channel") + "'s usual games"
         : // `unavailable` has the same rows a `title` basis would, but a header
-          // would claim a match the server disclaimed. The orange notice above
-          // the list explains these instead.
-          null;
+        // would claim a match the server disclaimed. The orange notice above
+        // the list explains these instead.
+        null;
 
   return [{ title, data: items }];
 }
