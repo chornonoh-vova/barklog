@@ -40,3 +40,10 @@ minimumReleaseAgeExclude:
   - framer-motion@13.2.0
   - motion-dom@13.2.0
   - motion@13.2.0
+  - '@expo/cli@57.0.22'
+  - expo-modules-core@57.0.16
+  - expo-modules-jsi@57.0.8
+  - expo@57.0.20
+  - '@expo/ui@57.0.16'
+  - expo-router@57.0.19
+  - expo-sharing@57.0.18
