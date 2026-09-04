@@ -1,8 +1,7 @@
-import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 import { PlatformColor, StyleSheet, View } from "react-native";
 
-import { useImageTransition } from "@/hooks/use-reduced-motion";
+import { RemoteImage } from "@/components/remote-image";
 import { coverUrl, type CoverSize } from "@/igdb-image";
 import { COVER_ASPECT } from "@/theme";
 
@@ -15,7 +14,6 @@ export function Cover({
   size: CoverSize;
   width: number;
 }) {
-  const transition = useImageTransition();
   const uri = coverUrl(imageId, size);
   const style = { width, height: width / COVER_ASPECT };
 
@@ -31,15 +29,7 @@ export function Cover({
     );
   }
 
-  return (
-    <Image
-      source={{ uri }}
-      style={[styles.image, style]}
-      contentFit="cover"
-      transition={transition}
-      cachePolicy="disk"
-    />
-  );
+  return <RemoteImage source={{ uri }} style={[styles.image, style]} />;
 }
 
 const styles = StyleSheet.create({

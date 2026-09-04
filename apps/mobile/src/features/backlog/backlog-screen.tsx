@@ -45,9 +45,8 @@ export function BacklogScreen() {
   const premium = useIsPremium();
   const slots = slotsLabel(stats.data, premium);
 
-  // Home, after the stats land: the calmest moment the app has, and the only
-  // screen a user reaches without having just tapped something.
-  useReviewPrompt(stats.data?.counts.completed);
+  // Home: the only screen a user reaches without having just tapped something.
+  useReviewPrompt();
 
   const openGame = useCallback((gameId: number) => router.push(`/game/${gameId}`), [router]);
 

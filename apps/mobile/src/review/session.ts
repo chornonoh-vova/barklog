@@ -11,8 +11,3 @@ export function markPaywallSeen(): void {
 export function hasSeenPaywallThisSession(): boolean {
   return paywallSeen;
 }
-
-/** Test-only: module state would otherwise leak between cases. */
-export function resetSession(): void {
-  paywallSeen = false;
-}

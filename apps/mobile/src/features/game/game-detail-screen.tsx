@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { FlatList, PlatformColor, ScrollView, StyleSheet, View, Text } from "react-native";
 
@@ -17,7 +16,7 @@ import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { SimilarGames } from "@/features/game/similar-games";
-import { useImageTransition } from "@/hooks/use-reduced-motion";
+import { RemoteImage } from "@/components/remote-image";
 import { screenshotUrl } from "@/igdb-image";
 import { Type } from "@/theme";
 
@@ -30,7 +29,6 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const upsert = useUpsertBacklogEntry(gameId);
   const remove = useDeleteBacklogEntry(gameId);
   const router = useRouter();
-  const transition = useImageTransition();
   const premium = usePremium();
   const stats = useBacklogStats();
   const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
@@ -82,12 +80,9 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
                   showsHorizontalScrollIndicator={false}
                   renderItem={({ item }) => (
                     <View style={styles.shot}>
-                      <Image
+                      <RemoteImage
                         source={{ uri: screenshotUrl(item) }}
                         style={StyleSheet.absoluteFill}
-                        contentFit="cover"
-                        transition={transition}
-                        cachePolicy="disk"
                       />
                     </View>
                   )}

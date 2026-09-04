@@ -1,12 +1,11 @@
 import type { ShareBasis, ShareSourceWire } from "@repo/contracts";
-import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 import { useState } from "react";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { UNAVAILABLE_NOTICE } from "@/features/share/empty-states";
+import { RemoteImage } from "@/components/remote-image";
 import { sourceThumbSize } from "@/features/share/source-thumb";
-import { useImageTransition } from "@/hooks/use-reduced-motion";
 import { Type } from "@/theme";
 
 export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis: ShareBasis }) {
@@ -40,7 +39,6 @@ export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis:
  */
 function SourceCover({ source }: { source: ShareSourceWire }) {
   const [failed, setFailed] = useState(false);
-  const transition = useImageTransition();
   const size = sourceThumbSize(source.provider);
 
   // `== null`, not `===`: responses are cast, not validated, so a field absent
@@ -58,12 +56,9 @@ function SourceCover({ source }: { source: ShareSourceWire }) {
   }
 
   return (
-    <Image
+    <RemoteImage
       source={{ uri: source.thumbnailUrl }}
       style={[styles.cover, size]}
-      contentFit="cover"
-      transition={transition}
-      cachePolicy="disk"
       onError={() => setFailed(true)}
       accessibilityElementsHidden
     />

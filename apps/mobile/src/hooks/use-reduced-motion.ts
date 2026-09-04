@@ -1,37 +1,42 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { AccessibilityInfo } from "react-native";
 
-/** `expo-image`'s cross-fade, in ms, when motion is not being reduced. */
 const IMAGE_TRANSITION_MS = 150;
 
 /**
- * Subscribed, not read once: Reduce Motion can be switched on while the app is
- * running, which is exactly what someone testing accessibility does. Starts
- * `false` so the first paint matches the common case — the real value lands a
- * tick later, well before any image has finished decoding.
+ * One subscription for the whole app, not one per hook call: `RemoteImage` is a
+ * list-cell leaf, so per-instance state would mean a native round-trip and a
+ * listener registration for every row scrolled past.
+ *
+ * Subscribed rather than read once because Reduce Motion can be switched on
+ * while the app is running, which is exactly what someone testing accessibility
+ * does.
  */
-export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+let reduced = false;
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    let active = true;
+function emit(value: boolean): void {
+  if (value === reduced) return;
 
-    void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
-      if (active) setReduced(value);
-    });
+  reduced = value;
+  for (const listener of listeners) listener();
+}
 
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduced);
+void AccessibilityInfo.isReduceMotionEnabled().then(emit);
+AccessibilityInfo.addEventListener("reduceMotionChanged", emit);
 
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, []);
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
 
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function snapshot(): boolean {
   return reduced;
 }
 
-/** Cross-fade duration for `expo-image`, or none at all under Reduce Motion. */
 export function useImageTransition(): number {
-  return useReducedMotion() ? 0 : IMAGE_TRANSITION_MS;
+  return useSyncExternalStore(subscribe, snapshot) ? 0 : IMAGE_TRANSITION_MS;
 }
