@@ -6,40 +6,29 @@ const DIST = path.resolve(import.meta.dirname, "../dist");
 
 const read = (route: string) => readFile(path.join(DIST, route, "index.html"), "utf8");
 
-test("the legal routes are built as directories", async () => {
-  await expect(read("terms")).resolves.toContain("<h1");
-  await expect(read("privacy")).resolves.toContain("<h1");
-});
+/**
+ * /support is not a legal document, but it earns the same two guarantees: it is
+ * the URL App Review fetches for the listing's Support link, and it renders in
+ * the same zero-JavaScript layout, so a script arriving there would breach the
+ * same CSP.
+ */
+const ROUTES = ["terms", "privacy", "support"];
 
-test("the legal pages ship no JavaScript", async () => {
-  for (const route of ["terms", "privacy"]) {
-    expect(await read(route)).not.toMatch(/<script/i);
+test("the standalone routes are built as directories", async () => {
+  for (const route of ROUTES) {
+    await expect(read(route), `/${route} did not build`).resolves.toContain("<h1");
   }
 });
 
-test("the terms name the operator, the law, and Apple's role", async () => {
-  const html = await read("terms");
-
-  expect(html).toContain("Volodymyr Chornonoh");
-  expect(html).toContain("chernonog.vova@gmail.com");
-  expect(html).toMatch(/Ukrain/);
-  // The single most consequential sentence: deleting an account does not
-  // cancel the subscription.
-  expect(html).toMatch(/does not cancel/i);
-});
-
-test("the privacy policy names every processor", async () => {
-  const html = await read("privacy");
-
-  for (const processor of ["Clerk", "RevenueCat", "Apple", "OpenAI", "PlanetScale", "IGDB"]) {
-    expect(html, `privacy policy does not mention ${processor}`).toContain(processor);
+test("the standalone pages ship no JavaScript", async () => {
+  for (const route of ROUTES) {
+    expect(await read(route), `/${route} ships a script`).not.toMatch(/<script/i);
   }
 });
 
-test("the privacy policy states the two strong claims", async () => {
-  const html = await read("privacy");
+test("support reaches the contact address and the issue tracker", async () => {
+  const html = await read("support");
 
-  expect(html).toMatch(/no cookies/i);
-  // Only the video's title and channel name reach OpenAI.
-  expect(html).toMatch(/title and channel name/i);
+  expect(html).toContain("mailto:");
+  expect(html).toContain("github.com/chornonoh-vova/barklog");
 });

@@ -99,3 +99,9 @@ test("the screenshots describe the screen, not the file", async () => {
     expect(alt.length, `alt text is too short to describe anything: "${alt}"`).toBeGreaterThan(30);
   }
 });
+
+test("the footer reaches the support page", async () => {
+  // The App Store listing's Support URL points at /support, so a footer link
+  // dropped here is the only in-site path to it going missing.
+  expect(await home()).toContain('href="/support"');
+});
