@@ -41,6 +41,26 @@ export function shareHostProvider(url: string): ShareProviderName | null {
   return null;
 }
 
+/**
+ * Shape only. The outbound request is guarded at the network layer instead —
+ * see `apps/api/src/share/safe-fetch.ts`.
+ */
+export function isShareableUrl(input: string): boolean {
+  let url: URL;
+
+  try {
+    url = new URL(input);
+  } catch {
+    return false;
+  }
+
+  if (url.protocol !== "https:") return false;
+  if (url.username !== "" || url.password !== "") return false;
+  if (url.port !== "" && url.port !== "443") return false;
+
+  return true;
+}
+
 export const shareIdentifySchema = v.strictObject({
   url: v.pipe(
     v.string(),

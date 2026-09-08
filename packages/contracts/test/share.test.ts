@@ -1,7 +1,12 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
-import { IDENTIFY_LIMIT_DEFAULT, shareHostProvider, shareIdentifySchema } from "../src/share.js";
+import {
+  IDENTIFY_LIMIT_DEFAULT,
+  isShareableUrl,
+  shareHostProvider,
+  shareIdentifySchema,
+} from "../src/share.js";
 
 const parse = (input: unknown) => v.safeParse(shareIdentifySchema, input);
 
@@ -33,6 +38,33 @@ describe("shareHostProvider", () => {
   it("is null for anything unparseable", () => {
     expect(shareHostProvider("not a url")).toBeNull();
     expect(shareHostProvider("")).toBeNull();
+  });
+});
+
+describe("isShareableUrl", () => {
+  it("accepts a plain https url", () => {
+    expect(isShareableUrl("https://example.test/a")).toBe(true);
+  });
+
+  it("accepts the default https port spelled out explicitly", () => {
+    expect(isShareableUrl("https://example.test:443/a")).toBe(true);
+  });
+
+  it("rejects http", () => {
+    expect(isShareableUrl("http://example.test/a")).toBe(false);
+  });
+
+  it("rejects a non-standard port", () => {
+    expect(isShareableUrl("https://example.test:8443/a")).toBe(false);
+  });
+
+  it("rejects embedded credentials", () => {
+    expect(isShareableUrl("https://user:pass@example.test/a")).toBe(false);
+  });
+
+  it("rejects anything unparseable", () => {
+    expect(isShareableUrl("not a url")).toBe(false);
+    expect(isShareableUrl("")).toBe(false);
   });
 });
 
