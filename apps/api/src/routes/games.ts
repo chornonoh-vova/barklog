@@ -162,7 +162,7 @@ export function gamesRoutes(deps: AppDeps) {
       // the TTL — the same property `/:id/similar` relies on.
       let meta: SourceMeta;
       try {
-        meta = await withCache(deps.cache, sourceKey(share.shareId), SOURCE_TTL_SECONDS, () =>
+        meta = await withCache(deps.cache, sourceKey(share), SOURCE_TTL_SECONDS, () =>
           deps.share.fetchMeta(share),
         );
       } catch (error) {
@@ -179,8 +179,12 @@ export function gamesRoutes(deps: AppDeps) {
         // Logged: `apiErrorHandler` never logs a `ProblemDetailsError`, so
         // without this a blocked address — the SSRF-probe signal now that
         // the host allowlist is gone — would fail as a silent 502.
+        // `sourceId` is the only human-readable handle here: the cache keys
+        // are sha1 digests, so without it a log line names nothing you can
+        // search for.
         log.warn("Metadata fetch failed for {shareId}: {errorClass}", {
           shareId: share.shareId,
+          sourceId: share.sourceId,
           errorClass: error instanceof Error ? error.constructor.name : typeof error,
         });
         // A fixed string: a 5xx must never carry the upstream message.
@@ -196,7 +200,7 @@ export function gamesRoutes(deps: AppDeps) {
       try {
         const extraction = await withCache(
           deps.cache,
-          extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, meta.shareId),
+          extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, meta),
           EXTRACT_TTL_SECONDS,
           () => deps.share.extractTitles(meta),
         );

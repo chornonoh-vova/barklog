@@ -11,7 +11,8 @@ import type { ShareProvider } from "../src/types.js";
 import { callApi, createTestApp, logs, seedGame, type TestHarness } from "./helpers.js";
 
 const SHARE_URL = "https://www.ign.com/articles/re2-review";
-const SHARE_ID = normaliseShare(SHARE_URL)!.shareId;
+const SHARE = normaliseShare(SHARE_URL)!;
+const SHARE_ID = SHARE.shareId;
 
 const META: SourceMeta = {
   title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
@@ -110,7 +111,12 @@ test("a source whose metadata carries no thumbnail still answers 200, with a nul
 
   const app = createTestApp({
     share: shareStub({
-      fetchMeta: async () => ({ ...META, thumbnailUrl: null, thumbnailWidth: null, thumbnailHeight: null }),
+      fetchMeta: async () => ({
+        ...META,
+        thumbnailUrl: null,
+        thumbnailWidth: null,
+        thumbnailHeight: null,
+      }),
     }),
   });
 
@@ -127,8 +133,14 @@ test("the response always carries the thumbnail fields, even for a cached Source
 
   // A shape `withCache` would hand back unvalidated, since it casts.
   await harness.cache.set(
-    sourceKey(SHARE_ID),
-    { title: META.title, author: META.author, provider: META.provider, pageUrl: META.pageUrl, shareId: SHARE_ID },
+    sourceKey(SHARE),
+    {
+      title: META.title,
+      author: META.author,
+      provider: META.provider,
+      pageUrl: META.pageUrl,
+      shareId: SHARE_ID,
+    },
     60,
   );
 
@@ -370,7 +382,10 @@ test("a repeated identify reuses the cached extraction", async () => {
 });
 
 test("collapses two different requested links onto one cached extraction when they resolve to the same source", async () => {
-  const extraction = vi.fn(async (): Promise<Extraction> => ({ titles: ["Resident Evil 2"], basis: "title" }));
+  const extraction = vi.fn(async (): Promise<Extraction> => ({
+    titles: ["Resident Evil 2"],
+    basis: "title",
+  }));
 
   // Both requests key the metadata cache differently (distinct requested
   // shareIds), but `fetchMeta` here reports the same resolved source both
@@ -390,8 +405,8 @@ test("collapses two different requested links onto one cached extraction when th
 test("the extraction cache key is built from the resolved shareId, not the requested one", () => {
   const requestedId = normaliseShare("https://short.example/abc")!.shareId;
 
-  expect(extractKey(EXTRACT_PROMPT_VERSION, "gpt-5.4-mini", META.shareId)).not.toBe(
-    extractKey(EXTRACT_PROMPT_VERSION, "gpt-5.4-mini", requestedId),
+  expect(extractKey(EXTRACT_PROMPT_VERSION, "gpt-5.4-mini", META)).not.toBe(
+    extractKey(EXTRACT_PROMPT_VERSION, "gpt-5.4-mini", { ...META, shareId: requestedId }),
   );
 });
 

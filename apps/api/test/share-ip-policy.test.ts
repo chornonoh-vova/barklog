@@ -98,9 +98,12 @@ test.each([
 test.each([
   ["::ffff:93.184.216.34", 6],
   ["0:0:0:0:0:ffff:5db8:d822", 6],
-] as const)("refuses ipv4-mapped forms even when the wrapped v4 is public: %s", (address, family) => {
-  expect(isPublicUnicast(address, family)).toBe(false);
-});
+] as const)(
+  "refuses ipv4-mapped forms even when the wrapped v4 is public: %s",
+  (address, family) => {
+    expect(isPublicUnicast(address, family)).toBe(false);
+  },
+);
 
 test.each([
   ["::ffff:0:127.0.0.1", 6],

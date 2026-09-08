@@ -58,7 +58,9 @@ function expandDottedTail(address: string): string | null {
 function parseHextets(part: string): number[] | null {
   if (part === "") return [];
 
-  const values = part.split(":").map((h) => (/^[0-9a-fA-F]{1,4}$/.test(h) ? Number.parseInt(h, 16) : Number.NaN));
+  const values = part
+    .split(":")
+    .map((h) => (/^[0-9a-fA-F]{1,4}$/.test(h) ? Number.parseInt(h, 16) : Number.NaN));
   return values.some((v) => Number.isNaN(v)) ? null : values;
 }
 

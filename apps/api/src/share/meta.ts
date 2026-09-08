@@ -10,6 +10,29 @@ export class SourceUnreadable extends Error {
   override readonly name = "SourceUnreadable";
 }
 
+/**
+ * Gone is terminal and must not fall through to scraping the provider's own
+ * "unavailable" page. Every other failure may still resolve on a later rung,
+ * so it reads as a miss.
+ */
+async function tryOembed(
+  url: string,
+  shareId: string,
+  deadline: number,
+  fetchImpl?: typeof fetch,
+  lookup?: LookupFn,
+): Promise<SourceMeta | null> {
+  const match = matchProvider(url);
+  if (match === null) return null;
+
+  try {
+    return { ...(await fetchOembed(match.endpoint, url, deadline, fetchImpl, lookup)), shareId };
+  } catch (error) {
+    if (error instanceof SourceGone) throw error;
+    return null;
+  }
+}
+
 export async function fetchSourceMeta(
   share: NormalisedShare,
   fetchImpl?: typeof fetch,
@@ -17,20 +40,8 @@ export async function fetchSourceMeta(
 ): Promise<SourceMeta> {
   const deadline = Date.now() + LADDER_BUDGET_MS;
 
-  const direct = matchProvider(share.url);
-  if (direct !== null) {
-    try {
-      return {
-        ...(await fetchOembed(direct.endpoint, share.url, deadline, fetchImpl, lookup)),
-        shareId: share.shareId,
-      };
-    } catch (error) {
-      // Gone is terminal and must not fall through to scraping the
-      // provider's own "unavailable" page. Anything else may still resolve
-      // on a later rung.
-      if (error instanceof SourceGone) throw error;
-    }
-  }
+  const direct = await tryOembed(share.url, share.shareId, deadline, fetchImpl, lookup);
+  if (direct !== null) return direct;
 
   let page: { html: string; finalUrl: string };
   try {
@@ -44,17 +55,14 @@ export async function fetchSourceMeta(
   const resolved = normaliseShare(page.finalUrl) ?? share;
 
   if (resolved.url !== share.url) {
-    const afterRedirect = matchProvider(resolved.url);
-    if (afterRedirect !== null) {
-      try {
-        return {
-          ...(await fetchOembed(afterRedirect.endpoint, resolved.url, deadline, fetchImpl, lookup)),
-          shareId: resolved.shareId,
-        };
-      } catch (error) {
-        if (error instanceof SourceGone) throw error;
-      }
-    }
+    const afterRedirect = await tryOembed(
+      resolved.url,
+      resolved.shareId,
+      deadline,
+      fetchImpl,
+      lookup,
+    );
+    if (afterRedirect !== null) return afterRedirect;
   }
 
   const parsed = parseOpenGraph(page.html);

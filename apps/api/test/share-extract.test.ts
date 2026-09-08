@@ -28,7 +28,10 @@ test("EXTRACT_PROMPT_VERSION is 3", () => {
 });
 
 test("parses a well-formed pass 1 answer and trims the titles", () => {
-  const raw = JSON.stringify({ titles: ["  Resident Evil 2 ", "Resident Evil 2 (1998)"], basis: "title" });
+  const raw = JSON.stringify({
+    titles: ["  Resident Evil 2 ", "Resident Evil 2 (1998)"],
+    basis: "title",
+  });
 
   expect(parseExtraction(raw, PASS_1_BASES)).toEqual({
     titles: ["Resident Evil 2", "Resident Evil 2 (1998)"],
@@ -55,8 +58,12 @@ test("collapses to none when the two fields disagree", () => {
 });
 
 test("pass 1 refuses a pass-2-only basis, and pass 2 refuses a pass-1-only basis", () => {
-  expect(() => parseExtraction(JSON.stringify({ titles: ["A"], basis: "web" }), PASS_1_BASES)).toThrow();
-  expect(() => parseExtraction(JSON.stringify({ titles: ["A"], basis: "title" }), PASS_2_BASES)).toThrow();
+  expect(() =>
+    parseExtraction(JSON.stringify({ titles: ["A"], basis: "web" }), PASS_1_BASES),
+  ).toThrow();
+  expect(() =>
+    parseExtraction(JSON.stringify({ titles: ["A"], basis: "title" }), PASS_2_BASES),
+  ).toThrow();
 });
 
 test("pass 1 refuses the mobile-only 'channel' basis, since PASS_1_BASES must not contain it", () => {
@@ -68,7 +75,9 @@ test("pass 1 refuses the mobile-only 'channel' basis, since PASS_1_BASES must no
 
 test("throws on anything unparseable so it stays out of the cache", () => {
   expect(() => parseExtraction("not json", PASS_1_BASES)).toThrow();
-  expect(() => parseExtraction(JSON.stringify({ titles: "A", basis: "title" }), PASS_1_BASES)).toThrow();
+  expect(() =>
+    parseExtraction(JSON.stringify({ titles: "A", basis: "title" }), PASS_1_BASES),
+  ).toThrow();
 });
 
 test("the constructed client carries a bounded timeout and retry budget, not the SDK's 10-minute/2-retry defaults", () => {
@@ -160,7 +169,9 @@ test("returns none when pass 2 also gives up", async () => {
 });
 
 test("does not run pass 2 at all when pass 1 succeeds via the author tier", async () => {
-  const { create, client } = stubClient(JSON.stringify({ titles: ["Hollow Knight"], basis: "author" }));
+  const { create, client } = stubClient(
+    JSON.stringify({ titles: ["Hollow Knight"], basis: "author" }),
+  );
 
   await createTitleExtractor({ apiKey: "k", model: "gpt-5.4-mini", client })(META);
 
@@ -170,7 +181,10 @@ test("does not run pass 2 at all when pass 1 succeeds via the author tier", asyn
 test("propagates a pass 2 failure so nothing is cached, rather than degrading to none", async () => {
   const create = vi
     .fn()
-    .mockResolvedValueOnce({ output_text: JSON.stringify({ titles: [], basis: "none" }), usage: {} })
+    .mockResolvedValueOnce({
+      output_text: JSON.stringify({ titles: [], basis: "none" }),
+      usage: {},
+    })
     .mockRejectedValueOnce(new Error("web search unavailable"));
 
   const client = { responses: { create } } as never;
@@ -195,20 +209,26 @@ test("MAX_GUESSES bounds both passes", () => {
   expect(MAX_GUESSES).toBe(3);
 });
 
+const metaWith = (shareId: string): SourceMeta => ({ ...META, shareId });
+
 describe("extractKey", () => {
   test("carries the prompt version, the model and the shareId, so none survives a change", () => {
-    expect(extractKey(3, "gpt-5.4-mini", "abc123")).toBe("extract:v3:gpt-5.4-mini:abc123");
+    expect(extractKey(3, "gpt-5.4-mini", metaWith("abc123"))).toBe(
+      "extract:v3:gpt-5.4-mini:abc123",
+    );
   });
 
   test("changes when the model changes", () => {
-    expect(extractKey(3, "gpt-5.4-mini", "abc123")).not.toBe(extractKey(3, "gpt-5.4-nano", "abc123"));
+    expect(extractKey(3, "gpt-5.4-mini", metaWith("abc123"))).not.toBe(
+      extractKey(3, "gpt-5.4-nano", metaWith("abc123")),
+    );
   });
 
   test("changes when the prompt version changes", () => {
-    expect(extractKey(1, "m", "abc123")).not.toBe(extractKey(2, "m", "abc123"));
+    expect(extractKey(1, "m", metaWith("abc123"))).not.toBe(extractKey(2, "m", metaWith("abc123")));
   });
 
   test("changes when the shareId changes", () => {
-    expect(extractKey(3, "m", "abc123")).not.toBe(extractKey(3, "m", "xyz789"));
+    expect(extractKey(3, "m", metaWith("abc123"))).not.toBe(extractKey(3, "m", metaWith("xyz789")));
   });
 });

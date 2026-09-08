@@ -1,6 +1,6 @@
 import { Parser } from "htmlparser2";
 
-import { httpsUrlOrNull } from "./oembed.js";
+import { httpsUrlOrNull, toPositiveInt } from "./oembed.js";
 import type { LookupFn } from "./safe-fetch.js";
 import { safeFetch } from "./safe-fetch.js";
 
@@ -12,13 +12,6 @@ export interface PageMeta {
   imageUrl: string | null;
   imageWidth: number | null;
   imageHeight: number | null;
-}
-
-function toPositiveInt(value: string | undefined): number | null {
-  if (value === undefined) return null;
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null;
 }
 
 export function parseOpenGraph(html: string): PageMeta | null {

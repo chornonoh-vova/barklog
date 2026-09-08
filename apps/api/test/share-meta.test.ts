@@ -1,30 +1,18 @@
 import { expect, test, vi } from "vitest";
 
 import { fetchSourceMeta, SourceUnreadable } from "../src/share/meta.js";
+import { htmlResponse, jsonResponse, PUBLIC_LOOKUP } from "./share-fixtures.js";
 import { normaliseShare } from "../src/share/normalise.js";
 import { SourceGone, SourceUnavailable } from "../src/share/oembed.js";
-
-const PUBLIC = async () => [{ address: "93.184.216.34", family: 4 as const }];
-
-function json(payload: unknown, status = 200) {
-  return new Response(status === 200 ? JSON.stringify(payload) : null, {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
-
-function html(body: string, status = 200) {
-  return new Response(body, { status, headers: { "content-type": "text/html" } });
-}
 
 const YT = normaliseShare("https://www.youtube.com/watch?v=1vs0lLIRt7w")!;
 const IGN = normaliseShare("https://www.ign.com/articles/a-review")!;
 const SHORT = normaliseShare("https://vm.tiktok.com/ZMabcdef/")!;
 
 test("takes the oEmbed rung when a scheme matches", async () => {
-  const fetchImpl = vi.fn(async () => json({ title: "A Video", provider_name: "YouTube" }));
+  const fetchImpl = vi.fn(async () => jsonResponse({ title: "A Video", provider_name: "YouTube" }));
 
-  const meta = await fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch, PUBLIC);
+  const meta = await fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP);
 
   expect(meta.title).toBe("A Video");
   expect(meta.provider).toBe("YouTube");
@@ -33,21 +21,23 @@ test("takes the oEmbed rung when a scheme matches", async () => {
 });
 
 test("an oEmbed 404 is terminal and never scrapes the error page", async () => {
-  const fetchImpl = vi.fn(async () => json(null, 404));
+  const fetchImpl = vi.fn(async () => jsonResponse(null, 404));
 
-  await expect(fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch, PUBLIC)).rejects.toThrow(
-    SourceGone,
-  );
+  await expect(
+    fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP),
+  ).rejects.toThrow(SourceGone);
   expect(fetchImpl).toHaveBeenCalledTimes(1);
 });
 
 test("an oEmbed 500 falls through to the page", async () => {
   const fetchImpl = vi
     .fn()
-    .mockResolvedValueOnce(json(null, 500))
-    .mockResolvedValueOnce(html('<head><meta property="og:title" content="Fallback"></head>'));
+    .mockResolvedValueOnce(jsonResponse(null, 500))
+    .mockResolvedValueOnce(
+      htmlResponse('<head><meta property="og:title" content="Fallback"></head>'),
+    );
 
-  const meta = await fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch, PUBLIC);
+  const meta = await fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP);
 
   expect(meta.title).toBe("Fallback");
   expect(meta.shareId).toBe(YT.shareId);
@@ -56,12 +46,12 @@ test("an oEmbed 500 falls through to the page", async () => {
 
 test("reads og:title for a page no provider claims", async () => {
   const fetchImpl = vi.fn(async () =>
-    html(
+    htmlResponse(
       '<head><meta property="og:title" content="Silksong Review"><meta property="og:site_name" content="IGN"></head>',
     ),
   );
 
-  const meta = await fetchSourceMeta(IGN, fetchImpl as unknown as typeof fetch, PUBLIC);
+  const meta = await fetchSourceMeta(IGN, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP);
 
   expect(meta.title).toBe("Silksong Review");
   expect(meta.author).toBe("IGN");
@@ -85,11 +75,11 @@ test("a short link resolves, re-matches, and lands back on oEmbed", async () => 
     // Hop 1: the short link's own host. safeFetch follows this redirect internally.
     .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: canonical } }))
     // Hop 2: safeFetch's own redirect-follow lands here and reads the body.
-    .mockResolvedValueOnce(html("<html><body>irrelevant, oEmbed wins first</body></html>"))
+    .mockResolvedValueOnce(htmlResponse("<html><body>irrelevant, oEmbed wins first</body></html>"))
     // The re-matched oEmbed call, against the resolved canonical url.
-    .mockResolvedValueOnce(json({ title: "A Clip", provider_name: "TikTok" }));
+    .mockResolvedValueOnce(jsonResponse({ title: "A Clip", provider_name: "TikTok" }));
 
-  const meta = await fetchSourceMeta(SHORT, fetchImpl as unknown as typeof fetch, PUBLIC);
+  const meta = await fetchSourceMeta(SHORT, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP);
 
   expect(meta.provider).toBe("TikTok");
   expect(meta.pageUrl).toBe(canonical);
@@ -106,11 +96,13 @@ test("a short link resolves, re-matches, and lands back on oEmbed", async () => 
 });
 
 test("a page with no title at all is unreadable and terminal", async () => {
-  const fetchImpl = vi.fn(async () => html("<html><head></head><body>nothing</body></html>"));
-
-  await expect(fetchSourceMeta(IGN, fetchImpl as unknown as typeof fetch, PUBLIC)).rejects.toThrow(
-    SourceUnreadable,
+  const fetchImpl = vi.fn(async () =>
+    htmlResponse("<html><head></head><body>nothing</body></html>"),
   );
+
+  await expect(
+    fetchSourceMeta(IGN, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP),
+  ).rejects.toThrow(SourceUnreadable);
 });
 
 test("a page that cannot be read at all stays retriable", async () => {
@@ -118,21 +110,21 @@ test("a page that cannot be read at all stays retriable", async () => {
     throw new Error("socket hang up");
   });
 
-  await expect(fetchSourceMeta(IGN, fetchImpl as unknown as typeof fetch, PUBLIC)).rejects.toThrow(
-    SourceUnavailable,
-  );
+  await expect(
+    fetchSourceMeta(IGN, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP),
+  ).rejects.toThrow(SourceUnavailable);
 });
 
 test("the two floors are distinguishable by class, not just message", async () => {
-  const unreadable = vi.fn(async () => html("<html><head></head></html>"));
+  const unreadable = vi.fn(async () => htmlResponse("<html><head></head></html>"));
   const unavailable = vi.fn(async () => {
     throw new Error("timed out");
   });
 
   await expect(
-    fetchSourceMeta(IGN, unreadable as unknown as typeof fetch, PUBLIC),
+    fetchSourceMeta(IGN, unreadable as unknown as typeof fetch, PUBLIC_LOOKUP),
   ).rejects.toBeInstanceOf(SourceUnreadable);
   await expect(
-    fetchSourceMeta(IGN, unavailable as unknown as typeof fetch, PUBLIC),
+    fetchSourceMeta(IGN, unavailable as unknown as typeof fetch, PUBLIC_LOOKUP),
   ).rejects.toBeInstanceOf(SourceUnavailable);
 });

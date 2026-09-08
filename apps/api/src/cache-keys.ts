@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 
 import type { GameFeed } from "@repo/contracts";
+
+import type { NormalisedShare } from "./share/normalise.js";
+import type { SourceMeta } from "./share/oembed.js";
 import { startOfUtcDay } from "@repo/db";
 
 export { SEARCH_VERSION_KEY } from "@repo/cache";
@@ -36,11 +39,16 @@ export function similarKey(version: number, gameId: number, limit: number): stri
 /** A source's title effectively never changes. */
 export const SOURCE_TTL_SECONDS = 604_800;
 
-export function sourceKey(shareId: string): string {
+/**
+ * Takes the whole `NormalisedShare`, not a bare id: this cache keys on the
+ * REQUESTED url's id, `extractKey` below keys on the POST-REDIRECT one, and
+ * the two are only distinguishable here because the parameter types are.
+ */
+export function sourceKey(share: NormalisedShare): string {
   // `v3`: the cached value is a `SourceMeta`, keyed by shareId rather than
   // provider/videoId so any https link — not just the two hand-rolled
   // providers — can share the cache.
-  return `oembed:v3:${shareId}`;
+  return `oembed:v3:${share.shareId}`;
 }
 
 /**
@@ -54,6 +62,6 @@ export const EXTRACT_TTL_SECONDS = 2_592_000;
  * Both the prompt version and the model belong in the key: either one changing
  * changes the answer, and a 30-day TTL outlives several deploys.
  */
-export function extractKey(promptVersion: number, model: string, shareId: string): string {
-  return `extract:v${promptVersion}:${model}:${shareId}`;
+export function extractKey(promptVersion: number, model: string, meta: SourceMeta): string {
+  return `extract:v${promptVersion}:${model}:${meta.shareId}`;
 }

@@ -11,9 +11,7 @@ import {
   safeFetch,
   __internal,
 } from "../src/share/safe-fetch.js";
-
-const PUBLIC = async () => [{ address: "93.184.216.34", family: 4 as const }];
-const PRIVATE = async () => [{ address: "10.0.0.5", family: 4 as const }];
+import { PRIVATE_LOOKUP, PUBLIC_LOOKUP } from "./share-fixtures.js";
 
 function jsonResponse(body: string, init: ResponseInit = {}) {
   return new Response(body, {
@@ -30,7 +28,7 @@ test("returns the body and the final url", async () => {
 
   const result = await safeFetch("https://example.test/a", {
     ...opts,
-    lookup: PUBLIC,
+    lookup: PUBLIC_LOOKUP,
     fetchImpl: fetchImpl as unknown as typeof fetch,
   });
 
@@ -44,7 +42,7 @@ test("refuses a host that resolves to a private address", async () => {
   await expect(
     safeFetch("https://internal.test/a", {
       ...opts,
-      lookup: PRIVATE,
+      lookup: PRIVATE_LOOKUP,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     }),
   ).rejects.toThrow(BlockedAddress);
@@ -77,7 +75,7 @@ test("follows redirects and reports the last url", async () => {
 
   const result = await safeFetch("https://a.test/start", {
     ...opts,
-    lookup: PUBLIC,
+    lookup: PUBLIC_LOOKUP,
     fetchImpl: fetchImpl as unknown as typeof fetch,
   });
 
@@ -116,7 +114,7 @@ test("refuses a redirect that leaves https", async () => {
   await expect(
     safeFetch("https://a.test/start", {
       ...opts,
-      lookup: PUBLIC,
+      lookup: PUBLIC_LOOKUP,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     }),
   ).rejects.toThrow(FetchRefused);
@@ -130,7 +128,7 @@ test("gives up after MAX_REDIRECTS redirects, one request past the cap", async (
   await expect(
     safeFetch("https://a.test/loop", {
       ...opts,
-      lookup: PUBLIC,
+      lookup: PUBLIC_LOOKUP,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     }),
   ).rejects.toThrow(FetchRefused);
@@ -155,7 +153,7 @@ test("follows exactly MAX_REDIRECTS redirects before landing on content", async 
 
   const result = await safeFetch("https://a.test/start", {
     ...opts,
-    lookup: PUBLIC,
+    lookup: PUBLIC_LOOKUP,
     fetchImpl: fetchImpl as unknown as typeof fetch,
   });
 
@@ -171,7 +169,7 @@ test("refuses a body past maxBytes", async () => {
     safeFetch("https://a.test/big", {
       ...opts,
       maxBytes: 64,
-      lookup: PUBLIC,
+      lookup: PUBLIC_LOOKUP,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     }),
   ).rejects.toThrow(FetchRefused);
@@ -185,7 +183,7 @@ test("refuses a content-type the caller did not ask for", async () => {
   await expect(
     safeFetch("https://a.test/page", {
       ...opts,
-      lookup: PUBLIC,
+      lookup: PUBLIC_LOOKUP,
       fetchImpl: fetchImpl as unknown as typeof fetch,
     }),
   ).rejects.toThrow(FetchRefused);
@@ -196,7 +194,7 @@ test("refuses once the deadline has passed", async () => {
     safeFetch("https://a.test/a", {
       ...opts,
       deadline: Date.now() - 1,
-      lookup: PUBLIC,
+      lookup: PUBLIC_LOOKUP,
       fetchImpl: (async () => jsonResponse("{}")) as unknown as typeof fetch,
     }),
   ).rejects.toThrow(FetchRefused);
@@ -206,7 +204,7 @@ test("refuses globalThis.fetch outright, since it cannot honor the pinned dispat
   await expect(
     safeFetch("https://example.test/a", {
       ...opts,
-      lookup: PUBLIC,
+      lookup: PUBLIC_LOOKUP,
       fetchImpl: globalThis.fetch,
     }),
   ).rejects.toThrow(FetchRefused);
@@ -216,7 +214,7 @@ test("refuses globalThis.fetch outright, since it cannot honor the pinned dispat
 
 describe("defect: IPv6 literal hosts", () => {
   test("checks a literal IPv6 host's own address, without calling lookup, and allows a public one", async () => {
-    const lookup = vi.fn(PUBLIC);
+    const lookup = vi.fn(PUBLIC_LOOKUP);
     const fetchImpl = vi.fn(async () => jsonResponse('{"ok":true}'));
 
     const result = await safeFetch("https://[2606:4700:4700::1111]/a", {
@@ -230,7 +228,7 @@ describe("defect: IPv6 literal hosts", () => {
   });
 
   test("checks a literal IPv6 loopback host and refuses it without ever fetching", async () => {
-    const lookup = vi.fn(PUBLIC);
+    const lookup = vi.fn(PUBLIC_LOOKUP);
     const fetchImpl = vi.fn(async () => jsonResponse("{}"));
 
     await expect(
@@ -252,7 +250,7 @@ describe("defect: IPv6 literal hosts", () => {
     await expect(
       safeFetch("https://[::ffff:127.0.0.1]/a", {
         ...opts,
-        lookup: PUBLIC,
+        lookup: PUBLIC_LOOKUP,
         fetchImpl: fetchImpl as unknown as typeof fetch,
       }),
     ).rejects.toThrow(BlockedAddress);

@@ -40,7 +40,8 @@ const oembedSchema = v.object({
   thumbnail_height: v.optional(v.unknown()),
 });
 
-function positiveIntOrNull(value: unknown): number | null {
+/** Shared with `opengraph.ts`: `unknown` covers both a JSON number and an HTML attribute string. */
+export function toPositiveInt(value: unknown): number | null {
   const parsed = typeof value === "string" ? Number(value) : value;
   if (typeof parsed !== "number" || !Number.isFinite(parsed) || parsed <= 0) return null;
 
@@ -111,7 +112,7 @@ export async function fetchOembed(
     provider: parsed.output.provider_name || new URL(url).hostname,
     pageUrl: url,
     thumbnailUrl,
-    thumbnailWidth: thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_width),
-    thumbnailHeight: thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_height),
+    thumbnailWidth: thumbnailUrl === null ? null : toPositiveInt(parsed.output.thumbnail_width),
+    thumbnailHeight: thumbnailUrl === null ? null : toPositiveInt(parsed.output.thumbnail_height),
   };
 }

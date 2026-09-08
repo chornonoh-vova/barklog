@@ -1,9 +1,7 @@
 import { expect, test, vi } from "vitest";
 
 import { fetchPage, parseOpenGraph } from "../src/share/opengraph.js";
-
-const PUBLIC = async () => [{ address: "93.184.216.34", family: 4 as const }];
-const deadline = () => Date.now() + 8_000;
+import { htmlResponse, PUBLIC_LOOKUP, testDeadline } from "./share-fixtures.js";
 
 test("reads og:title, og:site_name and og:image with dimensions", () => {
   const html = `<html><head>
@@ -84,18 +82,14 @@ test("does not choke on a document with no head at all", () => {
   expect(parseOpenGraph("<html><body><p>hi</p></body></html>")).toBeNull();
 });
 
-function html(body: string, status = 200) {
-  return new Response(body, { status, headers: { "content-type": "text/html" } });
-}
-
 test("fetchPage returns the body and the resolved final url", async () => {
-  const fetchImpl = vi.fn(async () => html("<head><title>A Page</title></head>"));
+  const fetchImpl = vi.fn(async () => htmlResponse("<head><title>A Page</title></head>"));
 
   const result = await fetchPage(
     "https://example.test/a",
-    deadline(),
+    testDeadline(),
     fetchImpl as unknown as typeof fetch,
-    PUBLIC,
+    PUBLIC_LOOKUP,
   );
 
   expect(result.html).toContain("A Page");
@@ -109,13 +103,13 @@ test("fetchPage follows a redirect and reports the resolved url", async () => {
     .mockResolvedValueOnce(
       new Response(null, { status: 302, headers: { location: "https://example.test/b" } }),
     )
-    .mockResolvedValueOnce(html("<head><title>B Page</title></head>"));
+    .mockResolvedValueOnce(htmlResponse("<head><title>B Page</title></head>"));
 
   const result = await fetchPage(
     "https://example.test/a",
-    deadline(),
+    testDeadline(),
     fetchImpl as unknown as typeof fetch,
-    PUBLIC,
+    PUBLIC_LOOKUP,
   );
 
   expect(result.finalUrl).toBe("https://example.test/b");
@@ -128,6 +122,11 @@ test("a fetch failure propagates rather than being swallowed", async () => {
   });
 
   await expect(
-    fetchPage("https://example.test/a", deadline(), fetchImpl as unknown as typeof fetch, PUBLIC),
+    fetchPage(
+      "https://example.test/a",
+      testDeadline(),
+      fetchImpl as unknown as typeof fetch,
+      PUBLIC_LOOKUP,
+    ),
   ).rejects.toThrow();
 });

@@ -163,12 +163,18 @@ async function readCapped(response: Response, maxBytes: number): Promise<string>
  * next to the code that finishes reading (or explicitly drops) that body,
  * rather than in a `finally` around the `fetch` call that returned it.
  */
-async function drainAndClose(response: Response, dispatcher: Agent): Promise<void> {
+async function withDispatcherClose<T>(dispatcher: Agent, action: () => Promise<T>): Promise<T> {
   try {
-    await response.body?.cancel().catch(() => {});
+    return await action();
   } finally {
     await dispatcher.close().catch(() => {});
   }
+}
+
+async function drainAndClose(response: Response, dispatcher: Agent): Promise<void> {
+  await withDispatcherClose(dispatcher, async () => {
+    await response.body?.cancel().catch(() => {});
+  });
 }
 
 async function readCappedAndClose(
@@ -176,11 +182,7 @@ async function readCappedAndClose(
   maxBytes: number,
   dispatcher: Agent,
 ): Promise<string> {
-  try {
-    return await readCapped(response, maxBytes);
-  } finally {
-    await dispatcher.close().catch(() => {});
-  }
+  return withDispatcherClose(dispatcher, () => readCapped(response, maxBytes));
 }
 
 export async function safeFetch(
