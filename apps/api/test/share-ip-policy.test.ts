@@ -124,7 +124,22 @@ test.each([
   ["2001:4860:4860::8888", 6],
   ["2002:5db8:d822::", 6],
   ["2400:cb00::1", 6],
-  ["3fff::1", 6],
 ] as const)("accepts global unicast: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(true);
+});
+
+test.each([
+  ["3fff::1", 6],
+  ["3fff:0fff:ffff::1", 6],
+] as const)("refuses RFC 9637 documentation space: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
+});
+
+test.each([
+  ["3fff:1000::1", 6],
+  ["3ff0::1", 6],
+  ["3ffe::1", 6],
+  ["3ffd::1", 6],
+] as const)("accepts global unicast either side of the /20: %s", (address, family) => {
   expect(isPublicUnicast(address, family)).toBe(true);
 });

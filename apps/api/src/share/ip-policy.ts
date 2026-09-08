@@ -104,6 +104,7 @@ export function isPublicUnicast(address: string, family: 4 | 6): boolean {
   if (g[0] === 0x2002) return isPublicV4(groupsToV4(g[1]!, g[2]!)); // 6to4
   if (g[0] === 0x2001 && g[1] === 0x0000) return false; // Teredo 2001:0000::/32
   if (g[0] === 0x2001 && g[1] === 0x0db8) return false; // documentation 2001:db8::/32
+  if (g[0] === 0x3fff && (g[1]! & 0xf000) === 0) return false; // documentation (RFC 9637) 3fff::/20
 
   return true;
 }
