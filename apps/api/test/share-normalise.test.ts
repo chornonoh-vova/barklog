@@ -149,3 +149,24 @@ test("youtube ids are unaffected by the strip list, since the url is rebuilt", (
 
   expect(a?.shareId).toBe(b?.shareId);
 });
+
+test("keeps si, which can select content on third-party pages", () => {
+  const a = normaliseShare("https://shop.example/listing?si=42");
+  const b = normaliseShare("https://shop.example/listing?si=43");
+
+  expect(a?.shareId).not.toBe(b?.shareId);
+});
+
+test("strips tracking params whatever their case", () => {
+  const a = normaliseShare("https://example.test/a?FBCLID=1&UTM_Source=x");
+  const b = normaliseShare("https://example.test/a");
+
+  expect(a?.shareId).toBe(b?.shareId);
+});
+
+test("youtube still collapses with si present", () => {
+  const a = normaliseShare("https://www.youtube.com/watch?v=1vs0lLIRt7w&si=abc");
+  const b = normaliseShare("https://youtu.be/1vs0lLIRt7w");
+
+  expect(a?.shareId).toBe(b?.shareId);
+});

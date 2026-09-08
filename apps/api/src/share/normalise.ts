@@ -9,13 +9,13 @@ export interface NormalisedShare {
   sourceId: string | null;
 }
 
-// `t` and `ref` are deliberately not here: on an arbitrary third-party page
-// either can select content (`?t=news` vs `?t=sports`), not just track a
+// `t`, `ref`, and `si` are deliberately not here: all three are short and
+// generic enough that an arbitrary third-party page could use one to select
+// content (`?si=42` vs `?si=43` as a size or session id), not just track a
 // referrer, and collapsing two different pages onto one shareId serves one
 // page's cached answer for another. YouTube/TikTok video pages are rebuilt
-// from their id below, so this list never touches their `t`/`ref` usage.
+// from their id below, so this list never touches their usage of any of them.
 const TRACKING = new Set([
-  "si",
   "fbclid",
   "gclid",
   "igsh",
@@ -47,7 +47,8 @@ function youtubeId(url: URL): string | null {
 
 function stripTracking(url: URL): void {
   for (const key of [...url.searchParams.keys()]) {
-    if (TRACKING.has(key) || key.toLowerCase().startsWith("utm_")) url.searchParams.delete(key);
+    const lower = key.toLowerCase();
+    if (TRACKING.has(lower) || lower.startsWith("utm_")) url.searchParams.delete(key);
   }
   // Two spellings differing only in query-param order must hit the same cache entry.
   url.searchParams.sort();
