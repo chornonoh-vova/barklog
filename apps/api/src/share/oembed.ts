@@ -2,7 +2,16 @@ import type { ShareProviderName } from "@repo/contracts";
 import * as v from "valibot";
 
 import type { VideoRef } from "./canonicalise.js";
+import type { LookupFn } from "./safe-fetch.js";
+import { safeFetch } from "./safe-fetch.js";
 
+/**
+ * Everything below to the `--- ladder rung ---` marker is the pre-any-link
+ * video-only shape. It stays exactly as it behaved before this task, unused
+ * by any new code, because `provider.ts`, `games.ts` and
+ * `identify-routes.test.ts` still call it directly and rewiring them is
+ * Task 9's job, not this one's.
+ */
 export interface VideoMeta {
   title: string;
   author: string | null;
@@ -33,7 +42,7 @@ const ENDPOINTS: Record<ShareProviderName, string> = {
  * blank or absent title for a removed video, and without this the pipeline
  * would send whitespace to the extraction step and pay for it.
  */
-const oembedSchema = v.object({
+const legacyOembedSchema = v.object({
   title: v.pipe(v.string(), v.trim(), v.minLength(1)),
   // `nullish`, not `optional`: a `null` author_name in an otherwise valid
   // 200 must not fail the whole schema and turn into a 502.
@@ -47,7 +56,7 @@ const oembedSchema = v.object({
  * Handed straight to the client to load, so anything that is not an https
  * url is dropped rather than forwarded.
  */
-function httpsUrlOrNull(value: unknown): string | null {
+export function httpsUrlOrNull(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
   try {
@@ -80,7 +89,7 @@ export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Pr
   }
 
   const body: unknown = await response.json().catch(() => null);
-  const parsed = v.safeParse(oembedSchema, body);
+  const parsed = v.safeParse(legacyOembedSchema, body);
   if (!parsed.success) {
     throw new VideoMetaUnavailable(`${ref.provider} oEmbed payload did not match the schema`);
   }
@@ -89,5 +98,106 @@ export async function fetchVideoMeta(ref: VideoRef, fetchImpl: typeof fetch): Pr
     title: parsed.output.title,
     author: parsed.output.author_name || null,
     thumbnailUrl: httpsUrlOrNull(parsed.output.thumbnail_url),
+  };
+}
+
+// --- ladder rung: any https url, not just the two hand-rolled providers ---
+
+export const OEMBED_MAX_BYTES = 65_536;
+
+/** The video or page is private, removed, or never existed. A 404 for the caller. */
+export class SourceGone extends Error {
+  override readonly name = "SourceGone";
+}
+
+/** This rung failed; a later one in the ladder may still succeed. */
+export class SourceUnavailable extends Error {
+  override readonly name = "SourceUnavailable";
+}
+
+export interface SourceMeta {
+  title: string;
+  author: string | null;
+  provider: string;
+  pageUrl: string;
+  shareId: string;
+  thumbnailUrl: string | null;
+  thumbnailWidth: number | null;
+  thumbnailHeight: number | null;
+}
+
+const oembedSchema = v.object({
+  /**
+   * `minLength(1)` after `trim`: TikTok answers 200 with a blank title for a
+   * removed video, and without this the ladder would report whitespace as a
+   * usable result instead of falling through to the next rung.
+   */
+  title: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  author_name: v.nullish(v.pipe(v.string(), v.trim())),
+  provider_name: v.nullish(v.pipe(v.string(), v.trim())),
+  thumbnail_url: v.optional(v.unknown()),
+  thumbnail_width: v.optional(v.unknown()),
+  thumbnail_height: v.optional(v.unknown()),
+});
+
+function positiveIntOrNull(value: unknown): number | null {
+  const parsed = typeof value === "string" ? Number(value) : value;
+  if (typeof parsed !== "number" || !Number.isFinite(parsed) || parsed <= 0) return null;
+
+  return Math.round(parsed);
+}
+
+export async function fetchOembed(
+  endpoint: string,
+  url: string,
+  deadline: number,
+  fetchImpl?: typeof fetch,
+  lookup?: LookupFn,
+): Promise<Omit<SourceMeta, "shareId">> {
+  const target = `${endpoint}${endpoint.includes("?") ? "&" : "?"}url=${encodeURIComponent(url)}&format=json`;
+
+  let response;
+  try {
+    response = await safeFetch(target, {
+      allow: ["application/json"],
+      maxBytes: OEMBED_MAX_BYTES,
+      deadline,
+      fetchImpl,
+      lookup,
+    });
+  } catch (cause) {
+    throw new SourceUnavailable("oEmbed did not answer", { cause });
+  }
+
+  // Checked ahead of the general failure range below: these three mean the
+  // source is gone, which is terminal, while every other failure may still
+  // resolve on a later rung.
+  if (response.status === 401 || response.status === 403 || response.status === 404) {
+    throw new SourceGone(`oEmbed answered ${response.status}`);
+  }
+  if (response.status < 200 || response.status >= 300) {
+    throw new SourceUnavailable(`oEmbed answered ${response.status}`);
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(response.body);
+  } catch {
+    throw new SourceUnavailable("oEmbed payload was not json");
+  }
+
+  const parsed = v.safeParse(oembedSchema, body);
+  if (!parsed.success) throw new SourceUnavailable("oEmbed payload did not match the schema");
+
+  const thumbnailUrl = httpsUrlOrNull(parsed.output.thumbnail_url);
+
+  return {
+    title: parsed.output.title,
+    author: parsed.output.author_name || null,
+    provider: parsed.output.provider_name || new URL(url).hostname,
+    pageUrl: url,
+    thumbnailUrl,
+    thumbnailWidth: thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_width),
+    thumbnailHeight: thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_height),
   };
 }
