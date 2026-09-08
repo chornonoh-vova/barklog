@@ -206,6 +206,17 @@ pnpm --filter @repo/api exec vitest run test/share-ip-policy.test.ts
 
 Expected: FAIL, cannot resolve `../src/share/ip-policy.js`.
 
+> **Superseded during execution.** The reference implementation below was
+> exploitable: it detected IPv4-in-IPv6 by string prefix, so `::ffff:127.0.0.1`
+> was refused but `0::ffff:127.0.0.1`, `::127.0.0.1`, `::10.0.0.5` and
+> `2002:7f00:0001::` all reached loopback or RFC1918. Three fix rounds replaced
+> it. The shipped design is an **allowlist**: parse to eight 16-bit groups,
+> refuse anything outside global unicast `2000::/3`, then carve out 6to4
+> (unwrap and re-check the v4 table), Teredo `2001:0000::/32`, `2001:db8::/32`
+> and `3fff::/20`. Read `apps/api/src/share/ip-policy.ts` and
+> `.superpowers/sdd/2026-09-08-share-any-link/task-2-report.md`, not the block
+> below, which is kept only so the rulings have something to refer to.
+
 - [ ] **Step 3: Implement**
 
 ```ts
