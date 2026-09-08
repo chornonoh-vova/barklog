@@ -57,11 +57,8 @@ export interface ShareSourceWire {
   thumbnailHeight: number | null;
 }
 
-// "channel" is deliberately still here: apps/api/test/identify-routes.test.ts
-// still types an extraction against it (see task-10-report.md), even though
-// mobile itself no longer branches on it. Remove once that test is updated.
 /** The tiers the extraction model chooses between. Drives its prompt and its schema. */
-export const EXTRACTED_BASES = ["title", "author", "channel", "web", "none"] as const;
+export const EXTRACTED_BASES = ["title", "author", "web", "none"] as const;
 
 /**
  * What the guesses were derived from, in descending confidence. `unavailable`

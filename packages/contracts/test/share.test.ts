@@ -83,9 +83,7 @@ describe("EXTRACTED_BASES", () => {
     expect(EXTRACTED_BASES).toContain("web");
   });
 
-  // Not yet removed: apps/api/test/identify-routes.test.ts still types an
-  // extraction against "channel", even though mobile no longer branches on it.
-  it("channel is still present until the api test suite stops relying on it too", () => {
-    expect(EXTRACTED_BASES).toContain("channel");
+  it("no longer carries channel, now that mobile has stopped branching on it", () => {
+    expect(EXTRACTED_BASES).not.toContain("channel");
   });
 });

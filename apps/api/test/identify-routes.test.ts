@@ -282,19 +282,19 @@ test("a failing extraction falls soft to the raw title", async () => {
   await app.close();
 });
 
-test("a channel-derived extraction reaches the client as such, so it can say what it is guessing from", async () => {
+test("an author-derived extraction reaches the client as such, so it can say what it is guessing from", async () => {
   await seedGame(harness.db, { id: 1, name: "Elden Ring", count: 5000 });
 
   const app = createTestApp({
     share: shareStub({
-      extractTitles: async () => ({ titles: ["Elden Ring"], basis: "channel" }),
+      extractTitles: async () => ({ titles: ["Elden Ring"], basis: "author" }),
     }),
   });
 
   const response = await identifyOn(app.app);
   const body = (await response.json()) as { basis: string; identified: boolean };
 
-  expect(body.basis).toBe("channel");
+  expect(body.basis).toBe("author");
   expect(body.identified).toBe(true);
   await app.close();
 });
