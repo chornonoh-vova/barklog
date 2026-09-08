@@ -190,15 +190,34 @@ export async function safeFetch(
     maxBytes: number;
     deadline: number;
     lookup?: LookupFn;
+    /**
+     * Leave unset outside tests. Whatever is passed here MUST forward the
+     * `dispatcher` init option through to an actual connection — that is the
+     * only thing that makes the address check upstream binding rather than
+     * advisory. Node's own global `fetch` does not qualify (see the check
+     * below); a hand-rolled mock that ignores its `init` argument does not
+     * either, silently, and no mocked test can catch that because a mock
+     * ignoring an argument it doesn't care about is exactly what a mock is.
+     */
     fetchImpl?: typeof fetch;
   },
 ): Promise<SafeResponse> {
   const lookup = options.lookup ?? defaultLookup;
+
   // Node's own global `fetch` is backed by a different, internally bundled
   // build of undici than this package's `Agent`. Handing it an `Agent` from
   // the npm package throws (`invalid onRequestStart method`) — a version
   // mismatch between the two, not a bug in the dispatcher wiring. Defaulting
-  // to undici's own `fetch` keeps the pair from the same build.
+  // to undici's own `fetch` keeps the pair from the same build. Checked
+  // explicitly, and rejected up front with a message that says why, because
+  // otherwise the failure surfaces as a cryptic error from deep inside
+  // undici the first time someone "simplifies" this back to global fetch.
+  if (options.fetchImpl === globalThis.fetch) {
+    throw new FetchRefused(
+      "safeFetch cannot use the global fetch: it does not honor the pinned dispatcher, " +
+        "which silently defeats the DNS-rebinding guard. Omit fetchImpl to use undici's own fetch.",
+    );
+  }
   const fetchImpl = options.fetchImpl ?? (undiciFetch as unknown as typeof fetch);
 
   let current = url;

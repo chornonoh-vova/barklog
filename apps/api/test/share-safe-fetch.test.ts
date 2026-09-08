@@ -170,6 +170,16 @@ test("refuses once the deadline has passed", async () => {
   ).rejects.toThrow(FetchRefused);
 });
 
+test("refuses globalThis.fetch outright, since it cannot honor the pinned dispatcher", async () => {
+  await expect(
+    safeFetch("https://example.test/a", {
+      ...opts,
+      lookup: PUBLIC,
+      fetchImpl: globalThis.fetch,
+    }),
+  ).rejects.toThrow(FetchRefused);
+});
+
 // --- Defects found in the brief's reference implementation ---
 
 describe("defect: IPv6 literal hosts", () => {

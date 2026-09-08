@@ -28,6 +28,7 @@
     "hono": "^4.13.3",
     "hono-problem-details": "^0.11.0",
     "openai": "^7.9.0",
+    "undici": "^8.10.0",
     "valibot": "catalog:"
   },
   "devDependencies": {
