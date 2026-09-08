@@ -9,7 +9,21 @@ export interface NormalisedShare {
   sourceId: string | null;
 }
 
-const TRACKING = new Set(["si", "t", "ref", "fbclid", "igsh", "is_from_webapp", "sender_device"]);
+// `t` and `ref` are deliberately not here: on an arbitrary third-party page
+// either can select content (`?t=news` vs `?t=sports`), not just track a
+// referrer, and collapsing two different pages onto one shareId serves one
+// page's cached answer for another. YouTube/TikTok video pages are rebuilt
+// from their id below, so this list never touches their `t`/`ref` usage.
+const TRACKING = new Set([
+  "si",
+  "fbclid",
+  "gclid",
+  "igsh",
+  "mc_cid",
+  "mc_eid",
+  "is_from_webapp",
+  "sender_device",
+]);
 
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]);
 const YOUTUBE_ID = /^[\w-]{11}$/;

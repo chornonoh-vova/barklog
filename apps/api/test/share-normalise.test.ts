@@ -34,12 +34,15 @@ test("rebuilds tiktok video urls and reports the video id", () => {
   expect(normaliseShare(url)?.sourceId).toBe("7123456789012345678");
 });
 
-test("passes other hosts through with tracking stripped and no sourceId", () => {
+test("passes other hosts through with unambiguous tracking stripped, ref kept, and no sourceId", () => {
   const result = normaliseShare(
     "https://WWW.IGN.com/articles/a-review?utm_source=x&ref=y&keep=1#top",
   );
 
-  expect(result?.url).toBe("https://www.ign.com/articles/a-review?keep=1");
+  // `ref` is not stripped: on an arbitrary third-party page it can select
+  // content, not just track a referrer, so removing it risks serving one
+  // page's cached answer for another.
+  expect(result?.url).toBe("https://www.ign.com/articles/a-review?keep=1&ref=y");
   expect(result?.sourceId).toBeNull();
 });
 
@@ -123,4 +126,26 @@ test("a malformed tiktok video id passes through instead of being refused", () =
 
   expect(result).not.toBeNull();
   expect(result?.sourceId).toBeNull();
+});
+
+test("keeps params that may select content on third-party pages", () => {
+  const a = normaliseShare("https://example.test/search?t=news");
+  const b = normaliseShare("https://example.test/search?t=sports");
+
+  expect(a?.url).toBe("https://example.test/search?t=news");
+  expect(a?.shareId).not.toBe(b?.shareId);
+});
+
+test("still collapses unambiguous tracking noise", () => {
+  const a = normaliseShare("https://example.test/a?utm_source=x&gclid=1&fbclid=2");
+  const b = normaliseShare("https://example.test/a");
+
+  expect(a?.shareId).toBe(b?.shareId);
+});
+
+test("youtube ids are unaffected by the strip list, since the url is rebuilt", () => {
+  const a = normaliseShare("https://www.youtube.com/watch?v=1vs0lLIRt7w&t=42&ref=x");
+  const b = normaliseShare("https://youtu.be/1vs0lLIRt7w");
+
+  expect(a?.shareId).toBe(b?.shareId);
 });
