@@ -388,6 +388,11 @@ because `parseExtraction` is already separate from the API call. Either way
 `parseExtraction` throws on non-conforming output and the route's fail-soft
 contains it.
 
+**Probe result (2026-09-08):** combination works. Pass 2 uses the single-call
+shape. `output_text` parsed as JSON conforming to the schema, and the output
+array contained three `web_search_call` items. `search_context_size: "low"`
+placed inside the `web_search` tool object was accepted without error.
+
 ### Compliance note
 
 OpenAI requires visible, clickable inline citations *when displaying web
