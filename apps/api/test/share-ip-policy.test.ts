@@ -58,3 +58,35 @@ test("refuses anything unparseable", () => {
   expect(isPublicUnicast("not-an-address", 4)).toBe(false);
   expect(isPublicUnicast("", 6)).toBe(false);
 });
+
+test.each([
+  ["0::ffff:127.0.0.1", 6],
+  ["0:0:0:0:0:ffff:127.0.0.1", 6],
+  ["0:0:0:0:0:ffff:7f00:1", 6],
+  ["::127.0.0.1", 6],
+  ["::10.0.0.5", 6],
+  ["0:0:0:0:0:0:7f00:1", 6],
+  ["64:ff9b:0:0:0:0:a00:5", 6],
+  ["2002:7f00:0001::", 6],
+  ["2002:0a00:0005::", 6],
+  ["2002:a9fe:a9fe::", 6],
+] as const)("refuses embedded ipv4 whatever the spelling: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
+});
+
+test.each([
+  ["192.0.2.1", 4],
+  ["198.51.100.1", 4],
+  ["203.0.113.1", 4],
+] as const)("refuses documentation range %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
+});
+
+test.each([
+  ["::ffff:93.184.216.34", 6],
+  ["0:0:0:0:0:ffff:5db8:d822", 6],
+  ["2002:5db8:d822::", 6],
+  ["2606:4700:4700::1111", 6],
+] as const)("still accepts public addresses however spelled: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(true);
+});
