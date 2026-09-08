@@ -3,42 +3,9 @@ import * as v from "valibot";
 import { integerFrom } from "./coerce.js";
 import type { GameSummaryWire } from "./wire.js";
 
-export const SHARE_PROVIDERS = ["youtube", "tiktok"] as const;
-export type ShareProviderName = (typeof SHARE_PROVIDERS)[number];
-
 export const SHARE_URL_MAX = 2048;
 export const IDENTIFY_LIMIT_DEFAULT = 15;
 export const IDENTIFY_LIMIT_MAX = 20;
-
-/**
- * Exact hosts, never suffix matching: `endsWith("youtube.com")` would accept
- * `notyoutube.com`, and a suffix check on `.youtube.com` would accept
- * `youtube.com.evil.test`. This list is the API's outbound allowlist, so a
- * loose match here is an SSRF hole.
- */
-const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]);
-const TIKTOK_HOSTS = new Set(["tiktok.com", "www.tiktok.com", "vm.tiktok.com", "vt.tiktok.com"]);
-
-/** `null` for anything we will not fetch — wrong host, wrong scheme, unparseable. */
-export function shareHostProvider(url: string): ShareProviderName | null {
-  let parsed: URL;
-
-  try {
-    parsed = new URL(url);
-  } catch {
-    return null;
-  }
-
-  // https only: a downgrade to http is refused here too.
-  if (parsed.protocol !== "https:") return null;
-
-  const host = parsed.hostname.toLowerCase();
-
-  if (YOUTUBE_HOSTS.has(host)) return "youtube";
-  if (TIKTOK_HOSTS.has(host)) return "tiktok";
-
-  return null;
-}
 
 /**
  * Shape only. The outbound request is guarded at the network layer instead —
@@ -90,6 +57,9 @@ export interface ShareSourceWire {
   thumbnailHeight: number | null;
 }
 
+// "channel" is deliberately still here: apps/api/test/identify-routes.test.ts
+// still types an extraction against it (see task-10-report.md), even though
+// mobile itself no longer branches on it. Remove once that test is updated.
 /** The tiers the extraction model chooses between. Drives its prompt and its schema. */
 export const EXTRACTED_BASES = ["title", "author", "channel", "web", "none"] as const;
 

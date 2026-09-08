@@ -1,9 +1,11 @@
 import type { ShareBasis, ShareSourceWire } from "@repo/contracts";
+import { openURL } from "expo-linking";
 import { SymbolView } from "expo-symbols";
 import { useState } from "react";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { UNAVAILABLE_NOTICE } from "@/features/share/empty-states";
+import { displayHost } from "@/features/share/host";
 import { RemoteImage } from "@/components/remote-image";
 import { sourceThumbSize } from "@/features/share/source-thumb";
 import { Type } from "@/theme";
@@ -25,6 +27,14 @@ export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis:
               {source.author}
             </Text>
           )}
+          <Text
+            style={styles.sourceLink}
+            numberOfLines={1}
+            accessibilityRole="link"
+            onPress={() => void openURL(source.pageUrl)}
+          >
+            {displayHost(source.pageUrl)}
+          </Text>
         </View>
       </View>
 
@@ -39,7 +49,7 @@ export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis:
  */
 function SourceCover({ source }: { source: ShareSourceWire }) {
   const [failed, setFailed] = useState(false);
-  const size = sourceThumbSize(source.provider);
+  const size = sourceThumbSize(source);
 
   // `== null`, not `===`: responses are cast, not validated, so a field absent
   // from an older API build arrives as `undefined`.
@@ -48,7 +58,7 @@ function SourceCover({ source }: { source: ShareSourceWire }) {
       <View style={[styles.cover, styles.coverPlaceholder, size]} accessibilityElementsHidden>
         <SymbolView
           name="play.rectangle.fill"
-          size={Math.min(size.width, size.height) * 0.5}
+          size={Math.min(size.height * size.aspectRatio, size.height) * 0.5}
           tintColor={PlatformColor("secondaryLabel")}
         />
       </View>
@@ -99,6 +109,7 @@ const styles = StyleSheet.create({
   sourceText: { flex: 1, gap: 2 },
   sourceTitle: { ...Type.subheadline, color: PlatformColor("label") },
   sourceAuthor: { ...Type.footnote, color: PlatformColor("secondaryLabel") },
+  sourceLink: { ...Type.footnote, color: PlatformColor("link") },
 
   notice: {
     flexDirection: "row",

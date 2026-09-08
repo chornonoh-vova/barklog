@@ -10,6 +10,7 @@ import { QueryBoundary } from "@/components/query-boundary";
 import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
 import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { displayHost } from "@/features/share/host";
 import { toShareSections, type ShareSection } from "@/features/share/sections";
 import { ShareHeader } from "@/features/share/share-header";
 import { Screen, SectionHeader } from "@/theme";
@@ -97,11 +98,11 @@ export function ShareScreen({
             <EmptyState
               {...noMatch(data.basis, data.guesses)}
               action={{ label: "Search Instead", onPress: onSearch }}
-              // The last resort: nothing was identified, so hand the video back.
+              // The last resort: nothing was identified, so hand the source back.
               secondaryAction={
                 data.basis === "none"
                   ? {
-                      label: "Open the Original Video",
+                      label: `Open on ${displayHost(data.source.pageUrl)}`,
                       onPress: () => void openURL(data.source.pageUrl),
                     }
                   : undefined

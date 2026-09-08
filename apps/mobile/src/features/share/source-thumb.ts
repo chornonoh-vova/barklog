@@ -1,19 +1,27 @@
-import type { ShareProviderName } from "@repo/contracts";
+import type { ShareSourceWire } from "@repo/contracts";
+
+const THUMB_HEIGHT = 56;
+const DEFAULT_RATIO = 16 / 9;
+const MIN_RATIO = 0.5;
+const MAX_RATIO = 1.8;
 
 /**
- * Display sizes, deliberately not the dimensions oEmbed reports: YouTube's
- * `hqdefault.jpg` is 480x360, 4:3 with letterbox bars baked in, so a 16:9 box
- * with `contentFit="cover"` crops off exactly the bars. TikTok's cover is
- * already portrait. Equal heights keep the row independent of the source.
+ * Height fixed, width left to Yoga's `aspectRatio`. A bare height gives a
+ * zero-width view: layout runs before the image decodes, and expo-image fills
+ * the box it is given rather than reporting an intrinsic size back into
+ * layout. `aspectRatio` makes the width deterministic up front, so the row
+ * does not reflow when the image lands, and the placeholder branch (no image
+ * at all) gets an identical box.
  */
-const SOURCE_THUMB_SIZE: Record<ShareProviderName, { width: number; height: number }> = {
-  youtube: { width: 100, height: 56 },
-  tiktok: { width: 32, height: 56 },
-};
+export function sourceThumbSize(source: ShareSourceWire): { height: number; aspectRatio: number } {
+  const { thumbnailWidth: width, thumbnailHeight: height } = source;
 
-// Stopgap ahead of Task 10, which replaces this with aspect-ratio sizing:
-// `provider` is now any wire string, so a host outside the old two-provider
-// map falls back to YouTube's box rather than indexing undefined.
-export function sourceThumbSize(provider: string): { width: number; height: number } {
-  return SOURCE_THUMB_SIZE[provider as ShareProviderName] ?? SOURCE_THUMB_SIZE.youtube;
+  if (typeof width !== "number" || typeof height !== "number" || width <= 0 || height <= 0) {
+    return { height: THUMB_HEIGHT, aspectRatio: DEFAULT_RATIO };
+  }
+
+  return {
+    height: THUMB_HEIGHT,
+    aspectRatio: Math.min(MAX_RATIO, Math.max(MIN_RATIO, width / height)),
+  };
 }

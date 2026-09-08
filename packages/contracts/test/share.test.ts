@@ -5,42 +5,10 @@ import {
   EXTRACTED_BASES,
   IDENTIFY_LIMIT_DEFAULT,
   isShareableUrl,
-  shareHostProvider,
   shareIdentifySchema,
 } from "../src/share.js";
 
 const parse = (input: unknown) => v.safeParse(shareIdentifySchema, input);
-
-describe("shareHostProvider", () => {
-  it("recognises every YouTube shape a share sheet produces", () => {
-    expect(shareHostProvider("https://www.youtube.com/watch?v=1vs0lLIRt7w")).toBe("youtube");
-    expect(shareHostProvider("https://m.youtube.com/watch?v=1vs0lLIRt7w")).toBe("youtube");
-    expect(shareHostProvider("https://youtu.be/1vs0lLIRt7w")).toBe("youtube");
-    expect(shareHostProvider("https://www.youtube.com/shorts/abcdefghijk")).toBe("youtube");
-  });
-
-  it("recognises TikTok, long and short", () => {
-    expect(shareHostProvider("https://www.tiktok.com/@user/video/7123456789012345678")).toBe(
-      "tiktok",
-    );
-    expect(shareHostProvider("https://vm.tiktok.com/ZMabcdef/")).toBe("tiktok");
-  });
-
-  it("matches the host exactly, so a lookalike domain cannot pass", () => {
-    expect(shareHostProvider("https://youtube.com.evil.test/watch?v=x")).toBeNull();
-    expect(shareHostProvider("https://notyoutube.com/watch?v=x")).toBeNull();
-    expect(shareHostProvider("https://evil.test/?u=https://youtube.com/watch?v=x")).toBeNull();
-  });
-
-  it("requires https, so a downgraded link cannot be fetched", () => {
-    expect(shareHostProvider("http://www.youtube.com/watch?v=1vs0lLIRt7w")).toBeNull();
-  });
-
-  it("is null for anything unparseable", () => {
-    expect(shareHostProvider("not a url")).toBeNull();
-    expect(shareHostProvider("")).toBeNull();
-  });
-});
 
 describe("isShareableUrl", () => {
   it("accepts a plain https url", () => {
@@ -115,7 +83,9 @@ describe("EXTRACTED_BASES", () => {
     expect(EXTRACTED_BASES).toContain("web");
   });
 
-  it("channel is still present until mobile stops branching on it", () => {
+  // Not yet removed: apps/api/test/identify-routes.test.ts still types an
+  // extraction against "channel", even though mobile no longer branches on it.
+  it("channel is still present until the api test suite stops relying on it too", () => {
     expect(EXTRACTED_BASES).toContain("channel");
   });
 });
