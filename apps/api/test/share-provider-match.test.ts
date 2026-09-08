@@ -19,6 +19,16 @@ test("a host wildcard cannot cross a path separator into a later segment", () =>
   expect(pattern.test("https://evil.com/x.youtube.com/watch?v=1")).toBe(false);
 });
 
+test("a backslash cannot smuggle a foreign host past the wildcard", () => {
+  const pattern = schemeToRegExp("https://*.youtube.com/watch*");
+  const raw = "https://evil.com\\x.youtube.com/watch?v=1";
+
+  // WHATWG parses this to host evil.com.
+  expect(new URL(raw).hostname).toBe("evil.com");
+  expect(pattern.test(raw)).toBe(false);
+  expect(pattern.test("https://www.youtube.com/watch?v=ok")).toBe(true);
+});
+
 test("a host wildcard spans one label, not a path", () => {
   const pattern = schemeToRegExp("https://*.flickr.com/photos/*");
 

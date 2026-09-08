@@ -5,15 +5,18 @@ export type { ProviderEntry };
 const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
 
 /**
- * `*` matches any run of characters that does not contain `/`, so it cannot
- * cross the boundary between the host and the path (or between two path
- * segments). Without that restriction, `*.youtube.com/watch*` would match
- * `https://evil.com/x.youtube.com/watch?v=1`: a plain `.*` lets the host
- * wildcard swallow `evil.com/x` and pick up `.youtube.com/watch` on the far
- * side of the `/`. A `*` that is the last character of the scheme is the one
- * exception: it also swallows the query string, matching how oEmbed schemes
- * such as `vimeo.com/*` are written to cover every video id and its query
- * params.
+ * `*` matches any run of characters that contains neither `/` nor `\`, so it
+ * cannot cross the boundary between the host and the path (or between two
+ * path segments). Without that restriction, `*.youtube.com/watch*` would
+ * match `https://evil.com/x.youtube.com/watch?v=1`: a plain `.*` lets the
+ * host wildcard swallow `evil.com/x` and pick up `.youtube.com/watch` on the
+ * far side of the `/`. `\` is excluded for the same reason: WHATWG URL
+ * treats `\` as a path separator for special schemes like `https:`, so
+ * `https://evil.com\x.youtube.com/watch` parses to host `evil.com`, and a
+ * class that only excluded `/` would let the wildcard cross that separator
+ * too. A `*` that is the last character of the scheme is the one exception:
+ * it also swallows the query string, matching how oEmbed schemes such as
+ * `vimeo.com/*` are written to cover every video id and its query params.
  */
 export function schemeToRegExp(scheme: string): RegExp {
   const trailingWildcard = scheme.endsWith("*");
@@ -22,7 +25,7 @@ export function schemeToRegExp(scheme: string): RegExp {
   const body = anchored
     .split("*")
     .map((literal) => literal.replace(REGEXP_SPECIAL, "\\$&"))
-    .join("[^/]*");
+    .join("[^/\\\\]*");
 
   return new RegExp(`^${body}${trailingWildcard ? ".*" : ""}$`, "i");
 }
