@@ -201,7 +201,7 @@ test("refuses anything unparseable", () => {
 - [ ] **Step 2: Run it, verify it fails**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-ip-policy.test.ts
+pnpm --filter api exec vitest run test/share-ip-policy.test.ts
 ```
 
 Expected: FAIL, cannot resolve `../src/share/ip-policy.js`.
@@ -309,7 +309,7 @@ export function isPublicUnicast(address: string, family: 4 | 6): boolean {
 - [ ] **Step 4: Run tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-ip-policy.test.ts
+pnpm --filter api exec vitest run test/share-ip-policy.test.ts
 ```
 
 Expected: PASS, all cases.
@@ -559,7 +559,7 @@ test("refuses once the deadline has passed", async () => {
 - [ ] **Step 2: Run it, verify it fails**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-safe-fetch.test.ts
+pnpm --filter api exec vitest run test/share-safe-fetch.test.ts
 ```
 
 Expected: FAIL, cannot resolve `../src/share/safe-fetch.js`.
@@ -739,7 +739,7 @@ export async function safeFetch(
 - [ ] **Step 4: Run tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-safe-fetch.test.ts
+pnpm --filter api exec vitest run test/share-safe-fetch.test.ts
 ```
 
 Expected: PASS.
@@ -843,7 +843,7 @@ test("keeps a short link intact so the ladder can resolve it", () => {
 - [ ] **Step 2: Run it, verify it fails**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-normalise.test.ts
+pnpm --filter api exec vitest run test/share-normalise.test.ts
 ```
 
 Expected: FAIL, cannot resolve `../src/share/normalise.js`.
@@ -925,7 +925,7 @@ export function normaliseShare(input: string): NormalisedShare | null {
 - [ ] **Step 4: Run tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-normalise.test.ts
+pnpm --filter api exec vitest run test/share-normalise.test.ts
 ```
 
 Expected: PASS.
@@ -936,7 +936,7 @@ Expected: PASS.
 git rm apps/api/src/share/canonicalise.ts apps/api/test/share-canonicalise.test.ts
 ```
 
-`pnpm --filter @repo/api check-types` will now fail in `games.ts`, `types.ts` and `provider.ts`. Expected. Task 9 fixes it.
+`pnpm --filter api check-types` will now fail in `games.ts`, `types.ts` and `provider.ts`. Expected. Task 9 fixes it.
 
 - [ ] **Step 6: Commit**
 
@@ -1015,7 +1015,7 @@ test("returns null for a page no provider claims", () => {
 - [ ] **Step 2: Run it, verify it fails**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-provider-match.test.ts
+pnpm --filter api exec vitest run test/share-provider-match.test.ts
 ```
 
 Expected: FAIL, cannot resolve `../src/share/provider-match.js`.
@@ -1075,7 +1075,7 @@ console.log(`wrote ${entries.length} provider endpoints`);
 - [ ] **Step 4: Run it, then format the output**
 
 ```bash
-pnpm --filter @repo/api exec tsx scripts/refresh-oembed-providers.ts
+pnpm --filter api exec tsx scripts/refresh-oembed-providers.ts
 pnpm exec prettier --write apps/api/src/share/providers.generated.ts
 ```
 
@@ -1128,7 +1128,7 @@ export function matchProvider(url: string): ProviderEntry | null {
 - [ ] **Step 6: Run tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-provider-match.test.ts
+pnpm --filter api exec vitest run test/share-provider-match.test.ts
 ```
 
 Expected: PASS. If the Vimeo assertion fails, check the snapshot for Vimeo's actual scheme and adjust the test URL to a real one — do not loosen the matcher.
@@ -1187,7 +1187,7 @@ Three files. `oembed.ts` and `opengraph.ts` are rungs; `meta.ts` sequences them 
 - [ ] **Step 1: Add the dependency**
 
 ```bash
-pnpm --filter @repo/api add htmlparser2@^12.0.0
+pnpm --filter api add htmlparser2@^12.0.0
 ```
 
 - [ ] **Step 2: Write the failing oEmbed test**
@@ -1391,7 +1391,7 @@ export async function fetchOembed(
 - [ ] **Step 4: Run oEmbed tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-oembed.test.ts
+pnpm --filter api exec vitest run test/share-oembed.test.ts
 ```
 
 Expected: PASS.
@@ -1555,7 +1555,7 @@ export async function fetchPage(
 - [ ] **Step 7: Run Open Graph tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-opengraph.test.ts
+pnpm --filter api exec vitest run test/share-opengraph.test.ts
 ```
 
 Expected: PASS. If `parser.reset()` inside `onclosetag` throws, replace it with a boolean guard that ignores further callbacks after `head` closes.
@@ -1751,7 +1751,7 @@ export async function fetchSourceMeta(
 - [ ] **Step 10: Run ladder tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-meta.test.ts
+pnpm --filter api exec vitest run test/share-meta.test.ts
 ```
 
 Expected: PASS. The short-link test drives `safeFetch`'s real redirect handling through a stubbed `fetch`; if `Response.redirect` is awkward in the runner, build the redirect by hand with `new Response(null, { status: 302, headers: { location: canonical } })`.
@@ -2091,7 +2091,7 @@ test("propagates a pass 2 failure so nothing is cached", async () => {
 - [ ] **Step 2: Run it, verify it fails**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-extract.test.ts
+pnpm --filter api exec vitest run test/share-extract.test.ts
 ```
 
 Expected: FAIL — `parseExtraction` takes one argument, `PASS_1_BASES` is undefined.
@@ -2256,7 +2256,7 @@ If Task 1's probe said the combination does NOT work, change the pass-2 block to
 - [ ] **Step 4: Run tests, verify pass**
 
 ```bash
-pnpm --filter @repo/api exec vitest run test/share-extract.test.ts
+pnpm --filter api exec vitest run test/share-extract.test.ts
 ```
 
 Expected: PASS.
@@ -2485,7 +2485,7 @@ test("carries the thumbnail dimensions through to the wire", async () => {
 - [ ] **Step 6: Run the whole API suite**
 
 ```bash
-pnpm --filter @repo/api test && pnpm --filter @repo/api check-types && pnpm --filter @repo/api lint
+pnpm --filter api test && pnpm --filter api check-types && pnpm --filter api lint
 ```
 
 Expected: all green. The API half is now complete.
@@ -2880,7 +2880,7 @@ Everything above is green in CI and none of it proves the feature works. Run the
 - [ ] **Step 1: Build and install**
 
 ```bash
-pnpm --filter @repo/api dev            # terminal 1
+pnpm --filter api dev            # terminal 1
 pnpm --filter mobile ios:device        # terminal 2
 ```
 
