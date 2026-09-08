@@ -149,6 +149,9 @@ export function gamesRoutes(deps: AppDeps) {
 
       const share = normaliseShare(url);
       if (share === null) {
+        // Unreachable over HTTP: `shareIdentifySchema` already validated `url`
+        // with the same `isShareableUrl` predicate `normaliseShare` uses.
+        // Kept for type narrowing only — do not chase a test for this branch.
         throw problems.create("UNPROCESSABLE_SHARE", {
           detail: "That link cannot be opened. Barklog needs an https web address.",
         });
@@ -173,6 +176,13 @@ export function gamesRoutes(deps: AppDeps) {
             detail: "We opened that link but could not find a title on it.",
           });
         }
+        // Logged: `apiErrorHandler` never logs a `ProblemDetailsError`, so
+        // without this a blocked address — the SSRF-probe signal now that
+        // the host allowlist is gone — would fail as a silent 502.
+        log.warn("Metadata fetch failed for {shareId}: {errorClass}", {
+          shareId: share.shareId,
+          errorClass: error instanceof Error ? error.constructor.name : typeof error,
+        });
         // A fixed string: a 5xx must never carry the upstream message.
         throw problems.create("BAD_GATEWAY", {
           detail: "That link could not be read right now. Try again shortly.",

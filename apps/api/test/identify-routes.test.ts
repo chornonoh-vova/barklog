@@ -6,8 +6,9 @@ import { EXTRACT_PROMPT_VERSION, type Extraction } from "../src/share/extract.js
 import { SourceUnreadable } from "../src/share/meta.js";
 import { normaliseShare } from "../src/share/normalise.js";
 import { SourceGone, SourceUnavailable, type SourceMeta } from "../src/share/oembed.js";
+import { BlockedAddress } from "../src/share/safe-fetch.js";
 import type { ShareProvider } from "../src/types.js";
-import { callApi, createTestApp, seedGame, type TestHarness } from "./helpers.js";
+import { callApi, createTestApp, logs, seedGame, type TestHarness } from "./helpers.js";
 
 const SHARE_URL = "https://www.ign.com/articles/re2-review";
 const SHARE_ID = normaliseShare(SHARE_URL)!.shareId;
@@ -235,6 +236,26 @@ test("a metadata outage is 502", async () => {
   expect(response.status).toBe(502);
   // The 5xx must not leak the upstream exception message.
   expect(body.detail ?? "").not.toContain("500");
+  await app.close();
+});
+
+test("a blocked address is logged at warn, since a 502 with no log line would hide an SSRF probe", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new BlockedAddress("10.0.0.5 is a blocked address");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app);
+
+  expect(response.status).toBe(502);
+
+  const warnLine = logs.records.find(
+    (record) => record.category.includes("identify") && record.level === "warning",
+  );
+  expect(warnLine?.properties).toMatchObject({ shareId: SHARE_ID, errorClass: "BlockedAddress" });
   await app.close();
 });
 

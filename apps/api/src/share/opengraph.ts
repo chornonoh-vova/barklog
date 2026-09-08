@@ -55,7 +55,10 @@ export function parseOpenGraph(html: string): PageMeta | null {
   parser.write(html);
   parser.end();
 
-  const title = (tags.get("og:title") ?? documentTitle).trim();
+  // `??` alone only falls back on nullish, so a page emitting an empty or
+  // whitespace-only `og:title` would never reach `documentTitle` below.
+  const ogTitle = tags.get("og:title")?.trim() ?? "";
+  const title = ogTitle !== "" ? ogTitle : documentTitle.trim();
   if (title === "") return null;
 
   const imageUrl = httpsUrlOrNull(tags.get("og:image"));

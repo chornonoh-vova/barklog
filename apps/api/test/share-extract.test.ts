@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { extractKey } from "../src/cache-keys.js";
 import {
+  createOpenAIClient,
   createTitleExtractor,
   EXTRACT_PROMPT_VERSION,
   MAX_GUESSES,
@@ -70,6 +71,13 @@ test("throws on anything unparseable so it stays out of the cache", () => {
   expect(() => parseExtraction(JSON.stringify({ titles: "A", basis: "title" }), PASS_1_BASES)).toThrow();
 });
 
+test("the constructed client carries a bounded timeout and retry budget, not the SDK's 10-minute/2-retry defaults", () => {
+  const client = createOpenAIClient("k");
+
+  expect(client.timeout).toBe(20_000);
+  expect(client.maxRetries).toBe(1);
+});
+
 function stubClient(...outputs: string[]) {
   const create = vi.fn();
   for (const output of outputs) create.mockResolvedValueOnce({ output_text: output, usage: {} });
@@ -125,6 +133,18 @@ test("escalates to a searching pass 2 when pass 1 gives up", async () => {
   expect(second.tools).toEqual([{ type: "web_search", search_context_size: "low" }]);
   expect(second.max_output_tokens).toBe(1024);
   expect(second.text.format.schema.properties.basis.enum).toEqual(["web", "none"]);
+});
+
+test("pass 2's request carries its own zero-retry budget, since a retry would bill for a second web search", async () => {
+  const { create, client } = stubClient(
+    JSON.stringify({ titles: [], basis: "none" }),
+    JSON.stringify({ titles: ["Silksong"], basis: "web" }),
+  );
+
+  await createTitleExtractor({ apiKey: "k", model: "gpt-5.4-mini", client })(META);
+
+  expect(create.mock.calls[0]![1]).toBeUndefined();
+  expect(create.mock.calls[1]![1]).toEqual({ maxRetries: 0 });
 });
 
 test("returns none when pass 2 also gives up", async () => {

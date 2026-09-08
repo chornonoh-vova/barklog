@@ -91,12 +91,23 @@ function describeSource(meta: SourceMeta): string {
   return lines.join("\n");
 }
 
+/**
+ * The SDK defaults to 2 retries and a 10-minute timeout: one logical pass 2
+ * could otherwise issue three web-search requests, each billed even if the
+ * caller gives up first. Separated out so the settings are assertable
+ * without a network call. Pass 2 additionally zeroes its own retry budget
+ * where it is used below, since a retried search bills twice for one answer.
+ */
+export function createOpenAIClient(apiKey: string): OpenAI {
+  return new OpenAI({ apiKey, timeout: 20_000, maxRetries: 1 });
+}
+
 export function createTitleExtractor(options: {
   apiKey: string;
   model: string;
   client?: OpenAI;
 }): (meta: SourceMeta) => Promise<Extraction> {
-  const client = options.client ?? new OpenAI({ apiKey: options.apiKey });
+  const client = options.client ?? createOpenAIClient(options.apiKey);
 
   return async function extractFromSource(meta: SourceMeta): Promise<Extraction> {
     const described = describeSource(meta);
@@ -126,15 +137,20 @@ export function createTitleExtractor(options: {
     // Pass 2 bills for a web search at roughly 80x pass 1's cost, so it only ever
     // runs after pass 1 admits defeat, and its failure must propagate uncached
     // rather than collapse into pass 1's `none` (that call has no try/catch).
-    const second = await client.responses.create({
-      model: options.model,
-      instructions: PASS_2_SYSTEM,
-      input: `${described}\nURL: ${meta.pageUrl}`,
-      max_output_tokens: PASS_2_MAX_OUTPUT_TOKENS,
-      reasoning: { effort: "low" },
-      tools: [{ type: "web_search", search_context_size: "low" }],
-      text: { format: schemaFor(PASS_2_BASES) },
-    });
+    const second = await client.responses.create(
+      {
+        model: options.model,
+        instructions: PASS_2_SYSTEM,
+        input: `${described}\nURL: ${meta.pageUrl}`,
+        max_output_tokens: PASS_2_MAX_OUTPUT_TOKENS,
+        reasoning: { effort: "low" },
+        tools: [{ type: "web_search", search_context_size: "low" }],
+        text: { format: schemaFor(PASS_2_BASES) },
+      },
+      // No retries on this specific call: it is the one that already paid
+      // for a web search, so a retry would bill for a second one.
+      { maxRetries: 0 },
+    );
 
     const pass2 = parseExtraction(second.output_text, PASS_2_BASES);
 

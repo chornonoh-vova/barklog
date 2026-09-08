@@ -4,7 +4,13 @@ import type { AddressInfo } from "node:net";
 import { fetch as undiciFetch } from "undici";
 import { describe, expect, test, vi } from "vitest";
 
-import { BlockedAddress, FetchRefused, safeFetch, __internal } from "../src/share/safe-fetch.js";
+import {
+  BlockedAddress,
+  FetchRefused,
+  MAX_REDIRECTS,
+  safeFetch,
+  __internal,
+} from "../src/share/safe-fetch.js";
 
 const PUBLIC = async () => [{ address: "93.184.216.34", family: 4 as const }];
 const PRIVATE = async () => [{ address: "10.0.0.5", family: 4 as const }];
@@ -116,7 +122,7 @@ test("refuses a redirect that leaves https", async () => {
   ).rejects.toThrow(FetchRefused);
 });
 
-test("gives up after MAX_REDIRECTS hops", async () => {
+test("gives up after MAX_REDIRECTS redirects, one request past the cap", async () => {
   const fetchImpl = vi.fn(
     async () => new Response(null, { status: 302, headers: { location: "https://a.test/loop" } }),
   );
@@ -129,7 +135,33 @@ test("gives up after MAX_REDIRECTS hops", async () => {
     }),
   ).rejects.toThrow(FetchRefused);
 
-  expect(fetchImpl).toHaveBeenCalledTimes(3);
+  // The initial request plus MAX_REDIRECTS follow-up requests.
+  expect(fetchImpl).toHaveBeenCalledTimes(MAX_REDIRECTS + 1);
+});
+
+test("follows exactly MAX_REDIRECTS redirects before landing on content", async () => {
+  const fetchImpl = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(null, { status: 302, headers: { location: "https://b.test/1" } }),
+    )
+    .mockResolvedValueOnce(
+      new Response(null, { status: 302, headers: { location: "https://b.test/2" } }),
+    )
+    .mockResolvedValueOnce(
+      new Response(null, { status: 302, headers: { location: "https://b.test/3" } }),
+    )
+    .mockResolvedValueOnce(jsonResponse('{"landed":true}'));
+
+  const result = await safeFetch("https://a.test/start", {
+    ...opts,
+    lookup: PUBLIC,
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+  });
+
+  expect(result.finalUrl).toBe("https://b.test/3");
+  expect(result.body).toBe('{"landed":true}');
+  expect(fetchImpl).toHaveBeenCalledTimes(MAX_REDIRECTS + 1);
 });
 
 test("refuses a body past maxBytes", async () => {

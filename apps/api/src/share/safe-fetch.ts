@@ -6,6 +6,7 @@ import { Agent, fetch as undiciFetch } from "undici";
 
 import { isPublicUnicast } from "./ip-policy.js";
 
+/** Redirects followed, not requests sent: the loop below also makes the initial request. */
 export const MAX_REDIRECTS = 3;
 export const HOP_TIMEOUT_MS = 5_000;
 export const LADDER_BUDGET_MS = 8_000;
@@ -222,7 +223,7 @@ export async function safeFetch(
 
   let current = url;
 
-  for (let hop = 0; hop < MAX_REDIRECTS; hop += 1) {
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
     if (Date.now() >= options.deadline) throw new FetchRefused("ladder budget exhausted");
     if (!isShareableUrl(current)) throw new FetchRefused(`refused url: ${current}`);
 

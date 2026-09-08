@@ -45,6 +45,16 @@ test("prefers og:title over <title>", () => {
   expect(parseOpenGraph(html)?.title).toBe("Page");
 });
 
+test("falls back to <title> when og:title is present but empty", () => {
+  const html = `<head><title>Real Title</title><meta property="og:title" content=""></head>`;
+  expect(parseOpenGraph(html)?.title).toBe("Real Title");
+});
+
+test("falls back to <title> when og:title is present but whitespace-only", () => {
+  const html = `<head><title>Real Title</title><meta property="og:title" content="   "></head>`;
+  expect(parseOpenGraph(html)?.title).toBe("Real Title");
+});
+
 test("returns null when the page carries no title at all", () => {
   expect(parseOpenGraph("<html><head></head><body>hi</body></html>")).toBeNull();
   expect(parseOpenGraph("")).toBeNull();
