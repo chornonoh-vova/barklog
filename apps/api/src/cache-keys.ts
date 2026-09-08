@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { GameFeed, ShareProviderName } from "@repo/contracts";
+import type { GameFeed } from "@repo/contracts";
 import { startOfUtcDay } from "@repo/db";
 
 export { SEARCH_VERSION_KEY } from "@repo/cache";
@@ -33,20 +33,20 @@ export function similarKey(version: number, gameId: number, limit: number): stri
   return `similar:v${version}:${gameId}:${limit}`;
 }
 
-/** A published video's title effectively never changes. */
-export const OEMBED_TTL_SECONDS = 604_800;
+/** A source's title effectively never changes. */
+export const SOURCE_TTL_SECONDS = 604_800;
 
-export function oembedKey(provider: ShareProviderName, videoId: string): string {
-  // `v2`: the cached value is a `VideoMeta`, and it gained `thumbnailUrl`.
-  // Entries from the previous generation deserialise without it, and
-  // `withCache` casts rather than validates.
-  return `oembed:v2:${provider}:${videoId}`;
+export function sourceKey(shareId: string): string {
+  // `v3`: the cached value is a `SourceMeta`, keyed by shareId rather than
+  // provider/videoId so any https link — not just the two hand-rolled
+  // providers — can share the cache.
+  return `oembed:v3:${shareId}`;
 }
 
 /**
- * 30 days is its own budget, not derived from `OEMBED_TTL_SECONDS` above. The
+ * 30 days is its own budget, not derived from `SOURCE_TTL_SECONDS` above. The
  * key already encodes everything the answer depends on — prompt version,
- * model, and video metadata — so a cached extraction cannot go stale under it.
+ * model, and source metadata — so a cached extraction cannot go stale under it.
  */
 export const EXTRACT_TTL_SECONDS = 2_592_000;
 
@@ -54,11 +54,6 @@ export const EXTRACT_TTL_SECONDS = 2_592_000;
  * Both the prompt version and the model belong in the key: either one changing
  * changes the answer, and a 30-day TTL outlives several deploys.
  */
-export function extractKey(
-  promptVersion: number,
-  model: string,
-  provider: string,
-  videoId: string,
-): string {
-  return `extract:v${promptVersion}:${model}:${provider}:${videoId}`;
+export function extractKey(promptVersion: number, model: string, shareId: string): string {
+  return `extract:v${promptVersion}:${model}:${shareId}`;
 }

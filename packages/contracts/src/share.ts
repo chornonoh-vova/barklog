@@ -29,8 +29,7 @@ export function shareHostProvider(url: string): ShareProviderName | null {
     return null;
   }
 
-  // https only: the redirect chain in `canonicalise.ts` re-checks every hop
-  // through this function, so a downgrade to http is refused there too.
+  // https only: a downgrade to http is refused here too.
   if (parsed.protocol !== "https:") return null;
 
   const host = parsed.hostname.toLowerCase();
@@ -66,34 +65,29 @@ export const shareIdentifySchema = v.strictObject({
     v.string(),
     v.trim(),
     v.maxLength(SHARE_URL_MAX),
-    v.check(
-      (value) => shareHostProvider(value) !== null,
-      "Only https links to YouTube or TikTok are supported",
-    ),
+    v.check((value) => isShareableUrl(value), "Only https links are supported"),
   ),
   limit: v.optional(integerFrom(1, IDENTIFY_LIMIT_MAX), IDENTIFY_LIMIT_DEFAULT),
 });
 export type ShareIdentifyBody = v.InferOutput<typeof shareIdentifySchema>;
 
 export interface ShareSourceWire {
-  provider: ShareProviderName;
-  videoId: string;
+  /** An oEmbed `provider_name`, or a hostname — not just the two hand-rolled providers. */
+  provider: string;
+  shareId: string;
   title: string;
   author: string | null;
-  /** The canonical video page, offered as the last resort when nothing could be identified. */
+  /** The canonical source page, offered as the last resort when nothing could be identified. */
   pageUrl: string;
   /**
-   * oEmbed's cover image. `null` when the provider omitted one or gave
-   * something that is not an https url. TikTok's is a signed CDN url that can
-   * expire inside `OEMBED_TTL_SECONDS`, so a load failure on the client is
-   * ordinary, not exceptional.
+   * The source's cover image. `null` when the source gave nothing usable, or
+   * gave something that is not an https url. A signed CDN url can expire
+   * inside its cache TTL, so a load failure on the client is ordinary, not
+   * exceptional.
    */
   thumbnailUrl: string | null;
-
-  /** Added ahead of Task 9. Optional until the route emits them. */
-  shareId?: string;
-  thumbnailWidth?: number | null;
-  thumbnailHeight?: number | null;
+  thumbnailWidth: number | null;
+  thumbnailHeight: number | null;
 }
 
 /** The tiers the extraction model chooses between. Drives its prompt and its schema. */

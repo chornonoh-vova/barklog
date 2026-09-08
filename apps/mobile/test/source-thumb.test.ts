@@ -23,4 +23,8 @@ describe("sourceThumbSize", () => {
     expect(sourceThumbSize("youtube")).toEqual({ width: 100, height: 56 });
     expect(sourceThumbSize("tiktok")).toEqual({ width: 32, height: 56 });
   });
+
+  it("falls back to the YouTube box for a provider outside the old two-provider map", () => {
+    expect(sourceThumbSize("IGN")).toEqual({ width: 100, height: 56 });
+  });
 });

@@ -3,9 +3,9 @@ import type { Database, SubscriptionRow } from "@repo/db";
 
 import type { AuthProvider } from "./middleware/auth.js";
 import type { RateLimits } from "./rate-limits.js";
-import type { Canonical, VideoRef } from "./share/canonicalise.js";
 import type { Extraction } from "./share/extract.js";
-import type { VideoMeta } from "./share/oembed.js";
+import type { NormalisedShare } from "./share/normalise.js";
+import type { SourceMeta } from "./share/oembed.js";
 
 export type Db = Database["db"];
 
@@ -39,17 +39,15 @@ export interface AppEnv {
 }
 
 /**
- * The three impure edges of the identify pipeline, injected so the test suite
- * needs no network — the same reason `auth: AuthProvider` is a dep.
- * `parseShareUrl` is deliberately absent: it is pure, so tests exercise the
- * real one.
+ * The impure edges of the identify pipeline, injected so the suite needs no
+ * network. `normaliseShare` is deliberately absent: it is pure, so tests
+ * exercise the real one.
  */
 export interface ShareProvider {
-  /** The model that produced a cached extraction — the route needs it to build the cache key. */
+  /** The model that produced a cached extraction — the route needs it for the key. */
   model: string;
-  resolveShortLink(url: string): Promise<Canonical>;
-  fetchMeta(ref: VideoRef): Promise<VideoMeta>;
-  extractTitles(meta: VideoMeta): Promise<Extraction>;
+  fetchMeta(share: NormalisedShare): Promise<SourceMeta>;
+  extractTitles(meta: SourceMeta): Promise<Extraction>;
 }
 
 /** Injected like `share`, so the suite needs no network. */

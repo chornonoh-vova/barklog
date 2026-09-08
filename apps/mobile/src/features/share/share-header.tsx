@@ -34,7 +34,7 @@ export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis:
 }
 
 /**
- * TikTok's signed CDN url can expire inside `OEMBED_TTL_SECONDS`, so `onError`
+ * A signed CDN thumbnail url can expire inside its cache TTL, so `onError`
  * is an ordinary outcome here, not an exceptional one.
  */
 function SourceCover({ source }: { source: ShareSourceWire }) {

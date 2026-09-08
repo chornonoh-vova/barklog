@@ -87,11 +87,10 @@ describe("shareIdentifySchema", () => {
     expect(result.output?.url).toBe("https://youtu.be/1vs0lLIRt7w");
   });
 
-  it("rejects an unsupported host, naming the url field", () => {
+  it("accepts a link to a host that is neither YouTube nor TikTok, since any https link is shareable now", () => {
     const result = parse({ url: "https://vimeo.com/12345" });
 
-    expect(result.success).toBe(false);
-    expect(result.issues?.map((issue) => v.getDotPath(issue))).toContain("url");
+    expect(result.success).toBe(true);
   });
 
   it("rejects a limit over the cap rather than clamping it", () => {

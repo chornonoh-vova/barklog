@@ -22,9 +22,6 @@ export const fakeAuthProvider: AuthProvider = {
 
 const unusedShareProvider: ShareProvider = {
   model: "gpt-5.4-mini",
-  resolveShortLink: () => {
-    throw new Error("share.resolveShortLink was not stubbed for this test");
-  },
   fetchMeta: () => {
     throw new Error("share.fetchMeta was not stubbed for this test");
   },

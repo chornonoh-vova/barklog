@@ -11,6 +11,9 @@ const SOURCE_THUMB_SIZE: Record<ShareProviderName, { width: number; height: numb
   tiktok: { width: 32, height: 56 },
 };
 
-export function sourceThumbSize(provider: ShareProviderName): { width: number; height: number } {
-  return SOURCE_THUMB_SIZE[provider];
+// Stopgap ahead of Task 10, which replaces this with aspect-ratio sizing:
+// `provider` is now any wire string, so a host outside the old two-provider
+// map falls back to YouTube's box rather than indexing undefined.
+export function sourceThumbSize(provider: string): { width: number; height: number } {
+  return SOURCE_THUMB_SIZE[provider as ShareProviderName] ?? SOURCE_THUMB_SIZE.youtube;
 }

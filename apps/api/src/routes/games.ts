@@ -31,20 +31,21 @@ import {
   FEED_TTL_SECONDS,
   feedKey,
   normaliseQuery,
-  OEMBED_TTL_SECONDS,
-  oembedKey,
   SEARCH_TTL_SECONDS,
   SEARCH_VERSION_KEY,
   searchKey,
   SIMILAR_TTL_SECONDS,
   similarKey,
+  SOURCE_TTL_SECONDS,
+  sourceKey,
 } from "../cache-keys.js";
 import { onInvalid, problems } from "../problems.js";
 import { toBacklogEntry, toGameDetail, toGameSummary, type GameSummaryWire } from "../serialize.js";
-import { parseShareUrl, type Canonical } from "../share/canonicalise.js";
 import { EXTRACT_PROMPT_VERSION } from "../share/extract.js";
 import { mergeCandidates, PER_GUESS_LIMIT } from "../share/identify.js";
-import { VideoGone, type VideoMeta } from "../share/oembed.js";
+import { SourceUnreadable } from "../share/meta.js";
+import { normaliseShare } from "../share/normalise.js";
+import { SourceGone, type SourceMeta } from "../share/oembed.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
 const FEED_CACHE_CONTROL = "private, max-age=300";
@@ -146,61 +147,46 @@ export function gamesRoutes(deps: AppDeps) {
     .post("/identify", sValidator("json", shareIdentifySchema, onInvalid), async (c) => {
       const { url, limit } = c.req.valid("json");
 
-      // Pure first: a short link is the only shape that needs a network hop,
-      // so an ordinary link never pays for one.
-      let canonical: Canonical = parseShareUrl(url);
-      if (canonical.kind === "shortLink") {
-        canonical = await deps.share.resolveShortLink(canonical.url);
-      }
-
-      if (canonical.kind === "unreachable") {
-        // Distinct from `unsupported`: the shortener timed out or the network
-        // hop failed, not that the link is invalid. Retriable, so it gets the
-        // same 502 as an oEmbed failure below, not a terminal 422.
-        throw problems.create("BAD_GATEWAY", {
-          detail: "The video could not be read right now. Try again shortly.",
-        });
-      }
-
-      if (canonical.kind !== "video") {
-        // A recognised host whose path is not a video page. The schema cannot
-        // catch this — it validates the host, not the route within it.
+      const share = normaliseShare(url);
+      if (share === null) {
         throw problems.create("UNPROCESSABLE_SHARE", {
-          detail: "That link is not a YouTube or TikTok video page.",
+          detail: "That link cannot be opened. Barklog needs an https web address.",
         });
       }
 
-      const { ref } = canonical;
-
-      let meta: VideoMeta;
+      // The catch sits outside `withCache`, deliberately: a throw inside the
+      // loader propagates uncached, so a transient failure is not pinned for
+      // the TTL — the same property `/:id/similar` relies on.
+      let meta: SourceMeta;
       try {
-        meta = await withCache(
-          deps.cache,
-          oembedKey(ref.provider, ref.videoId),
-          OEMBED_TTL_SECONDS,
-          () => deps.share.fetchMeta(ref),
+        meta = await withCache(deps.cache, sourceKey(share.shareId), SOURCE_TTL_SECONDS, () =>
+          deps.share.fetchMeta(share),
         );
       } catch (error) {
-        if (error instanceof VideoGone) {
+        if (error instanceof SourceGone) {
           throw problems.create("NOT_FOUND", {
-            detail: "That video is unavailable — it may be private or removed.",
+            detail: "That page is unavailable — it may be private or removed.",
+          });
+        }
+        if (error instanceof SourceUnreadable) {
+          throw problems.create("UNPROCESSABLE_SHARE", {
+            detail: "We opened that link but could not find a title on it.",
           });
         }
         // A fixed string: a 5xx must never carry the upstream message.
         throw problems.create("BAD_GATEWAY", {
-          detail: "The video could not be read right now. Try again shortly.",
+          detail: "That link could not be read right now. Try again shortly.",
         });
       }
 
-      // The catch sits outside `withCache`, deliberately. A throw inside the
-      // loader propagates uncached — the same property `/:id/similar` relies on
-      // — so one transient failure cannot pin a degraded answer for 30 days.
+      // Keyed on `meta.shareId` — the post-redirect id — not the requested
+      // one, so a short link and the page it resolves to share one cache entry.
       let guesses: string[];
       let basis: ShareBasis;
       try {
         const extraction = await withCache(
           deps.cache,
-          extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, ref.provider, ref.videoId),
+          extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, meta.shareId),
           EXTRACT_TTL_SECONDS,
           () => deps.share.extractTitles(meta),
         );
@@ -210,14 +196,11 @@ export function gamesRoutes(deps: AppDeps) {
         // Logged, not thrown: this is the one failure mode in the route that
         // never reaches `apiErrorHandler`, so without a log line an OpenAI
         // outage degrades every identify response in complete silence.
-        log.warn(
-          "Extraction failed for {provider}:{videoId}, falling back to the raw title: {message}",
-          {
-            provider: ref.provider,
-            videoId: ref.videoId,
-            message: error instanceof Error ? error.message : String(error),
-          },
-        );
+        log.warn("Extraction failed for {shareId}, falling back to the raw title: {message}", {
+          shareId: meta.shareId,
+          pageUrl: meta.pageUrl,
+          message: error instanceof Error ? error.message : String(error),
+        });
         // Fail soft: the raw title is a worse query than an extracted one, but
         // it is a far better answer than an error page.
         guesses = [meta.title];
@@ -231,14 +214,16 @@ export function gamesRoutes(deps: AppDeps) {
 
       const body: ShareIdentifyResponse = {
         source: {
-          provider: ref.provider,
-          videoId: ref.videoId,
+          provider: meta.provider,
+          shareId: meta.shareId,
           title: meta.title,
           author: meta.author,
-          pageUrl: ref.pageUrl,
-          // `?? null`: `withCache` casts rather than validates, so a cache
-          // entry written before this field existed arrives without it.
+          pageUrl: meta.pageUrl,
+          // `?? null`: `withCache` casts rather than validates, so an entry
+          // written before these fields existed arrives without them.
           thumbnailUrl: meta.thumbnailUrl ?? null,
+          thumbnailWidth: meta.thumbnailWidth ?? null,
+          thumbnailHeight: meta.thumbnailHeight ?? null,
         },
         basis,
         identified: basis !== "unavailable",
