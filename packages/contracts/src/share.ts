@@ -89,10 +89,15 @@ export interface ShareSourceWire {
    * ordinary, not exceptional.
    */
   thumbnailUrl: string | null;
+
+  /** Added ahead of Task 9. Optional until the route emits them. */
+  shareId?: string;
+  thumbnailWidth?: number | null;
+  thumbnailHeight?: number | null;
 }
 
 /** The tiers the extraction model chooses between. Drives its prompt and its schema. */
-export const EXTRACTED_BASES = ["title", "channel", "none"] as const;
+export const EXTRACTED_BASES = ["title", "author", "channel", "web", "none"] as const;
 
 /**
  * What the guesses were derived from, in descending confidence. `unavailable`

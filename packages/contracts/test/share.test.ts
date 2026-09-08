@@ -2,6 +2,7 @@ import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
 import {
+  EXTRACTED_BASES,
   IDENTIFY_LIMIT_DEFAULT,
   isShareableUrl,
   shareHostProvider,
@@ -106,5 +107,16 @@ describe("shareIdentifySchema", () => {
 
     expect(result.success).toBe(false);
     expect(result.issues?.map((issue) => v.getDotPath(issue))).toContain("url");
+  });
+});
+
+describe("EXTRACTED_BASES", () => {
+  it("the basis tiers include the new author and web values", () => {
+    expect(EXTRACTED_BASES).toContain("author");
+    expect(EXTRACTED_BASES).toContain("web");
+  });
+
+  it("channel is still present until mobile stops branching on it", () => {
+    expect(EXTRACTED_BASES).toContain("channel");
   });
 });
