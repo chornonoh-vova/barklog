@@ -7,11 +7,11 @@ import { useIdentifyShare } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
-import { LoadingState } from "@/components/query-states";
 import { summarySubtitle } from "@/features/game/format";
 import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
 import { displayHost } from "@/features/share/host";
 import { toShareSections, type ShareSection } from "@/features/share/sections";
+import { SearchingState } from "@/features/share/searching-state";
 import { ShareHeader } from "@/features/share/share-header";
 import { Screen, SectionHeader } from "@/theme";
 
@@ -68,7 +68,7 @@ export function ShareScreen({
 
   // `isPending` first: the settled branches below all read as terminal, and one
   // would flash on a share's first frame if pending were checked after them.
-  if (isPending) return <LoadingState />;
+  if (isPending) return <SearchingState />;
 
   if (error !== null) {
     return <EmptyState {...UNREADABLE} action={backToHome} />;
@@ -80,7 +80,7 @@ export function ShareScreen({
   }
 
   return (
-    <QueryBoundary query={identify}>
+    <QueryBoundary query={identify} loading={<SearchingState />}>
       {(data) => (
         <SectionList
           style={Screen.fill}
