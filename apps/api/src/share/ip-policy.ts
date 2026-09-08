@@ -99,29 +99,11 @@ export function isPublicUnicast(address: string, family: 4 | 6): boolean {
   const g = toGroups(address);
   if (g === null) return false;
 
-  if (g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0 && g[5] === 0xffff) {
-    return isPublicV4(groupsToV4(g[6]!, g[7]!)); // ::ffff:0:0/96
-  }
+  if ((g[0]! & 0xe000) !== 0x2000) return false; // outside 2000::/3 global unicast
 
-  if (g[0] === 0x64 && g[1] === 0xff9b && g[2] === 0 && g[3] === 0 && g[4] === 0 && g[5] === 0) {
-    return isPublicV4(groupsToV4(g[6]!, g[7]!)); // 64:ff9b::/96
-  }
-
-  if (g[0] === 0x2002) {
-    return isPublicV4(groupsToV4(g[1]!, g[2]!)); // 2002::/16
-  }
-
-  const isUnspecified = g.every((v) => v === 0);
-  const isLoopback = g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0 && g[5] === 0 && g[6] === 0 && g[7] === 1;
-  const firstSixZero = g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0 && g[5] === 0;
-
-  if (isUnspecified || isLoopback) return false;
-  if (firstSixZero) return isPublicV4(groupsToV4(g[6]!, g[7]!)); // legacy IPv4-compatible ::a.b.c.d
-
-  const head = g[0]!;
-  if ((head & 0xfe00) === 0xfc00) return false; // fc00::/7
-  if ((head & 0xffc0) === 0xfe80) return false; // fe80::/10
-  if ((head & 0xff00) === 0xff00) return false; // ff00::/8
+  if (g[0] === 0x2002) return isPublicV4(groupsToV4(g[1]!, g[2]!)); // 6to4
+  if (g[0] === 0x2001 && g[1] === 0x0000) return false; // Teredo 2001:0000::/32
+  if (g[0] === 0x2001 && g[1] === 0x0db8) return false; // documentation 2001:db8::/32
 
   return true;
 }

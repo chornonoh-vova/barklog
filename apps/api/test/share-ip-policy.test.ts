@@ -50,8 +50,12 @@ test.each([
   expect(isPublicUnicast(address, family)).toBe(false);
 });
 
-test("unwraps a mapped public address and accepts it", () => {
-  expect(isPublicUnicast("::ffff:93.184.216.34", 6)).toBe(true);
+// Round 2 policy change: ::ffff:0:0/96 sits outside 2000::/3, so it is refused
+// outright rather than unwrapped, even though the wrapped v4 is public. This
+// is what closes the embedding class for good instead of chasing every new
+// RFC's transition prefix (see fix-brief-round2.md).
+test("refuses an ipv4-mapped address even though the wrapped v4 is public", () => {
+  expect(isPublicUnicast("::ffff:93.184.216.34", 6)).toBe(false);
 });
 
 test("refuses anything unparseable", () => {
@@ -83,10 +87,44 @@ test.each([
 });
 
 test.each([
-  ["::ffff:93.184.216.34", 6],
-  ["0:0:0:0:0:ffff:5db8:d822", 6],
   ["2002:5db8:d822::", 6],
   ["2606:4700:4700::1111", 6],
 ] as const)("still accepts public addresses however spelled: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(true);
+});
+
+// These are ipv4-mapped forms, not global unicast (see round-2 policy change
+// above): they are refused outright regardless of the wrapped v4.
+test.each([
+  ["::ffff:93.184.216.34", 6],
+  ["0:0:0:0:0:ffff:5db8:d822", 6],
+] as const)("refuses ipv4-mapped forms even when the wrapped v4 is public: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
+});
+
+test.each([
+  ["::ffff:0:127.0.0.1", 6],
+  ["::ffff:0:10.0.0.5", 6],
+  ["0:0:0:0:ffff:0:127.0.0.1", 6],
+  ["::FfFf:0:127.0.0.1", 6],
+  ["::ffff:0:7f00:1", 6],
+  ["64:ff9b:1::7f00:1", 6],
+  ["2001:0:1234::1", 6],
+  ["2001:db8::1", 6],
+  ["100::1", 6],
+  ["4000::1", 6],
+  ["8000::1", 6],
+  ["::2", 6],
+] as const)("refuses everything outside global unicast: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
+});
+
+test.each([
+  ["2606:4700:4700::1111", 6],
+  ["2001:4860:4860::8888", 6],
+  ["2002:5db8:d822::", 6],
+  ["2400:cb00::1", 6],
+  ["3fff::1", 6],
+] as const)("accepts global unicast: %s", (address, family) => {
   expect(isPublicUnicast(address, family)).toBe(true);
 });
