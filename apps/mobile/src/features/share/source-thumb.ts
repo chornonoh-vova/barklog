@@ -1,6 +1,6 @@
 import type { ShareSourceWire } from "@repo/contracts";
 
-const THUMB_HEIGHT = 56;
+const THUMB_HEIGHT = 64;
 const DEFAULT_RATIO = 16 / 9;
 const MIN_RATIO = 0.5;
 const MAX_RATIO = 1.8;
