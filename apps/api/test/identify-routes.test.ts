@@ -3,7 +3,7 @@ import { afterAll, beforeEach, expect, test, vi } from "vitest";
 import { extractKey, sourceKey } from "../src/cache-keys.js";
 import { problems } from "../src/problems.js";
 import { EXTRACT_PROMPT_VERSION, type Extraction } from "../src/share/extract.js";
-import { SourceUnreadable } from "../src/share/meta.js";
+import { SourceBlocked, SourceUnreadable } from "../src/share/meta.js";
 import { normaliseShare } from "../src/share/normalise.js";
 import { SourceGone, SourceUnavailable, type SourceMeta } from "../src/share/oembed.js";
 import { BlockedAddress } from "../src/share/safe-fetch.js";
@@ -446,5 +446,22 @@ test("the identify scope is tighter than the overall one", async () => {
   const limited = await send();
   expect(limited.status).toBe(429);
   expect(limited.headers.get("retry-after")).toBeTruthy();
+  await app.close();
+});
+
+test("a site that blocks us says so, rather than claiming the page had no title", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new SourceBlocked("the site answered 403");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app);
+  const body = (await response.json()) as { detail: string };
+
+  expect(response.status).toBe(422);
+  expect(body.detail).toBe("That site would not let us read the page.");
   await app.close();
 });

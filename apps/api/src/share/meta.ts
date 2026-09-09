@@ -5,6 +5,15 @@ import { matchProvider } from "./provider-match.js";
 import type { LookupFn } from "./safe-fetch.js";
 import { LADDER_BUDGET_MS } from "./safe-fetch.js";
 
+/**
+ * The site refused us outright — a bot challenge, or auth. Terminal: the page
+ * may well exist, but no retry of ours will see it. Distinct from
+ * `SourceUnreadable`, which means we DID read a page and it carried no title.
+ */
+export class SourceBlocked extends Error {
+  override readonly name = "SourceBlocked";
+}
+
 /** We read the page and it carried no title. Terminal: retrying will not help. */
 export class SourceUnreadable extends Error {
   override readonly name = "SourceUnreadable";
@@ -47,11 +56,24 @@ export async function fetchSourceMeta(
   const direct = await oembedRung(share, deadline, fetchImpl, lookup);
   if (direct !== null) return direct;
 
-  let page: { html: string; finalUrl: string };
+  let page: { html: string; finalUrl: string; status: number };
   try {
     page = await fetchPage(share.url, deadline, fetchImpl, lookup);
   } catch (cause) {
     throw new SourceUnavailable("the page could not be read", { cause });
+  }
+
+  // A non-2xx body is empty by the time it reaches here, so parsing it would
+  // report "no title" for a page we never actually received. What the status
+  // meant has to be decided before the parse, not after it.
+  if (page.status === 401 || page.status === 403) {
+    throw new SourceBlocked(`the site answered ${page.status}`);
+  }
+  if (page.status === 404 || page.status === 410) {
+    throw new SourceGone(`the page answered ${page.status}`);
+  }
+  if (page.status < 200 || page.status >= 300) {
+    throw new SourceUnavailable(`the page answered ${page.status}`);
   }
 
   // Re-normalised, not reused: a short link's `finalUrl` is the only place

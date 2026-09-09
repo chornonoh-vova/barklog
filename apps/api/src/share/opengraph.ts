@@ -70,7 +70,7 @@ export async function fetchPage(
   deadline: number,
   fetchImpl?: typeof fetch,
   lookup?: LookupFn,
-): Promise<{ html: string; finalUrl: string }> {
+): Promise<{ html: string; finalUrl: string; status: number }> {
   const response = await safeFetch(url, {
     allow: ["text/html", "application/xhtml+xml"],
     maxBytes: HTML_MAX_BYTES,
@@ -79,5 +79,5 @@ export async function fetchPage(
     lookup,
   });
 
-  return { html: response.body, finalUrl: response.finalUrl };
+  return { html: response.body, finalUrl: response.finalUrl, status: response.status };
 }

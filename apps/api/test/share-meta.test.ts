@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 
-import { fetchSourceMeta, SourceUnreadable } from "../src/share/meta.js";
+import { fetchSourceMeta, SourceBlocked, SourceUnreadable } from "../src/share/meta.js";
 import { htmlResponse, jsonResponse, PUBLIC_LOOKUP } from "./share-fixtures.js";
 import { normaliseShare } from "../src/share/normalise.js";
 import { SourceGone, SourceUnavailable } from "../src/share/oembed.js";
@@ -127,4 +127,37 @@ test("the two floors are distinguishable by class, not just message", async () =
   await expect(
     fetchSourceMeta(IGN, unavailable as unknown as typeof fetch, PUBLIC_LOOKUP),
   ).rejects.toBeInstanceOf(SourceUnavailable);
+});
+
+test.each([401, 403])(
+  "a page that refuses us with %i is blocked, not untitled — the body never arrived",
+  async (status) => {
+    // Cloudflare's bot challenge, verbatim in shape: a 403 carrying its own
+    // titled HTML. Reporting "no title" would describe a page we never read.
+    const blocked = () =>
+      new Response("<html><head><title>Just a moment...</title></head></html>", {
+        status,
+        headers: { "content-type": "text/html" },
+      });
+
+    await expect(
+      fetchSourceMeta(IGN, blocked as unknown as typeof fetch, PUBLIC_LOOKUP),
+    ).rejects.toThrow(SourceBlocked);
+  },
+);
+
+test.each([404, 410])("a page that answers %i is gone", async (status) => {
+  const missing = () => new Response(null, { status, headers: { "content-type": "text/html" } });
+
+  await expect(
+    fetchSourceMeta(IGN, missing as unknown as typeof fetch, PUBLIC_LOOKUP),
+  ).rejects.toThrow(SourceGone);
+});
+
+test.each([500, 503])("a page answering %i stays retriable, not a terminal 422", async (status) => {
+  const down = () => new Response(null, { status, headers: { "content-type": "text/html" } });
+
+  await expect(
+    fetchSourceMeta(IGN, down as unknown as typeof fetch, PUBLIC_LOOKUP),
+  ).rejects.toThrow(SourceUnavailable);
 });

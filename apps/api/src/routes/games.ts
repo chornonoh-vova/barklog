@@ -43,7 +43,7 @@ import { onInvalid, problems } from "../problems.js";
 import { toBacklogEntry, toGameDetail, toGameSummary, type GameSummaryWire } from "../serialize.js";
 import { EXTRACT_PROMPT_VERSION } from "../share/extract.js";
 import { mergeCandidates, PER_GUESS_LIMIT } from "../share/identify.js";
-import { SourceUnreadable } from "../share/meta.js";
+import { SourceBlocked, SourceUnreadable } from "../share/meta.js";
 import { normaliseShare } from "../share/normalise.js";
 import { SourceGone, type SourceMeta } from "../share/oembed.js";
 import type { AppDeps, AppEnv } from "../types.js";
@@ -169,6 +169,11 @@ export function gamesRoutes(deps: AppDeps) {
         if (error instanceof SourceGone) {
           throw problems.create("NOT_FOUND", {
             detail: "That page is unavailable — it may be private or removed.",
+          });
+        }
+        if (error instanceof SourceBlocked) {
+          throw problems.create("UNPROCESSABLE_SHARE", {
+            detail: "That site would not let us read the page.",
           });
         }
         if (error instanceof SourceUnreadable) {
