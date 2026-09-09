@@ -465,3 +465,65 @@ test("a site that blocks us says so, rather than claiming the page had no title"
   expect(body.detail).toBe("That site would not let us read the page.");
   await app.close();
 });
+
+const IGDB_URL = "https://www.igdb.com/games/marvels-wolverine";
+
+test("an igdb game page is answered from the mirror, touching neither the network nor the model", async () => {
+  await seedGame(harness.db, {
+    id: 41,
+    name: "Marvel's Wolverine",
+    slug: "marvels-wolverine",
+    count: 900,
+  });
+
+  // The default share stub throws on both fetchMeta and extractTitles, so this
+  // passing IS the assertion that the shortcut skipped the whole pipeline.
+  const app = createTestApp({ share: shareStub() });
+
+  const response = await identifyOn(app.app, { url: IGDB_URL });
+  const body = (await response.json()) as {
+    basis: string;
+    guesses: string[];
+    source: { provider: string; title: string; pageUrl: string };
+    items: { id: number; name: string }[];
+  };
+
+  expect(response.status).toBe(200);
+  expect(body.items.map((i) => i.id)).toEqual([41]);
+  expect(body.basis).toBe("title");
+  expect(body.guesses).toEqual(["Marvel's Wolverine"]);
+  expect(body.source.provider).toBe("IGDB");
+  expect(body.source.title).toBe("Marvel's Wolverine");
+  expect(body.source.pageUrl).toBe(IGDB_URL);
+  await app.close();
+});
+
+test("a migrated slug returns every match, most popular first, rather than guessing", async () => {
+  await seedGame(harness.db, { id: 51, name: "Old Claimant", slug: "shared-slug", count: 10 });
+  await seedGame(harness.db, { id: 52, name: "New Claimant", slug: "shared-slug", count: 5000 });
+
+  const app = createTestApp({ share: shareStub() });
+
+  const response = await identifyOn(app.app, { url: "https://www.igdb.com/games/shared-slug" });
+  const body = (await response.json()) as { items: { id: number }[] };
+
+  expect(body.items.map((i) => i.id)).toEqual([52, 51]);
+  await app.close();
+});
+
+test("an igdb page we have not mirrored falls through to the ladder", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new SourceBlocked("the site answered 403");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app, { url: "https://www.igdb.com/games/not-mirrored" });
+  const body = (await response.json()) as { detail: string };
+
+  expect(response.status).toBe(422);
+  expect(body.detail).toBe("That site would not let us read the page.");
+  await app.close();
+});

@@ -4,6 +4,7 @@ import { afterAll, beforeEach, expect, inject, test } from "vitest";
 import { createDb } from "../src/client.js";
 import {
   gameExists,
+  gamesBySlug,
   getGameDetail,
   popularGames,
   recentGames,
@@ -34,6 +35,8 @@ interface Fixture {
   rating?: number | null;
   releaseDate?: Date | null;
   cover?: string | null;
+  /** Override the name-derived slug, to cover slugs that migrated between games. */
+  slug?: string;
 }
 
 const RANKING_FIXTURES: Fixture[] = [
@@ -61,7 +64,7 @@ async function seed(fixtures: Fixture[]): Promise<void> {
     fixtures.map((fixture) => ({
       id: fixture.id,
       name: fixture.name,
-      slug: slugify(fixture.name),
+      slug: fixture.slug ?? slugify(fixture.name),
       gameTypeId: fixture.typeId ?? 0,
       totalRating: fixture.rating === undefined ? 85 : fixture.rating,
       totalRatingCount: fixture.count,
@@ -384,4 +387,34 @@ test("similar games carry the same projection as every other list", async () => 
     "totalRating",
     "totalRatingCount",
   ]);
+});
+
+test("gamesBySlug finds the game an igdb slug names", async () => {
+  await seed([{ id: 900, name: "Marvel's Wolverine", count: 900 }]);
+
+  const rows = await gamesBySlug(db, "marvel-s-wolverine", 15);
+
+  expect(rows.map((r) => r.id)).toEqual([900]);
+});
+
+test("gamesBySlug returns every claimant of a migrated slug, most popular first", async () => {
+  await seed([
+    { id: 901, name: "Old Claimant", slug: "shared-slug", count: 10 },
+    { id: 902, name: "New Claimant", slug: "shared-slug", count: 5000 },
+    { id: 903, name: "Unrelated", count: 4000 },
+  ]);
+
+  const rows = await gamesBySlug(db, "shared-slug", 15);
+
+  expect(rows.map((r) => r.id)).toEqual([902, 901]);
+});
+
+test("gamesBySlug honours the limit and returns nothing for an unmirrored slug", async () => {
+  await seed([
+    { id: 904, name: "A", slug: "same", count: 3 },
+    { id: 905, name: "B", slug: "same", count: 2 },
+  ]);
+
+  expect(await gamesBySlug(db, "same", 1)).toHaveLength(1);
+  expect(await gamesBySlug(db, "never-mirrored", 15)).toEqual([]);
 });

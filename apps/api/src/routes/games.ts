@@ -13,6 +13,7 @@ import {
 } from "@repo/contracts";
 import {
   gameExists,
+  gamesBySlug,
   getBacklogEntry,
   getGameDetail,
   popularGames,
@@ -155,6 +156,37 @@ export function gamesRoutes(deps: AppDeps) {
         throw problems.create("UNPROCESSABLE_SHARE", {
           detail: "That link cannot be opened. Barklog needs an https web address.",
         });
+      }
+
+      // IGDB is the mirror's own upstream, so a game page's slug identifies a
+      // row exactly. Answer from the database and skip the whole pipeline: no
+      // fetch, no model call, no cache entry. Falls through when the slug is
+      // not mirrored, and the ladder reports whatever it finds — today that is
+      // IGDB's Cloudflare challenge.
+      if (share.igdbSlug !== null) {
+        const items = await gamesBySlug(deps.db, share.igdbSlug, limit);
+
+        if (items.length > 0) {
+          const body: ShareIdentifyResponse = {
+            source: {
+              provider: "IGDB",
+              shareId: share.shareId,
+              title: items[0]!.name,
+              author: "IGDB",
+              pageUrl: share.url,
+              thumbnailUrl: null,
+              thumbnailWidth: null,
+              thumbnailHeight: null,
+            },
+            basis: "title",
+            identified: true,
+            guesses: [items[0]!.name],
+            items: items.map(toGameSummary),
+          };
+
+          c.header("Cache-Control", "private, no-store");
+          return c.json(body);
+        }
       }
 
       // The catch sits outside `withCache`, deliberately: a throw inside the

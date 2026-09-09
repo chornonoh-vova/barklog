@@ -7,6 +7,12 @@ export interface NormalisedShare {
   shareId: string;
   /** Provider-native video id, for the two hosts we rebuild by hand. Every other page gets null. */
   sourceId: string | null;
+  /**
+   * The IGDB game slug, when the link is an igdb.com game page. IGDB is the
+   * mirror's own source, so this slug maps straight to a row — no fetch, no
+   * model. `null` for every other host.
+   */
+  igdbSlug: string | null;
 }
 
 // `t`, `ref`, and `si` are deliberately not here: all three are short and
@@ -29,6 +35,10 @@ const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com"
 const YOUTUBE_ID = /^[\w-]{11}$/;
 
 const TIKTOK_HOSTS = new Set(["tiktok.com", "www.tiktok.com"]);
+
+const IGDB_HOSTS = new Set(["igdb.com", "www.igdb.com"]);
+/** IGDB slugs are lowercase alphanumerics and hyphens. */
+const IGDB_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const TIKTOK_ID = /^\d{6,25}$/;
 
 function segments(url: URL): string[] {
@@ -54,8 +64,12 @@ function stripTracking(url: URL): void {
   url.searchParams.sort();
 }
 
-function finish(url: string, sourceId: string | null): NormalisedShare {
-  return { url, shareId: sha1(url), sourceId };
+function finish(
+  url: string,
+  sourceId: string | null,
+  igdbSlug: string | null = null,
+): NormalisedShare {
+  return { url, shareId: sha1(url), sourceId, igdbSlug };
 }
 
 export function normaliseShare(input: string): NormalisedShare | null {
@@ -64,6 +78,13 @@ export function normaliseShare(input: string): NormalisedShare | null {
   const url = new URL(input);
   url.hash = "";
   stripTracking(url);
+
+  if (IGDB_HOSTS.has(url.hostname)) {
+    const [section, slug] = segments(url);
+    if (section === "games" && slug !== undefined && IGDB_SLUG.test(slug)) {
+      return finish(`https://www.igdb.com/games/${slug}`, null, slug);
+    }
+  }
 
   if (YOUTUBE_HOSTS.has(url.hostname)) {
     const videoId = youtubeId(url);

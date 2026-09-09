@@ -170,3 +170,31 @@ test("youtube still collapses with si present", () => {
 
   expect(a?.shareId).toBe(b?.shareId);
 });
+
+test("recognises an igdb game page and reports its slug", () => {
+  const result = normaliseShare("https://www.igdb.com/games/marvels-wolverine");
+
+  expect(result?.igdbSlug).toBe("marvels-wolverine");
+  expect(result?.url).toBe("https://www.igdb.com/games/marvels-wolverine");
+  expect(result?.sourceId).toBeNull();
+});
+
+test("collapses the bare host onto the www form, so both share a cache entry", () => {
+  expect(normaliseShare("https://igdb.com/games/marvels-wolverine")?.shareId).toBe(
+    normaliseShare("https://www.igdb.com/games/marvels-wolverine")?.shareId,
+  );
+});
+
+test.each([
+  "https://www.igdb.com/games",
+  "https://www.igdb.com/companies/insomniac-games",
+  "https://www.igdb.com/games/Marvels_Wolverine",
+  "https://www.igdb.com/games/-leading-hyphen",
+])("does not claim a slug for %s", (url) => {
+  expect(normaliseShare(url)?.igdbSlug).toBeNull();
+});
+
+test("every other host reports no slug", () => {
+  expect(normaliseShare("https://www.ign.com/articles/a-review")?.igdbSlug).toBeNull();
+  expect(normaliseShare("https://www.youtube.com/watch?v=1vs0lLIRt7w")?.igdbSlug).toBeNull();
+});

@@ -15,12 +15,12 @@ const SOURCE: ShareSourceWire = {
 };
 
 test("defaults to 16:9 when no dimensions were reported", () => {
-  expect(sourceThumbSize(SOURCE)).toEqual({ height: 56, aspectRatio: 16 / 9 });
+  expect(sourceThumbSize(SOURCE)).toEqual({ height: 64, aspectRatio: 16 / 9 });
 });
 
 test("uses the reported ratio when both dimensions are present", () => {
   expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 480, thumbnailHeight: 360 })).toEqual({
-    height: 56,
+    height: 64,
     aspectRatio: 480 / 360,
   });
 });
