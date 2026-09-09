@@ -41,8 +41,10 @@ export const SOURCE_TTL_SECONDS = 604_800;
 
 /**
  * Takes the whole `NormalisedShare`, not a bare id: this cache keys on the
- * REQUESTED url's id, `extractKey` below keys on the POST-REDIRECT one, and
- * the two are only distinguishable here because the parameter types are.
+ * REQUESTED url's id while `extractKey` below keys on the POST-REDIRECT one,
+ * and passing the wrong container will not compile. Note the guarantee stops
+ * at the container — once either id is destructured into a bare string the
+ * two are interchangeable again.
  */
 export function sourceKey(share: NormalisedShare): string {
   // `v3`: the cached value is a `SourceMeta`, keyed by shareId rather than

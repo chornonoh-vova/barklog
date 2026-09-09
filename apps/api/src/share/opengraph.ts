@@ -1,6 +1,6 @@
 import { Parser } from "htmlparser2";
 
-import { httpsUrlOrNull, toPositiveInt } from "./oembed.js";
+import { httpsUrlOrNull, toPositiveInt } from "./coerce.js";
 import type { LookupFn } from "./safe-fetch.js";
 import { safeFetch } from "./safe-fetch.js";
 

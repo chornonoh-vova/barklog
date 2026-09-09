@@ -1,5 +1,7 @@
 import * as v from "valibot";
 
+import { httpsUrlOrNull, toPositiveInt } from "./coerce.js";
+
 import type { LookupFn } from "./safe-fetch.js";
 import { safeFetch } from "./safe-fetch.js";
 
@@ -21,6 +23,8 @@ export interface SourceMeta {
   provider: string;
   pageUrl: string;
   shareId: string;
+  /** Post-redirect provider-native id, for the two hand-rolled hosts. Logs only. */
+  sourceId: string | null;
   thumbnailUrl: string | null;
   thumbnailWidth: number | null;
   thumbnailHeight: number | null;
@@ -40,35 +44,13 @@ const oembedSchema = v.object({
   thumbnail_height: v.optional(v.unknown()),
 });
 
-/** Shared with `opengraph.ts`: `unknown` covers both a JSON number and an HTML attribute string. */
-export function toPositiveInt(value: unknown): number | null {
-  const parsed = typeof value === "string" ? Number(value) : value;
-  if (typeof parsed !== "number" || !Number.isFinite(parsed) || parsed <= 0) return null;
-
-  return Math.round(parsed);
-}
-
-/**
- * Handed straight to the client to load, so anything that is not an https
- * url is dropped rather than forwarded.
- */
-export function httpsUrlOrNull(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-
-  try {
-    return new URL(value).protocol === "https:" ? value : null;
-  } catch {
-    return null;
-  }
-}
-
 export async function fetchOembed(
   endpoint: string,
   url: string,
   deadline: number,
   fetchImpl?: typeof fetch,
   lookup?: LookupFn,
-): Promise<Omit<SourceMeta, "shareId">> {
+): Promise<Omit<SourceMeta, "shareId" | "sourceId">> {
   const target = `${endpoint}${endpoint.includes("?") ? "&" : "?"}url=${encodeURIComponent(url)}&format=json`;
 
   let response;

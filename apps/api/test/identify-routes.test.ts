@@ -20,6 +20,7 @@ const META: SourceMeta = {
   provider: "IGN",
   pageUrl: SHARE_URL,
   shareId: SHARE_ID,
+  sourceId: null,
   thumbnailUrl: "https://i.ytimg.com/vi/1vs0lLIRt7w/hqdefault.jpg",
   thumbnailWidth: null,
   thumbnailHeight: null,

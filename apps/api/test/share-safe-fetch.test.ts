@@ -11,7 +11,7 @@ import {
   safeFetch,
   __internal,
 } from "../src/share/safe-fetch.js";
-import { PRIVATE_LOOKUP, PUBLIC_LOOKUP } from "./share-fixtures.js";
+import { PRIVATE_LOOKUP, PUBLIC_LOOKUP, testDeadline } from "./share-fixtures.js";
 
 function jsonResponse(body: string, init: ResponseInit = {}) {
   return new Response(body, {
@@ -21,7 +21,7 @@ function jsonResponse(body: string, init: ResponseInit = {}) {
   });
 }
 
-const opts = { allow: ["application/json"], maxBytes: 65_536, deadline: Date.now() + 8_000 };
+const opts = { allow: ["application/json"], maxBytes: 65_536, deadline: testDeadline() };
 
 test("returns the body and the final url", async () => {
   const fetchImpl = vi.fn(async () => jsonResponse('{"ok":true}'));

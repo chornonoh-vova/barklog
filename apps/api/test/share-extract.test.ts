@@ -18,6 +18,7 @@ const META: SourceMeta = {
   provider: "YouTube",
   pageUrl: "https://www.youtube.com/watch?v=1vs0lLIRt7w",
   shareId: "abc123",
+  sourceId: null,
   thumbnailUrl: null,
   thumbnailWidth: null,
   thumbnailHeight: null,

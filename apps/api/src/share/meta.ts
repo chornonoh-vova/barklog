@@ -11,22 +11,26 @@ export class SourceUnreadable extends Error {
 }
 
 /**
- * Gone is terminal and must not fall through to scraping the provider's own
- * "unavailable" page. Every other failure may still resolve on a later rung,
- * so it reads as a miss.
+ * The whole oEmbed rung, including whether it applies at all: `null` means
+ * either no provider claims this url or the attempt failed in a way a later
+ * rung may recover from. `SourceGone` is the exception — it is terminal, and
+ * must not fall through to scraping the provider's own "unavailable" page.
  */
-async function tryOembed(
-  url: string,
-  shareId: string,
+async function oembedRung(
+  share: NormalisedShare,
   deadline: number,
   fetchImpl?: typeof fetch,
   lookup?: LookupFn,
 ): Promise<SourceMeta | null> {
-  const match = matchProvider(url);
+  const match = matchProvider(share.url);
   if (match === null) return null;
 
   try {
-    return { ...(await fetchOembed(match.endpoint, url, deadline, fetchImpl, lookup)), shareId };
+    return {
+      ...(await fetchOembed(match.endpoint, share.url, deadline, fetchImpl, lookup)),
+      shareId: share.shareId,
+      sourceId: share.sourceId,
+    };
   } catch (error) {
     if (error instanceof SourceGone) throw error;
     return null;
@@ -40,7 +44,7 @@ export async function fetchSourceMeta(
 ): Promise<SourceMeta> {
   const deadline = Date.now() + LADDER_BUDGET_MS;
 
-  const direct = await tryOembed(share.url, share.shareId, deadline, fetchImpl, lookup);
+  const direct = await oembedRung(share, deadline, fetchImpl, lookup);
   if (direct !== null) return direct;
 
   let page: { html: string; finalUrl: string };
@@ -55,13 +59,7 @@ export async function fetchSourceMeta(
   const resolved = normaliseShare(page.finalUrl) ?? share;
 
   if (resolved.url !== share.url) {
-    const afterRedirect = await tryOembed(
-      resolved.url,
-      resolved.shareId,
-      deadline,
-      fetchImpl,
-      lookup,
-    );
+    const afterRedirect = await oembedRung(resolved, deadline, fetchImpl, lookup);
     if (afterRedirect !== null) return afterRedirect;
   }
 
@@ -74,6 +72,7 @@ export async function fetchSourceMeta(
     provider: new URL(resolved.url).hostname,
     pageUrl: resolved.url,
     shareId: resolved.shareId,
+    sourceId: resolved.sourceId,
     thumbnailUrl: parsed.imageUrl,
     thumbnailWidth: parsed.imageWidth,
     thumbnailHeight: parsed.imageHeight,

@@ -212,6 +212,7 @@ export function gamesRoutes(deps: AppDeps) {
         // outage degrades every identify response in complete silence.
         log.warn("Extraction failed for {shareId}, falling back to the raw title: {message}", {
           shareId: meta.shareId,
+          sourceId: meta.sourceId,
           pageUrl: meta.pageUrl,
           message: error instanceof Error ? error.message : String(error),
         });

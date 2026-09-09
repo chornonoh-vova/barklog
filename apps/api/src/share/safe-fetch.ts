@@ -157,24 +157,19 @@ async function readCapped(response: Response, maxBytes: number): Promise<string>
 }
 
 /**
- * Both branches end by closing `dispatcher` themselves, once they are truly
- * done with the response body — not before. Closing an agent while its body
- * is still being streamed is a truncation risk, so the closing call lives
- * next to the code that finishes reading (or explicitly drops) that body,
- * rather than in a `finally` around the `fetch` call that returned it.
+ * Closes `dispatcher` only once the body is truly finished — not before.
+ * Closing an agent mid-stream is a truncation risk, so the close lives next
+ * to the code that finishes reading, or explicitly drops, that body, rather
+ * than in a `finally` around the `fetch` that returned it. Both functions
+ * below repeat the `finally` deliberately: it is one line, and hiding it in a
+ * combinator moves this reasoning away from the code it governs.
  */
-async function withDispatcherClose<T>(dispatcher: Agent, action: () => Promise<T>): Promise<T> {
+async function drainAndClose(response: Response, dispatcher: Agent): Promise<void> {
   try {
-    return await action();
+    await response.body?.cancel().catch(() => {});
   } finally {
     await dispatcher.close().catch(() => {});
   }
-}
-
-async function drainAndClose(response: Response, dispatcher: Agent): Promise<void> {
-  await withDispatcherClose(dispatcher, async () => {
-    await response.body?.cancel().catch(() => {});
-  });
 }
 
 async function readCappedAndClose(
@@ -182,7 +177,11 @@ async function readCappedAndClose(
   maxBytes: number,
   dispatcher: Agent,
 ): Promise<string> {
-  return withDispatcherClose(dispatcher, () => readCapped(response, maxBytes));
+  try {
+    return await readCapped(response, maxBytes);
+  } finally {
+    await dispatcher.close().catch(() => {});
+  }
 }
 
 export async function safeFetch(
