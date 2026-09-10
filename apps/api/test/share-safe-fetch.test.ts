@@ -189,6 +189,52 @@ test("refuses a content-type the caller did not ask for", async () => {
   ).rejects.toThrow(FetchRefused);
 });
 
+test("refuses a content-type that only has an allowed type as a prefix", async () => {
+  const fetchImpl = vi.fn(
+    async () => new Response("{}", { headers: { "content-type": "application/jsonp" } }),
+  );
+
+  await expect(
+    safeFetch("https://a.test/page", {
+      ...opts,
+      lookup: PUBLIC_LOOKUP,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    }),
+  ).rejects.toThrow(FetchRefused);
+});
+
+test("refuses a content-type that names an allowed type only in a parameter", async () => {
+  const fetchImpl = vi.fn(
+    async () =>
+      new Response("{}", { headers: { "content-type": "text/plain; x=application/json" } }),
+  );
+
+  await expect(
+    safeFetch("https://a.test/page", {
+      ...opts,
+      lookup: PUBLIC_LOOKUP,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    }),
+  ).rejects.toThrow(FetchRefused);
+});
+
+test("accepts an allowed content-type carrying parameters", async () => {
+  const fetchImpl = vi.fn(
+    async () =>
+      new Response('{"ok":true}', {
+        headers: { "content-type": " Application/JSON ; charset=utf-8" },
+      }),
+  );
+
+  const result = await safeFetch("https://a.test/page", {
+    ...opts,
+    lookup: PUBLIC_LOOKUP,
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+  });
+
+  expect(result.body).toBe('{"ok":true}');
+});
+
 test("refuses once the deadline has passed", async () => {
   await expect(
     safeFetch("https://a.test/a", {

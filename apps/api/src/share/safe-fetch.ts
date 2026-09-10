@@ -132,6 +132,16 @@ function createPinnedDispatcher(address: string, family: 4 | 6): Agent {
   });
 }
 
+/**
+ * The type/subtype of a `Content-Type`, without its parameters, lowercased.
+ * Compared exactly rather than by substring: `includes("application/json")`
+ * also accepts `application/jsonp`, and accepts any type at all that merely
+ * mentions an allowed one in a parameter.
+ */
+function mimeEssence(header: string): string {
+  return header.split(";", 1)[0]!.trim().toLowerCase();
+}
+
 async function readCapped(response: Response, maxBytes: number): Promise<string> {
   const reader = response.body?.getReader();
   if (reader === undefined) return "";
@@ -187,7 +197,10 @@ async function readCappedAndClose(
 export async function safeFetch(
   url: string,
   options: {
-    /** Acceptable content-type prefixes. Sent joined as the `Accept` header. */
+    /**
+     * Acceptable MIME types, matched exactly against the response's essence.
+     * Sent joined as the `Accept` header. Must be lowercase and parameterless.
+     */
     allow: readonly string[];
     maxBytes: number;
     deadline: number;
@@ -267,12 +280,12 @@ export async function safeFetch(
       continue;
     }
 
-    const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+    const contentType = response.headers.get("content-type") ?? "";
     if (!response.ok) {
       await drainAndClose(response, dispatcher);
       return { status: response.status, headers: response.headers, body: "", finalUrl: current };
     }
-    if (!options.allow.some((type) => contentType.includes(type))) {
+    if (!options.allow.includes(mimeEssence(contentType))) {
       await drainAndClose(response, dispatcher);
       throw new FetchRefused(`unexpected content-type: ${contentType}`);
     }
