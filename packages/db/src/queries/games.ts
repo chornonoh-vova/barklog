@@ -172,6 +172,24 @@ export async function gameExists(db: Queryable, gameId: number): Promise<boolean
   return rows.length > 0;
 }
 
+/**
+ * IGDB slugs are indexed but NOT unique — they occasionally migrate between
+ * games — so this returns every match, most popular first, and the caller
+ * decides. One row is the ordinary case.
+ */
+export async function gamesBySlug(
+  db: Queryable,
+  slug: string,
+  limit: number,
+): Promise<GameSummary[]> {
+  return db
+    .select(GAME_SUMMARY_COLUMNS)
+    .from(games)
+    .where(eq(games.slug, slug))
+    .orderBy(desc(games.totalRatingCount), asc(games.id))
+    .limit(limit);
+}
+
 export async function getGameDetail(db: Queryable, gameId: number): Promise<GameDetail | null> {
   const parent = alias(games, "parent");
 

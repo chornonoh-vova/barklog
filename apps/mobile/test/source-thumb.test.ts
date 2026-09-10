@@ -1,26 +1,43 @@
-import { describe, expect, it } from "vitest";
+import type { ShareSourceWire } from "@repo/contracts";
+import { expect, test } from "vitest";
 
 import { sourceThumbSize } from "@/features/share/source-thumb";
 
-describe("sourceThumbSize", () => {
-  it("gives both providers the same height, so the row never changes height", () => {
-    expect(sourceThumbSize("youtube").height).toBe(sourceThumbSize("tiktok").height);
+const SOURCE: ShareSourceWire = {
+  provider: "YouTube",
+  shareId: "abc",
+  title: "A video",
+  author: null,
+  pageUrl: "https://www.youtube.com/watch?v=a",
+  thumbnailUrl: "https://i.ytimg.com/vi/a/hqdefault.jpg",
+  thumbnailWidth: null,
+  thumbnailHeight: null,
+};
+
+test("defaults to 16:9 when no dimensions were reported", () => {
+  expect(sourceThumbSize(SOURCE)).toEqual({ height: 64, aspectRatio: 16 / 9 });
+});
+
+test("uses the reported ratio when both dimensions are present", () => {
+  expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 480, thumbnailHeight: 360 })).toEqual({
+    height: 64,
+    aspectRatio: 480 / 360,
   });
+});
 
-  it("renders YouTube landscape", () => {
-    const { width, height } = sourceThumbSize("youtube");
+test("clamps a freak ratio so it cannot distort the row", () => {
+  expect(
+    sourceThumbSize({ ...SOURCE, thumbnailWidth: 4000, thumbnailHeight: 100 }).aspectRatio,
+  ).toBe(1.8);
 
-    expect(width).toBeGreaterThan(height);
-  });
+  expect(
+    sourceThumbSize({ ...SOURCE, thumbnailWidth: 100, thumbnailHeight: 4000 }).aspectRatio,
+  ).toBe(0.5);
+});
 
-  it("renders TikTok portrait", () => {
-    const { width, height } = sourceThumbSize("tiktok");
-
-    expect(height).toBeGreaterThan(width);
-  });
-
-  it("pins the exact dimensions, so a change in the rounding is visible", () => {
-    expect(sourceThumbSize("youtube")).toEqual({ width: 100, height: 56 });
-    expect(sourceThumbSize("tiktok")).toEqual({ width: 32, height: 56 });
-  });
+test("ignores a partial or nonsensical pair", () => {
+  expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 480 }).aspectRatio).toBe(16 / 9);
+  expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 0, thumbnailHeight: 0 }).aspectRatio).toBe(
+    16 / 9,
+  );
 });

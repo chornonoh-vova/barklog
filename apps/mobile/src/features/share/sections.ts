@@ -25,13 +25,14 @@ export function toShareSections(
 
   const title =
     basis === "title"
-      ? "Matches for the video title"
-      : basis === "channel"
-        ? (author ?? "This channel") + "'s usual games"
-        : // `unavailable` has the same rows a `title` basis would, but a header
-          // would claim a match the server disclaimed. The orange notice above
-          // the list explains these instead.
-          null;
+      ? "Matches for the title"
+      : basis === "author"
+        ? `Games ${author ?? "this source"} usually covers`
+        : basis === "web"
+          ? "Matches from a web search"
+          : // `unavailable` has the rows a `title` basis would, but a header
+            // would claim a match the server disclaimed.
+            null;
 
   return [{ title, data: items }];
 }

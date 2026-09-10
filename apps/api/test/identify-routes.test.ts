@@ -1,27 +1,35 @@
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
+import { extractKey, sourceKey } from "../src/cache-keys.js";
 import { problems } from "../src/problems.js";
-import type { Canonical, VideoRef } from "../src/share/canonicalise.js";
-import type { Extraction } from "../src/share/extract.js";
-import type { VideoMeta } from "../src/share/oembed.js";
-import { oembedKey } from "../src/cache-keys.js";
-import { VideoGone, VideoMetaUnavailable } from "../src/share/oembed.js";
+import { EXTRACT_PROMPT_VERSION, type Extraction } from "../src/share/extract.js";
+import { SourceBlocked, SourceUnreadable } from "../src/share/meta.js";
+import { normaliseShare } from "../src/share/normalise.js";
+import { SourceGone, SourceUnavailable, type SourceMeta } from "../src/share/oembed.js";
+import { BlockedAddress } from "../src/share/safe-fetch.js";
 import type { ShareProvider } from "../src/types.js";
-import { callApi, createTestApp, seedGame, type TestHarness } from "./helpers.js";
+import { callApi, createTestApp, logs, seedGame, type TestHarness } from "./helpers.js";
 
-const RE2_URL = "https://www.youtube.com/watch?v=1vs0lLIRt7w";
+const SHARE_URL = "https://www.ign.com/articles/re2-review";
+const SHARE = normaliseShare(SHARE_URL)!;
+const SHARE_ID = SHARE.shareId;
 
-const META: VideoMeta = {
+const META: SourceMeta = {
   title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
   author: "Snamwiches",
+  provider: "IGN",
+  pageUrl: SHARE_URL,
+  shareId: SHARE_ID,
+  sourceId: null,
   thumbnailUrl: "https://i.ytimg.com/vi/1vs0lLIRt7w/hqdefault.jpg",
+  thumbnailWidth: null,
+  thumbnailHeight: null,
 };
 
 function shareStub(overrides: Partial<ShareProvider> = {}): ShareProvider {
   return {
     model: "gpt-5.4-mini",
-    resolveShortLink: async (): Promise<Canonical> => ({ kind: "unsupported" }),
-    fetchMeta: async (_ref: VideoRef) => META,
+    fetchMeta: async () => META,
     extractTitles: async () => ({ titles: ["Resident Evil 2"], basis: "title" }),
     ...overrides,
   };
@@ -45,7 +53,7 @@ afterAll(async () => {
 
 const identifyOn = (
   app: TestHarness["app"],
-  body: unknown = { url: RE2_URL },
+  body: unknown = { url: SHARE_URL },
   init: RequestInit & { user?: string | null } = {},
 ) =>
   callApi(app, "/api/games/identify", {
@@ -58,20 +66,22 @@ const identifyOn = (
 const identify = (body: unknown, init: RequestInit & { user?: string | null } = {}) =>
   identifyOn(harness.app, body, init);
 
-test("identifies the game, returning ranked candidates and the video it came from", async () => {
+test("identifies the game, returning ranked candidates and the source it came from", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
   await seedGame(harness.db, { id: 2, name: "Resident Evil 2 Remake Mod", count: 4 });
   await seedGame(harness.db, { id: 3, name: "Hades", count: 900 });
 
-  const response = await identify({ url: RE2_URL });
+  const response = await identify({ url: SHARE_URL });
   const body = (await response.json()) as {
     source: {
       provider: string;
-      videoId: string;
+      shareId: string;
       title: string;
       author: string | null;
       pageUrl: string;
       thumbnailUrl: string | null;
+      thumbnailWidth: number | null;
+      thumbnailHeight: number | null;
     };
     basis: string;
     identified: boolean;
@@ -82,12 +92,14 @@ test("identifies the game, returning ranked candidates and the video it came fro
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("private, no-store");
   expect(body.source).toEqual({
-    provider: "youtube",
-    videoId: "1vs0lLIRt7w",
+    provider: META.provider,
+    shareId: META.shareId,
     title: META.title,
-    author: "Snamwiches",
-    pageUrl: RE2_URL,
+    author: META.author,
+    pageUrl: META.pageUrl,
     thumbnailUrl: META.thumbnailUrl,
+    thumbnailWidth: META.thumbnailWidth,
+    thumbnailHeight: META.thumbnailHeight,
   });
   expect(body.basis).toBe("title");
   expect(body.identified).toBe(true);
@@ -95,11 +107,18 @@ test("identifies the game, returning ranked candidates and the video it came fro
   expect(body.items.map((item) => item.id)).toEqual([1, 2]);
 });
 
-test("a video whose oEmbed carries no thumbnail still answers 200, with a null thumbnailUrl", async () => {
+test("a source whose metadata carries no thumbnail still answers 200, with a null thumbnailUrl", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
 
   const app = createTestApp({
-    share: shareStub({ fetchMeta: async () => ({ ...META, thumbnailUrl: null }) }),
+    share: shareStub({
+      fetchMeta: async () => ({
+        ...META,
+        thumbnailUrl: null,
+        thumbnailWidth: null,
+        thumbnailHeight: null,
+      }),
+    }),
   });
 
   const response = await identifyOn(app.app);
@@ -110,25 +129,39 @@ test("a video whose oEmbed carries no thumbnail still answers 200, with a null t
   await app.close();
 });
 
-test("the response always carries thumbnailUrl, even for a cached VideoMeta without it", async () => {
+test("the response always carries the thumbnail fields, even for a cached SourceMeta without them", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
 
   // A shape `withCache` would hand back unvalidated, since it casts.
   await harness.cache.set(
-    oembedKey("youtube", "1vs0lLIRt7w"),
-    { title: META.title, author: META.author },
+    sourceKey(SHARE),
+    {
+      title: META.title,
+      author: META.author,
+      provider: META.provider,
+      pageUrl: META.pageUrl,
+      shareId: SHARE_ID,
+    },
     60,
   );
 
-  const response = await identify({ url: RE2_URL });
+  const response = await identify({ url: SHARE_URL });
   const body = (await response.json()) as { source: Record<string, unknown> };
 
   expect(response.status).toBe(200);
   expect(body.source).toHaveProperty("thumbnailUrl", null);
+  expect(body.source).toHaveProperty("thumbnailWidth", null);
+  expect(body.source).toHaveProperty("thumbnailHeight", null);
 });
 
-test("an unsupported host is 422, naming the url field", async () => {
-  const response = await identify({ url: "https://vimeo.com/12345" });
+test("refuses a link that is not https", async () => {
+  const response = await identify({ url: "http://www.ign.com/a" });
+
+  expect(response.status).toBe(422);
+});
+
+test("an unparseable url is 422, naming the url field via the schema, not the registry", async () => {
+  const response = await identify({ url: "not a url" });
   const body = (await response.json()) as { errors: { field: string }[]; type: string };
 
   expect(response.status).toBe(422);
@@ -138,67 +171,59 @@ test("an unsupported host is 422, naming the url field", async () => {
   expect(body.type).toBe("about:blank");
 });
 
-test("a supported host that is not a video page is 422", async () => {
-  const response = await identify({ url: "https://www.youtube.com/feed/subscriptions" });
-  const body = (await response.json()) as { type: string };
-
-  expect(response.status).toBe(422);
-  // The registry's shape, not the schema hook's — pins that a recognised host
-  // with a non-video path reaches `UNPROCESSABLE_SHARE`, not schema validation.
-  expect(body.type).toBe(problems.get("UNPROCESSABLE_SHARE").type);
-});
-
-test("a resolved short link identifies the video it points to", async () => {
-  await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
-
-  const app = createTestApp({
-    share: shareStub({
-      resolveShortLink: async (): Promise<Canonical> => ({
-        kind: "video",
-        ref: { provider: "youtube", videoId: "1vs0lLIRt7w", pageUrl: RE2_URL },
-      }),
-    }),
-  });
-
-  const response = await identifyOn(app.app, { url: "https://vm.tiktok.com/ZMabcdef1/" });
-  const body = (await response.json()) as { source: { videoId: string } };
-
-  expect(response.status).toBe(200);
-  expect(body.source.videoId).toBe("1vs0lLIRt7w");
-  await app.close();
-});
-
-test("a short link that resolves to nothing usable is 422", async () => {
-  const app = createTestApp({
-    share: shareStub({
-      resolveShortLink: async (): Promise<Canonical> => ({ kind: "unsupported" }),
-    }),
-  });
-
-  const response = await identifyOn(app.app, { url: "https://vm.tiktok.com/ZMabcdef1/" });
-
-  expect(response.status).toBe(422);
-  await app.close();
-});
-
-test("a short link the shortener failed to answer is 502, not a 422", async () => {
-  const app = createTestApp({
-    share: shareStub({
-      resolveShortLink: async (): Promise<Canonical> => ({ kind: "unreachable" }),
-    }),
-  });
-
-  const response = await identifyOn(app.app, { url: "https://vm.tiktok.com/ZMabcdef1/" });
-
-  expect(response.status).toBe(502);
-  await app.close();
-});
-
-test("a gone video is 404, not a 502", async () => {
+test("turns an unreadable page into a 422", async () => {
   const app = createTestApp({
     share: shareStub({
       fetchMeta: async () => {
-        throw new VideoGone("410");
+        throw new SourceUnreadable("no title");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app);
+  const body = (await response.json()) as { type: string };
+
+  expect(response.status).toBe(422);
+  // The registry's shape, not the schema hook's — pins that an unreadable
+  // page reaches `UNPROCESSABLE_SHARE`, not schema validation.
+  expect(body.type).toBe(problems.get("UNPROCESSABLE_SHARE").type);
+  await app.close();
+});
+
+test("reports a web basis when the extraction searched", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => META,
+      extractTitles: async () => ({ titles: ["Silksong"], basis: "web" as const }),
+    }),
+  });
+
+  const body = (await identifyOn(app.app).then((response) => response.json())) as { basis: string };
+  expect(body.basis).toBe("web");
+  await app.close();
+});
+
+test("carries the thumbnail dimensions through to the wire", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => ({ ...META, thumbnailWidth: 1280, thumbnailHeight: 720 }),
+      extractTitles: async () => ({ titles: ["A"], basis: "title" as const }),
+    }),
+  });
+
+  const body = (await identifyOn(app.app).then((response) => response.json())) as {
+    source: { thumbnailWidth: number | null; thumbnailHeight: number | null };
+  };
+  expect(body.source.thumbnailWidth).toBe(1280);
+  expect(body.source.thumbnailHeight).toBe(720);
+  await app.close();
+});
+
+test("a gone source is 404, not a 502", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new SourceGone("410");
       },
     }),
   });
@@ -209,11 +234,11 @@ test("a gone video is 404, not a 502", async () => {
   await app.close();
 });
 
-test("an oEmbed outage is 502", async () => {
+test("a metadata outage is 502", async () => {
   const app = createTestApp({
     share: shareStub({
       fetchMeta: async () => {
-        throw new VideoMetaUnavailable("500");
+        throw new SourceUnavailable("500");
       },
     }),
   });
@@ -227,7 +252,45 @@ test("an oEmbed outage is 502", async () => {
   await app.close();
 });
 
-test("a failing extraction falls soft to the raw video title", async () => {
+test("a blocked address is logged at warn, since a 502 with no log line would hide an SSRF probe", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new BlockedAddress("10.0.0.5 is a blocked address");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app);
+
+  expect(response.status).toBe(502);
+
+  const warnLine = logs.records.find(
+    (record) => record.category.includes("identify") && record.level === "warning",
+  );
+  expect(warnLine?.properties).toMatchObject({ shareId: SHARE_ID, errorClass: "BlockedAddress" });
+  await app.close();
+});
+
+test("a failed metadata fetch is not cached, so the next call retries it", async () => {
+  let calls = 0;
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        calls += 1;
+        throw new SourceUnavailable("boom");
+      },
+    }),
+  });
+
+  await identifyOn(app.app);
+  await identifyOn(app.app);
+
+  expect(calls).toBe(2);
+  await app.close();
+});
+
+test("a failing extraction falls soft to the raw title", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
 
   const app = createTestApp({
@@ -253,19 +316,19 @@ test("a failing extraction falls soft to the raw video title", async () => {
   await app.close();
 });
 
-test("a channel-derived extraction reaches the client as such, so it can say what it is guessing from", async () => {
+test("an author-derived extraction reaches the client as such, so it can say what it is guessing from", async () => {
   await seedGame(harness.db, { id: 1, name: "Elden Ring", count: 5000 });
 
   const app = createTestApp({
     share: shareStub({
-      extractTitles: async () => ({ titles: ["Elden Ring"], basis: "channel" }),
+      extractTitles: async () => ({ titles: ["Elden Ring"], basis: "author" }),
     }),
   });
 
   const response = await identifyOn(app.app);
   const body = (await response.json()) as { basis: string; identified: boolean };
 
-  expect(body.basis).toBe("channel");
+  expect(body.basis).toBe("author");
   expect(body.identified).toBe(true);
   await app.close();
 });
@@ -286,7 +349,7 @@ test("an extraction that identified nothing is `none`, with the page url left to
   expect(body.basis).toBe("none");
   expect(body.guesses).toEqual([]);
   expect(body.items).toEqual([]);
-  expect(body.source.pageUrl).toBe(RE2_URL);
+  expect(body.source.pageUrl).toBe(SHARE_URL);
   await app.close();
 });
 
@@ -313,14 +376,43 @@ test("a failed extraction is not cached, so the next call retries it", async () 
 test("a repeated identify reuses the cached extraction", async () => {
   await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
 
-  await identify({ url: RE2_URL });
-  await identify({ url: RE2_URL });
+  await identify({ url: SHARE_URL });
+  await identify({ url: SHARE_URL });
 
   expect(extractTitles).toHaveBeenCalledTimes(1);
 });
 
+test("collapses two different requested links onto one cached extraction when they resolve to the same source", async () => {
+  const extraction = vi.fn(async (): Promise<Extraction> => ({
+    titles: ["Resident Evil 2"],
+    basis: "title",
+  }));
+
+  // Both requests key the metadata cache differently (distinct requested
+  // shareIds), but `fetchMeta` here reports the same resolved source both
+  // times — as a redirect through a short link would — so the extraction
+  // cache, keyed on `meta.shareId`, must collapse onto one entry.
+  const app = createTestApp({
+    share: shareStub({ fetchMeta: async () => META, extractTitles: extraction }),
+  });
+
+  await identifyOn(app.app, { url: "https://short.example/abc" });
+  await identifyOn(app.app, { url: "https://short.example/xyz" });
+
+  expect(extraction).toHaveBeenCalledTimes(1);
+  await app.close();
+});
+
+test("the extraction cache key is built from the resolved shareId, not the requested one", () => {
+  const requestedId = normaliseShare("https://short.example/abc")!.shareId;
+
+  expect(extractKey(EXTRACT_PROMPT_VERSION, "gpt-5.4-mini", META)).not.toBe(
+    extractKey(EXTRACT_PROMPT_VERSION, "gpt-5.4-mini", { ...META, shareId: requestedId }),
+  );
+});
+
 test("a game with no match is 200 with an empty list and the guesses intact", async () => {
-  const response = await identify({ url: RE2_URL });
+  const response = await identify({ url: SHARE_URL });
   const body = (await response.json()) as { items: unknown[]; guesses: string[] };
 
   expect(response.status).toBe(200);
@@ -329,13 +421,13 @@ test("a game with no match is 200 with an empty list and the guesses intact", as
 });
 
 test("the route needs a session token", async () => {
-  const response = await identify({ url: RE2_URL }, { user: null });
+  const response = await identify({ url: SHARE_URL }, { user: null });
 
   expect(response.status).toBe(401);
 });
 
 test("a body without a JSON content type is 415", async () => {
-  const response = await identifyOn(harness.app, { url: RE2_URL }, { headers: {} });
+  const response = await identifyOn(harness.app, { url: SHARE_URL }, { headers: {} });
 
   expect(response.status).toBe(415);
 });
@@ -354,5 +446,84 @@ test("the identify scope is tighter than the overall one", async () => {
   const limited = await send();
   expect(limited.status).toBe(429);
   expect(limited.headers.get("retry-after")).toBeTruthy();
+  await app.close();
+});
+
+test("a site that blocks us says so, rather than claiming the page had no title", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new SourceBlocked("the site answered 403");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app);
+  const body = (await response.json()) as { detail: string };
+
+  expect(response.status).toBe(422);
+  expect(body.detail).toBe("That site would not let us read the page.");
+  await app.close();
+});
+
+const IGDB_URL = "https://www.igdb.com/games/marvels-wolverine";
+
+test("an igdb game page is answered from the mirror, touching neither the network nor the model", async () => {
+  await seedGame(harness.db, {
+    id: 41,
+    name: "Marvel's Wolverine",
+    slug: "marvels-wolverine",
+    count: 900,
+  });
+
+  // The default share stub throws on both fetchMeta and extractTitles, so this
+  // passing IS the assertion that the shortcut skipped the whole pipeline.
+  const app = createTestApp({ share: shareStub() });
+
+  const response = await identifyOn(app.app, { url: IGDB_URL });
+  const body = (await response.json()) as {
+    basis: string;
+    guesses: string[];
+    source: { provider: string; title: string; pageUrl: string };
+    items: { id: number; name: string }[];
+  };
+
+  expect(response.status).toBe(200);
+  expect(body.items.map((i) => i.id)).toEqual([41]);
+  expect(body.basis).toBe("title");
+  expect(body.guesses).toEqual(["Marvel's Wolverine"]);
+  expect(body.source.provider).toBe("IGDB");
+  expect(body.source.title).toBe("Marvel's Wolverine");
+  expect(body.source.pageUrl).toBe(IGDB_URL);
+  await app.close();
+});
+
+test("a migrated slug returns every match, most popular first, rather than guessing", async () => {
+  await seedGame(harness.db, { id: 51, name: "Old Claimant", slug: "shared-slug", count: 10 });
+  await seedGame(harness.db, { id: 52, name: "New Claimant", slug: "shared-slug", count: 5000 });
+
+  const app = createTestApp({ share: shareStub() });
+
+  const response = await identifyOn(app.app, { url: "https://www.igdb.com/games/shared-slug" });
+  const body = (await response.json()) as { items: { id: number }[] };
+
+  expect(body.items.map((i) => i.id)).toEqual([52, 51]);
+  await app.close();
+});
+
+test("an igdb page we have not mirrored falls through to the ladder", async () => {
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => {
+        throw new SourceBlocked("the site answered 403");
+      },
+    }),
+  });
+
+  const response = await identifyOn(app.app, { url: "https://www.igdb.com/games/not-mirrored" });
+  const body = (await response.json()) as { detail: string };
+
+  expect(response.status).toBe(422);
+  expect(body.detail).toBe("That site would not let us read the page.");
   await app.close();
 });

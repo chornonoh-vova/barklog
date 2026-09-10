@@ -6,8 +6,8 @@ describe("NO_LINK", () => {
   it("is the state for a share that resolved with no link in it", () => {
     expect(NO_LINK.title).not.toBe("");
     expect(NO_LINK.systemImage).not.toBe("");
-    expect(NO_LINK.description).toMatch(/YouTube/);
-    expect(NO_LINK.description).toMatch(/TikTok/);
+    expect(NO_LINK.description).toMatch(/web link/);
+    expect(NO_LINK.description).toMatch(/screenshot/);
   });
 });
 
@@ -26,8 +26,8 @@ describe("UNREADABLE", () => {
 });
 
 describe("UNAVAILABLE_NOTICE", () => {
-  it("says the matches came from the video title, not an identified game", () => {
-    expect(UNAVAILABLE_NOTICE).toMatch(/video title/);
+  it("says the matches came from the title, not an identified game", () => {
+    expect(UNAVAILABLE_NOTICE).toMatch(/matches for the title/);
     expect(UNAVAILABLE_NOTICE).not.toBe("");
   });
 });
@@ -36,7 +36,7 @@ describe("noMatch", () => {
   it("says only that it could not tell when there is no guess", () => {
     const state = noMatch("title", []);
 
-    expect(state.description).toBe("We could not tell which game this video is about.");
+    expect(state.description).toBe("We couldn't tell which game this is about.");
   });
 
   it("names a single guess", () => {
@@ -46,23 +46,23 @@ describe("noMatch", () => {
   });
 
   it("joins several guesses into one sentence", () => {
-    expect(noMatch("channel", ["Hollow Knight", "Silksong"]).description).toBe(
+    expect(noMatch("author", ["Hollow Knight", "Silksong"]).description).toBe(
       "We think this is about Hollow Knight or Silksong, but it is not in the catalogue yet.",
     );
   });
 
-  it("does not quote the raw video title back as a game when extraction failed soft", () => {
+  it("does not quote the raw title back as a game when extraction failed soft", () => {
     const state = noMatch("unavailable", ["Sekiro's 100% is actually miserable"]);
 
-    expect(state.description).toBe("We could not tell which game this video is about.");
+    expect(state.description).toBe("We couldn't tell which game this is about.");
     expect(state.description).not.toMatch(/Sekiro/);
   });
 
-  it("points at the original video when the model had the channel and still could not tell", () => {
+  it("points at the original page when even a web search could not tell", () => {
     const state = noMatch("none", []);
 
-    expect(state.description).toMatch(/even from the channel/);
-    expect(state.description).toMatch(/original video/);
+    expect(state.description).toMatch(/searching the web/);
+    expect(state.description).toMatch(/original page/);
   });
 
   it("separates the model's dead end from an extraction that never ran", () => {

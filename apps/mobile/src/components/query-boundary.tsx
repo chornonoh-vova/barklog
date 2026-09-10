@@ -6,9 +6,11 @@ import { ErrorState, LoadingState } from "@/components/query-states";
 export function QueryBoundary<T>({
   query,
   children,
+  loading,
 }: {
   query: UseQueryResult<T>;
   children: (data: T) => ReactNode;
+  loading?: ReactNode;
 }) {
   /**
    * Data wins over an error, and the ordering is the point: a result can carry
@@ -17,7 +19,7 @@ export function QueryBoundary<T>({
    */
   if (query.data !== undefined) return children(query.data);
 
-  if (query.isPending) return <LoadingState />;
+  if (query.isPending) return loading ?? <LoadingState />;
 
   return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
 }
