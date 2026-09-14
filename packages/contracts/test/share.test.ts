@@ -1,38 +1,40 @@
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
 
-import { IDENTIFY_LIMIT_DEFAULT, shareHostProvider, shareIdentifySchema } from "../src/share.js";
+import {
+  EXTRACTED_BASES,
+  IDENTIFY_LIMIT_DEFAULT,
+  isShareableUrl,
+  legacyShareProvider,
+  shareIdentifySchema,
+} from "../src/share.js";
 
 const parse = (input: unknown) => v.safeParse(shareIdentifySchema, input);
 
-describe("shareHostProvider", () => {
-  it("recognises every YouTube shape a share sheet produces", () => {
-    expect(shareHostProvider("https://www.youtube.com/watch?v=1vs0lLIRt7w")).toBe("youtube");
-    expect(shareHostProvider("https://m.youtube.com/watch?v=1vs0lLIRt7w")).toBe("youtube");
-    expect(shareHostProvider("https://youtu.be/1vs0lLIRt7w")).toBe("youtube");
-    expect(shareHostProvider("https://www.youtube.com/shorts/abcdefghijk")).toBe("youtube");
+describe("isShareableUrl", () => {
+  it("accepts a plain https url", () => {
+    expect(isShareableUrl("https://example.test/a")).toBe(true);
   });
 
-  it("recognises TikTok, long and short", () => {
-    expect(shareHostProvider("https://www.tiktok.com/@user/video/7123456789012345678")).toBe(
-      "tiktok",
-    );
-    expect(shareHostProvider("https://vm.tiktok.com/ZMabcdef/")).toBe("tiktok");
+  it("accepts the default https port spelled out explicitly", () => {
+    expect(isShareableUrl("https://example.test:443/a")).toBe(true);
   });
 
-  it("matches the host exactly, so a lookalike domain cannot pass", () => {
-    expect(shareHostProvider("https://youtube.com.evil.test/watch?v=x")).toBeNull();
-    expect(shareHostProvider("https://notyoutube.com/watch?v=x")).toBeNull();
-    expect(shareHostProvider("https://evil.test/?u=https://youtube.com/watch?v=x")).toBeNull();
+  it("rejects http", () => {
+    expect(isShareableUrl("http://example.test/a")).toBe(false);
   });
 
-  it("requires https, so a downgraded link cannot be fetched", () => {
-    expect(shareHostProvider("http://www.youtube.com/watch?v=1vs0lLIRt7w")).toBeNull();
+  it("rejects a non-standard port", () => {
+    expect(isShareableUrl("https://example.test:8443/a")).toBe(false);
   });
 
-  it("is null for anything unparseable", () => {
-    expect(shareHostProvider("not a url")).toBeNull();
-    expect(shareHostProvider("")).toBeNull();
+  it("rejects embedded credentials", () => {
+    expect(isShareableUrl("https://user:pass@example.test/a")).toBe(false);
+  });
+
+  it("rejects anything unparseable", () => {
+    expect(isShareableUrl("not a url")).toBe(false);
+    expect(isShareableUrl("")).toBe(false);
   });
 });
 
@@ -54,11 +56,10 @@ describe("shareIdentifySchema", () => {
     expect(result.output?.url).toBe("https://youtu.be/1vs0lLIRt7w");
   });
 
-  it("rejects an unsupported host, naming the url field", () => {
+  it("accepts a link to a host that is neither YouTube nor TikTok, since any https link is shareable now", () => {
     const result = parse({ url: "https://vimeo.com/12345" });
 
-    expect(result.success).toBe(false);
-    expect(result.issues?.map((issue) => v.getDotPath(issue))).toContain("url");
+    expect(result.success).toBe(true);
   });
 
   it("rejects a limit over the cap rather than clamping it", () => {
@@ -74,5 +75,58 @@ describe("shareIdentifySchema", () => {
 
     expect(result.success).toBe(false);
     expect(result.issues?.map((issue) => v.getDotPath(issue))).toContain("url");
+  });
+});
+
+describe("EXTRACTED_BASES", () => {
+  it("the basis tiers include the new author and web values", () => {
+    expect(EXTRACTED_BASES).toContain("author");
+    expect(EXTRACTED_BASES).toContain("web");
+  });
+
+  it("no longer carries channel, now that mobile has stopped branching on it", () => {
+    expect(EXTRACTED_BASES).not.toContain("channel");
+  });
+});
+
+describe("legacyShareProvider", () => {
+  it("names youtube for every youtube host the old build knew", () => {
+    for (const url of [
+      "https://youtube.com/watch?v=a",
+      "https://www.youtube.com/watch?v=a",
+      "https://m.youtube.com/watch?v=a",
+      "https://youtu.be/a",
+    ]) {
+      expect(legacyShareProvider(url)).toBe("youtube");
+    }
+  });
+
+  it("names tiktok for every tiktok host the old build knew", () => {
+    for (const url of [
+      "https://tiktok.com/@a/video/1",
+      "https://www.tiktok.com/@a/video/1",
+      "https://vm.tiktok.com/a",
+      "https://vt.tiktok.com/a",
+    ]) {
+      expect(legacyShareProvider(url)).toBe("tiktok");
+    }
+  });
+
+  it("falls back to the landscape token for a host the old build never knew", () => {
+    expect(legacyShareProvider("https://www.ign.com/articles/a")).toBe("youtube");
+    expect(legacyShareProvider("https://store.steampowered.com/app/1")).toBe("youtube");
+  });
+
+  it("matches hosts exactly, so a lookalike does not borrow the portrait token", () => {
+    expect(legacyShareProvider("https://nottiktok.com/a")).toBe("youtube");
+    expect(legacyShareProvider("https://tiktok.com.evil.test/a")).toBe("youtube");
+  });
+
+  it("case-folds the host", () => {
+    expect(legacyShareProvider("https://WWW.TIKTOK.COM/@a/video/1")).toBe("tiktok");
+  });
+
+  it("never throws on a url it cannot parse, so it cannot break the response", () => {
+    expect(legacyShareProvider("not a url")).toBe("youtube");
   });
 });

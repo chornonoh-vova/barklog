@@ -23,6 +23,10 @@ function sign(rawBody: string, secret = WEBHOOK_SIGNING_SECRET): string {
   return `t=${t},v1=${v1}`;
 }
 
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Relative to whenever the suite runs, not a fixed calendar date — an
+// absolute expiry here goes stale the day the real clock passes it.
 const event = (overrides: Record<string, unknown> = {}) => ({
   event: {
     id: "rc_event_1",
@@ -32,8 +36,8 @@ const event = (overrides: Record<string, unknown> = {}) => ({
     product_id: "gg.barklog.app.premium.yearly",
     store: "APP_STORE",
     period_type: "TRIAL",
-    purchased_at_ms: Date.parse("2026-09-01T00:00:00Z"),
-    expiration_at_ms: Date.parse("2026-09-08T00:00:00Z"),
+    purchased_at_ms: Date.now() - WEEK_MS,
+    expiration_at_ms: Date.now() + WEEK_MS,
     environment: "PRODUCTION",
     ...overrides,
   },

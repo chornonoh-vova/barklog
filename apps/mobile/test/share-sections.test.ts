@@ -1,5 +1,5 @@
 import type { GameSummaryWire } from "@repo/contracts";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, test } from "vitest";
 
 import { toShareSections } from "@/features/share/sections";
 
@@ -13,18 +13,24 @@ describe("toShareSections", () => {
     const [section, ...rest] = toShareSections("title", ITEMS, "Snamwiches");
 
     expect(rest).toEqual([]);
-    expect(section?.title).toBe("Matches for the video title");
+    expect(section?.title).toBe("Matches for the title");
     expect(section?.data).toEqual(ITEMS);
   });
 
-  it("names the channel when the guesses came from it, so the assumption is visible", () => {
-    expect(toShareSections("channel", ITEMS, "Snamwiches")[0]?.title).toBe(
-      "Snamwiches's usual games",
+  it("names the author when the guesses came from them, so the assumption is visible", () => {
+    expect(toShareSections("author", ITEMS, "Snamwiches")[0]?.title).toBe(
+      "Games Snamwiches usually covers",
     );
   });
 
-  it("still labels a channel group when oEmbed gave no author", () => {
-    expect(toShareSections("channel", ITEMS, null)[0]?.title).toBe("This channel's usual games");
+  it("still labels an author group when oEmbed gave no author", () => {
+    expect(toShareSections("author", ITEMS, null)[0]?.title).toBe(
+      "Games this source usually covers",
+    );
+  });
+
+  test("labels a web-searched result", () => {
+    expect(toShareSections("web", ITEMS, null)[0]?.title).toBe("Matches from a web search");
   });
 
   it("gives the fail-soft group no header, since the notice above the list explains it", () => {

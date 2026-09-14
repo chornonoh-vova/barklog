@@ -22,9 +22,6 @@ export const fakeAuthProvider: AuthProvider = {
 
 const unusedShareProvider: ShareProvider = {
   model: "gpt-5.4-mini",
-  resolveShortLink: () => {
-    throw new Error("share.resolveShortLink was not stubbed for this test");
-  },
   fetchMeta: () => {
     throw new Error("share.fetchMeta was not stubbed for this test");
   },
@@ -123,6 +120,8 @@ export async function seedGame(
     typeId?: number;
     firstReleaseDate?: Date | null;
     coverImageId?: string | null;
+    /** Override the name-derived slug, for the igdb shortcut's tests. */
+    slug?: string;
   },
 ): Promise<void> {
   await db
@@ -133,10 +132,12 @@ export async function seedGame(
   await db.insert(schema.games).values({
     id: game.id,
     name: game.name,
-    slug: game.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, ""),
+    slug:
+      game.slug ??
+      game.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, ""),
     gameTypeId: game.typeId ?? 0,
     totalRating: game.rating === undefined ? 85 : game.rating,
     totalRatingCount: game.count ?? 100,
