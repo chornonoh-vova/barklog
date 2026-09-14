@@ -92,7 +92,9 @@ test("identifies the game, returning ranked candidates and the source it came fr
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("private, no-store");
   expect(body.source).toEqual({
-    provider: META.provider,
+    // Not `META.provider`: the wire field is a legacy sizing token derived
+    // from `pageUrl`. See the legacy-provider tests at the end of this file.
+    provider: "youtube",
     shareId: META.shareId,
     title: META.title,
     author: META.author,
@@ -492,7 +494,6 @@ test("an igdb game page is answered from the mirror, touching neither the networ
   expect(body.items.map((i) => i.id)).toEqual([41]);
   expect(body.basis).toBe("title");
   expect(body.guesses).toEqual(["Marvel's Wolverine"]);
-  expect(body.source.provider).toBe("IGDB");
   expect(body.source.title).toBe("Marvel's Wolverine");
   expect(body.source.pageUrl).toBe(IGDB_URL);
   await app.close();
@@ -525,5 +526,58 @@ test("an igdb page we have not mirrored falls through to the ladder", async () =
 
   expect(response.status).toBe(422);
   expect(body.detail).toBe("That site would not let us read the page.");
+  await app.close();
+});
+
+/**
+ * The three tests below pin the one field an app build predating the any-link
+ * release cannot survive a surprise in: it looks `provider` up in a two-entry
+ * table to size the thumbnail, and reads `undefined` for anything else, which
+ * throws when the source has no thumbnail to fall back on.
+ */
+test("the wire provider is a legacy sizing token, never the real provider name", async () => {
+  await seedGame(harness.db, { id: 1, name: "Resident Evil 2", count: 2000 });
+
+  const response = await identify({ url: SHARE_URL });
+  const body = (await response.json()) as { source: { provider: string } };
+
+  expect(META.provider).toBe("IGN");
+  expect(body.source.provider).toBe("youtube");
+});
+
+test("a tiktok source keeps the portrait token so old builds size its cover correctly", async () => {
+  const tiktokUrl = "https://www.tiktok.com/@a/video/1";
+  const app = createTestApp({
+    share: shareStub({
+      fetchMeta: async () => ({
+        ...META,
+        provider: "TikTok",
+        pageUrl: tiktokUrl,
+        shareId: normaliseShare(tiktokUrl)!.shareId,
+      }),
+    }),
+  });
+
+  const response = await identifyOn(app.app, { url: tiktokUrl });
+  const body = (await response.json()) as { source: { provider: string } };
+
+  expect(response.status).toBe(200);
+  expect(body.source.provider).toBe("tiktok");
+  await app.close();
+});
+
+test("the igdb shortcut answers with a legacy token too, not the literal 'IGDB'", async () => {
+  await seedGame(harness.db, {
+    id: 41,
+    name: "Marvel's Wolverine",
+    slug: "marvels-wolverine",
+    count: 900,
+  });
+
+  const app = createTestApp({ share: shareStub() });
+  const response = await identifyOn(app.app, { url: IGDB_URL });
+  const body = (await response.json()) as { source: { provider: string } };
+
+  expect(body.source.provider).toBe("youtube");
   await app.close();
 });

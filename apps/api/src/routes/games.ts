@@ -4,6 +4,7 @@ import { withCache } from "@repo/cache";
 import {
   gameFeedQuerySchema,
   gameIdParamSchema,
+  legacyShareProvider,
   searchQuerySchema,
   shareIdentifySchema,
   similarQuerySchema,
@@ -169,7 +170,7 @@ export function gamesRoutes(deps: AppDeps) {
         if (items.length > 0) {
           const body: ShareIdentifyResponse = {
             source: {
-              provider: "IGDB",
+              provider: legacyShareProvider(share.url),
               shareId: share.shareId,
               title: items[0]!.name,
               author: "IGDB",
@@ -266,7 +267,11 @@ export function gamesRoutes(deps: AppDeps) {
 
       const body: ShareIdentifyResponse = {
         source: {
-          provider: meta.provider,
+          // Deliberately not `meta.provider`: that is the real provider name,
+          // and an app build predating the any-link release crashes on any
+          // value outside `LEGACY_SHARE_PROVIDERS`. The real name still
+          // reaches the model through `meta`.
+          provider: legacyShareProvider(meta.pageUrl),
           shareId: meta.shareId,
           title: meta.title,
           author: meta.author,

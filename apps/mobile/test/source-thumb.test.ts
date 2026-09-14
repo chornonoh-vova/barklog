@@ -4,7 +4,9 @@ import { expect, test } from "vitest";
 import { sourceThumbSize } from "@/features/share/source-thumb";
 
 const SOURCE: ShareSourceWire = {
-  provider: "YouTube",
+  // A legacy sizing token, not a provider name — nothing in this screen reads
+  // it any more, and the type keeps a real name from creeping back onto the wire.
+  provider: "youtube",
   shareId: "abc",
   title: "A video",
   author: null,

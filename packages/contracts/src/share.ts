@@ -27,6 +27,45 @@ export function isShareableUrl(input: string): boolean {
   return true;
 }
 
+/**
+ * The sizing tokens an app build before the any-link release understands. That
+ * build looks `provider` up in a two-entry table to size the source thumbnail
+ * and reads `undefined` for anything else, which throws when the source has no
+ * thumbnail. It never renders the value as text, so this is a shape hint, not
+ * a claim about who published the page.
+ */
+export const LEGACY_SHARE_PROVIDERS = ["youtube", "tiktok"] as const;
+export type LegacyShareProvider = (typeof LEGACY_SHARE_PROVIDERS)[number];
+
+/**
+ * Only the portrait token needs matching: `youtube` is the landscape one and
+ * doubles as the fallback, so every host that is not TikTok wants it anyway.
+ *
+ * Exact hosts, never suffix matching — a loose match would hand `nottiktok.com`
+ * and `tiktok.com.evil.test` the portrait box. This is no longer an outbound
+ * allowlist (`safe-fetch.ts` guards that), so a miss costs an aspect ratio
+ * rather than a fetch.
+ */
+const TIKTOK_HOSTS = new Set(["tiktok.com", "www.tiktok.com", "vm.tiktok.com", "vt.tiktok.com"]);
+
+/**
+ * Total, and never throwing: the old build crashes on any value outside the
+ * pair, so there is no input for which returning nothing is safe. An arbitrary
+ * page's Open Graph image is overwhelmingly landscape, which is what makes
+ * `youtube` the right default rather than merely a convenient one.
+ */
+export function legacyShareProvider(pageUrl: string): LegacyShareProvider {
+  let host: string;
+
+  try {
+    host = new URL(pageUrl).hostname.toLowerCase();
+  } catch {
+    return "youtube";
+  }
+
+  return TIKTOK_HOSTS.has(host) ? "tiktok" : "youtube";
+}
+
 export const shareIdentifySchema = v.strictObject({
   url: v.pipe(
     v.string(),
@@ -39,8 +78,15 @@ export const shareIdentifySchema = v.strictObject({
 export type ShareIdentifyBody = v.InferOutput<typeof shareIdentifySchema>;
 
 export interface ShareSourceWire {
-  /** An oEmbed `provider_name`, or a hostname — not just the two hand-rolled providers. */
-  provider: string;
+  /**
+   * @deprecated A legacy thumbnail-sizing token, not the real provider — the
+   * real one lives on the server's `SourceMeta`. Kept, and kept inside
+   * `LEGACY_SHARE_PROVIDERS`, for as long as app builds predating the any-link
+   * release are in the wild: those crash on any other value. New clients read
+   * `thumbnailWidth`/`thumbnailHeight` for size and derive the display host
+   * from `pageUrl`.
+   */
+  provider: LegacyShareProvider;
   shareId: string;
   title: string;
   author: string | null;

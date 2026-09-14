@@ -5,6 +5,7 @@ import {
   EXTRACTED_BASES,
   IDENTIFY_LIMIT_DEFAULT,
   isShareableUrl,
+  legacyShareProvider,
   shareIdentifySchema,
 } from "../src/share.js";
 
@@ -85,5 +86,47 @@ describe("EXTRACTED_BASES", () => {
 
   it("no longer carries channel, now that mobile has stopped branching on it", () => {
     expect(EXTRACTED_BASES).not.toContain("channel");
+  });
+});
+
+describe("legacyShareProvider", () => {
+  it("names youtube for every youtube host the old build knew", () => {
+    for (const url of [
+      "https://youtube.com/watch?v=a",
+      "https://www.youtube.com/watch?v=a",
+      "https://m.youtube.com/watch?v=a",
+      "https://youtu.be/a",
+    ]) {
+      expect(legacyShareProvider(url)).toBe("youtube");
+    }
+  });
+
+  it("names tiktok for every tiktok host the old build knew", () => {
+    for (const url of [
+      "https://tiktok.com/@a/video/1",
+      "https://www.tiktok.com/@a/video/1",
+      "https://vm.tiktok.com/a",
+      "https://vt.tiktok.com/a",
+    ]) {
+      expect(legacyShareProvider(url)).toBe("tiktok");
+    }
+  });
+
+  it("falls back to the landscape token for a host the old build never knew", () => {
+    expect(legacyShareProvider("https://www.ign.com/articles/a")).toBe("youtube");
+    expect(legacyShareProvider("https://store.steampowered.com/app/1")).toBe("youtube");
+  });
+
+  it("matches hosts exactly, so a lookalike does not borrow the portrait token", () => {
+    expect(legacyShareProvider("https://nottiktok.com/a")).toBe("youtube");
+    expect(legacyShareProvider("https://tiktok.com.evil.test/a")).toBe("youtube");
+  });
+
+  it("case-folds the host", () => {
+    expect(legacyShareProvider("https://WWW.TIKTOK.COM/@a/video/1")).toBe("tiktok");
+  });
+
+  it("never throws on a url it cannot parse, so it cannot break the response", () => {
+    expect(legacyShareProvider("not a url")).toBe("youtube");
   });
 });
