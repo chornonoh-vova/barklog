@@ -141,8 +141,32 @@ test.each([
 test.each([
   ["3fff:1000::1", 6],
   ["3ff0::1", 6],
-  ["3ffe::1", 6],
   ["3ffd::1", 6],
 ] as const)("accepts global unicast either side of the /20: %s", (address, family) => {
   expect(isPublicUnicast(address, family)).toBe(true);
+});
+
+test.each([
+  ["2001:2::1", 6],
+  ["2001:2:0:ffff::1", 6],
+  ["2001:3::1", 6],
+  ["2001:20::1", 6],
+  ["2001:1ff::1", 6],
+  ["2001::1", 6],
+] as const)("refuses IETF protocol assignments, 2001::/23: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
+});
+
+test.each([
+  ["2001:200::1", 6],
+  ["2001:4860:4860::8888", 6],
+] as const)("accepts ordinary allocations just above 2001::/23: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(true);
+});
+
+test.each([
+  ["3ffe::1", 6],
+  ["3ffe:ffff::1", 6],
+] as const)("refuses the returned 6bone space, 3ffe::/16: %s", (address, family) => {
+  expect(isPublicUnicast(address, family)).toBe(false);
 });

@@ -212,8 +212,9 @@ Expected: FAIL, cannot resolve `../src/share/ip-policy.js`.
 > `2002:7f00:0001::` all reached loopback or RFC1918. Three fix rounds replaced
 > it. The shipped design is an **allowlist**: parse to eight 16-bit groups,
 > refuse anything outside global unicast `2000::/3`, then carve out 6to4
-> (unwrap and re-check the v4 table), Teredo `2001:0000::/32`, `2001:db8::/32`
-> and `3fff::/20`. Read `apps/api/src/share/ip-policy.ts` and
+> (unwrap and re-check the v4 table), IETF protocol assignments `2001::/23`
+> (which subsumes Teredo `2001:0000::/32`), `2001:db8::/32`, `3fff::/20` and the
+> returned 6bone space `3ffe::/16`. Read `apps/api/src/share/ip-policy.ts` and
 > `.superpowers/sdd/2026-09-08-share-any-link/task-2-report.md`, not the block
 > below, which is kept only so the rulings have something to refer to.
 

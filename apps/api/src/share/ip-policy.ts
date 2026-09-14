@@ -104,9 +104,21 @@ export function isPublicUnicast(address: string, family: 4 | 6): boolean {
   if ((g[0]! & 0xe000) !== 0x2000) return false; // outside 2000::/3 global unicast
 
   if (g[0] === 0x2002) return isPublicV4(groupsToV4(g[1]!, g[2]!)); // 6to4
-  if (g[0] === 0x2001 && g[1] === 0x0000) return false; // Teredo 2001:0000::/32
+
+  // IETF protocol assignments, 2001::/23 (RFC 2928) — Teredo, benchmarking
+  // (2001:2::/48), AMT and AS112 all live here, and none of them is an
+  // ordinary destination. Carved as the whole /23 rather than prefix by
+  // prefix: the sub-assignments change, the "not a real host" property does
+  // not. ORCHIDv2 (2001:20::/28) is the one globally-reachable block inside
+  // it, and nothing a share links to resolves to a cryptographic identifier.
+  if (g[0] === 0x2001 && (g[1]! & 0xfe00) === 0) return false;
+
   if (g[0] === 0x2001 && g[1] === 0x0db8) return false; // documentation 2001:db8::/32
   if (g[0] === 0x3fff && (g[1]! & 0xf000) === 0) return false; // documentation (RFC 9637) 3fff::/20
+
+  // Former 6bone, returned to IANA by RFC 3701 and never reallocated. Nothing
+  // legitimate answers here, so a route to it is someone else's internal net.
+  if (g[0] === 0x3ffe) return false;
 
   return true;
 }

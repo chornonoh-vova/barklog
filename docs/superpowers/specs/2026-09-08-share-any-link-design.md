@@ -412,9 +412,19 @@ same injection idiom `ShareProvider` already uses.
 `shareIdentifySchema` keeps a shape check — parseable, `https:`, no userinfo,
 default port — with the message reduced to "Only https links are supported".
 
+> **`provider` superseded during execution.** Widening it to the real provider
+> name crashes every app build already in the App Store: that build sizes the
+> thumbnail by looking `provider` up in a two-entry `{youtube, tiktok}` table,
+> reads `undefined` for anything else, then dereferences it. The shipped
+> contract keeps the field as a deprecated *sizing token* constrained to
+> `LEGACY_SHARE_PROVIDERS`, derived from `pageUrl` by `legacyShareProvider`.
+> The real name stays server-side on `SourceMeta`, which is what the extraction
+> prompt and the logs read. Read `packages/contracts/src/share.ts`, not the
+> `provider` line below.
+
 ```ts
 export interface ShareSourceWire {
-  provider: string;                 // oEmbed provider_name, else the hostname
+  provider: string;                 // superseded — see the note above
   shareId: string;                  // was videoId
   title: string;
   author: string | null;
