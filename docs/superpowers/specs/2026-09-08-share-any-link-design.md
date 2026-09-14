@@ -159,7 +159,7 @@ is deliberate:
   direct link to the same video occupy two entries. They are cheap, they expire
   in seven days, and the alternative is a cache that cannot be read before the
   work it caches has already happened.
-- **The extraction cache keys on the *final* `shareId`**, recomputed by
+- **The extraction cache keys on the _final_ `shareId`**, recomputed by
   re-normalising `finalUrl`. That is the expensive entry, and collapsing the
   short and direct forms of one link onto it is worth the extra step.
 
@@ -224,11 +224,11 @@ important detail in the file.
 
 Rejected, on every hop:
 
-| Family | Rejected |
-|---|---|
-| IPv4 | `0.0.0.0/8`, `10/8`, `100.64/10`, `127/8`, `169.254/16`, `172.16/12`, `192.0.0/24`, `192.168/16`, `198.18/15`, multicast `224/4`, reserved `240/4` |
-| IPv6 | `::/128`, `::1/128`, `fc00::/7`, `fe80::/10`, `ff00::/8` |
-| Mapped | `::ffff:0:0/96` and `64:ff9b::/96` are **unwrapped and re-checked** against the IPv4 table |
+| Family | Rejected                                                                                                                                           |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IPv4   | `0.0.0.0/8`, `10/8`, `100.64/10`, `127/8`, `169.254/16`, `172.16/12`, `192.0.0/24`, `192.168/16`, `198.18/15`, multicast `224/4`, reserved `240/4` |
+| IPv6   | `::/128`, `::1/128`, `fc00::/7`, `fe80::/10`, `ff00::/8`                                                                                           |
+| Mapped | `::ffff:0:0/96` and `64:ff9b::/96` are **unwrapped and re-checked** against the IPv4 table                                                         |
 
 The mapped row is the one that gets forgotten, and it is a complete bypass when
 it is: `::ffff:127.0.0.1` is loopback wearing an IPv6 hat.
@@ -356,9 +356,9 @@ and `none | low | medium | high | xhigh` reasoning.
 ### Bases
 
 ```ts
-EXTRACTED_BASES = ["title", "author", "web", "none"]  // the wire union
-PASS_1_BASES    = ["title", "author", "none"]
-PASS_2_BASES    = ["web", "none"]
+EXTRACTED_BASES = ["title", "author", "web", "none"]; // the wire union
+PASS_1_BASES = ["title", "author", "none"];
+PASS_2_BASES = ["web", "none"];
 ```
 
 `parseExtraction` takes the allowed bases as an argument and keeps every rule
@@ -395,8 +395,8 @@ placed inside the `web_search` tool object was accepted without error.
 
 ### Compliance note
 
-OpenAI requires visible, clickable inline citations *when displaying web
-results to end users*. We display catalogue rows derived from a search, never
+OpenAI requires visible, clickable inline citations _when displaying web
+results to end users_. We display catalogue rows derived from a search, never
 the search text itself. This is a reason not to surface model prose in the UI.
 
 ### Testability
@@ -416,7 +416,7 @@ default port — with the message reduced to "Only https links are supported".
 > name crashes every app build already in the App Store: that build sizes the
 > thumbnail by looking `provider` up in a two-entry `{youtube, tiktok}` table,
 > reads `undefined` for anything else, then dereferences it. The shipped
-> contract keeps the field as a deprecated *sizing token* constrained to
+> contract keeps the field as a deprecated _sizing token_ constrained to
 > `LEGACY_SHARE_PROVIDERS`, derived from `pageUrl` by `legacyShareProvider`.
 > The real name stays server-side on `SourceMeta`, which is what the extraction
 > prompt and the logs read. Read `packages/contracts/src/share.ts`, not the
@@ -424,11 +424,11 @@ default port — with the message reduced to "Only https links are supported".
 
 ```ts
 export interface ShareSourceWire {
-  provider: string;                 // superseded — see the note above
-  shareId: string;                  // was videoId
+  provider: string; // superseded — see the note above
+  shareId: string; // was videoId
   title: string;
   author: string | null;
-  pageUrl: string;                  // canonical, post-redirect
+  pageUrl: string; // canonical, post-redirect
   thumbnailUrl: string | null;
   thumbnailWidth: number | null;
   thumbnailHeight: number | null;
@@ -471,9 +471,7 @@ not pinned, and the extraction catch is the fail-soft that never reaches
 aspect ratio rather than two pixel values:
 
 ```ts
-export function sourceThumbSize(
-  source: ShareSourceWire,
-): { height: number; aspectRatio: number }
+export function sourceThumbSize(source: ShareSourceWire): { height: number; aspectRatio: number };
 ```
 
 `{ height: 56, aspectRatio: 16 / 9 }` by default, or the reported ratio when
@@ -504,7 +502,7 @@ inner `Text` inside a sentence so only the label is tappable, with
 **The label is the hostname of `pageUrl` with a leading `www.` stripped, never
 `source.provider`.** `provider` now carries a string supplied by whatever site
 we just fetched: any host can return `"YouTube"` in its oEmbed payload and get
-a link reading *YouTube* that navigates to its own domain. Deriving the label
+a link reading _YouTube_ that navigates to its own domain. Deriving the label
 from the URL the tap actually opens makes label and destination unable to
 disagree. A new pure `features/share/host.ts` does the derivation, testable in
 plain Node like its neighbours.
@@ -546,17 +544,17 @@ preview box is mis-sized. Degraded, not broken, and only on links that are a
 
 ## 12. Failure behaviour
 
-| Condition | Result |
-|---|---|
-| Not parseable / not https / userinfo / non-443 port | 422, at the schema |
-| Redirect chain exceeds 3 hops, or leaves the address policy | 502 |
-| oEmbed answers 401/403/404 | 404 |
-| oEmbed 5xx or bad payload | falls through to Open Graph |
-| Page read, no `og:title` and no `<title>` | 422 |
-| Page could not be read at all | 502 |
-| Pass 1 throws | `basis: "unavailable"`, raw title, logged, uncached |
-| Pass 2 throws | same |
-| Model returns `none` from both passes | `basis: "none"`, empty state |
+| Condition                                                   | Result                                              |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| Not parseable / not https / userinfo / non-443 port         | 422, at the schema                                  |
+| Redirect chain exceeds 3 hops, or leaves the address policy | 502                                                 |
+| oEmbed answers 401/403/404                                  | 404                                                 |
+| oEmbed 5xx or bad payload                                   | falls through to Open Graph                         |
+| Page read, no `og:title` and no `<title>`                   | 422                                                 |
+| Page could not be read at all                               | 502                                                 |
+| Pass 1 throws                                               | `basis: "unavailable"`, raw title, logged, uncached |
+| Pass 2 throws                                               | same                                                |
+| Model returns `none` from both passes                       | `basis: "none"`, empty state                        |
 
 ## 13. Files
 
@@ -647,14 +645,14 @@ One PR, ten steps, each verifiable on its own. Root commands are `pnpm test`,
 5. **The ladder**: `oembed.ts` generalised, `opengraph.ts`, `meta.ts`, and
    `share-oembed.test.ts` adapted.
 6. **Contracts and cache keys.** Deliberately red then green — `pnpm
-   check-types` enumerates every call site. Then
+check-types` enumerates every call site. Then
    `pnpm turbo run build --filter=@repo/contracts` before mobile typechecks.
 7. **`extract.ts`** two passes, with the sequencing tests.
 8. **Route rewiring** in `games.ts`; `identify-routes.test.ts` green; full API
    suite green.
 9. **Mobile**: thumb sizing, source link, copy. Suite green, plus a real run of
    the share screen.
-9b. **Mobile**: the searching state, so the longer wait has something to look at.
+   9b. **Mobile**: the searching state, so the longer wait has something to look at.
 10. **Full sweep**: `pnpm lint && pnpm check-types && pnpm test`.
 
 Steps 2-5 and 7-9 each leave the repo green. Step 6 is the one intentional

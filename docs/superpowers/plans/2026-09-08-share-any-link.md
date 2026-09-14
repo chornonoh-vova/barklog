@@ -27,20 +27,20 @@
 
 ## File structure
 
-| File | Responsibility |
-|---|---|
-| `apps/api/src/share/safe-fetch.ts` | Only outbound path. DNS pin, address policy, redirects, byte cap. |
-| `apps/api/src/share/ip-policy.ts` | Pure address predicate. Split from safe-fetch so it tests without sockets. |
-| `apps/api/src/share/normalise.ts` | Pure URL canonicalisation → `{ url, shareId, sourceId }`. Replaces `canonicalise.ts`. |
-| `apps/api/src/share/providers.generated.ts` | Committed snapshot of oembed.com providers. |
-| `apps/api/src/share/provider-match.ts` | Scheme glob → anchored regex, and the lookup. |
-| `apps/api/src/share/oembed.ts` | One rung. Any endpoint. |
-| `apps/api/src/share/opengraph.ts` | One rung. HTML → og/title. |
-| `apps/api/src/share/meta.ts` | Sequences the rungs. Owns the two floors. |
-| `apps/api/src/share/extract.ts` | Two-pass extractor. |
-| `apps/api/scripts/refresh-oembed-providers.ts` | Regenerates the snapshot. Dev-time only. |
-| `apps/mobile/src/features/share/host.ts` | Pure. `pageUrl` → display host. |
-| `apps/mobile/src/features/share/searching-state.tsx` | Mascot + spinner + copy. |
+| File                                                 | Responsibility                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `apps/api/src/share/safe-fetch.ts`                   | Only outbound path. DNS pin, address policy, redirects, byte cap.                     |
+| `apps/api/src/share/ip-policy.ts`                    | Pure address predicate. Split from safe-fetch so it tests without sockets.            |
+| `apps/api/src/share/normalise.ts`                    | Pure URL canonicalisation → `{ url, shareId, sourceId }`. Replaces `canonicalise.ts`. |
+| `apps/api/src/share/providers.generated.ts`          | Committed snapshot of oembed.com providers.                                           |
+| `apps/api/src/share/provider-match.ts`               | Scheme glob → anchored regex, and the lookup.                                         |
+| `apps/api/src/share/oembed.ts`                       | One rung. Any endpoint.                                                               |
+| `apps/api/src/share/opengraph.ts`                    | One rung. HTML → og/title.                                                            |
+| `apps/api/src/share/meta.ts`                         | Sequences the rungs. Owns the two floors.                                             |
+| `apps/api/src/share/extract.ts`                      | Two-pass extractor.                                                                   |
+| `apps/api/scripts/refresh-oembed-providers.ts`       | Regenerates the snapshot. Dev-time only.                                              |
+| `apps/mobile/src/features/share/host.ts`             | Pure. `pageUrl` → display host.                                                       |
+| `apps/mobile/src/features/share/searching-state.tsx` | Mascot + spinner + copy.                                                              |
 
 ---
 
@@ -49,9 +49,11 @@
 Spec §8 open question. Undocumented combination. Settle before building on it.
 
 **Files:**
+
 - Create: `/tmp/probe-websearch.mjs` (throwaway, never committed)
 
 **Interfaces:**
+
 - Produces: a yes/no that decides Task 7's pass-2 shape.
 
 - [ ] **Step 1: Write the probe**
@@ -90,7 +92,10 @@ const response = await client.responses.create({
 console.log("output_text:", response.output_text);
 console.log("parsed:", JSON.parse(response.output_text));
 console.log("usage:", response.usage);
-console.log("items:", response.output.map((i) => i.type));
+console.log(
+  "items:",
+  response.output.map((i) => i.type),
+);
 ```
 
 - [ ] **Step 2: Run it**
@@ -126,10 +131,12 @@ git commit -m "docs: record web_search + json_schema probe result"
 Pure predicate. No sockets. Tests exhaustively.
 
 **Files:**
+
 - Create: `apps/api/src/share/ip-policy.ts`
 - Test: `apps/api/test/share-ip-policy.test.ts`
 
 **Interfaces:**
+
 - Produces: `isPublicUnicast(address: string, family: 4 | 6): boolean`
 
 - [ ] **Step 1: Write the failing test**
@@ -329,26 +336,37 @@ git commit -m "feat(share): add public-unicast address policy"
 Wraps `ip-policy`. DNS pinned inside the agent's lookup so the socket cannot reach an address the check did not see.
 
 **Files:**
+
 - Create: `apps/api/src/share/safe-fetch.ts`
 - Test: `apps/api/test/share-safe-fetch.test.ts`
 
 **Interfaces:**
+
 - Consumes: `isPublicUnicast` (Task 2), `isShareableUrl` (Step 0 below)
 - Produces:
+
   ```ts
   export const MAX_REDIRECTS = 3;
   export const HOP_TIMEOUT_MS = 5_000;
   export const LADDER_BUDGET_MS = 8_000;
   export class BlockedAddress extends Error {}
   export class FetchRefused extends Error {}
-  export interface SafeResponse { status: number; headers: Headers; body: string; finalUrl: string }
-  export function safeFetch(url: string, options: {
-    allow: readonly string[];
-    maxBytes: number;
-    deadline: number;
-    lookup?: LookupFn;
-    fetchImpl?: typeof fetch;
-  }): Promise<SafeResponse>;
+  export interface SafeResponse {
+    status: number;
+    headers: Headers;
+    body: string;
+    finalUrl: string;
+  }
+  export function safeFetch(
+    url: string,
+    options: {
+      allow: readonly string[];
+      maxBytes: number;
+      deadline: number;
+      lookup?: LookupFn;
+      fetchImpl?: typeof fetch;
+    },
+  ): Promise<SafeResponse>;
   export type LookupFn = (hostname: string) => Promise<{ address: string; family: 4 | 6 }[]>;
   ```
 
@@ -759,17 +777,25 @@ git commit -m "feat(share): add pinned-address safe fetch"
 Pure. Replaces `canonicalise.ts`. Keeps YouTube/TikTok rebuilds; drops the provider union.
 
 **Files:**
+
 - Create: `apps/api/src/share/normalise.ts`
 - Delete: `apps/api/src/share/canonicalise.ts`
 - Test: rename `apps/api/test/share-canonicalise.test.ts` → `apps/api/test/share-normalise.test.ts`
 
 **Interfaces:**
+
 - Consumes: `isShareableUrl` from `@repo/contracts`, `sha1` from `../cache-keys.js`
 - Produces:
+
   ```ts
-  export interface NormalisedShare { url: string; shareId: string; sourceId: string | null }
+  export interface NormalisedShare {
+    url: string;
+    shareId: string;
+    sourceId: string | null;
+  }
   export function normaliseShare(input: string): NormalisedShare | null;
   ```
+
   `null` means refuse — the route turns it into a 422.
 
 - [ ] **Step 1: Write the failing test**
@@ -806,7 +832,9 @@ test("rebuilds youtube urls and reports the video id", () => {
 
 test("rebuilds tiktok video urls and reports the video id", () => {
   const url = "https://www.tiktok.com/@creator/video/7123456789012345678?is_from_webapp=1";
-  expect(normaliseShare(url)?.url).toBe("https://www.tiktok.com/@creator/video/7123456789012345678");
+  expect(normaliseShare(url)?.url).toBe(
+    "https://www.tiktok.com/@creator/video/7123456789012345678",
+  );
   expect(normaliseShare(url)?.sourceId).toBe("7123456789012345678");
 });
 
@@ -855,7 +883,6 @@ Expected: FAIL, cannot resolve `../src/share/normalise.js`.
 // apps/api/src/share/normalise.ts
 import { sha1 } from "../cache-keys.js";
 import { isShareableUrl } from "@repo/contracts";
-
 
 export interface NormalisedShare {
   url: string;
@@ -951,17 +978,24 @@ git commit -m "feat(share): replace canonicalise with url normalise"
 ## Task 5: Provider snapshot and scheme matching
 
 **Files:**
+
 - Create: `apps/api/scripts/refresh-oembed-providers.ts`
 - Create: `apps/api/src/share/providers.generated.ts` (by running the script)
 - Create: `apps/api/src/share/provider-match.ts`
 - Test: `apps/api/test/share-provider-match.test.ts`
 
 **Interfaces:**
+
 - Produces:
+
   ```ts
-  export interface ProviderEntry { name: string; endpoint: string; schemes: string[] }
-  export const PROVIDERS: readonly ProviderEntry[];              // providers.generated.ts
-  export function schemeToRegExp(scheme: string): RegExp;        // provider-match.ts
+  export interface ProviderEntry {
+    name: string;
+    endpoint: string;
+    schemes: string[];
+  }
+  export const PROVIDERS: readonly ProviderEntry[]; // providers.generated.ts
+  export function schemeToRegExp(scheme: string): RegExp; // provider-match.ts
   export function matchProvider(url: string): ProviderEntry | null;
   ```
 
@@ -1149,6 +1183,7 @@ git commit -m "feat(share): vendor oembed providers and match schemes"
 Three files. `oembed.ts` and `opengraph.ts` are rungs; `meta.ts` sequences them and owns the two floors.
 
 **Files:**
+
 - Modify: `apps/api/src/share/oembed.ts` (rewrite)
 - Create: `apps/api/src/share/opengraph.ts`
 - Create: `apps/api/src/share/meta.ts`
@@ -1156,8 +1191,10 @@ Three files. `oembed.ts` and `opengraph.ts` are rungs; `meta.ts` sequences them 
 - Test: rewrite `apps/api/test/share-oembed.test.ts`, create `apps/api/test/share-opengraph.test.ts`, `apps/api/test/share-meta.test.ts`
 
 **Interfaces:**
+
 - Consumes: `safeFetch`, `FetchRefused` (Task 3); `NormalisedShare`, `normaliseShare` (Task 4); `matchProvider` (Task 5)
 - Produces:
+
   ```ts
   // oembed.ts
   export class SourceGone extends Error {}
@@ -1173,16 +1210,34 @@ Three files. `oembed.ts` and `opengraph.ts` are rungs; `meta.ts` sequences them 
     thumbnailHeight: number | null;
   }
   export function httpsUrlOrNull(value: unknown): string | null;
-  export function fetchOembed(endpoint: string, url: string, deadline: number, fetchImpl?: typeof fetch): Promise<Omit<SourceMeta, "shareId">>;
+  export function fetchOembed(
+    endpoint: string,
+    url: string,
+    deadline: number,
+    fetchImpl?: typeof fetch,
+  ): Promise<Omit<SourceMeta, "shareId">>;
 
   // opengraph.ts
-  export interface PageMeta { title: string; siteName: string | null; imageUrl: string | null; imageWidth: number | null; imageHeight: number | null }
+  export interface PageMeta {
+    title: string;
+    siteName: string | null;
+    imageUrl: string | null;
+    imageWidth: number | null;
+    imageHeight: number | null;
+  }
   export function parseOpenGraph(html: string): PageMeta | null;
-  export function fetchPage(url: string, deadline: number, fetchImpl?: typeof fetch): Promise<{ html: string; finalUrl: string }>;
+  export function fetchPage(
+    url: string,
+    deadline: number,
+    fetchImpl?: typeof fetch,
+  ): Promise<{ html: string; finalUrl: string }>;
 
   // meta.ts
   export class SourceUnreadable extends Error {}
-  export function fetchSourceMeta(share: NormalisedShare, fetchImpl?: typeof fetch): Promise<SourceMeta>;
+  export function fetchSourceMeta(
+    share: NormalisedShare,
+    fetchImpl?: typeof fetch,
+  ): Promise<SourceMeta>;
   ```
 
 - [ ] **Step 1: Add the dependency**
@@ -1223,7 +1278,9 @@ test("reads title, author, provider and thumbnail dimensions", async () => {
     }),
   );
 
-  expect(await fetchOembed(ENDPOINT, PAGE, deadline(), fetchImpl as unknown as typeof fetch)).toEqual({
+  expect(
+    await fetchOembed(ENDPOINT, PAGE, deadline(), fetchImpl as unknown as typeof fetch),
+  ).toEqual({
     title: "Can You Beat Resident Evil 2 WITHOUT Killing Anything?",
     author: "Snamwiches",
     provider: "YouTube",
@@ -1384,7 +1441,8 @@ export async function fetchOembed(
     pageUrl: url,
     thumbnailUrl,
     thumbnailWidth: thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_width),
-    thumbnailHeight: thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_height),
+    thumbnailHeight:
+      thumbnailUrl === null ? null : positiveIntOrNull(parsed.output.thumbnail_height),
   };
 }
 ```
@@ -1600,7 +1658,9 @@ test("takes the oEmbed rung when a scheme matches", async () => {
 test("an oEmbed 404 is terminal and never scrapes the error page", async () => {
   const fetchImpl = vi.fn(async () => json(null, 404));
 
-  await expect(fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch)).rejects.toThrow(SourceGone);
+  await expect(fetchSourceMeta(YT, fetchImpl as unknown as typeof fetch)).rejects.toThrow(
+    SourceGone,
+  );
   expect(fetchImpl).toHaveBeenCalledTimes(1);
 });
 
@@ -1702,7 +1762,10 @@ export async function fetchSourceMeta(
   const direct = matchProvider(share.url);
   if (direct !== null) {
     try {
-      return { ...(await fetchOembed(direct.endpoint, share.url, deadline, fetchImpl)), shareId: share.shareId };
+      return {
+        ...(await fetchOembed(direct.endpoint, share.url, deadline, fetchImpl)),
+        shareId: share.shareId,
+      };
     } catch (error) {
       // A gone source is terminal; anything else drops to the page below.
       if (error instanceof SourceGone) throw error;
@@ -1773,11 +1836,13 @@ git commit -m "feat(share): add oembed, open graph and the metadata ladder"
 Mechanical sweep. Goes red, then green. The compiler enumerates the call sites.
 
 **Files:**
+
 - Modify: `packages/contracts/src/share.ts`
 - Modify: `packages/contracts/test/share.test.ts`
 - Modify: `apps/api/src/cache-keys.ts`
 
 **Interfaces:**
+
 - Produces: `EXTRACTED_BASES`, `ShareSourceWire`, `shareIdentifySchema`, `sourceKey`, `extractKey`, `SOURCE_TTL_SECONDS`
 
 - [ ] **Step 1: Rewrite the contracts test**
@@ -1935,10 +2000,12 @@ git commit -m "feat(contracts): open the share contract to any https link"
 Pass 1 = today's call plus a `Site:` line. Pass 2 runs only on `none`.
 
 **Files:**
+
 - Modify: `apps/api/src/share/extract.ts` (rewrite)
 - Test: rewrite `apps/api/test/share-extract.test.ts`
 
 **Interfaces:**
+
 - Consumes: `SourceMeta` (Task 6), `EXTRACTED_BASES` (Task 7)
 - Produces:
   ```ts
@@ -1946,10 +2013,16 @@ Pass 1 = today's call plus a `Site:` line. Pass 2 runs only on `none`.
   export const MAX_GUESSES = 3;
   export const PASS_1_BASES = ["title", "author", "none"] as const;
   export const PASS_2_BASES = ["web", "none"] as const;
-  export interface Extraction { titles: string[]; basis: (typeof EXTRACTED_BASES)[number] }
+  export interface Extraction {
+    titles: string[];
+    basis: (typeof EXTRACTED_BASES)[number];
+  }
   export function parseExtraction(raw: string, allowed: readonly string[]): Extraction;
-  export function createTitleExtractor(options: { apiKey: string; model: string; client?: OpenAI }):
-    (meta: SourceMeta) => Promise<Extraction>;
+  export function createTitleExtractor(options: {
+    apiKey: string;
+    model: string;
+    client?: OpenAI;
+  }): (meta: SourceMeta) => Promise<Extraction>;
   ```
 
 Note: `extractTitles` takes `SourceMeta` alone. The URL it hands pass 2 is `meta.pageUrl`, so the route does not pass it separately.
@@ -1981,7 +2054,10 @@ const META: SourceMeta = {
 };
 
 test("parses a well-formed answer and trims the titles", () => {
-  const raw = JSON.stringify({ titles: ["  Resident Evil 2 ", "Resident Evil 2 (1998)"], basis: "title" });
+  const raw = JSON.stringify({
+    titles: ["  Resident Evil 2 ", "Resident Evil 2 (1998)"],
+    basis: "title",
+  });
 
   expect(parseExtraction(raw, PASS_1_BASES)).toEqual({
     titles: ["Resident Evil 2", "Resident Evil 2 (1998)"],
@@ -2009,13 +2085,19 @@ test("collapses to none when the two fields disagree", () => {
 });
 
 test("refuses a basis the pass is not allowed to return", () => {
-  expect(() => parseExtraction(JSON.stringify({ titles: ["A"], basis: "web" }), PASS_1_BASES)).toThrow();
-  expect(() => parseExtraction(JSON.stringify({ titles: ["A"], basis: "title" }), PASS_2_BASES)).toThrow();
+  expect(() =>
+    parseExtraction(JSON.stringify({ titles: ["A"], basis: "web" }), PASS_1_BASES),
+  ).toThrow();
+  expect(() =>
+    parseExtraction(JSON.stringify({ titles: ["A"], basis: "title" }), PASS_2_BASES),
+  ).toThrow();
 });
 
 test("throws on anything unparseable so it stays out of the cache", () => {
   expect(() => parseExtraction("not json", PASS_1_BASES)).toThrow();
-  expect(() => parseExtraction(JSON.stringify({ titles: "A", basis: "title" }), PASS_1_BASES)).toThrow();
+  expect(() =>
+    parseExtraction(JSON.stringify({ titles: "A", basis: "title" }), PASS_1_BASES),
+  ).toThrow();
 });
 
 function stubClient(...outputs: string[]) {
@@ -2078,7 +2160,10 @@ test("returns none when pass 2 also gives up", async () => {
 test("propagates a pass 2 failure so nothing is cached", async () => {
   const create = vi
     .fn()
-    .mockResolvedValueOnce({ output_text: JSON.stringify({ titles: [], basis: "none" }), usage: {} })
+    .mockResolvedValueOnce({
+      output_text: JSON.stringify({ titles: [], basis: "none" }),
+      usage: {},
+    })
     .mockRejectedValueOnce(new Error("web search unavailable"));
 
   const client = { responses: { create } } as never;
@@ -2276,6 +2361,7 @@ git commit -m "feat(share): escalate extraction to a web search on none"
 Closes the API side of the type errors.
 
 **Files:**
+
 - Modify: `apps/api/src/types.ts:41-53`
 - Modify: `apps/api/src/share/provider.ts`
 - Modify: `apps/api/src/routes/games.ts:145-245`
@@ -2283,6 +2369,7 @@ Closes the API side of the type errors.
 - Test: rewrite `apps/api/test/identify-routes.test.ts`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 4-8
 - Produces: `ShareProvider { model, fetchMeta(share), extractTitles(meta) }`
 
@@ -2339,84 +2426,84 @@ export function createShareProvider(env: {
 In `apps/api/src/routes/games.ts`, replace the whole `/identify` handler body (from `const { url, limit }` to the closing `return c.json(body);`) with:
 
 ```ts
-      const { url, limit } = c.req.valid("json");
+const { url, limit } = c.req.valid("json");
 
-      const share = normaliseShare(url);
-      if (share === null) {
-        throw problems.create("UNPROCESSABLE_SHARE", {
-          detail: "That link cannot be opened. Barklog needs an https web address.",
-        });
-      }
+const share = normaliseShare(url);
+if (share === null) {
+  throw problems.create("UNPROCESSABLE_SHARE", {
+    detail: "That link cannot be opened. Barklog needs an https web address.",
+  });
+}
 
-      let meta: SourceMeta;
-      try {
-        meta = await withCache(deps.cache, sourceKey(share.shareId), SOURCE_TTL_SECONDS, () =>
-          deps.share.fetchMeta(share),
-        );
-      } catch (error) {
-        if (error instanceof SourceGone) {
-          throw problems.create("NOT_FOUND", {
-            detail: "That page is unavailable — it may be private or removed.",
-          });
-        }
-        if (error instanceof SourceUnreadable) {
-          throw problems.create("UNPROCESSABLE_SHARE", {
-            detail: "We opened that link but could not find a title on it.",
-          });
-        }
-        // A fixed string: a 5xx must never carry the upstream message.
-        throw problems.create("BAD_GATEWAY", {
-          detail: "That link could not be read right now. Try again shortly.",
-        });
-      }
+let meta: SourceMeta;
+try {
+  meta = await withCache(deps.cache, sourceKey(share.shareId), SOURCE_TTL_SECONDS, () =>
+    deps.share.fetchMeta(share),
+  );
+} catch (error) {
+  if (error instanceof SourceGone) {
+    throw problems.create("NOT_FOUND", {
+      detail: "That page is unavailable — it may be private or removed.",
+    });
+  }
+  if (error instanceof SourceUnreadable) {
+    throw problems.create("UNPROCESSABLE_SHARE", {
+      detail: "We opened that link but could not find a title on it.",
+    });
+  }
+  // A fixed string: a 5xx must never carry the upstream message.
+  throw problems.create("BAD_GATEWAY", {
+    detail: "That link could not be read right now. Try again shortly.",
+  });
+}
 
-      let guesses: string[];
-      let basis: ShareBasis;
-      try {
-        const extraction = await withCache(
-          deps.cache,
-          extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, meta.shareId),
-          EXTRACT_TTL_SECONDS,
-          () => deps.share.extractTitles(meta),
-        );
-        guesses = extraction.titles;
-        basis = extraction.basis;
-      } catch (error) {
-        log.warn("Extraction failed for {shareId}, falling back to the raw title: {message}", {
-          shareId: meta.shareId,
-          pageUrl: meta.pageUrl,
-          message: error instanceof Error ? error.message : String(error),
-        });
-        guesses = [meta.title];
-        basis = "unavailable";
-      }
+let guesses: string[];
+let basis: ShareBasis;
+try {
+  const extraction = await withCache(
+    deps.cache,
+    extractKey(EXTRACT_PROMPT_VERSION, deps.share.model, meta.shareId),
+    EXTRACT_TTL_SECONDS,
+    () => deps.share.extractTitles(meta),
+  );
+  guesses = extraction.titles;
+  basis = extraction.basis;
+} catch (error) {
+  log.warn("Extraction failed for {shareId}, falling back to the raw title: {message}", {
+    shareId: meta.shareId,
+    pageUrl: meta.pageUrl,
+    message: error instanceof Error ? error.message : String(error),
+  });
+  guesses = [meta.title];
+  basis = "unavailable";
+}
 
-      const version = await searchVersion();
-      const results = await Promise.all(
-        guesses.map((guess) => cachedSearch(guess, PER_GUESS_LIMIT, 0, version)),
-      );
+const version = await searchVersion();
+const results = await Promise.all(
+  guesses.map((guess) => cachedSearch(guess, PER_GUESS_LIMIT, 0, version)),
+);
 
-      const body: ShareIdentifyResponse = {
-        source: {
-          provider: meta.provider,
-          shareId: meta.shareId,
-          title: meta.title,
-          author: meta.author,
-          pageUrl: meta.pageUrl,
-          // `?? null`: `withCache` casts rather than validates, so an entry
-          // written before these fields existed arrives without them.
-          thumbnailUrl: meta.thumbnailUrl ?? null,
-          thumbnailWidth: meta.thumbnailWidth ?? null,
-          thumbnailHeight: meta.thumbnailHeight ?? null,
-        },
-        basis,
-        identified: basis !== "unavailable",
-        guesses,
-        items: mergeCandidates(results, limit),
-      };
+const body: ShareIdentifyResponse = {
+  source: {
+    provider: meta.provider,
+    shareId: meta.shareId,
+    title: meta.title,
+    author: meta.author,
+    pageUrl: meta.pageUrl,
+    // `?? null`: `withCache` casts rather than validates, so an entry
+    // written before these fields existed arrives without them.
+    thumbnailUrl: meta.thumbnailUrl ?? null,
+    thumbnailWidth: meta.thumbnailWidth ?? null,
+    thumbnailHeight: meta.thumbnailHeight ?? null,
+  },
+  basis,
+  identified: basis !== "unavailable",
+  guesses,
+  items: mergeCandidates(results, limit),
+};
 
-      c.header("Cache-Control", "private, no-store");
-      return c.json(body);
+c.header("Cache-Control", "private, no-store");
+return c.json(body);
 ```
 
 Fix the imports at the top of `games.ts`: drop `parseShareUrl`, `Canonical`, `VideoGone`, `VideoMeta`, `oembedKey`, `OEMBED_TTL_SECONDS`; add `normaliseShare`, `SourceGone`, `SourceUnreadable`, `SourceMeta`, `sourceKey`, `SOURCE_TTL_SECONDS`.
@@ -2503,6 +2590,7 @@ git commit -m "feat(api): identify any https link through the metadata ladder"
 ## Task 10: Mobile source preview and copy
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/share/source-thumb.ts` (rewrite)
 - Create: `apps/mobile/src/features/share/host.ts`
 - Modify: `apps/mobile/src/features/share/share-header.tsx`
@@ -2512,7 +2600,9 @@ git commit -m "feat(api): identify any https link through the metadata ladder"
 - Test: rewrite `apps/mobile/test/source-thumb.test.ts`, create `apps/mobile/test/share-host.test.ts`, update `apps/mobile/test/share-sections.test.ts` and `apps/mobile/test/share-empty-states.test.ts`
 
 **Interfaces:**
+
 - Produces:
+
   ```ts
   export function sourceThumbSize(source: ShareSourceWire): { height: number; aspectRatio: number };
   export function displayHost(pageUrl: string): string;
@@ -2585,7 +2675,9 @@ test("clamps a freak ratio so it cannot distort the row", () => {
 
 test("ignores a partial or nonsensical pair", () => {
   expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 480 }).aspectRatio).toBe(16 / 9);
-  expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 0, thumbnailHeight: 0 }).aspectRatio).toBe(16 / 9);
+  expect(sourceThumbSize({ ...SOURCE, thumbnailWidth: 0, thumbnailHeight: 0 }).aspectRatio).toBe(
+    16 / 9,
+  );
 });
 ```
 
@@ -2656,16 +2748,16 @@ Expected: PASS.
 In `apps/mobile/src/features/share/sections.ts`, replace the `title` computation:
 
 ```ts
-  const title =
-    basis === "title"
-      ? "Matches for the title"
-      : basis === "author"
-        ? `Games ${author ?? "this source"} usually covers`
-        : basis === "web"
-          ? "Matches from a web search"
-          : // `unavailable` has the rows a `title` basis would, but a header
-            // would claim a match the server disclaimed.
-            null;
+const title =
+  basis === "title"
+    ? "Matches for the title"
+    : basis === "author"
+      ? `Games ${author ?? "this source"} usually covers`
+      : basis === "web"
+        ? "Matches from a web search"
+        : // `unavailable` has the rows a `title` basis would, but a header
+          // would claim a match the server disclaimed.
+          null;
 ```
 
 In `apps/mobile/src/features/share/empty-states.ts`, replace three strings:
@@ -2697,6 +2789,7 @@ export const UNAVAILABLE_NOTICE =
 In `apps/mobile/src/features/share/share-header.tsx`:
 
 Add imports:
+
 ```tsx
 import { openURL } from "expo-linking";
 
@@ -2704,26 +2797,30 @@ import { displayHost } from "@/features/share/host";
 ```
 
 Add a third line inside the `sourceText` view, after the author block:
+
 ```tsx
-          <Text
-            style={styles.sourceLink}
-            numberOfLines={1}
-            accessibilityRole="link"
-            onPress={() => void openURL(source.pageUrl)}
-          >
-            {displayHost(source.pageUrl)}
-          </Text>
+<Text
+  style={styles.sourceLink}
+  numberOfLines={1}
+  accessibilityRole="link"
+  onPress={() => void openURL(source.pageUrl)}
+>
+  {displayHost(source.pageUrl)}
+</Text>
 ```
 
 Add the style:
+
 ```tsx
   sourceLink: { ...Type.footnote, color: PlatformColor("link") },
 ```
 
 Replace the two uses of `size` in `SourceCover`. The placeholder glyph becomes:
+
 ```tsx
           size={Math.min(size.height * size.aspectRatio, size.height) * 0.5}
 ```
+
 and `sourceThumbSize` is now called as `sourceThumbSize(source)`.
 
 - [ ] **Step 7: Retitle the escape hatch**
@@ -2773,6 +2870,7 @@ git commit -m "feat(mobile): show the source host and size previews from oembed"
 Pass 2 adds seconds. A bare spinner is a poor thing to stare at.
 
 **Files:**
+
 - Create: `apps/mobile/src/features/share/searching-state.tsx`
 - Modify: `apps/mobile/src/components/query-boundary.tsx`
 - Modify: `apps/mobile/src/features/share/share-screen.tsx:82`
@@ -2780,6 +2878,7 @@ Pass 2 adds seconds. A bare spinner is a poor thing to stare at.
 No unit test: both files import react-native, and the mobile runner is plain Node. Device case 1 in Task 12 covers it.
 
 **Interfaces:**
+
 - Consumes: `Mascot` (`@/components/mascot`), `ProgressView` (`@expo/ui/swift-ui`)
 - Produces: `SearchingState`, and `QueryBoundary`'s optional `loading` prop
 
@@ -2846,7 +2945,7 @@ In `share-screen.tsx`, add `import { SearchingState } from "@/features/share/sea
 Also swap the payload-resolution branch at line 70 so both waits look the same:
 
 ```tsx
-  if (isPending) return <SearchingState />;
+if (isPending) return <SearchingState />;
 ```
 
 - [ ] **Step 4: Verify types and lint**
@@ -2891,19 +2990,19 @@ Watch the API log in terminal 1 throughout. The `pass 1`/`pass 2` debug lines ar
 
 For each: share the link from Safari or the source app into Barklog, then check the expected column. "Ladder" names the rung that should produce the metadata; "pass" names how many model calls the log should show.
 
-| # | Share this | Ladder | Pass | Expect on screen |
-|---|---|---|---|---|
-| 1 | A YouTube video whose title names a game outright, e.g. a "Silksong review" upload | oEmbed | 1 | Mascot + "Working out which game this is" while it loads. Then header shows the video title, the channel, and `youtube.com` as a tappable link. Section header "Matches for the title". 16:9 thumbnail. |
-| 2 | A YouTube video with a vague title on a channel that only covers one game, e.g. a large Destiny or Warframe channel | oEmbed | 1 | Section header reads "Games <channel> usually covers". This is the `author` tier — if it says "Matches for the title" the model used tier 1, which is fine but pick a vaguer title to actually exercise tier 2. |
-| 3 | A TikTok **short** link (`vm.tiktok.com/…`), copied from TikTok's own share sheet | HTML → re-match → oEmbed | 1 | Works at all. Header shows the TikTok creator and `tiktok.com`. Log shows two outbound fetches then one model call. This is the short-link loop. |
-| 4 | An IGN review article | og:title | 1 | Header title is the article headline, author is "IGN", link reads `ign.com`. Thumbnail is the article's `og:image` at its own ratio, not 16:9. |
-| 5 | A Reddit post from r/gaming or similar | oEmbed (new provider) | 1 or 2 | Identified at all — this provider was a hard 422 before. Log should show provider "Reddit". Reddit's schemes are `https://www.reddit.com/r/*/comments/*/*`, so use a full permalink, not a `redd.it` short link. |
-| 6 | A Steam store page for a game | og:title | 1 | Header shows the store page title; `store.steampowered.com` in full, since only `www.` is stripped. Steam is not an oEmbed provider, so this genuinely exercises the Open Graph rung. |
-| 6b | A Twitch clip | og:title | 1 or 2 | Twitch is **not** in `providers.json` — verified 2026-09-08. It falls to the Open Graph rung, and the log must show no oEmbed attempt. If it 422s, Twitch is serving a JS-rendered title and that is a known limitation, not a bug. |
-| 7 | A YouTube video with a cryptic title on a channel nobody has heard of, where the game is only identifiable from the page itself | oEmbed | **2** | The important one. Log must show a pass 2 line with `pageUrl`. Section header "Matches from a web search". Expect this to take noticeably longer — that is what Task 11 exists for. |
-| 8 | Any page clearly not about a game, e.g. a weather report | og:title | 2 | Empty state: "We couldn't tell which game this is, even after searching the web." Secondary button reads "Open on <host>" and opens the page. |
-| 9 | A private or deleted YouTube video | oEmbed 404 | 0 | Error state, not a crash and not a scraped "Video unavailable" title. |
-| 10 | A direct link to a PDF or an image file | refused | 0 | A clean error, no hang. The content-type check should refuse it before anything is parsed. |
+| #   | Share this                                                                                                                      | Ladder                   | Pass   | Expect on screen                                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | A YouTube video whose title names a game outright, e.g. a "Silksong review" upload                                              | oEmbed                   | 1      | Mascot + "Working out which game this is" while it loads. Then header shows the video title, the channel, and `youtube.com` as a tappable link. Section header "Matches for the title". 16:9 thumbnail.                             |
+| 2   | A YouTube video with a vague title on a channel that only covers one game, e.g. a large Destiny or Warframe channel             | oEmbed                   | 1      | Section header reads "Games <channel> usually covers". This is the `author` tier — if it says "Matches for the title" the model used tier 1, which is fine but pick a vaguer title to actually exercise tier 2.                     |
+| 3   | A TikTok **short** link (`vm.tiktok.com/…`), copied from TikTok's own share sheet                                               | HTML → re-match → oEmbed | 1      | Works at all. Header shows the TikTok creator and `tiktok.com`. Log shows two outbound fetches then one model call. This is the short-link loop.                                                                                    |
+| 4   | An IGN review article                                                                                                           | og:title                 | 1      | Header title is the article headline, author is "IGN", link reads `ign.com`. Thumbnail is the article's `og:image` at its own ratio, not 16:9.                                                                                      |
+| 5   | A Reddit post from r/gaming or similar                                                                                          | oEmbed (new provider)    | 1 or 2 | Identified at all — this provider was a hard 422 before. Log should show provider "Reddit". Reddit's schemes are `https://www.reddit.com/r/*/comments/*/*`, so use a full permalink, not a `redd.it` short link.                    |
+| 6   | A Steam store page for a game                                                                                                   | og:title                 | 1      | Header shows the store page title; `store.steampowered.com` in full, since only `www.` is stripped. Steam is not an oEmbed provider, so this genuinely exercises the Open Graph rung.                                               |
+| 6b  | A Twitch clip                                                                                                                   | og:title                 | 1 or 2 | Twitch is **not** in `providers.json` — verified 2026-09-08. It falls to the Open Graph rung, and the log must show no oEmbed attempt. If it 422s, Twitch is serving a JS-rendered title and that is a known limitation, not a bug. |
+| 7   | A YouTube video with a cryptic title on a channel nobody has heard of, where the game is only identifiable from the page itself | oEmbed                   | **2**  | The important one. Log must show a pass 2 line with `pageUrl`. Section header "Matches from a web search". Expect this to take noticeably longer — that is what Task 11 exists for.                                                 |
+| 8   | Any page clearly not about a game, e.g. a weather report                                                                        | og:title                 | 2      | Empty state: "We couldn't tell which game this is, even after searching the web." Secondary button reads "Open on <host>" and opens the page.                                                                                       |
+| 9   | A private or deleted YouTube video                                                                                              | oEmbed 404               | 0      | Error state, not a crash and not a scraped "Video unavailable" title.                                                                                                                                                               |
+| 10  | A direct link to a PDF or an image file                                                                                         | refused                  | 0      | A clean error, no hang. The content-type check should refuse it before anything is parsed.                                                                                                                                          |
 
 - [ ] **Step 3: Check the two things easy to miss**
 

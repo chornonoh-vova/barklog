@@ -56,8 +56,7 @@ Pod::Project.prepend(PodsUuidCollisionFix) unless Pod::Project.ancestors.include
 const withPodsUuidCollisionFix = (config) =>
   withPodfile(config, (podfileConfig) => {
     if (!podfileConfig.modResults.contents.includes(MARKER)) {
-      podfileConfig.modResults.contents =
-        PRELUDE + podfileConfig.modResults.contents;
+      podfileConfig.modResults.contents = PRELUDE + podfileConfig.modResults.contents;
     }
 
     return podfileConfig;
