@@ -74,6 +74,12 @@ export async function fetchPage(
   const response = await safeFetch(url, {
     allow: ["text/html", "application/xhtml+xml"],
     maxBytes: HTML_MAX_BYTES,
+    // Truncated, not refused: `parseOpenGraph` stops at `</head>`, so the cap
+    // only ever cuts into markup it would have discarded anyway. Pages that
+    // inline their whole app into one document — an Instagram reel is ~745KB
+    // with its og tags in the first 20KB — are readable exactly as long as
+    // their head arrives, and refusing them turned a 200 into a 502.
+    onOverflow: "truncate",
     deadline,
     fetchImpl,
     lookup,

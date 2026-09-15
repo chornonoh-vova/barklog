@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 
-import { fetchPage, parseOpenGraph } from "../src/share/opengraph.js";
+import { fetchPage, HTML_MAX_BYTES, parseOpenGraph } from "../src/share/opengraph.js";
 import { htmlResponse, PUBLIC_LOOKUP, testDeadline } from "./share-fixtures.js";
 
 test("reads og:title, og:site_name and og:image with dimensions", () => {
@@ -95,6 +95,24 @@ test("fetchPage returns the body and the resolved final url", async () => {
   expect(result.html).toContain("A Page");
   expect(result.finalUrl).toBe("https://example.test/a");
   expect(fetchImpl).toHaveBeenCalledTimes(1);
+});
+
+test("fetchPage keeps the head of a page whose body runs past the cap", async () => {
+  // Instagram's logged-out reel page is ~745KB of inlined script with every
+  // og tag inside the first 20KB. Refusing the whole page for its tail threw
+  // away metadata we had already received.
+  const html = `<head><meta property="og:title" content="Big Page"></head><body>${"x".repeat(HTML_MAX_BYTES)}</body>`;
+  const fetchImpl = vi.fn(async () => htmlResponse(html));
+
+  const result = await fetchPage(
+    "https://example.test/big",
+    testDeadline(),
+    fetchImpl as unknown as typeof fetch,
+    PUBLIC_LOOKUP,
+  );
+
+  expect(Buffer.byteLength(result.html)).toBe(HTML_MAX_BYTES);
+  expect(parseOpenGraph(result.html)?.title).toBe("Big Page");
 });
 
 test("fetchPage follows a redirect and reports the resolved url", async () => {
