@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { FlatList, PlatformColor, ScrollView, StyleSheet, View, Text } from "react-native";
+import { useCallback } from "react";
+import { FlatList, PlatformColor, ScrollView, Share, StyleSheet, View, Text } from "react-native";
 
 import {
   useBacklogStats,
@@ -15,6 +16,7 @@ import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
+import { gameShareContent } from "@/features/game/share";
 import { SimilarGames } from "@/features/game/similar-games";
 import { RemoteImage } from "@/components/remote-image";
 import { screenshotUrl } from "@/igdb-image";
@@ -33,21 +35,34 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const stats = useBacklogStats();
   const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
 
+  const gameData = game.data;
+  const onShare = useCallback(() => {
+    if (gameData === undefined) return;
+    const { content, options } = gameShareContent(gameData);
+    void Share.share(content, options).catch(() => {});
+  }, [gameData]);
+
   return (
     <>
       <Stack.Header transparent />
       <Stack.Screen.BackButton displayMode="minimal" />
       <Stack.Title>{game.data?.name ?? ""}</Stack.Title>
 
-      {game.data?.backlogEntry == null ? null : (
-        <Stack.Toolbar placement="right">
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          icon="square.and.arrow.up"
+          accessibilityLabel="Share game"
+          disabled={game.data === undefined}
+          onPress={onShare}
+        />
+        {game.data?.backlogEntry == null ? null : (
           <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel="Backlog actions">
             <Stack.Toolbar.MenuAction icon="trash" destructive onPress={() => remove.mutate()}>
               Remove from Backlog
             </Stack.Toolbar.MenuAction>
           </Stack.Toolbar.Menu>
-        </Stack.Toolbar>
-      )}
+        )}
+      </Stack.Toolbar>
 
       <QueryBoundary query={game}>
         {(data) => (

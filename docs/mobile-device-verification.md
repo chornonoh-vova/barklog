@@ -294,3 +294,42 @@ Boxes stay unticked here; the owner ticks them as each is verified.
       match in the catalogue" state, with `Search Instead` still working from
       there. A clipped or zero-height empty state means
       `contentContainerStyle={Screen.listContent}` was dropped.
+
+## Share game link checks
+
+Added by the game detail share button. The payload itself is unit-tested in
+`apps/mobile/test/game-share.test.ts`; everything below is the native share
+sheet, which no test off-device can reach. Boxes stay unticked until run.
+
+- [ ] **50. The share button sits left of the dots and survives backlog state
+      changes.** Open an unadded game: one share glyph in the top-right, no
+      dots. Add it: the dots appear to the _right_ of share, and share does not
+      move. Remove it: the dots go, share stays put. Watch the title through
+      both transitions for the iOS 26 header reflow that `ProfileToolbar`
+      documents.
+- [ ] **51. The button is dimmed while the game query is in flight.** Open a
+      game on a cold cache, or with the network throttled. The share glyph must
+      be present and visibly disabled until the screen fills in, then enable.
+      Tapping it while dimmed does nothing and shows nothing.
+- [ ] **52. The share sheet carries the IGDB page, not a bare title.** Tap
+      share on a game whose IGDB page exists. Copy the link and check it reads
+      `https://www.igdb.com/games/<slug>` — the same URL the "Powered by IGDB"
+      credit at the bottom of the screen opens.
+- [ ] **53. Messages renders a rich link preview.** Share to Messages: expect a
+      card with the game's cover and title pulled from igdb.com's OpenGraph
+      tags, not a naked URL. A bare link here means IGDB stopped serving those
+      tags, not that the payload is wrong.
+- [ ] **54. Mail pre-fills the subject with the game name.** Share to Mail:
+      the subject line must be the game's name, the body the URL. This is the
+      only surface that reads `options.subject`, so it is the only proof that
+      half the payload is wired up.
+- [ ] **55. Cancelling the sheet leaves the screen untouched.** Open share,
+      swipe it away. No toast, no error, no navigation — and the button is
+      immediately tappable again.
+- [ ] **56. Share works from all four routes.** The same detail screen is
+      mounted under Home, Explore, Search and the share-intent modal
+      (`/shared/game/[id]`). Check the button appears and shares in each; the
+      modal one especially, since it is a `fullScreenModal` root.
+- [ ] **57. A game with punctuation in its name shares cleanly.** Find a title
+      with a colon or dash — "NieR:Automata", "Hollow Knight: Silksong". The
+      Mail subject must keep the punctuation verbatim, unescaped.
