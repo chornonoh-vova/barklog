@@ -142,7 +142,22 @@ function mimeEssence(header: string): string {
   return header.split(";", 1)[0]!.trim().toLowerCase();
 }
 
-async function readCapped(response: Response, maxBytes: number): Promise<string> {
+/**
+ * What to do with a body that runs past `maxBytes`. `"refuse"` is the default
+ * because a partial payload is a broken payload for anything parsed whole — a
+ * truncated oEmbed document is not json, and reporting it as malformed would
+ * blame the provider for our own cap. `"truncate"` is for the one shape where
+ * the prefix is the whole point: an HTML page whose `<head>` carries the
+ * metadata and whose tail is inlined script we never read. Either way the
+ * read stops at `maxBytes`, so memory stays bounded by the cap.
+ */
+export type OverflowPolicy = "refuse" | "truncate";
+
+async function readCapped(
+  response: Response,
+  maxBytes: number,
+  onOverflow: OverflowPolicy = "refuse",
+): Promise<string> {
   const reader = response.body?.getReader();
   if (reader === undefined) return "";
 
@@ -154,15 +169,27 @@ async function readCapped(response: Response, maxBytes: number): Promise<string>
     if (done) break;
     if (value === undefined) continue;
 
-    total += value.byteLength;
-    if (total > maxBytes) {
+    // Tested before the chunk is kept, not after: under `"truncate"` the part
+    // of this chunk that fits is exactly what we keep, and that slice can only
+    // be taken while the overrun is still known.
+    if (total + value.byteLength > maxBytes) {
+      if (onOverflow === "refuse") {
+        await reader.cancel().catch(() => {});
+        throw new FetchRefused(`body exceeded ${maxBytes} bytes`);
+      }
+
+      chunks.push(value.subarray(0, maxBytes - total));
       await reader.cancel().catch(() => {});
-      throw new FetchRefused(`body exceeded ${maxBytes} bytes`);
+      break;
     }
 
+    total += value.byteLength;
     chunks.push(value);
   }
 
+  // Non-fatal by default, which is what a cut at an arbitrary byte needs: a
+  // multi-byte character split by the cap becomes one U+FFFD at the very end
+  // of the string rather than throwing away the 512KB in front of it.
   return new TextDecoder().decode(Buffer.concat(chunks));
 }
 
@@ -186,9 +213,10 @@ async function readCappedAndClose(
   response: Response,
   maxBytes: number,
   dispatcher: Agent,
+  onOverflow: OverflowPolicy,
 ): Promise<string> {
   try {
-    return await readCapped(response, maxBytes);
+    return await readCapped(response, maxBytes, onOverflow);
   } finally {
     await dispatcher.close().catch(() => {});
   }
@@ -203,6 +231,8 @@ export async function safeFetch(
      */
     allow: readonly string[];
     maxBytes: number;
+    /** How a body past `maxBytes` is handled. Defaults to `"refuse"`. */
+    onOverflow?: OverflowPolicy;
     deadline: number;
     lookup?: LookupFn;
     /**
@@ -293,7 +323,12 @@ export async function safeFetch(
     return {
       status: response.status,
       headers: response.headers,
-      body: await readCappedAndClose(response, options.maxBytes, dispatcher),
+      body: await readCappedAndClose(
+        response,
+        options.maxBytes,
+        dispatcher,
+        options.onOverflow ?? "refuse",
+      ),
       finalUrl: current,
     };
   }

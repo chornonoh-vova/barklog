@@ -4,10 +4,12 @@ import { fetchSourceMeta, SourceBlocked, SourceUnreadable } from "../src/share/m
 import { htmlResponse, jsonResponse, PUBLIC_LOOKUP } from "./share-fixtures.js";
 import { normaliseShare } from "../src/share/normalise.js";
 import { SourceGone, SourceUnavailable } from "../src/share/oembed.js";
+import { HTML_MAX_BYTES } from "../src/share/opengraph.js";
 
 const YT = normaliseShare("https://www.youtube.com/watch?v=1vs0lLIRt7w")!;
 const IGN = normaliseShare("https://www.ign.com/articles/a-review")!;
 const SHORT = normaliseShare("https://vm.tiktok.com/ZMabcdef/")!;
+const REEL = normaliseShare("https://www.instagram.com/reel/DdPKTVhMuLy/")!;
 
 test("takes the oEmbed rung when a scheme matches", async () => {
   const fetchImpl = vi.fn(async () => jsonResponse({ title: "A Video", provider_name: "YouTube" }));
@@ -41,6 +43,30 @@ test("an oEmbed 500 falls through to the page", async () => {
 
   expect(meta.title).toBe("Fallback");
   expect(meta.shareId).toBe(YT.shareId);
+  expect(fetchImpl).toHaveBeenCalledTimes(2);
+});
+
+test("a page whose body runs past the cap still yields the metadata in its head", async () => {
+  // The Instagram reel regression: the unauthenticated instagram_oembed
+  // endpoint answers 200 with no `title` at all, so the ladder falls through
+  // to the page — which is ~745KB, well past HTML_MAX_BYTES, with its og tags
+  // in the first 20KB. Refusing it turned a readable page into a 502.
+  const fetchImpl = vi
+    .fn()
+    .mockResolvedValueOnce(
+      jsonResponse({ version: "1.0", provider_name: "Instagram", html: "<b>" }),
+    )
+    .mockResolvedValueOnce(
+      htmlResponse(
+        `<head><meta property="og:title" content="A Reel"><meta property="og:site_name" content="Instagram"></head><body>${"x".repeat(HTML_MAX_BYTES)}</body>`,
+      ),
+    );
+
+  const meta = await fetchSourceMeta(REEL, fetchImpl as unknown as typeof fetch, PUBLIC_LOOKUP);
+
+  expect(meta.title).toBe("A Reel");
+  expect(meta.author).toBe("Instagram");
+  expect(meta.provider).toBe("www.instagram.com");
   expect(fetchImpl).toHaveBeenCalledTimes(2);
 });
 

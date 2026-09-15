@@ -175,6 +175,27 @@ test("refuses a body past maxBytes", async () => {
   ).rejects.toThrow(FetchRefused);
 });
 
+test("truncates past maxBytes instead of refusing when the caller asks it to", async () => {
+  const fetchImpl = vi.fn(
+    async () =>
+      new Response(`<head><title>Kept</title></head>${"x".repeat(1_000)}`, {
+        headers: { "content-type": "text/html" },
+      }),
+  );
+
+  const result = await safeFetch("https://a.test/big", {
+    ...opts,
+    allow: ["text/html"],
+    maxBytes: 64,
+    onOverflow: "truncate",
+    lookup: PUBLIC_LOOKUP,
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+  });
+
+  expect(Buffer.byteLength(result.body)).toBe(64);
+  expect(result.body).toContain("<title>Kept</title>");
+});
+
 test("refuses a content-type the caller did not ask for", async () => {
   const fetchImpl = vi.fn(
     async () => new Response("<html></html>", { headers: { "content-type": "text/html" } }),
