@@ -68,7 +68,7 @@ gives the slot back.
 | Products                    | Monthly $2.99, Yearly $19.99, one group              | Minimum App Store Connect surface with a low-commitment entry point.                                                                                                     |
 | Trial                       | 7-day introductory offer on both                     | Judging runs Oct 1–13. A 30-day trial started in September converts to first payment _after_ judging closes, leaving zero revenue to report.                             |
 | Paywall UI                  | RevenueCat Paywalls v2 (`react-native-purchases-ui`) | Remotely editable after Sept 30 without a new build or review. The app ships once; judging happens afterwards.                                                           |
-| Paywall presentation        | `pageSheet`, dismissible                             | A sheet reads as an offer; a `fullScreenModal` reads as a wall. That is the "chore" line.                                                                                |
+| Paywall presentation        | `fullScreenModal`, dismissible                       | Originally a `pageSheet`, on the argument that a sheet reads as an offer and a takeover reads as a wall. Changed for consistency: every other modal in the app is full-screen. Dismissibility, not presentation style, is what keeps it an offer.                                                                                |
 | Entitlement identifier      | `barklog_premium`                                    | As created in RevenueCat, display name "Barklog Premium". Not `ad_free`, and not because ads are coming later — there are none. It grants unlimited slots, nothing more. |
 
 ### Rejected alternatives
@@ -549,7 +549,7 @@ be wrong. `src/app/paywall.tsx` renders `RevenueCatUI.Paywall`, registered
 alongside `(tabs)` and `shared` in `app/_layout.tsx`:
 
 ```tsx
-<Stack.Screen name="paywall" options={{ presentation: "pageSheet" }} />
+<Stack.Screen name="paywall" options={{ presentation: "fullScreenModal" }} />
 ```
 
 ### Two trigger paths
