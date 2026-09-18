@@ -170,6 +170,47 @@ test("an expired subscription is back to the free tier", async () => {
   expect(response.status).toBe(402);
 });
 
+test("a lapsed subscriber above the cap keeps everything and is told the real distance back", async () => {
+  await grantPremium();
+  for (let id = 1; id <= GAME_COUNT; id++) {
+    const added = await callApi(harness.app, `/api/backlog/${id}`, put({ status: "waiting" }));
+    expect(added.status, `adding game ${id} as premium`).toBe(201);
+  }
+
+  // The subscription lapses while more games are unfinished than the free tier
+  // allows. `lastEventAtMs` must beat grantPremium's or the upsert is ignored.
+  await upsertSubscription(harness.db, {
+    userId: TEST_USER,
+    productId: "gg.barklog.app.premium.yearly",
+    store: "app_store",
+    periodType: "normal",
+    purchasedAt: new Date("2026-07-01T00:00:00Z"),
+    expiresAt: new Date("2026-08-01T00:00:00Z"),
+    willRenew: false,
+    sandbox: false,
+    lastEventAtMs: 2_000,
+  });
+
+  // Nothing is taken away.
+  const list = await callApi(harness.app, "/api/backlog");
+  const body = (await list.json()) as { items: unknown[] };
+  expect(body.items).toHaveLength(GAME_COUNT);
+
+  // Finishing is still allowed above the cap, which is the whole point of
+  // checking the transition rather than the total.
+  const finished = await callApi(harness.app, "/api/backlog/1", put({ status: "completed" }));
+  expect(finished.status).toBe(200);
+
+  // Reopening it consumes a slot again, so it is refused — and at 11 active,
+  // "finish one to free a spot" would be a lie.
+  const blocked = await callApi(harness.app, "/api/backlog/1", put({ status: "playing" }));
+  expect(blocked.status).toBe(402);
+
+  const problem = (await blocked.json()) as { detail: string; activeCount: number };
+  expect(problem.activeCount).toBe(GAME_COUNT - 1);
+  expect(problem.detail).toContain(`Finish ${GAME_COUNT - FREE_ACTIVE_SLOTS}`);
+});
+
 test("the cap counts one user's entries only", async () => {
   await fillSlots();
 

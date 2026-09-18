@@ -3044,7 +3044,7 @@ import RevenueCatUI from "react-native-purchases-ui";
 
 import { keys } from "@/api/keys";
 
-/** Presented as a `pageSheet` by `_layout.tsx` — an offer, not a wall. */
+/** A dismissible `fullScreenModal` from `_layout.tsx` — an offer, not a wall. */
 export default function Paywall() {
   const queryClient = useQueryClient();
 
@@ -3071,7 +3071,7 @@ export default function Paywall() {
 In `apps/mobile/src/app/_layout.tsx`, beside the `shared` screen:
 
 ```tsx
-<Stack.Screen name="paywall" options={{ presentation: "pageSheet" }} />
+<Stack.Screen name="paywall" options={{ presentation: "fullScreenModal" }} />
 ```
 
 - [ ] **Step 6: Add the proactive trigger**
@@ -3200,8 +3200,8 @@ git commit -m "feat(mobile): paywall sheet, reached two ways
 
 RevenueCat's hosted paywall, so copy and pricing emphasis can change
 after the app ships without another App Store review. Presented as a
-pageSheet: a dismissible sheet reads as an offer, a full-screen takeover
-reads as a wall.
+dismissible fullScreenModal, consistent with every other modal in the
+app; being dismissible is what keeps it an offer rather than a wall.
 
 Two triggers, both needed. The proactive one in entry-actions diverts
 before mutating, which matters because onMutate writes optimistically —

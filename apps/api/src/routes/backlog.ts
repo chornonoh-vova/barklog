@@ -111,8 +111,15 @@ export function backlogRoutes(deps: AppDeps) {
         });
 
         if (outcome.blocked) {
+          // A lapsed subscriber can sit above the cap, where finishing a single
+          // game frees nothing usable. Say how many it actually takes.
+          const toFree = outcome.activeCount - FREE_ACTIVE_SLOTS + 1;
+
           throw problems.create("SUBSCRIPTION_REQUIRED", {
-            detail: `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games. Finish one to free a spot, or subscribe for unlimited.`,
+            detail:
+              toFree > 1
+                ? `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games and you have ${outcome.activeCount}. Finish ${toFree} to free a spot, or subscribe for unlimited.`
+                : `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games. Finish one to free a spot, or subscribe for unlimited.`,
             extensions: { activeCount: outcome.activeCount, limit: FREE_ACTIVE_SLOTS },
           });
         }
