@@ -333,3 +333,49 @@ sheet, which no test off-device can reach. Boxes stay unticked until run.
 - [ ] **57. A game with punctuation in its name shares cleanly.** Find a title
       with a colon or dash — "NieR:Automata", "Hollow Knight: Silksong". The
       Mail subject must keep the punctuation verbatim, unescaped.
+
+## Screenshot viewer checks
+
+The first `Host` in the app to live inside a react-native `Modal`, and the
+second place a hosted RN view sits inside a SwiftUI pager. Both are why this
+section exists; checks 60 and 62 are regressions that already happened once.
+
+- [ ] **58. The viewer fades in, and swiping actually pages.** It is mounted
+      only once a shot is tapped, so the enter animation happens on mount —
+      check it is not an abrupt cut. Open a game with several screenshots, tap
+      one, swipe sideways. If the pager is dead, `pointerEvents="none"` on the
+      hosted `RemoteImage` has come off — a hosted RN view swallows the swipe
+      otherwise, which is what `Mascot` documents for the onboarding pager.
+- [ ] **59. The viewer opens on the shot that was tapped**, not on the first
+      one. Tap the fourth tile in the row and check the dots agree.
+- [ ] **60. Every page draws its shot — none render black.** Swipe the whole
+      way through twice, so pages get recycled. A black page means the hosted
+      image lost its size: `RNHostView` must stay on `matchContents` with an
+      explicitly sized child, because the other branch pushes SwiftUI's size
+      into Yoga from `onGeometryChange`, which never fires for a page the
+      `UIPageViewController` recycled at zero.
+- [ ] **61. The dots stay readable on a game with many screenshots.** IGDB
+      routinely returns 10–20. SwiftUI's page dots neither scroll nor compress,
+      so if they crowd the bottom edge, switch `indexDisplayMode` to `'never'`
+      and put a controlled "3 of 12" counter there instead.
+- [ ] **62. The close button clears the status bar, and rotation is clean.**
+      The host takes no `ignoreSafeArea` — that applied to the whole host and
+      put the ✕ under the battery icon. Rotate to landscape mid-swipe: the page
+      must not half-scroll or land between two shots, and the shot must resize
+      with the window — the page box is clamped against window height as well
+      as width, so a wide, short window must not overflow it.
+- [ ] **63. The backdrop is black in light mode too.** The host is pinned to
+      true black and `colorScheme="dark"`, so a phone in light mode must still
+      show a black surround with light dots and a legible glass close button.
+- [ ] **64. Full-size shots are sharp.** The viewer requests
+      `t_screenshot_huge_2x` while the row keeps `t_screenshot_med_2x`. A soft,
+      upscaled-looking image means the viewer is still on the row's transform.
+- [ ] **65. VoiceOver reads each shot and the close button.** Swipe through
+      with VoiceOver on: each page announces "Screenshot N of M" from
+      `screenshotLabel`, and the ✕ announces as "Close screenshots". Neither
+      comes from the system — @expo/ui 57's `ButtonRole` has no `close`, so the
+      glyph is an explicit `xmark` `Image` and the name an `accessibilityLabel`
+      modifier.
+- [ ] **66. The viewer works from all four routes**, including
+      `/shared/game/[id]`, where it is a `Modal` presented over a
+      `fullScreenModal`. That nesting is the one most likely to misbehave.
