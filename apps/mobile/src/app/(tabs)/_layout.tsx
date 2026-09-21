@@ -1,4 +1,4 @@
-import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { NativeTabs } from "expo-router/native-tabs";
 
 const { Trigger } = NativeTabs;
 const { Icon, Label } = Trigger;
@@ -18,7 +18,6 @@ export default function TabsLayout() {
 
       <Trigger name="search" role="search">
         <Label>Search</Label>
-        <Icon sf="magnifyingglass" />
       </Trigger>
     </NativeTabs>
   );
