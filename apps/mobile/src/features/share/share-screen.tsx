@@ -102,9 +102,9 @@ export function ShareScreen({
               secondaryAction={
                 data.basis === "none"
                   ? {
-                    label: `Open on ${displayHost(data.source.pageUrl)}`,
-                    onPress: () => void openURL(data.source.pageUrl),
-                  }
+                      label: `Open on ${displayHost(data.source.pageUrl)}`,
+                      onPress: () => void openURL(data.source.pageUrl),
+                    }
                   : undefined
               }
             />
