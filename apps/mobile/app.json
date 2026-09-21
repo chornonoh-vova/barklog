@@ -7,14 +7,20 @@
     "icon": "./assets/icon/icon.png",
     "scheme": "barklog",
     "userInterfaceStyle": "automatic",
-    "platforms": ["ios"],
+    "platforms": [
+      "ios"
+    ],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
       "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
-      "associatedDomains": ["applinks:barklog.gg"],
+      "associatedDomains": [
+        "applinks:barklog.gg"
+      ],
       "entitlements": {
-        "com.apple.security.application-groups": ["group.gg.barklog.app"]
+        "com.apple.security.application-groups": [
+          "group.gg.barklog.app"
+        ]
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -48,15 +54,6 @@
         }
       ],
       [
-        "expo-build-properties",
-        {
-          "ios": {
-            "enableSceneSupport": true
-          }
-        }
-      ],
-      "@clerk/expo",
-      [
         "expo-localization",
         {
           "supportedLocales": {
@@ -64,6 +61,10 @@
           }
         }
       ],
+      "expo-build-properties",
+      "expo-image",
+      "expo-status-bar",
+      "@clerk/expo",
       "./plugins/with-pods-uuid-collision-fix"
     ],
     "locales": {
@@ -88,7 +89,9 @@
                   "targetName": "expo-sharing-extension",
                   "bundleIdentifier": "gg.barklog.app.expo-sharing-extension",
                   "entitlements": {
-                    "com.apple.security.application-groups": ["group.gg.barklog.app"]
+                    "com.apple.security.application-groups": [
+                      "group.gg.barklog.app"
+                    ]
                   }
                 }
               ]
