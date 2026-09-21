@@ -17,6 +17,17 @@ export const Type = {
 /** IGDB covers are 3:4 portrait, never square. */
 export const COVER_ASPECT = 3 / 4;
 
+/** IGDB screenshots are 16:9. Width over height, like `COVER_ASPECT`. */
+export const SHOT_ASPECT = 16 / 9;
+
+/** The heading above a horizontal shelf: Similar Games, Explore's rows, and
+ * the screenshot strip. */
+export const ShelfTitle = {
+  ...Type.headline,
+  color: PlatformColor("label"),
+  paddingHorizontal: 16,
+} as const;
+
 /** `listContent` must grow, or a `ListEmptyComponent` — cloned straight into
  * the content container — has no height and gets clipped. */
 export const Screen = {

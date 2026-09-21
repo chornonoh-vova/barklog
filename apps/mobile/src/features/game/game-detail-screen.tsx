@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { FlatList, PlatformColor, ScrollView, Share, StyleSheet, View, Text } from "react-native";
+import { PlatformColor, ScrollView, Share, StyleSheet } from "react-native";
 
 import {
   useBacklogStats,
@@ -16,13 +16,9 @@ import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
+import { Screenshots } from "@/features/game/screenshots";
 import { gameShareContent } from "@/features/game/share";
 import { SimilarGames } from "@/features/game/similar-games";
-import { RemoteImage } from "@/components/remote-image";
-import { screenshotUrl } from "@/igdb-image";
-import { Type } from "@/theme";
-
-const SHOT_WIDTH = 280;
 
 export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => void }) {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -83,27 +79,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
 
             {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
 
-            {data.screenshots.length === 0 ? null : (
-              <View style={styles.shotsContainer}>
-                <Text style={styles.title}>Screenshots</Text>
-                <FlatList
-                  horizontal
-                  style={styles.shots}
-                  contentContainerStyle={styles.shotsContent}
-                  data={data.screenshots}
-                  keyExtractor={(imageId) => imageId}
-                  showsHorizontalScrollIndicator={false}
-                  renderItem={({ item }) => (
-                    <View style={styles.shot}>
-                      <RemoteImage
-                        source={{ uri: screenshotUrl(item) }}
-                        style={StyleSheet.absoluteFill}
-                      />
-                    </View>
-                  )}
-                />
-              </View>
-            )}
+            <Screenshots screenshots={data.screenshots} />
 
             <DetailRows game={data} />
 
@@ -119,15 +95,4 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
-  title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
-  shotsContainer: { gap: 8 },
-  shots: { marginBottom: 24 },
-  shotsContent: { paddingHorizontal: 16, gap: 12 },
-  shot: {
-    width: SHOT_WIDTH,
-    height: SHOT_WIDTH * (9 / 16),
-    borderRadius: 10,
-    overflow: "hidden",
-    backgroundColor: PlatformColor("secondarySystemGroupedBackground"),
-  },
 });
