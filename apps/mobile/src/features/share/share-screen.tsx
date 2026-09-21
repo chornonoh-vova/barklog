@@ -71,12 +71,12 @@ export function ShareScreen({
   if (isPending) return <SearchingState />;
 
   if (error !== null) {
-    return <EmptyState {...UNREADABLE} action={backToHome} />;
+    return <EmptyState {...UNREADABLE} action={backToHome} fullscreen />;
   }
 
   // Without this branch the disabled query stays pending forever.
   if (url === null) {
-    return <EmptyState {...NO_LINK} action={backToHome} />;
+    return <EmptyState {...NO_LINK} action={backToHome} fullscreen />;
   }
 
   return (
@@ -102,9 +102,9 @@ export function ShareScreen({
               secondaryAction={
                 data.basis === "none"
                   ? {
-                      label: `Open on ${displayHost(data.source.pageUrl)}`,
-                      onPress: () => void openURL(data.source.pageUrl),
-                    }
+                    label: `Open on ${displayHost(data.source.pageUrl)}`,
+                    onPress: () => void openURL(data.source.pageUrl),
+                  }
                   : undefined
               }
             />

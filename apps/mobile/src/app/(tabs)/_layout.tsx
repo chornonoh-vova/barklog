@@ -18,7 +18,7 @@ export default function TabsLayout() {
 
       <Trigger name="search" role="search">
         <Label>Search</Label>
-        <Icon sf="magnifyingglass" />
+        <Icon sf="magnifyingglass" md="search" />
       </Trigger>
     </NativeTabs>
   );
