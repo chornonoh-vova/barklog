@@ -23,9 +23,9 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
       "env": {
-        "APP_VARIANT": "preview",
+        "APP_VARIANT": "preview"
       }
     },
     "production": {
