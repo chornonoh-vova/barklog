@@ -25,8 +25,14 @@ const getAppName = () => {
   return "Barklog";
 };
 
+const APP_GROUPS_ENTITLEMENT = "com.apple.security.application-groups";
+
 export default ({ config }) => {
   const bundleIdentifier = getUniqueIdentifier();
+  // `expo-sharing` defaults the extension's app group to `group.<bundleIdentifier>`,
+  // so the app and the extension have to follow the variant or their entitlements
+  // stop matching what the plugin generates. Production stays `group.gg.barklog.app`.
+  const appGroupIdentifier = `group.${bundleIdentifier}`;
   const easBuild = config.extra?.eas?.build ?? {};
   const experimentalIos = easBuild.experimental?.ios ?? {};
 
@@ -36,6 +42,10 @@ export default ({ config }) => {
     ios: {
       ...config.ios,
       bundleIdentifier,
+      entitlements: {
+        ...config.ios?.entitlements,
+        [APP_GROUPS_ENTITLEMENT]: [appGroupIdentifier],
+      },
     },
     android: {
       ...config.android,
@@ -57,6 +67,10 @@ export default ({ config }) => {
               appExtensions: experimentalIos.appExtensions?.map((extension) => ({
                 ...extension,
                 bundleIdentifier: `${bundleIdentifier}.${extension.targetName}`,
+                entitlements: {
+                  ...extension.entitlements,
+                  [APP_GROUPS_ENTITLEMENT]: [appGroupIdentifier],
+                },
               })),
             },
           },
