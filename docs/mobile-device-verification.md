@@ -379,3 +379,42 @@ section exists; checks 60 and 62 are regressions that already happened once.
 - [ ] **66. The viewer works from all four routes**, including
       `/shared/game/[id]`, where it is a `Modal` presented over a
       `fullScreenModal`. That nesting is the one most likely to misbehave.
+
+## iPad and adaptive layout (2026-10-12)
+
+Spec: `docs/superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md` §2.
+Needs a fresh `pnpm --filter mobile prebuild` (app.json and expo-haptics changed).
+There is no iPhone Duo simulator before Xcode 27.1; dragging the iPad Split View
+divider is the stand-in for folding.
+
+| Device              | Pose                             | Home | Search | Detail | Sheets | Notes |
+| ------------------- | -------------------------------- | ---- | ------ | ------ | ------ | ----- |
+| iPad Pro 13" (M5)   | landscape, full, sidebar open    |      |        |        |        |       |
+| iPad Pro 13" (M5)   | landscape, full, sidebar hidden  |      |        |        |        |       |
+| iPad Pro 13" (M5)   | portrait, full                   |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ⅓ Split View                     |      |        |        |        |       |
+| iPad Pro 11" (M5)   | landscape + portrait, full       |      |        |        |        |       |
+| iPad Pro 11" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad mini (A17 Pro) | portrait full (expect 2 columns) |      |        |        |        |       |
+| iPad mini (A17 Pro) | ⅓ Split View (expect 1 column)   |      |        |        |        |       |
+| iPhone 17 Pro       | portrait (must match main)       |      |        |        |        |       |
+| iPhone 17 Pro Max   | landscape (expect 2 columns)     |      |        |        |        |       |
+
+For every row: Home with and without a filter, Home empty state, Search
+empty / results / no results, game detail, paywall, profile, shared (via the
+share extension), onboarding (reset it via the dev menu or reinstall),
+screenshot viewer rotation, pull to refresh, Dynamic Type at default and AX3.
+
+Live resize: with Home scrolled halfway and a game detail pushed in the
+Search tab, drag the divider full → ½ → ⅓ → full. Expect columns to re-flow,
+no crash, scroll position kept, the Search tab's detail still on top.
+
+Haptic (physical iPhone only — simulators do not play haptics): add a game →
+buzz; change Playing → Completed → buzz; change only the rating → no buzz.
+
+Profile sheet: swiping it down closes it (React Native blocks the native
+swipe and routes it to `onRequestClose`); tapping the avatar again reopens it.
+
+Release: 13" iPad screenshots for App Store Connect; version bump — this is a
+native change and cannot ship over the air.
