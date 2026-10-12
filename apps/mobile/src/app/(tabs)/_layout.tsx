@@ -5,7 +5,7 @@ const { Icon, Label } = Trigger;
 
 export default function TabsLayout() {
   return (
-    <NativeTabs minimizeBehavior="onScrollDown">
+    <NativeTabs minimizeBehavior="onScrollDown" sidebarAdaptable>
       <Trigger name="(home)">
         <Label>Home</Label>
         <Icon sf={{ default: "house", selected: "house.fill" }} md="home" />

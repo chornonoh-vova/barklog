@@ -7,6 +7,10 @@ import { Type } from "@/theme";
 
 const COVER_WIDTH = 44;
 
+/** `row` is the plain list row a phone shows; `card` is one cell of a grid on a
+ * wider window. Same content, so the two never drift apart. */
+export type GameRowVariant = "row" | "card";
+
 /** Takes `id`, not a closure: a per-item `onPress={() => push(id)}` would hand
  * each row a fresh function and defeat the memo. */
 export const GameRow = memo(function GameRow({
@@ -14,18 +18,26 @@ export const GameRow = memo(function GameRow({
   title,
   subtitle,
   coverImageId,
+  variant = "row",
   onPress,
 }: {
   id: number;
   title: string;
   subtitle: string | null;
   coverImageId: string | null;
+  variant?: GameRowVariant;
   onPress: (id: number) => void;
 }) {
   return (
     <Pressable
       onPress={() => onPress(id)}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => {
+        const card = variant === "card";
+        return [
+          card ? styles.card : styles.row,
+          pressed && (card ? styles.cardPressed : styles.pressed),
+        ];
+      }}
       accessibilityRole="button"
       accessibilityLabel={subtitle === null ? title : `${title}, ${subtitle}`}
     >
@@ -42,7 +54,9 @@ export const GameRow = memo(function GameRow({
         )}
       </View>
 
-      <SymbolView name="chevron.right" size={13} tintColor={PlatformColor("tertiaryLabel")} />
+      {variant === "row" ? (
+        <SymbolView name="chevron.right" size={13} tintColor={PlatformColor("tertiaryLabel")} />
+      ) : null}
     </Pressable>
   );
 });
@@ -60,6 +74,20 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: PlatformColor("secondarySystemGroupedBackground"),
+  },
+  /** `flex: 1` so every card in a `GameGridRow` fills its slot and a row's
+   * cards share the tallest one's height. */
+  card: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: PlatformColor("secondarySystemGroupedBackground"),
+  },
+  cardPressed: {
+    backgroundColor: PlatformColor("tertiarySystemGroupedBackground"),
   },
   text: { flex: 1, gap: 2 },
   title: { ...Type.headline, color: PlatformColor("label") },
