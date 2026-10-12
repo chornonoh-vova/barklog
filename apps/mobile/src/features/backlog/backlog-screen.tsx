@@ -12,30 +12,41 @@ import {
 } from "react-native";
 
 import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
-import { GameRow } from "@/components/game-row";
 import { EmptyState } from "@/components/empty-state";
+import { GameGridRow } from "@/components/game-grid-row";
+import { GameRow, type GameRowVariant } from "@/components/game-row";
 import { LoadingState } from "@/components/query-states";
 import { QueryBoundary } from "@/components/query-boundary";
 import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
-import { toSections, type BacklogSection } from "@/features/backlog/sections";
+import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { rowSubtitle, statsLine } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
+import { columnCount } from "@/ui/columns";
+import { useMeasuredWidth } from "@/ui/use-measured-width";
 
-const keyExtractor = (item: BacklogListItemWire) => String(item.gameId);
+// A row's first game, so a key survives the column count changing under it.
+const keyExtractor = (row: BacklogListItemWire[]) => String(row[0]?.gameId);
 
-// Lowercase, deliberately not a component: `SectionList` calls this as a plain
-// function, and React Compiler would give a component a `useMemoCache` call
-// that then runs outside a render.
-const renderSectionHeader = ({ section }: { section: BacklogSection }) =>
+// Lowercase, deliberately not components: `SectionList` calls these as plain
+// functions, and React Compiler would give a component a `useMemoCache` call
+// that then runs outside a render. Two of them because the sticky header must
+// match the list behind it — plain under rows, grouped under cards.
+const sectionHeader = (section: BacklogRowSection, grouped: boolean) =>
   section.title === null ? null : (
-    <View style={styles.sectionHeader}>
+    <View style={grouped ? styles.groupedSectionHeader : styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
       <Text style={styles.sectionCount}>{section.count}</Text>
     </View>
   );
+
+const renderSectionHeader = ({ section }: { section: BacklogRowSection }) =>
+  sectionHeader(section, false);
+
+const renderGroupedSectionHeader = ({ section }: { section: BacklogRowSection }) =>
+  sectionHeader(section, true);
 
 export function BacklogScreen() {
   const [filter, setFilter] = useState<BacklogStatus | undefined>(undefined);
@@ -44,6 +55,9 @@ export function BacklogScreen() {
   const router = useRouter();
   const premium = useIsPremium();
   const slots = slotsLabel(stats.data, premium);
+  const { width, fontScale, onLayout } = useMeasuredWidth();
+  const columns = columnCount(width, fontScale);
+  const grid = columns > 1;
 
   // Home: the only screen a user reaches without having just tapped something.
   useReviewPrompt();
@@ -51,21 +65,31 @@ export function BacklogScreen() {
   const openGame = useCallback((gameId: number) => router.push(`/game/${gameId}`), [router]);
 
   const renderItem = useCallback(
-    ({ item }: { item: BacklogListItemWire }) => (
-      <GameRow
-        id={item.gameId}
-        title={item.game.name}
-        subtitle={rowSubtitle(item)}
-        coverImageId={item.game.coverImageId}
-        onPress={openGame}
-      />
-    ),
-    [openGame],
+    ({ item }: { item: BacklogListItemWire[] }) => {
+      const game = (entry: BacklogListItemWire, variant: GameRowVariant) => (
+        <GameRow
+          key={entry.gameId}
+          id={entry.gameId}
+          title={entry.game.name}
+          subtitle={rowSubtitle(entry)}
+          coverImageId={entry.game.coverImageId}
+          variant={variant}
+          onPress={openGame}
+        />
+      );
+
+      return grid ? (
+        <GameGridRow columns={columns}>{item.map((entry) => game(entry, "card"))}</GameGridRow>
+      ) : (
+        <>{item.map((entry) => game(entry, "row"))}</>
+      );
+    },
+    [openGame, grid, columns],
   );
 
   const sections = useMemo(
-    () => toSections(backlog.data?.items ?? [], filter),
-    [backlog.data, filter],
+    () => toRowSections(toSections(backlog.data?.items ?? [], filter), columns),
+    [backlog.data, filter, columns],
   );
 
   if (backlog.isPending) return <LoadingState />;
@@ -104,12 +128,13 @@ export function BacklogScreen() {
     <QueryBoundary query={backlog}>
       {() => (
         <SectionList
-          style={styles.list}
+          style={grid ? styles.groupedList : styles.list}
+          onLayout={onLayout}
           contentContainerStyle={styles.listContent}
           sections={sections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
+          renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={
             filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
@@ -133,6 +158,7 @@ export function BacklogScreen() {
 
 const styles = StyleSheet.create({
   list: Screen.fill,
+  groupedList: Screen.groupedFill,
   listContent: Screen.listContent,
   header: { paddingTop: 8, gap: 4 },
   stats: {
@@ -149,6 +175,11 @@ const styles = StyleSheet.create({
   slots: { ...Type.footnote, color: PlatformColor("link"), paddingHorizontal: 16 },
   sectionHeader: {
     ...SectionHeader.container,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  groupedSectionHeader: {
+    ...SectionHeader.groupedContainer,
     flexDirection: "row",
     justifyContent: "space-between",
   },
