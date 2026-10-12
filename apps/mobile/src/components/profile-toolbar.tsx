@@ -3,10 +3,11 @@ import { UserProfileView } from "@clerk/expo/native";
 import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet } from "react-native";
+import { Modal, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import RevenueCatUI from "react-native-purchases-ui";
 
 import { useIsPremium } from "@/api/hooks";
+import { prefersSheet } from "@/ui/columns";
 
 /**
  * Not Clerk's `UserButton`: it finds its parent by walking the responder chain,
@@ -21,6 +22,7 @@ export function ProfileToolbar() {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const premium = useIsPremium();
+  const { width } = useWindowDimensions();
 
   return (
     <>
@@ -56,7 +58,7 @@ export function ProfileToolbar() {
       <Modal
         visible={isOpen}
         animationType="slide"
-        presentationStyle="fullScreen"
+        presentationStyle={prefersSheet(width) ? "pageSheet" : "fullScreen"}
         onRequestClose={() => setIsOpen(false)}
       >
         <UserProfileView style={styles.profile} onDismiss={() => setIsOpen(false)} />
