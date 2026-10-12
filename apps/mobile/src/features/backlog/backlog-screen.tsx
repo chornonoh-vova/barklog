@@ -55,7 +55,7 @@ export function BacklogScreen() {
   const router = useRouter();
   const premium = useIsPremium();
   const slots = slotsLabel(stats.data, premium);
-  const { width, fontScale, onLayout } = useMeasuredWidth();
+  const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
 
@@ -130,7 +130,7 @@ export function BacklogScreen() {
         <SectionList
           style={grid ? styles.groupedList : styles.list}
           onLayout={onLayout}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, sideInsets]}
           sections={sections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}

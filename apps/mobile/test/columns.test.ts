@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   chunk,
   columnCount,
+  contentWidth,
   DETAIL_SPLIT_MIN_WIDTH,
   detailIsSplit,
   MAX_COLUMNS,
@@ -114,5 +115,23 @@ describe("prefersSheet", () => {
 
   it("stays full screen for an unusable width", () => {
     expect(prefersSheet(Number.NaN)).toBe(false);
+  });
+});
+
+describe("contentWidth", () => {
+  it("is the full width when there are no side insets (portrait iPhone, iPad)", () => {
+    expect(contentWidth(1376, 0, 0)).toBe(1376);
+  });
+
+  it("drops the side safe-area insets, so iPhone landscape lays out clear of the Dynamic Island", () => {
+    expect(contentWidth(956, 62, 62)).toBe(832);
+  });
+
+  it("handles asymmetric insets (iPhone Duo)", () => {
+    expect(contentWidth(900, 0, 40)).toBe(860);
+  });
+
+  it("never goes negative", () => {
+    expect(contentWidth(50, 40, 40)).toBe(0);
   });
 });

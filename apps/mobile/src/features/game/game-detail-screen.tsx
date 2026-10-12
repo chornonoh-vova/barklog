@@ -32,7 +32,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const premium = usePremium();
   const stats = useBacklogStats();
   const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
-  const { width, fontScale, onLayout } = useMeasuredWidth();
+  const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const split = detailIsSplit(width, fontScale);
 
   const gameData = game.data;
@@ -85,6 +85,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
           return (
             <ScrollView
               style={styles.scroll}
+              contentContainerStyle={sideInsets}
               onLayout={onLayout}
               contentInsetAdjustmentBehavior="automatic"
               showsVerticalScrollIndicator={false}

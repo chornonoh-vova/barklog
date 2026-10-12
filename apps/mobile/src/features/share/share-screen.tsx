@@ -14,6 +14,7 @@ import { toShareSections, type ShareSection } from "@/features/share/sections";
 import { SearchingState } from "@/features/share/searching-state";
 import { ShareHeader } from "@/features/share/share-header";
 import { Screen, SectionHeader } from "@/theme";
+import { useSideInsets } from "@/ui/use-side-insets";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
@@ -44,6 +45,7 @@ export function ShareScreen({
 }) {
   const identify = useIdentifyShare(url);
   const backToHome = { label: "Back to Home", onPress: onGoHome };
+  const sideInsets = useSideInsets();
 
   const sections = useMemo(
     () =>
@@ -85,7 +87,7 @@ export function ShareScreen({
         <SectionList
           style={Screen.fill}
           // `flexGrow: 1`, or the empty component is clipped — see `theme.ts`.
-          contentContainerStyle={Screen.listContent}
+          contentContainerStyle={[Screen.listContent, sideInsets]}
           sections={sections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}

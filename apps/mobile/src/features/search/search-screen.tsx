@@ -23,7 +23,7 @@ export function SearchScreen({ query }: { query: string }) {
   const debounced = useDebounced(query.trim(), DEBOUNCE_MS);
   const search = useSearchGames(debounced);
   const router = useRouter();
-  const { width, fontScale, onLayout } = useMeasuredWidth();
+  const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
 
@@ -72,7 +72,7 @@ export function SearchScreen({ query }: { query: string }) {
         // away the scroll position every time the window is resized.
         <FlatList
           style={grid ? styles.groupedList : styles.list}
-          contentContainerStyle={[styles.listContent, grid && styles.gridContent]}
+          contentContainerStyle={[styles.listContent, grid && styles.gridContent, sideInsets]}
           onLayout={onLayout}
           data={chunk(data.items, columns)}
           keyExtractor={keyExtractor}

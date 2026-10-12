@@ -8,6 +8,7 @@ import { ErrorState, LoadingState } from "@/components/query-states";
 import { GameShelf } from "@/features/explore/game-shelf";
 import { toShelves } from "@/features/explore/shelves";
 import { Screen } from "@/theme";
+import { useSideInsets } from "@/ui/use-side-insets";
 
 const EMPTY_CATALOGUE = (
   <EmptyState
@@ -23,6 +24,7 @@ export function ExploreScreen() {
   const upcoming = useGameFeed("upcoming");
   const recent = useGameFeed("recent");
   const router = useRouter();
+  const sideInsets = useSideInsets();
 
   // Each tab owns its own detail route so a push stays in the current tab: a
   // bare `/game/${id}` resolves to `(home)` and switches tabs.
@@ -50,7 +52,7 @@ export function ExploreScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, sideInsets]}
       refreshControl={
         <RefreshControl
           refreshing={feeds.some((feed) => feed.isRefetching)}

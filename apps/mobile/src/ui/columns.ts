@@ -60,3 +60,11 @@ export function detailIsSplit(width: number, fontScale: number): boolean {
 export function prefersSheet(windowWidth: number): boolean {
   return usable(windowWidth) && windowWidth >= SHEET_MIN_WIDTH;
 }
+
+/** The width content can use once the side safe-area insets are taken out: the
+ * Dynamic Island in iPhone landscape, and the asymmetric insets of iPhone Duo. A
+ * vertical scroll view's `contentInsetAdjustmentBehavior` only pads the
+ * scrolling axis, so the sides are ours to handle. */
+export function contentWidth(width: number, left: number, right: number): number {
+  return Math.max(0, width - left - right);
+}
