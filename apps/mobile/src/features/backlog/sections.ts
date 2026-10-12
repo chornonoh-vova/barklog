@@ -1,6 +1,7 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 
 import { statusLabel } from "@/features/game/format";
+import { chunk } from "@/ui/columns";
 
 /**
  * Not `BACKLOG_STATUSES`: that is the Postgres enum's declaration order, and
@@ -38,4 +39,14 @@ export function toSections(
 
     return [{ status, title: statusLabel(status), count: data.length, data }];
   });
+}
+
+/** A section whose items are grouped into rows of cards for a wide window. */
+export interface BacklogRowSection extends Omit<BacklogSection, "data"> {
+  data: BacklogListItemWire[][];
+}
+
+/** `count` stays the number of games — it is what the header shows. */
+export function toRowSections(sections: BacklogSection[], columns: number): BacklogRowSection[] {
+  return sections.map((section) => ({ ...section, data: chunk(section.data, columns) }));
 }
