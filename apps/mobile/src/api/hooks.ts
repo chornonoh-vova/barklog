@@ -20,8 +20,11 @@ import {
   type MeResponse,
   type ShareIdentifyResponse,
 } from "@repo/contracts";
+import { notificationAsync, NotificationFeedbackType } from "expo-haptics";
 import { router } from "expo-router";
 import { Alert } from "react-native";
+
+import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 
 import { errorCopy } from "./error-copy";
 import { isApiError } from "./errors";
@@ -116,6 +119,9 @@ function useBacklogEntryMutation<TInput>(
   options: {
     mutationFn: (input: TInput) => Promise<unknown>;
     entry: (previous: GameDetailResponse, input: TInput) => BacklogEntryWire | null;
+    /** Runs once the optimistic entry is in the cache, with the entry it
+     * replaced: `undefined` when the detail was not cached at all. */
+    onApply?: (previous: BacklogEntryWire | null | undefined, input: TInput) => void;
   },
 ) {
   const queryClient = useQueryClient();
@@ -134,6 +140,8 @@ function useBacklogEntryMutation<TInput>(
           backlogEntry: options.entry(previous, input),
         });
       }
+
+      options.onApply?.(previous?.backlogEntry, input);
 
       return { previous };
     },
@@ -172,6 +180,16 @@ export function useUpsertBacklogEntry(gameId: number) {
       addedAt: previous.backlogEntry?.addedAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }),
+    // At apply time, not on success: the screen already shows the new status,
+    // and a haptic that waits on the network lands after the change it marks.
+    // A failure is corrected by the rollback and alert in `onError`.
+    onApply: (previous, input) => {
+      const previousStatus = previous === undefined ? undefined : (previous?.status ?? null);
+
+      if (shouldPlayStatusHaptic(previousStatus, input.status)) {
+        void notificationAsync(NotificationFeedbackType.Success);
+      }
+    },
   });
 }
 
