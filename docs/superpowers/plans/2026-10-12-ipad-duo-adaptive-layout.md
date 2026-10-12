@@ -34,38 +34,40 @@
 
 ## File Structure
 
-| File | Status | Responsibility |
-|---|---|---|
-| `apps/mobile/app.json` | modify | Opt in to iPad and all orientations |
-| `apps/mobile/src/app/(tabs)/_layout.tsx` | modify | `sidebarAdaptable` tab bar |
-| `apps/mobile/src/ui/columns.ts` | create | Pure layout decisions: `columnCount`, `chunk`, `detailIsSplit`, `prefersSheet`, constants |
-| `apps/mobile/test/columns.test.ts` | create | Tests for the above |
-| `apps/mobile/src/ui/use-measured-width.ts` | create | Hook: window width first, then the view's own `onLayout` width |
-| `apps/mobile/src/features/backlog/sections.ts` | modify | `toRowSections` — section items chunked into rows |
-| `apps/mobile/test/sections.test.ts` | modify | Tests for `toRowSections` |
-| `apps/mobile/src/features/backlog/status-haptic.ts` | create | Pure `shouldPlayStatusHaptic` |
-| `apps/mobile/test/status-haptic.test.ts` | create | Tests for it |
-| `apps/mobile/src/api/hooks.ts` | modify | `onApply` hook in the backlog mutation; haptic in upsert |
-| `apps/mobile/src/theme.ts` | modify | Grouped background variants for list and sticky header |
-| `apps/mobile/src/components/game-row.tsx` | modify | `variant: "row" \| "card"` |
-| `apps/mobile/src/components/game-grid-row.tsx` | create | One row of cards with gaps and empty slots |
-| `apps/mobile/src/features/backlog/backlog-screen.tsx` | modify | Home grid |
-| `apps/mobile/src/features/search/search-screen.tsx` | modify | Search grid |
-| `apps/mobile/src/features/game/game-detail-screen.tsx` | modify | Two-column detail |
-| `apps/mobile/src/app/_layout.tsx` | modify | Paywall/shared as page sheets when wide |
-| `apps/mobile/src/app/paywall.tsx` | modify | Comment only (no longer always full screen) |
-| `apps/mobile/src/components/profile-toolbar.tsx` | modify | Profile as page sheet when wide |
-| `docs/mobile-device-verification.md` | modify | iPad / adaptive layout checklist and results |
+| File                                                   | Status | Responsibility                                                                            |
+| ------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------- |
+| `apps/mobile/app.json`                                 | modify | Opt in to iPad and all orientations                                                       |
+| `apps/mobile/src/app/(tabs)/_layout.tsx`               | modify | `sidebarAdaptable` tab bar                                                                |
+| `apps/mobile/src/ui/columns.ts`                        | create | Pure layout decisions: `columnCount`, `chunk`, `detailIsSplit`, `prefersSheet`, constants |
+| `apps/mobile/test/columns.test.ts`                     | create | Tests for the above                                                                       |
+| `apps/mobile/src/ui/use-measured-width.ts`             | create | Hook: window width first, then the view's own `onLayout` width                            |
+| `apps/mobile/src/features/backlog/sections.ts`         | modify | `toRowSections` — section items chunked into rows                                         |
+| `apps/mobile/test/sections.test.ts`                    | modify | Tests for `toRowSections`                                                                 |
+| `apps/mobile/src/features/backlog/status-haptic.ts`    | create | Pure `shouldPlayStatusHaptic`                                                             |
+| `apps/mobile/test/status-haptic.test.ts`               | create | Tests for it                                                                              |
+| `apps/mobile/src/api/hooks.ts`                         | modify | `onApply` hook in the backlog mutation; haptic in upsert                                  |
+| `apps/mobile/src/theme.ts`                             | modify | Grouped background variants for list and sticky header                                    |
+| `apps/mobile/src/components/game-row.tsx`              | modify | `variant: "row" \| "card"`                                                                |
+| `apps/mobile/src/components/game-grid-row.tsx`         | create | One row of cards with gaps and empty slots                                                |
+| `apps/mobile/src/features/backlog/backlog-screen.tsx`  | modify | Home grid                                                                                 |
+| `apps/mobile/src/features/search/search-screen.tsx`    | modify | Search grid                                                                               |
+| `apps/mobile/src/features/game/game-detail-screen.tsx` | modify | Two-column detail                                                                         |
+| `apps/mobile/src/app/_layout.tsx`                      | modify | Paywall/shared as page sheets when wide                                                   |
+| `apps/mobile/src/app/paywall.tsx`                      | modify | Comment only (no longer always full screen)                                               |
+| `apps/mobile/src/components/profile-toolbar.tsx`       | modify | Profile as page sheet when wide                                                           |
+| `docs/mobile-device-verification.md`                   | modify | iPad / adaptive layout checklist and results                                              |
 
 ---
 
 ### Task 1: Pure layout decisions — `src/ui/columns.ts`
 
 **Files:**
+
 - Create: `apps/mobile/src/ui/columns.ts`
 - Test: `apps/mobile/test/columns.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces (used by Tasks 2, 4, 5, 6, 7, 8):
   - `CARD_MIN_WIDTH`, `GUTTER`, `COLUMN_GAP`, `MAX_COLUMNS`, `MAX_TEXT_SCALE`, `DETAIL_SPLIT_MIN_WIDTH`, `SHEET_MIN_WIDTH`: `number`
@@ -291,10 +293,12 @@ git commit -m "feat(mobile): add width-based layout decisions"
 ### Task 2: Backlog sections as rows — `toRowSections`
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/backlog/sections.ts`
 - Test: `apps/mobile/test/sections.test.ts`
 
 **Interfaces:**
+
 - Consumes: `chunk` from Task 1.
 - Produces (used by Task 5):
   - `interface BacklogRowSection { status: BacklogStatus; title: string | null; count: number; data: BacklogListItemWire[][] }`
@@ -397,12 +401,14 @@ git commit -m "feat(mobile): group backlog sections into rows"
 ### Task 3: Haptic on status change
 
 **Files:**
+
 - Create: `apps/mobile/src/features/backlog/status-haptic.ts`
 - Test: `apps/mobile/test/status-haptic.test.ts`
 - Modify: `apps/mobile/src/api/hooks.ts` (`useBacklogEntryMutation` at ~line 114, `useUpsertBacklogEntry` at ~line 162)
 - Modify: `apps/mobile/package.json`, `pnpm-lock.yaml` (via `expo install`)
 
 **Interfaces:**
+
 - Consumes: nothing from earlier tasks.
 - Produces: `shouldPlayStatusHaptic(previous: BacklogStatus | null | undefined, next: BacklogStatus): boolean`; `useBacklogEntryMutation` option `onApply?: (previous: BacklogEntryWire | null | undefined, input: TInput) => void`. Stage 2's context menu relies on the haptic living in `useUpsertBacklogEntry`.
 
@@ -504,7 +510,7 @@ Extend `useBacklogEntryMutation`'s options type:
 In its `onMutate`, call it after the `if (previous) { … }` block and before `return { previous };`:
 
 ```ts
-      options.onApply?.(previous?.backlogEntry, input);
+options.onApply?.(previous?.backlogEntry, input);
 ```
 
 In `useUpsertBacklogEntry`, add after `entry: …`:
@@ -537,6 +543,7 @@ On-device check happens in Task 9 (simulators do not play haptics — use a phys
 ### Task 4: Opt in to iPad, sidebar tab bar, and UI building blocks
 
 **Files:**
+
 - Modify: `apps/mobile/app.json` (`orientation`, `ios.supportsTablet`)
 - Modify: `apps/mobile/src/app/(tabs)/_layout.tsx`
 - Modify: `apps/mobile/src/theme.ts` (`Screen`, `SectionHeader`)
@@ -545,6 +552,7 @@ On-device check happens in Task 9 (simulators do not play haptics — use a phys
 - Create: `apps/mobile/src/ui/use-measured-width.ts`
 
 **Interfaces:**
+
 - Consumes: `COLUMN_GAP`, `GUTTER` (Task 1).
 - Produces (used by Tasks 5–7):
   - `Screen.groupedFill`, `SectionHeader.groupedContainer` style objects
@@ -623,9 +631,11 @@ Add `variant = "row",` to the destructured props and `variant?: GameRowVariant;`
 ```
 
 ```tsx
-      {variant === "row" ? (
-        <SymbolView name="chevron.right" size={13} tintColor={PlatformColor("tertiaryLabel")} />
-      ) : null}
+{
+  variant === "row" ? (
+    <SymbolView name="chevron.right" size={13} tintColor={PlatformColor("tertiaryLabel")} />
+  ) : null;
+}
 ```
 
 Add to `styles`:
@@ -754,9 +764,11 @@ git commit -m "feat(mobile): support iPad and add card grid building blocks"
 ### Task 5: Home as a card grid on wide windows
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/backlog/backlog-screen.tsx`
 
 **Interfaces:**
+
 - Consumes: `columnCount` (Task 1), `toRowSections`, `BacklogRowSection` (Task 2), `GameGridRow`, `GameRowVariant`, `useMeasuredWidth`, `Screen.groupedFill`, `SectionHeader.groupedContainer` (Task 4).
 - Produces: nothing new.
 
@@ -820,41 +832,41 @@ const renderGroupedSectionHeader = sectionHeaderRenderer(true);
 Inside `BacklogScreen`, after `const slots = …`, add:
 
 ```tsx
-  const { width, fontScale, onLayout } = useMeasuredWidth();
-  const columns = columnCount(width, fontScale);
-  const grid = columns > 1;
+const { width, fontScale, onLayout } = useMeasuredWidth();
+const columns = columnCount(width, fontScale);
+const grid = columns > 1;
 ```
 
 Replace the existing `renderItem` and `sections` with:
 
 ```tsx
-  const renderItem = useCallback(
-    ({ item }: { item: BacklogListItemWire[] }) => {
-      const game = (entry: BacklogListItemWire, variant: GameRowVariant) => (
-        <GameRow
-          key={entry.gameId}
-          id={entry.gameId}
-          title={entry.game.name}
-          subtitle={rowSubtitle(entry)}
-          coverImageId={entry.game.coverImageId}
-          variant={variant}
-          onPress={openGame}
-        />
-      );
+const renderItem = useCallback(
+  ({ item }: { item: BacklogListItemWire[] }) => {
+    const game = (entry: BacklogListItemWire, variant: GameRowVariant) => (
+      <GameRow
+        key={entry.gameId}
+        id={entry.gameId}
+        title={entry.game.name}
+        subtitle={rowSubtitle(entry)}
+        coverImageId={entry.game.coverImageId}
+        variant={variant}
+        onPress={openGame}
+      />
+    );
 
-      return grid ? (
-        <GameGridRow columns={columns}>{item.map((entry) => game(entry, "card"))}</GameGridRow>
-      ) : (
-        <>{item.map((entry) => game(entry, "row"))}</>
-      );
-    },
-    [openGame, grid, columns],
-  );
+    return grid ? (
+      <GameGridRow columns={columns}>{item.map((entry) => game(entry, "card"))}</GameGridRow>
+    ) : (
+      <>{item.map((entry) => game(entry, "row"))}</>
+    );
+  },
+  [openGame, grid, columns],
+);
 
-  const sections = useMemo(
-    () => toRowSections(toSections(backlog.data?.items ?? [], filter), columns),
-    [backlog.data, filter, columns],
-  );
+const sections = useMemo(
+  () => toRowSections(toSections(backlog.data?.items ?? [], filter), columns),
+  [backlog.data, filter, columns],
+);
 ```
 
 - [ ] **Step 3: The list**
@@ -888,6 +900,7 @@ Run: `pnpm --filter mobile check-types && pnpm --filter mobile lint && pnpm --fi
 Expected: clean.
 
 With Metro running (Task 4 Step 7), reload on the iPad Pro 13" simulator and check:
+
 - Landscape full screen with the sidebar open: 3 columns of cards; with it hidden: 3 columns.
 - Portrait: 2 columns.
 - Filter to a status with one game: a single card at grid-cell width, not full width (Review Focus 2).
@@ -909,9 +922,11 @@ git commit -m "feat(mobile): show Home as a card grid on wide windows"
 ### Task 6: Search as a card grid on wide windows
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/search/search-screen.tsx`
 
 **Interfaces:**
+
 - Consumes: `columnCount`, `chunk`, `COLUMN_GAP` (Task 1), `GameGridRow`, `GameRowVariant`, `useMeasuredWidth`, `Screen.groupedFill` (Task 4).
 - Produces: nothing new.
 
@@ -1042,9 +1057,11 @@ git commit -m "feat(mobile): show Search results as a card grid on wide windows"
 ### Task 7: Two-column game detail
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/game/game-detail-screen.tsx`
 
 **Interfaces:**
+
 - Consumes: `detailIsSplit`, `COLUMN_GAP` (Task 1), `useMeasuredWidth` (Task 4).
 - Produces: nothing new. `Hero`, `EntryActions`, `ExpandableSummary`, `DetailRows`, `Screenshots`, `SimilarGames`, `IgdbAttribution` are not modified.
 
@@ -1066,8 +1083,8 @@ import { useMeasuredWidth } from "@/ui/use-measured-width";
 Inside `GameDetailScreen`, after `const activeCount = …`:
 
 ```tsx
-  const { width, fontScale, onLayout } = useMeasuredWidth();
-  const split = detailIsSplit(width, fontScale);
+const { width, fontScale, onLayout } = useMeasuredWidth();
+const split = detailIsSplit(width, fontScale);
 ```
 
 - [ ] **Step 2: Compose the two layouts**
@@ -1075,56 +1092,56 @@ Inside `GameDetailScreen`, after `const activeCount = …`:
 Replace the `<QueryBoundary query={game}>…</QueryBoundary>` block with:
 
 ```tsx
-      <QueryBoundary query={game}>
-        {(data) => {
-          const overview = (
-            <>
-              <Hero game={data} />
+<QueryBoundary query={game}>
+  {(data) => {
+    const overview = (
+      <>
+        <Hero game={data} />
 
-              <EntryActions
-                entry={data.backlogEntry}
-                premium={premium}
-                activeCount={activeCount}
-                onBlocked={() => router.push("/paywall")}
-                onUpsert={(input) => upsert.mutate(input)}
-              />
+        <EntryActions
+          entry={data.backlogEntry}
+          premium={premium}
+          activeCount={activeCount}
+          onBlocked={() => router.push("/paywall")}
+          onUpsert={(input) => upsert.mutate(input)}
+        />
 
-              {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
-            </>
-          );
+        {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
+      </>
+    );
 
-          return (
-            <ScrollView
-              style={styles.scroll}
-              onLayout={onLayout}
-              contentInsetAdjustmentBehavior="automatic"
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Wide: what you act on to the left, facts to the right. The
+    return (
+      <ScrollView
+        style={styles.scroll}
+        onLayout={onLayout}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Wide: what you act on to the left, facts to the right. The
                   shelves stay full width below either way — horizontal
                   scrolling is the one part that already uses the width. */}
-              {split ? (
-                <View style={styles.split}>
-                  <View style={styles.primary}>{overview}</View>
-                  <View style={styles.secondary}>
-                    <DetailRows game={data} />
-                  </View>
-                </View>
-              ) : (
-                overview
-              )}
+        {split ? (
+          <View style={styles.split}>
+            <View style={styles.primary}>{overview}</View>
+            <View style={styles.secondary}>
+              <DetailRows game={data} />
+            </View>
+          </View>
+        ) : (
+          overview
+        )}
 
-              <Screenshots screenshots={data.screenshots} />
+        <Screenshots screenshots={data.screenshots} />
 
-              {split ? null : <DetailRows game={data} />}
+        {split ? null : <DetailRows game={data} />}
 
-              <SimilarGames gameId={gameId} onPressGame={onOpenGame} />
+        <SimilarGames gameId={gameId} onPressGame={onOpenGame} />
 
-              <IgdbAttribution slug={data.slug} />
-            </ScrollView>
-          );
-        }}
-      </QueryBoundary>
+        <IgdbAttribution slug={data.slug} />
+      </ScrollView>
+    );
+  }}
+</QueryBoundary>
 ```
 
 - [ ] **Step 3: Styles**
@@ -1161,11 +1178,13 @@ git commit -m "feat(mobile): lay out game detail in two columns on wide windows"
 ### Task 8: Sheets instead of full-screen modals on wide windows
 
 **Files:**
+
 - Modify: `apps/mobile/src/app/_layout.tsx`
 - Modify: `apps/mobile/src/app/paywall.tsx:11` (comment)
 - Modify: `apps/mobile/src/components/profile-toolbar.tsx`
 
 **Interfaces:**
+
 - Consumes: `prefersSheet` (Task 1).
 - Produces: nothing new.
 
@@ -1178,10 +1197,10 @@ Change the `react-native` import to `import { useColorScheme, useWindowDimension
 In `RootLayout`, after `const colorScheme = useColorScheme();`:
 
 ```tsx
-  // Read at presentation time. An open sheet keeps its style if the window
-  // later resizes; UIKit already turns a page sheet full screen in compact width.
-  const { width } = useWindowDimensions();
-  const modal = prefersSheet(width) ? "pageSheet" : "fullScreenModal";
+// Read at presentation time. An open sheet keeps its style if the window
+// later resizes; UIKit already turns a page sheet full screen in compact width.
+const { width } = useWindowDimensions();
+const modal = prefersSheet(width) ? "pageSheet" : "fullScreenModal";
 ```
 
 Replace the two modal screens:
@@ -1216,7 +1235,7 @@ Change `import { Modal, Pressable, StyleSheet } from "react-native";` to `import
 In the component, after `const premium = useIsPremium();`:
 
 ```tsx
-  const { width } = useWindowDimensions();
+const { width } = useWindowDimensions();
 ```
 
 and on the `Modal`:
@@ -1231,6 +1250,7 @@ Run: `pnpm --filter mobile check-types && pnpm --filter mobile lint`
 Expected: clean.
 
 On iPad Pro 13" full screen:
+
 - Tap the avatar → Clerk's profile appears as a page sheet. Swipe it down → it dismisses, and tapping the avatar again opens it again (proves `onRequestClose` reset `isOpen`; Review Focus 5). If swipe-dismiss leaves `isOpen` stuck `true`, add `onDismiss={() => setIsOpen(false)}` to the `Modal` and re-test.
 - Tap "N of M slots used" on Home (free account) → RevenueCat paywall as a page sheet; dismiss works.
 - Share a link to Barklog from Safari → `shared` opens as a page sheet; picking a game pushes detail inside the sheet.
@@ -1251,9 +1271,11 @@ git commit -m "feat(mobile): present profile, paywall and share as sheets on wid
 ### Task 9: Device verification and checklist
 
 **Files:**
+
 - Modify: `docs/mobile-device-verification.md` (append a section)
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: the recorded result of spec §2.7's manual matrix.
 
@@ -1269,19 +1291,19 @@ Needs a fresh `pnpm --filter mobile prebuild` (app.json and expo-haptics changed
 There is no iPhone Duo simulator before Xcode 27.1; dragging the iPad Split View
 divider is the stand-in for folding.
 
-| Device | Pose | Home | Search | Detail | Sheets | Notes |
-|---|---|---|---|---|---|---|
-| iPad Pro 13" (M5) | landscape, full, sidebar open | | | | | |
-| iPad Pro 13" (M5) | landscape, full, sidebar hidden | | | | | |
-| iPad Pro 13" (M5) | portrait, full | | | | | |
-| iPad Pro 13" (M5) | ½ Split View | | | | | |
-| iPad Pro 13" (M5) | ⅓ Split View | | | | | |
-| iPad Pro 11" (M5) | landscape + portrait, full | | | | | |
-| iPad Pro 11" (M5) | ½ Split View | | | | | |
-| iPad mini (A17 Pro) | portrait full (expect 2 columns) | | | | | |
-| iPad mini (A17 Pro) | ⅓ Split View (expect 1 column) | | | | | |
-| iPhone 17 Pro | portrait (must match main) | | | | | |
-| iPhone 17 Pro Max | landscape (expect 2 columns) | | | | | |
+| Device              | Pose                             | Home | Search | Detail | Sheets | Notes |
+| ------------------- | -------------------------------- | ---- | ------ | ------ | ------ | ----- |
+| iPad Pro 13" (M5)   | landscape, full, sidebar open    |      |        |        |        |       |
+| iPad Pro 13" (M5)   | landscape, full, sidebar hidden  |      |        |        |        |       |
+| iPad Pro 13" (M5)   | portrait, full                   |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ⅓ Split View                     |      |        |        |        |       |
+| iPad Pro 11" (M5)   | landscape + portrait, full       |      |        |        |        |       |
+| iPad Pro 11" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad mini (A17 Pro) | portrait full (expect 2 columns) |      |        |        |        |       |
+| iPad mini (A17 Pro) | ⅓ Split View (expect 1 column)   |      |        |        |        |       |
+| iPhone 17 Pro       | portrait (must match main)       |      |        |        |        |       |
+| iPhone 17 Pro Max   | landscape (expect 2 columns)     |      |        |        |        |       |
 
 For every row: Home with and without a filter, Home empty state, Search
 empty / results / no results, game detail, paywall, profile, shared (via the

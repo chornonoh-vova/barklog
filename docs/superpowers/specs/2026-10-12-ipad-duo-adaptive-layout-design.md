@@ -90,7 +90,7 @@ is verified in Stage 3 (§4.4).
 
 ```ts
 export const CARD_MIN_WIDTH = 320;
-export const GUTTER = 16;      // outer margin, matches the 16pt list inset used everywhere
+export const GUTTER = 16; // outer margin, matches the 16pt list inset used everywhere
 export const COLUMN_GAP = 12;
 export const MAX_COLUMNS = 3;
 const MAX_TEXT_SCALE = 1.6;
@@ -112,17 +112,17 @@ export function chunk<T>(items: readonly T[], columns: number): T[][];
 
 Expected results (test table):
 
-| Width | Context | fontScale | Columns |
-|---|---|---|---|
-| 402 | iPhone portrait | 1.0 | 1 |
-| 440 | iPhone Pro Max portrait | 1.0 | 1 |
-| 744 | iPad mini portrait | 1.0 | 2 |
-| 956 | iPhone Pro Max landscape | 1.0 | 2 |
-| 1050 | 13" iPad landscape, sidebar open | 1.0 | 3 |
-| 1376 | 13" iPad landscape, sidebar hidden | 1.0 | 3 (capped) |
-| 744 | iPad mini portrait | 1.35 | 1 |
-| 1376 | 13" iPad landscape | 3.0 | 2 (scale capped at 1.6) |
-| 0 / NaN | before layout | — | 1 |
+| Width   | Context                            | fontScale | Columns                 |
+| ------- | ---------------------------------- | --------- | ----------------------- |
+| 402     | iPhone portrait                    | 1.0       | 1                       |
+| 440     | iPhone Pro Max portrait            | 1.0       | 1                       |
+| 744     | iPad mini portrait                 | 1.0       | 2                       |
+| 956     | iPhone Pro Max landscape           | 1.0       | 2                       |
+| 1050    | 13" iPad landscape, sidebar open   | 1.0       | 3                       |
+| 1376    | 13" iPad landscape, sidebar hidden | 1.0       | 3 (capped)              |
+| 744     | iPad mini portrait                 | 1.35      | 1                       |
+| 1376    | 13" iPad landscape                 | 3.0       | 2 (scale capped at 1.6) |
+| 0 / NaN | before layout                      | —         | 1                       |
 
 `src/ui/use-measured-width.ts`:
 
@@ -267,7 +267,7 @@ change, not removal, not navigation.
   for free, including Stage 2's context menu.
 - **Decision is pure:** `features/backlog/status-haptic.ts` —
   `shouldPlayStatusHaptic(previous: BacklogStatus | null | undefined, next:
-  BacklogStatus): boolean` is `previous !== next`. `undefined` (detail not
+BacklogStatus): boolean` is `previous !== next`. `undefined` (detail not
   cached) counts as a change: the user deliberately picked a status.
 - iOS already mutes haptics when the user turned System Haptics off.
 
@@ -285,12 +285,12 @@ change, not removal, not navigation.
 **Manual (Xcode 27.0 simulators, recorded in
 `docs/mobile-device-verification.md`):**
 
-| Device | Poses |
-|---|---|
-| iPad Pro 13" (M5) | landscape + portrait; full screen, ½ and ⅓ Split View; sidebar open and closed |
-| iPad Pro 11" (M5) | landscape + portrait; full screen and ½ Split View |
-| iPad mini (A17 Pro) | portrait full screen (2 columns), ⅓ Split View (1 column) |
-| iPhone 17 Pro / Pro Max | portrait (unchanged), landscape |
+| Device                  | Poses                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| iPad Pro 13" (M5)       | landscape + portrait; full screen, ½ and ⅓ Split View; sidebar open and closed |
+| iPad Pro 11" (M5)       | landscape + portrait; full screen and ½ Split View                             |
+| iPad mini (A17 Pro)     | portrait full screen (2 columns), ⅓ Split View (1 column)                      |
+| iPhone 17 Pro / Pro Max | portrait (unchanged), landscape                                                |
 
 For each: Home with and without a filter, Home empty state, Search empty /
 results / no results, game detail split and not, paywall, profile, shared
@@ -321,7 +321,7 @@ confirm.
 
 - `features/game/confirm-remove.ts` — `confirmRemove(gameName, onConfirm)`
   shows `Alert.alert` with title `Remove “<name>”?`, message `Its status and
-  rating will be lost.`, and buttons `Cancel` (cancel style) and `Remove`
+rating will be lost.`, and buttons `Cancel` (cancel style) and `Remove`
   (destructive style).
 - Used by the detail toolbar menu, the row context menu (§3.4) and the swipe
   action (§3.5), so all three paths behave the same.
@@ -420,7 +420,7 @@ React Native has no `UIKeyCommand` API on iOS.
 
 - Local Expo module `modules/key-commands` that registers `UIKeyCommand`s on
   the root view controller and emits events to JS; a `useKeyCommand(input,
-  modifiers, handler)` hook subscribes while a screen is focused.
+modifiers, handler)` hook subscribes while a screen is focused.
 - Shortcuts, each shown in the ⌘-hold discoverability overlay with a title:
   - `⌘F` — Find: switch to the Search tab and focus the search bar.
   - `⌘R` — Refresh: refetch the focused tab's queries.
@@ -493,11 +493,11 @@ pre-commit to fixes for problems not yet seen.
 
 ## 5. Risks and open questions
 
-| Risk | Mitigation |
-|---|---|
+| Risk                                                                     | Mitigation                                                                                            |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `sidebarAdaptable` misbehaves with `role="search"` or `minimizeBehavior` | Seen in the first iPad run; fall back to the plain tab bar on iPad (still correct, just less native). |
-| Clerk / RevenueCat views break in sheets | Keep that one presentation full screen (§2.6). |
-| `Link.Preview` problems under the transparent detail header | Ship menus without previews (§3.4). |
-| No pointer API reachable from React Native | Timeboxed; drop and record (§3.6). |
-| iPhone Duo behaviour differs from the third-party reports | Stage 3 verifies on Apple's simulator before any Duo-specific code is written. |
-| iPhone landscape exposes clipped onboarding pages | Part of Stage 1 manual testing; fix in Stage 1. |
+| Clerk / RevenueCat views break in sheets                                 | Keep that one presentation full screen (§2.6).                                                        |
+| `Link.Preview` problems under the transparent detail header              | Ship menus without previews (§3.4).                                                                   |
+| No pointer API reachable from React Native                               | Timeboxed; drop and record (§3.6).                                                                    |
+| iPhone Duo behaviour differs from the third-party reports                | Stage 3 verifies on Apple's simulator before any Duo-specific code is written.                        |
+| iPhone landscape exposes clipped onboarding pages                        | Part of Stage 1 manual testing; fix in Stage 1.                                                       |
