@@ -12,7 +12,7 @@ export default function SearchRoute() {
       <Stack.Title large>Search</Stack.Title>
       <ProfileToolbar />
       <Stack.SearchBar
-        placement="automatic"
+        placement="stacked"
         placeholder="Search games"
         onChangeText={(event) => setQuery(event.nativeEvent.text)}
       />
