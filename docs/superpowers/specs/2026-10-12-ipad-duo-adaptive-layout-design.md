@@ -369,17 +369,28 @@ tapping navigates through the `href` instead of `router.push`.
 - **GameRow and GameTile** take `href` instead of `onPress(id)`; each screen
   passes its own tab-scoped detail route (`/game/[id]`, `/search/game/[id]`,
   `/explore/game/[id]`), preserving the rule that a push stays in its tab.
-- **Menu when the game is in the backlog** (Home, and Search/Explore results
-  that carry an entry): `Status ▸` submenu with the four statuses (current one
-  checked), `Share`, and `Remove from Backlog…` (destructive → §3.1).
-- **Menu when it is not:** `Add to Backlog ▸` submenu with the statuses, and
-  `Share`.
-- Status changes go through `useUpsertBacklogEntry` and the same
-  `wouldExceedSlots` gate as `EntryActions`; a blocked change opens the
-  paywall.
-- Share reuses `gameShareContent`, which needs a `GameDetailResponse`;
-  `features/game/share.ts` gains a summary-shaped overload so rows can share
-  without fetching detail first.
+- **Home rows** (the only list that knows each game's entry): `Status ▸`
+  submenu with the four statuses (current one checked), `Share`, and
+  `Remove from Backlog…` (destructive → §3.1).
+- **Search, Explore, Similar Games and Share-sheet results:** preview and
+  `Share` only. `GameSummaryWire` carries no backlog entry, and the upsert
+  endpoint takes the rating with the status, so a status change from a
+  summary would send `rating: null` and wipe an existing rating. Adding from
+  these lists stays one tap away on the detail screen.
+- Status changes go through `useUpsertBacklogEntry` (so they play §2.6a's
+  haptic) and the same `wouldExceedSlots` gate as `EntryActions`; a blocked
+  change opens the paywall.
+- Share reuses `gameShareContent`, which already takes `{ slug, name }`, so
+  summaries share without fetching detail.
+- Shape (verified against expo-router 57's `LinkWithPreview`): `<Link href
+asChild push>` → `<Link.Trigger>` around a single `Pressable`, then
+  `<Link.Preview />` and `<Link.Menu>` as direct children of `Link`. The menu
+  must be a `Link.Menu` element, not a wrapper component, so hooks live in a
+  row component that builds the element. `href` must not change while a
+  preview is open. `Link`'s own `onPress` runs before navigation, which is
+  where Stage 3 records recent searches.
+- `GameDetailScreen` takes `gameHref(id)` instead of `onOpenGame(id)`, so
+  Similar Games tiles link within the current tab.
 
 Risk: `Link.Preview` mounts the destination route to render the preview.
 If that costs a detail fetch per long-press on slow networks, it is
@@ -391,7 +402,7 @@ broken under the transparent detail header, ship menus without
 
 Single-column Home rows get a trailing swipe action, `Remove`, via
 `react-native-gesture-handler`'s `ReanimatedSwipeable` (already a
-dependency). It goes through §3.1's confirmation. No full-swipe-to-delete:
+dependency; the root layout gains the `GestureHandlerRootView` it needs). It goes through §3.1's confirmation. No full-swipe-to-delete:
 a confirmation after a full swipe feels broken.
 
 Cards (2+ columns) get no swipe — swiping cards in a grid is not an iOS
@@ -405,8 +416,10 @@ Navigation bar items, tab bar, SwiftUI buttons and menus get pointer effects
 from UIKit already. React Native `Pressable` rows, cards, tiles and
 screenshots do not.
 
-- First, a timeboxed check (half a day): with `Link.Trigger` from §3.4 in
-  place, does the row get a native pointer highlight? If yes, done.
+- React Native's `Pressable` hover (`onHoverIn`) is web-only on iOS in RN
+  0.86 (`HoverState.js`), and `@expo/ui` has no `hoverEffect` modifier.
+- First, a quick check: with `Link.Trigger` from §3.4 in place, does the row
+  get a native pointer highlight? If yes, done.
 - If not: a local Expo module `modules/pointer-hover` exposing a view that
   adds a `UIPointerInteraction` with the `.highlight` / `.lift` effect, and
   wrap `GameRow`, `GameTile` and the screenshot thumbnails in it.
@@ -419,8 +432,14 @@ iPad users with a keyboard expect, and the HIG lists, standard shortcuts.
 React Native has no `UIKeyCommand` API on iOS.
 
 - Local Expo module `modules/key-commands` that registers `UIKeyCommand`s on
-  the root view controller and emits events to JS; a `useKeyCommand(input,
-modifiers, handler)` hook subscribes while a screen is focused.
+  the root view controller and emits events to JS; a `useKeyCommand(...)`
+  hook registers while a screen is focused. The action is a selector added to
+  `UIViewController` by extension, so whichever controller in the responder
+  chain sees it first — including a presented modal, whose chain reaches the
+  root through its presenter — can forward it.
+- `⌘F` focuses the search bar through `Stack.SearchBar`'s `ref`
+  (`SearchBarCommands.focus`), via a one-shot "focus requested" flag the
+  Search route takes when it gains focus.
 - Shortcuts, each shown in the ⌘-hold discoverability overlay with a title:
   - `⌘F` — Find: switch to the Search tab and focus the search bar.
   - `⌘R` — Refresh: refetch the focused tab's queries.
@@ -459,9 +478,10 @@ are none.
 - `features/search/recents.ts` — `pushRecent(list, query)` (trim,
   case-insensitive de-duplicate, newest first, cap 8) with tests; stored in
   AsyncStorage following `storage/flag.ts`'s pattern.
-- Tapping a recent query fills the search bar. Needs `Stack.SearchBar` to
-  accept text programmatically; if it cannot, tapping runs the search and
-  shows results without filling the field, and the plan records it.
+- Tapping a recent query fills the search bar through `Stack.SearchBar`'s
+  `ref` (`SearchBarCommands.setText`, verified in react-native-screens 4.26)
+  and runs the search.
+- Recorded from `Link`'s `onPress` on a Search result (§3.4).
 - Recents are local to the device and cleared on sign-out alongside the
   query cache (`should-clear-cache.ts`).
 
