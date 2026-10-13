@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 
 import { useDeleteBacklogEntry, useUpsertBacklogEntry } from "@/api/hooks";
 import { GameRow, type GameRowVariant } from "@/components/game-row";
-import { SwipeToRemove } from "@/components/swipe-to-remove";
 import { BacklogRowMenu } from "@/features/backlog/backlog-row-menu";
 import { confirmRemove } from "@/features/game/confirm-remove";
 import { rowSubtitle, rowSubtitleSpoken } from "@/features/game/format";
@@ -49,7 +48,7 @@ export function BacklogGameRow({
 
   const askRemove = () => confirmRemove(entry.game.name, () => remove.mutate());
 
-  const row = (
+  return (
     <GameRow
       id={entry.gameId}
       title={entry.game.name}
@@ -70,7 +69,4 @@ export function BacklogGameRow({
       }
     />
   );
-
-  // Cards get no swipe: swiping cards in a grid is not an iOS pattern (spec §3.5).
-  return variant === "row" ? <SwipeToRemove onRemove={askRemove}>{row}</SwipeToRemove> : row;
 }

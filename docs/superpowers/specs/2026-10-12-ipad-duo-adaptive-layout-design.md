@@ -22,8 +22,7 @@ together as mobile 1.2.0, from one branch (`feat/mobile-1.2`):
    the sidebar-adaptable tab bar, a two-column game detail, sheets on wide
    windows — plus a haptic on status change, pulled forward from polish.
 2. **HIG gaps** — destructive confirmation, rating accessibility,
-   accessibility-size reflow, a menu button on Home rows and swipe
-   actions. (Pointer and keyboard were dropped; see §3.6.)
+   accessibility-size reflow and a menu button on Home rows. (Pointer and keyboard were dropped; see §3.6.)
 3. **Polish and Duo verification** — section header style, recent
    searches, and a full pass on the iPhone Duo simulator once Xcode 27.1 is
    installed.
@@ -325,8 +324,8 @@ confirm.
   shows `Alert.alert` with title `Remove “<name>”?`, message `Its status and
 rating will be lost.`, and buttons `Cancel` (cancel style) and `Remove`
   (destructive style).
-- Used by the detail toolbar menu, the Home row menu (§3.4) and the swipe
-  action (§3.5), so all three paths behave the same.
+- Used by the detail toolbar menu and the Home row menu (§3.4), so both
+  paths behave the same.
 - Undo was considered and rejected: iOS has no system toast to host it, and a
   custom one is more UI than the problem deserves.
 
@@ -398,16 +397,11 @@ only visible rows pay it. Checked by scrolling a 200-game backlog on a
 physical iPhone; if it stutters, the fallback is a plain `Pressable` `…`
 that opens `ActionSheetIOS` (core React Native, still no native module).
 
-### 3.5 Swipe actions on Home
+### 3.5 Swipe actions on Home — dropped
 
-Single-column Home rows get a trailing swipe action, `Remove`, via
-`react-native-gesture-handler`'s `ReanimatedSwipeable` (already a
-dependency; the root layout gains the `GestureHandlerRootView` it needs). It goes through §3.1's confirmation. No full-swipe-to-delete:
-a confirmation after a full swipe feels broken.
-
-Cards (2+ columns) get no swipe — swiping cards in a grid is not an iOS
-pattern; the `…` menu covers them. Status changes stay in the menu; a swipe
-that silently advances status is too easy to trigger by accident.
+Decided 2026-10-13: a trailing swipe-to-remove duplicated the `…` menu's
+`Remove from Backlog…` and read as excessive once the menu was visible on
+every row. Removal lives in the menu and the detail toolbar only.
 
 ### 3.6 Pointer and keyboard — dropped
 

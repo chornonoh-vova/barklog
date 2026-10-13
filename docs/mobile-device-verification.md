@@ -426,7 +426,7 @@ the 13" iPad (2+ columns). Part of mobile 1.2.0.
 
 Remove confirmation: on a game detail, `…` → Remove from Backlog… shows
 "Remove “<name>”?" with Cancel and Remove. Cancel leaves the game; Remove
-deletes it. Same alert from the Home row menu and from the swipe.
+deletes it. Same alert from the Home row menu.
 
 Home row menu:
 
@@ -442,10 +442,6 @@ Home row menu:
   the paywall and changes nothing.
 - Share opens the share sheet with the game's IGDB link.
 - On iPad with a pointer, `…` highlights on hover.
-
-Swipe (single column only): swipe a Home row left → red Remove. Tap it → the
-row closes and the alert shows. Cancel keeps the row. On the iPad grid, cards
-do not swipe.
 
 Accessibility text sizes (Settings → Accessibility → Display & Text Size →
 Larger Text, AX3 and AX5):

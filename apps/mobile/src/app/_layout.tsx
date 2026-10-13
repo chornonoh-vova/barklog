@@ -4,8 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
-import { StyleSheet, useColorScheme, useWindowDimensions, View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useColorScheme, useWindowDimensions, View } from "react-native";
 
 import { ApiProvider } from "@/api/provider";
 import { AuthGate } from "@/auth/auth-gate";
@@ -27,44 +26,37 @@ export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
 
   return (
-    // Home's swipe-to-remove (`ReanimatedSwipeable`) needs this root.
-    <GestureHandlerRootView style={styles.root}>
-      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
-        <QueryClientProvider client={queryClient}>
-          <ApiProvider>
-            <PurchasesProvider>
-              <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-                {/* Fills the otherwise-unpainted white root view for the frames
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
+      <QueryClientProvider client={queryClient}>
+        <ApiProvider>
+          <PurchasesProvider>
+            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+              {/* Fills the otherwise-unpainted white root view for the frames
                   either gate renders `null` after the splash is down —
                   `OnboardingGate` mid storage-read, `AuthGate` before Clerk's
                   `isLoaded` lands. */}
-                <View style={Screen.fill}>
-                  <OnboardingGate>
-                    <AuthGate>
-                      {/* `Stack`, not `Slot`: `/shared` is a sibling of `(tabs)`,
+              <View style={Screen.fill}>
+                <OnboardingGate>
+                  <AuthGate>
+                    {/* `Stack`, not `Slot`: `/shared` is a sibling of `(tabs)`,
                         presented as a modal over it — a page sheet on a wide
                         window, full screen otherwise. Under `Slot` it
                         would replace the tab controller outright — the tabs
                         would unmount and their stacks would be lost, so there
                         would be nothing to return to. */}
-                      <Stack screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="(tabs)" />
-                        <Stack.Screen name="shared" options={{ presentation: modal }} />
-                        <Stack.Screen name="paywall" options={{ presentation: modal }} />
-                      </Stack>
-                    </AuthGate>
-                  </OnboardingGate>
-                </View>
-                <StatusBar style="auto" />
-              </ThemeProvider>
-            </PurchasesProvider>
-          </ApiProvider>
-        </QueryClientProvider>
-      </ClerkProvider>
-    </GestureHandlerRootView>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="shared" options={{ presentation: modal }} />
+                      <Stack.Screen name="paywall" options={{ presentation: modal }} />
+                    </Stack>
+                  </AuthGate>
+                </OnboardingGate>
+              </View>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </PurchasesProvider>
+        </ApiProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-});
