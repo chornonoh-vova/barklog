@@ -16,14 +16,15 @@ export default function SearchRoute() {
     void readRecents().then(setRecents);
   }, []);
 
-  const record = useCallback(
-    (searched: string) => {
-      const next = pushRecent(recents, searched);
-      setRecents(next);
+  // A functional update, so `record` stays stable and the result rows that
+  // hold it do not re-render each time a search is remembered.
+  const record = useCallback((searched: string) => {
+    setRecents((current) => {
+      const next = pushRecent(current, searched);
       void writeRecents(next);
-    },
-    [recents],
-  );
+      return next;
+    });
+  }, []);
 
   // Through the bar's own command, so the field shows the query too — setting
   // state alone would search for text the field does not show.

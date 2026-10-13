@@ -1,10 +1,10 @@
 import type { GameDetailResponse } from "@repo/contracts";
-import { PlatformColor, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Cover } from "@/components/cover";
 import { metaLine, ratingLine, ratingLineSpoken } from "@/features/game/format";
 import { Type } from "@/theme";
-import { isAccessibilitySize } from "@/ui/text-size";
+import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 
 const COVER_WIDTH = 132;
 
@@ -12,8 +12,7 @@ export function Hero({ game }: { game: GameDetailResponse }) {
   const meta = metaLine({ firstReleaseDate: game.firstReleaseDate, genres: game.genres });
   const rating = ratingLine(game);
   const developer = game.developers[0]?.name ?? null;
-  const { fontScale } = useWindowDimensions();
-  const ax = isAccessibilitySize(fontScale);
+  const ax = useIsAccessibilitySize();
 
   return (
     <View style={styles.container}>

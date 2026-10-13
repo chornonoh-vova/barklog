@@ -1,17 +1,9 @@
 import { SymbolView } from "expo-symbols";
 import { memo, type ReactNode } from "react";
-import {
-  Pressable,
-  PlatformColor,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Pressable, PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Cover } from "@/components/cover";
 import { Type } from "@/theme";
-import { isAccessibilitySize } from "@/ui/text-size";
 
 const COVER_WIDTH = 44;
 const MENU_SIZE = 44;
@@ -27,6 +19,7 @@ export const GameRow = memo(function GameRow({
   title,
   subtitle,
   spokenSubtitle,
+  subtitleLines = 1,
   coverImageId,
   variant = "row",
   menu,
@@ -36,16 +29,17 @@ export const GameRow = memo(function GameRow({
   title: string;
   subtitle: string | null;
   /** What VoiceOver reads instead of `subtitle`, when the visible one uses glyphs. */
-  spokenSubtitle?: string | null;
+  spokenSubtitle?: string;
+  /** 2 at accessibility text sizes. A prop, so the list reads the text size
+   * once instead of every row subscribing to the window. */
+  subtitleLines?: number;
   coverImageId: string | null;
   variant?: GameRowVariant;
   /** A trailing control, such as Home's `…` menu. It replaces the chevron. */
   menu?: ReactNode;
   onPress: (id: number) => void;
 }) {
-  const { fontScale } = useWindowDimensions();
-  const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
-  const spoken = spokenSubtitle === undefined ? subtitle : spokenSubtitle;
+  const spoken = spokenSubtitle ?? subtitle;
 
   const card = variant === "card";
 

@@ -14,7 +14,6 @@ import {
 import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
-import { type GameRowVariant } from "@/components/game-row";
 import { LoadingState } from "@/components/query-states";
 import { QueryBoundary } from "@/components/query-boundary";
 import { BacklogGameRow } from "@/features/backlog/backlog-game-row";
@@ -22,10 +21,12 @@ import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
+import { useSlotState } from "@/features/backlog/use-slot-state";
 import { statsLine, statsLineSpoken } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
+import { isAccessibilitySize } from "@/ui/text-size";
 import { useMeasuredWidth } from "@/ui/use-measured-width";
 
 // A row's first game, so a key survives the column count changing under it.
@@ -37,7 +38,7 @@ const keyExtractor = (row: BacklogListItemWire[]) => String(row[0]?.gameId);
 // match the list behind it — plain under rows, grouped under cards.
 const sectionHeader = (section: BacklogRowSection, grouped: boolean) =>
   section.title === null ? null : (
-    <View style={grouped ? styles.groupedSectionHeader : styles.sectionHeader}>
+    <View style={[styles.sectionHeader, grouped && styles.groupedSectionHeader]}>
       <Text style={styles.sectionTitle}>{section.title}</Text>
       <Text style={styles.sectionCount}>{section.count}</Text>
     </View>
@@ -59,6 +60,8 @@ export function BacklogScreen() {
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
+  const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
+  const slotState = useSlotState();
 
   // Home: the only screen a user reaches without having just tapped something.
   useReviewPrompt();
@@ -66,18 +69,22 @@ export function BacklogScreen() {
   const openGame = useCallback((gameId: number) => router.push(`/game/${gameId}`), [router]);
 
   const renderItem = useCallback(
-    ({ item }: { item: BacklogListItemWire[] }) => {
-      const game = (entry: BacklogListItemWire, variant: GameRowVariant) => (
-        <BacklogGameRow key={entry.gameId} entry={entry} variant={variant} onPress={openGame} />
-      );
-
-      return grid ? (
-        <GameGridRow columns={columns}>{item.map((entry) => game(entry, "card"))}</GameGridRow>
-      ) : (
-        <>{item.map((entry) => game(entry, "row"))}</>
-      );
-    },
-    [openGame, grid, columns],
+    ({ item }: { item: BacklogListItemWire[] }) => (
+      <GameGridRow columns={columns}>
+        {item.map((entry) => (
+          <BacklogGameRow
+            key={entry.gameId}
+            entry={entry}
+            variant={grid ? "card" : "row"}
+            subtitleLines={subtitleLines}
+            premium={slotState.premium}
+            activeCount={slotState.activeCount}
+            onPress={openGame}
+          />
+        ))}
+      </GameGridRow>
+    ),
+    [openGame, grid, columns, subtitleLines, slotState.premium, slotState.activeCount],
   );
 
   const sections = useMemo(
@@ -177,12 +184,7 @@ const styles = StyleSheet.create({
     // The footnote count sits on the headline's baseline.
     alignItems: "baseline",
   },
-  groupedSectionHeader: {
-    ...SectionHeader.groupedContainer,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "baseline",
-  },
+  groupedSectionHeader: SectionHeader.groupedContainer,
   sectionTitle: SectionHeader.title,
   sectionCount: { ...Type.footnote, color: PlatformColor("tertiaryLabel") },
 });

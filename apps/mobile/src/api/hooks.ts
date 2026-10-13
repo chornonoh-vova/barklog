@@ -119,9 +119,8 @@ function useBacklogEntryMutation<TInput>(
   gameId: number,
   options: {
     mutationFn: (input: TInput) => Promise<unknown>;
-    entry: (previous: GameDetailResponse, input: TInput) => BacklogEntryWire | null;
-    /** What the game's row becomes in cached backlog lists; `null` removes it. */
-    listEntry: (input: TInput) => { status: BacklogStatus; rating: number | null } | null;
+    /** What the entry becomes, in the detail and in cached lists; `null` removes it. */
+    change: (input: TInput) => { status: BacklogStatus; rating: number | null } | null;
     /** Runs once the optimistic entry is in the cache, with the entry it
      * replaced: `undefined` when the detail was not cached at all. */
     onApply?: (previous: BacklogEntryWire | null | undefined, input: TInput) => void;
@@ -134,24 +133,35 @@ function useBacklogEntryMutation<TInput>(
 
     onMutate: async (input: TInput) => {
       const key = keys.games.detail(gameId);
-      await queryClient.cancelQueries({ queryKey: key });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: key }),
+        queryClient.cancelQueries({ queryKey: keys.backlog.lists() }),
+      ]);
       const previous = queryClient.getQueryData<GameDetailResponse>(key);
+      const change = options.change(input);
+      const now = new Date().toISOString();
 
       if (previous) {
         queryClient.setQueryData<GameDetailResponse>(key, {
           ...previous,
-          backlogEntry: options.entry(previous, input),
+          backlogEntry:
+            change === null
+              ? null
+              : {
+                  gameId,
+                  status: change.status,
+                  rating: change.rating,
+                  addedAt: previous.backlogEntry?.addedAt ?? now,
+                  updatedAt: now,
+                },
         });
       }
 
       // Lists too, or Home keeps showing the old row until the refetch lands
       // — a removal that seems not to have worked invites a second tap.
-      await queryClient.cancelQueries({ queryKey: keys.backlog.lists() });
       const lists = queryClient.getQueriesData<BacklogListResponse>({
         queryKey: keys.backlog.lists(),
       });
-      const now = new Date().toISOString();
-      const change = options.listEntry(input);
 
       for (const [listKey, list] of lists) {
         if (list === undefined) continue;
@@ -195,21 +205,12 @@ export function useUpsertBacklogEntry(gameId: number) {
   return useBacklogEntryMutation(gameId, {
     mutationFn: (input: { status: BacklogStatus; rating: number | null }) =>
       api.upsertBacklogEntry(gameId, input),
-    entry: (previous, input) => ({
-      gameId,
-      status: input.status,
-      rating: input.rating,
-      addedAt: previous.backlogEntry?.addedAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }),
-    listEntry: (input) => input,
+    change: (input) => input,
     // At apply time, not on success: the screen already shows the new status,
     // and a haptic that waits on the network lands after the change it marks.
     // A failure is corrected by the rollback and alert in `onError`.
     onApply: (previous, input) => {
-      const previousStatus = previous === undefined ? undefined : (previous?.status ?? null);
-
-      if (shouldPlayStatusHaptic(previousStatus, input.status)) {
+      if (shouldPlayStatusHaptic(previous?.status, input.status)) {
         void notificationAsync(NotificationFeedbackType.Success);
       }
     },
@@ -221,8 +222,7 @@ export function useDeleteBacklogEntry(gameId: number) {
 
   return useBacklogEntryMutation<void>(gameId, {
     mutationFn: () => api.deleteBacklogEntry(gameId),
-    entry: () => null,
-    listEntry: () => null,
+    change: () => null,
   });
 }
 

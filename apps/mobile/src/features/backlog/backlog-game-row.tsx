@@ -1,16 +1,10 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useRouter } from "expo-router";
 
-import {
-  useBacklogStats,
-  useDeleteBacklogEntry,
-  usePremium,
-  useUpsertBacklogEntry,
-} from "@/api/hooks";
+import { useDeleteBacklogEntry, useUpsertBacklogEntry } from "@/api/hooks";
 import { GameRow, type GameRowVariant } from "@/components/game-row";
 import { SwipeToRemove } from "@/components/swipe-to-remove";
 import { BacklogRowMenu } from "@/features/backlog/backlog-row-menu";
-import { activeSlotsUsed } from "@/features/backlog/slots";
 import { confirmRemove } from "@/features/game/confirm-remove";
 import { rowSubtitle, rowSubtitleSpoken } from "@/features/game/format";
 import { shareGame } from "@/features/game/share-game";
@@ -24,18 +18,23 @@ import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 export function BacklogGameRow({
   entry,
   variant,
+  subtitleLines,
+  premium,
+  activeCount,
   onPress,
 }: {
   entry: BacklogListItemWire;
   variant: GameRowVariant;
+  subtitleLines: number;
+  /** From the screen, read once: a subscription per row would re-render every
+   * row whenever stats refetch. */
+  premium: boolean | undefined;
+  activeCount: number | undefined;
   onPress: (id: number) => void;
 }) {
   const upsert = useUpsertBacklogEntry(entry.gameId);
   const remove = useDeleteBacklogEntry(entry.gameId);
-  const premium = usePremium();
-  const stats = useBacklogStats();
   const router = useRouter();
-  const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
 
   const setStatus = (next: BacklogStatus) => {
     if (next === entry.status) return;
@@ -58,6 +57,7 @@ export function BacklogGameRow({
       spokenSubtitle={rowSubtitleSpoken(entry)}
       coverImageId={entry.game.coverImageId}
       variant={variant}
+      subtitleLines={subtitleLines}
       onPress={onPress}
       menu={
         <BacklogRowMenu

@@ -1,13 +1,13 @@
 import { HStack, Menu, Picker, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import { buttonStyle, clipShape, pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
 import type { BacklogStatus } from "@repo/contracts";
-import { StyleSheet, useWindowDimensions } from "react-native";
+import { StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel } from "@/features/game/format";
 import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
-import { isAccessibilitySize } from "@/ui/text-size";
+import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 
 const ALL = "all";
 
@@ -18,7 +18,7 @@ export function StatusFilter({
   value: BacklogStatus | undefined;
   onChange: (status: BacklogStatus | undefined) => void;
 }) {
-  const { fontScale } = useWindowDimensions();
+  const ax = useIsAccessibilitySize();
   const menu = (
     <Menu
       label={value ? statusLabel(value) : "All"}
@@ -44,7 +44,7 @@ export function StatusFilter({
 
   return (
     <MeasuredHost style={styles.host}>
-      {isAccessibilitySize(fontScale) ? (
+      {ax ? (
         <VStack alignment="leading">
           <Text>Show</Text>
           {menu}

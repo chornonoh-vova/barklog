@@ -1,18 +1,19 @@
 import { SEARCH_QUERY_MIN, type GameSummaryWire } from "@repo/contracts";
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { FlatList, StyleSheet } from "react-native";
 
 import { useSearchGames } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
-import { GameRow, type GameRowVariant } from "@/components/game-row";
+import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { summarySubtitle } from "@/features/game/format";
 import { RecentSearches } from "@/features/search/recent-searches";
 import { useDebounced } from "@/hooks/use-debounced";
 import { Screen } from "@/theme";
 import { chunk, COLUMN_GAP, columnCount } from "@/ui/columns";
+import { isAccessibilitySize } from "@/ui/text-size";
 import { useMeasuredWidth } from "@/ui/use-measured-width";
 
 const DEBOUNCE_MS = 400;
@@ -40,6 +41,9 @@ export function SearchScreen({
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
+  const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
+  // Out here, not in the render prop: memoised, so `FlatList` keeps its rows.
+  const rows = useMemo(() => chunk(search.data?.items ?? [], columns), [search.data, columns]);
 
   // Recorded on open, not on every keystroke: a query worth remembering is one
   // that found the game.
@@ -52,26 +56,23 @@ export function SearchScreen({
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: GameSummaryWire[] }) => {
-      const game = (summary: GameSummaryWire, variant: GameRowVariant) => (
-        <GameRow
-          key={summary.id}
-          id={summary.id}
-          title={summary.name}
-          subtitle={summarySubtitle(summary)}
-          coverImageId={summary.coverImageId}
-          variant={variant}
-          onPress={openGame}
-        />
-      );
-
-      return grid ? (
-        <GameGridRow columns={columns}>{item.map((summary) => game(summary, "card"))}</GameGridRow>
-      ) : (
-        <>{item.map((summary) => game(summary, "row"))}</>
-      );
-    },
-    [openGame, grid, columns],
+    ({ item }: { item: GameSummaryWire[] }) => (
+      <GameGridRow columns={columns}>
+        {item.map((summary) => (
+          <GameRow
+            key={summary.id}
+            id={summary.id}
+            title={summary.name}
+            subtitle={summarySubtitle(summary)}
+            coverImageId={summary.coverImageId}
+            variant={grid ? "card" : "row"}
+            subtitleLines={subtitleLines}
+            onPress={openGame}
+          />
+        ))}
+      </GameGridRow>
+    ),
+    [openGame, grid, columns, subtitleLines],
   );
 
   if (query.length < SEARCH_QUERY_MIN) {
@@ -92,7 +93,7 @@ export function SearchScreen({
 
   return (
     <QueryBoundary query={search}>
-      {(data) => (
+      {() => (
         // Rows of `chunk`, not `numColumns`: React Native refuses to change
         // `numColumns` on a mounted list, and remounting by `key` would throw
         // away the scroll position every time the window is resized.
@@ -100,7 +101,7 @@ export function SearchScreen({
           style={grid ? styles.groupedList : styles.list}
           contentContainerStyle={[styles.listContent, grid && styles.gridContent, sideInsets]}
           onLayout={onLayout}
-          data={chunk(data.items, columns)}
+          data={rows}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           keyboardDismissMode="on-drag"

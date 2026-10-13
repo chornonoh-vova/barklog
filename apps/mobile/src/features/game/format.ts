@@ -56,16 +56,20 @@ export function summarySubtitle(game: GameSummaryWire): string | null {
   return releaseYear(game.firstReleaseDate);
 }
 
+/** "12,481 ratings" — shared by the visible and spoken rating lines. */
+const ratingsCount = (count: number) =>
+  `${count.toLocaleString("en-GB")} ${count === 1 ? "rating" : "ratings"}`;
+
+/** "12 games" — shared by the visible and spoken stats lines. */
+const gamesCount = (total: number) => `${total} ${total === 1 ? "game" : "games"}`;
+
 export function ratingLine(input: {
   totalRating: number | null;
   totalRatingCount: number;
 }): string | null {
   if (input.totalRating === null) return null;
 
-  const count = input.totalRatingCount.toLocaleString("en-GB");
-  const noun = input.totalRatingCount === 1 ? "rating" : "ratings";
-
-  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${count} ${noun}`;
+  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${ratingsCount(input.totalRatingCount)}`;
 }
 
 /** `ratingLine` for VoiceOver: IGDB scores are out of 100, and `★` reads as
@@ -76,21 +80,18 @@ export function ratingLineSpoken(input: {
 }): string | null {
   if (input.totalRating === null) return null;
 
-  const count = input.totalRatingCount.toLocaleString("en-GB");
-  const noun = input.totalRatingCount === 1 ? "rating" : "ratings";
-
-  return `Rated ${Math.round(input.totalRating)} out of 100, from ${count} ${noun}`;
+  return `Rated ${Math.round(input.totalRating)} out of 100, from ${ratingsCount(input.totalRatingCount)}`;
 }
 
 export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
-  const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
+  const games = gamesCount(stats.total);
 
   return stats.averageRating === null ? games : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
 }
 
 /** `statsLine` for VoiceOver, without the glyph. */
 export function statsLineSpoken(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
-  const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
+  const games = gamesCount(stats.total);
 
   return stats.averageRating === null
     ? games

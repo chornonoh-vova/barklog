@@ -5,8 +5,10 @@
  * out — so the same numbers hold when a window is resized live.
  */
 
+import { ACCESSIBILITY_FONT_SCALE } from "@/ui/text-size";
+
 /** Narrowest a card may get before it drops a column. */
-export const CARD_MIN_WIDTH = 320;
+const CARD_MIN_WIDTH = 320;
 
 /** Outer margin, matching the 16pt list inset used everywhere else. */
 export const GUTTER = 16;
@@ -18,7 +20,7 @@ export const MAX_COLUMNS = 3;
 
 /** Text grows cards up to this scale; past it, AX sizes would force one column
  * even on a 13-inch iPad. */
-export const MAX_TEXT_SCALE = 1.6;
+const MAX_TEXT_SCALE = ACCESSIBILITY_FONT_SCALE;
 
 export const DETAIL_SPLIT_MIN_WIDTH = 700;
 

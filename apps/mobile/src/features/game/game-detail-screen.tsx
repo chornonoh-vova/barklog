@@ -2,15 +2,9 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
-import {
-  useBacklogStats,
-  useDeleteBacklogEntry,
-  useGame,
-  usePremium,
-  useUpsertBacklogEntry,
-} from "@/api/hooks";
+import { useDeleteBacklogEntry, useGame, useUpsertBacklogEntry } from "@/api/hooks";
 import { QueryBoundary } from "@/components/query-boundary";
-import { activeSlotsUsed } from "@/features/backlog/slots";
+import { useSlotState } from "@/features/backlog/use-slot-state";
 import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
@@ -30,9 +24,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const upsert = useUpsertBacklogEntry(gameId);
   const remove = useDeleteBacklogEntry(gameId);
   const router = useRouter();
-  const premium = usePremium();
-  const stats = useBacklogStats();
-  const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
+  const { premium, activeCount } = useSlotState();
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const split = detailIsSplit(width, fontScale);
 
