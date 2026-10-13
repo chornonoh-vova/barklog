@@ -38,7 +38,7 @@ const keyExtractor = (row: BacklogListItemWire[]) => String(row[0]?.gameId);
 const sectionHeader = (section: BacklogRowSection, grouped: boolean) =>
   section.title === null ? null : (
     <View style={grouped ? styles.groupedSectionHeader : styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
       <Text style={styles.sectionCount}>{section.count}</Text>
     </View>
   );
@@ -170,11 +170,14 @@ const styles = StyleSheet.create({
     ...SectionHeader.container,
     flexDirection: "row",
     justifyContent: "space-between",
+    // The footnote count sits on the headline's baseline.
+    alignItems: "baseline",
   },
   groupedSectionHeader: {
     ...SectionHeader.groupedContainer,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "baseline",
   },
   sectionTitle: SectionHeader.title,
   sectionCount: { ...Type.footnote, color: PlatformColor("tertiaryLabel") },

@@ -24,7 +24,7 @@ const keyExtractor = (item: GameSummaryWire) => String(item.id);
 const renderSectionHeader = ({ section }: { section: ShareSection }) =>
   section.title === null ? null : (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
     </View>
   );
 

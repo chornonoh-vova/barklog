@@ -48,10 +48,7 @@ export const SectionHeader = {
     ...SECTION_HEADER_INSETS,
     backgroundColor: PlatformColor("systemGroupedBackground"),
   },
-  title: {
-    ...Type.footnote,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-    color: PlatformColor("secondaryLabel"),
-  },
+  /** iOS 26 plain-list headers are title case in headline weight, not the
+   * old small caps. */
+  title: { ...Type.headline, color: PlatformColor("label") },
 } as const;
