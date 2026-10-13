@@ -3,6 +3,7 @@ import { AuthView, useAuthViewState } from "@clerk/expo/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { clearRecents } from "@/features/search/recents-storage";
 import { useReleaseSplash } from "@/splash";
 
 import { shouldClearCache } from "./should-clear-cache";
@@ -22,7 +23,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (shouldClearCache(previous.current, userId)) queryClient.clear();
+    if (shouldClearCache(previous.current, userId)) {
+      queryClient.clear();
+      // Recents are device-local but personal: the next account must not see them.
+      void clearRecents();
+    }
     if (userId !== undefined) previous.current = userId;
   }, [isLoaded, userId, queryClient]);
 

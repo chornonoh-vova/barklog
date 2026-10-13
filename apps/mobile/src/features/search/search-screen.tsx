@@ -9,6 +9,7 @@ import { GameGridRow } from "@/components/game-grid-row";
 import { GameRow, type GameRowVariant } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { summarySubtitle } from "@/features/game/format";
+import { RecentSearches } from "@/features/search/recent-searches";
 import { useDebounced } from "@/hooks/use-debounced";
 import { Screen } from "@/theme";
 import { chunk, COLUMN_GAP, columnCount } from "@/ui/columns";
@@ -19,7 +20,20 @@ const DEBOUNCE_MS = 400;
 // A row's first game, so a key survives the column count changing under it.
 const keyExtractor = (row: GameSummaryWire[]) => String(row[0]?.id);
 
-export function SearchScreen({ query }: { query: string }) {
+export function SearchScreen({
+  query,
+  recents,
+  onPickRecent,
+  onClearRecents,
+  onOpenResult,
+}: {
+  query: string;
+  recents: string[];
+  onPickRecent: (query: string) => void;
+  onClearRecents: () => void;
+  /** Called with the query a result was found by, as that result opens. */
+  onOpenResult: (query: string) => void;
+}) {
   const debounced = useDebounced(query.trim(), DEBOUNCE_MS);
   const search = useSearchGames(debounced);
   const router = useRouter();
@@ -27,7 +41,15 @@ export function SearchScreen({ query }: { query: string }) {
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
 
-  const openGame = useCallback((id: number) => router.push(`/search/game/${id}`), [router]);
+  // Recorded on open, not on every keystroke: a query worth remembering is one
+  // that found the game.
+  const openGame = useCallback(
+    (id: number) => {
+      onOpenResult(debounced);
+      router.push(`/search/game/${id}`);
+    },
+    [onOpenResult, debounced, router],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: GameSummaryWire[] }) => {
@@ -53,6 +75,10 @@ export function SearchScreen({ query }: { query: string }) {
   );
 
   if (query.length < SEARCH_QUERY_MIN) {
+    if (recents.length > 0) {
+      return <RecentSearches recents={recents} onPick={onPickRecent} onClear={onClearRecents} />;
+    }
+
     return (
       <EmptyState
         title="Fetch a game"
