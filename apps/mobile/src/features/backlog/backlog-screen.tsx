@@ -14,14 +14,15 @@ import {
 import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
-import { GameRow, type GameRowVariant } from "@/components/game-row";
+import { type GameRowVariant } from "@/components/game-row";
 import { LoadingState } from "@/components/query-states";
 import { QueryBoundary } from "@/components/query-boundary";
+import { BacklogGameRow } from "@/features/backlog/backlog-game-row";
 import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
-import { rowSubtitle, rowSubtitleSpoken, statsLine } from "@/features/game/format";
+import { statsLine } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -67,16 +68,7 @@ export function BacklogScreen() {
   const renderItem = useCallback(
     ({ item }: { item: BacklogListItemWire[] }) => {
       const game = (entry: BacklogListItemWire, variant: GameRowVariant) => (
-        <GameRow
-          key={entry.gameId}
-          id={entry.gameId}
-          title={entry.game.name}
-          subtitle={rowSubtitle(entry)}
-          spokenSubtitle={rowSubtitleSpoken(entry)}
-          coverImageId={entry.game.coverImageId}
-          variant={variant}
-          onPress={openGame}
-        />
+        <BacklogGameRow key={entry.gameId} entry={entry} variant={variant} onPress={openGame} />
       );
 
       return grid ? (

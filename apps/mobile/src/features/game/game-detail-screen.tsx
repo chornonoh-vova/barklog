@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { PlatformColor, ScrollView, Share, StyleSheet, View } from "react-native";
+import { PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
 import {
   useBacklogStats,
@@ -18,7 +18,7 @@ import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { Screenshots } from "@/features/game/screenshots";
 import { confirmRemove } from "@/features/game/confirm-remove";
-import { gameShareContent } from "@/features/game/share";
+import { shareGame } from "@/features/game/share-game";
 import { SimilarGames } from "@/features/game/similar-games";
 import { COLUMN_GAP, detailIsSplit } from "@/ui/columns";
 import { useMeasuredWidth } from "@/ui/use-measured-width";
@@ -38,9 +38,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
 
   const gameData = game.data;
   const onShare = useCallback(() => {
-    if (gameData === undefined) return;
-    const { content, options } = gameShareContent(gameData);
-    void Share.share(content, options).catch(() => {});
+    if (gameData !== undefined) shareGame(gameData);
   }, [gameData]);
 
   return (

@@ -1,5 +1,5 @@
 import { SymbolView } from "expo-symbols";
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import {
   Pressable,
   PlatformColor,
@@ -14,6 +14,7 @@ import { Type } from "@/theme";
 import { isAccessibilitySize } from "@/ui/text-size";
 
 const COVER_WIDTH = 44;
+const MENU_SIZE = 44;
 
 /** `row` is the plain list row a phone shows; `card` is one cell of a grid on a
  * wider window. Same content, so the two never drift apart. */
@@ -28,6 +29,7 @@ export const GameRow = memo(function GameRow({
   spokenSubtitle,
   coverImageId,
   variant = "row",
+  menu,
   onPress,
 }: {
   id: number;
@@ -37,22 +39,24 @@ export const GameRow = memo(function GameRow({
   spokenSubtitle?: string | null;
   coverImageId: string | null;
   variant?: GameRowVariant;
+  /** A trailing control, such as Home's `…` menu. It replaces the chevron. */
+  menu?: ReactNode;
   onPress: (id: number) => void;
 }) {
   const { fontScale } = useWindowDimensions();
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
   const spoken = spokenSubtitle === undefined ? subtitle : spokenSubtitle;
 
-  return (
+  const card = variant === "card";
+
+  const body = (
     <Pressable
       onPress={() => onPress(id)}
-      style={({ pressed }) => {
-        const card = variant === "card";
-        return [
-          card ? styles.card : styles.row,
-          pressed && (card ? styles.cardPressed : styles.pressed),
-        ];
-      }}
+      style={({ pressed }) => [
+        card ? styles.card : styles.row,
+        menu !== undefined && styles.withMenu,
+        pressed && (card ? styles.cardPressed : styles.pressed),
+      ]}
       accessibilityRole="button"
       accessibilityLabel={spoken === null ? title : `${title}, ${spoken}`}
     >
@@ -69,10 +73,20 @@ export const GameRow = memo(function GameRow({
         )}
       </View>
 
-      {variant === "row" ? (
+      {!card && menu === undefined ? (
         <SymbolView name="chevron.right" size={13} tintColor={PlatformColor("tertiaryLabel")} />
       ) : null}
     </Pressable>
+  );
+
+  if (menu === undefined) return body;
+
+  // A sibling on top, not a child: a tap on the menu must not also open the game.
+  return (
+    <View style={card ? styles.cardSlot : undefined}>
+      {body}
+      <View style={styles.menu}>{menu}</View>
+    </View>
   );
 });
 
@@ -103,6 +117,17 @@ const styles = StyleSheet.create({
   },
   cardPressed: {
     backgroundColor: PlatformColor("tertiarySystemGroupedBackground"),
+  },
+  withMenu: { paddingRight: MENU_SIZE + 8 },
+  /** Gives a wrapped card its `GameGridRow` slot, as the bare card's `flex: 1` does. */
+  cardSlot: { flex: 1 },
+  menu: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 4,
+    width: MENU_SIZE,
+    justifyContent: "center",
   },
   text: { flex: 1, gap: 2 },
   title: { ...Type.headline, color: PlatformColor("label") },
