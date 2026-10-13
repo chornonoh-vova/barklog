@@ -6,7 +6,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { clearRecents } from "@/features/search/recents-storage";
 import { useReleaseSplash } from "@/splash";
 
-import { shouldClearCache } from "./should-clear-cache";
+import { shouldClearCache, shouldClearRecents } from "./should-clear-cache";
 
 /**
  * Two hooks, deliberately: `isSignedIn` flips true before a native
@@ -23,11 +23,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (shouldClearCache(previous.current, userId)) {
-      queryClient.clear();
-      // Recents are device-local but personal: the next account must not see them.
-      void clearRecents();
-    }
+    if (shouldClearCache(previous.current, userId)) queryClient.clear();
+    // Recents are device-local but personal: the next account must not see them.
+    if (shouldClearRecents(previous.current, userId)) void clearRecents();
     if (userId !== undefined) previous.current = userId;
   }, [isLoaded, userId, queryClient]);
 
