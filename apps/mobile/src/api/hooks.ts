@@ -24,6 +24,7 @@ import { notificationAsync, NotificationFeedbackType } from "expo-haptics";
 import { router } from "expo-router";
 import { Alert } from "react-native";
 
+import { patchBacklogList, type BacklogListFilter } from "@/features/backlog/optimistic-list";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 
 import { errorCopy } from "./error-copy";
@@ -119,6 +120,8 @@ function useBacklogEntryMutation<TInput>(
   options: {
     mutationFn: (input: TInput) => Promise<unknown>;
     entry: (previous: GameDetailResponse, input: TInput) => BacklogEntryWire | null;
+    /** What the game's row becomes in cached backlog lists; `null` removes it. */
+    listEntry: (input: TInput) => { status: BacklogStatus; rating: number | null } | null;
     /** Runs once the optimistic entry is in the cache, with the entry it
      * replaced: `undefined` when the detail was not cached at all. */
     onApply?: (previous: BacklogEntryWire | null | undefined, input: TInput) => void;
@@ -141,14 +144,33 @@ function useBacklogEntryMutation<TInput>(
         });
       }
 
+      // Lists too, or Home keeps showing the old row until the refetch lands
+      // — a removal that seems not to have worked invites a second tap.
+      await queryClient.cancelQueries({ queryKey: keys.backlog.lists() });
+      const lists = queryClient.getQueriesData<BacklogListResponse>({
+        queryKey: keys.backlog.lists(),
+      });
+      const now = new Date().toISOString();
+      const change = options.listEntry(input);
+
+      for (const [listKey, list] of lists) {
+        if (list === undefined) continue;
+        const filter = listKey[2] as BacklogListFilter;
+        queryClient.setQueryData(listKey, patchBacklogList(list, filter, gameId, change, now));
+      }
+
       options.onApply?.(previous?.backlogEntry, input);
 
-      return { previous };
+      return { previous, lists };
     },
 
     onError: (error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(keys.games.detail(gameId), context.previous);
+      }
+
+      for (const [listKey, list] of context?.lists ?? []) {
+        queryClient.setQueryData(listKey, list);
       }
 
       // No Alert: a sheet plus an alert is two dismissals for one event.
@@ -180,6 +202,7 @@ export function useUpsertBacklogEntry(gameId: number) {
       addedAt: previous.backlogEntry?.addedAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }),
+    listEntry: (input) => input,
     // At apply time, not on success: the screen already shows the new status,
     // and a haptic that waits on the network lands after the change it marks.
     // A failure is corrected by the rollback and alert in `onError`.
@@ -199,6 +222,7 @@ export function useDeleteBacklogEntry(gameId: number) {
   return useBacklogEntryMutation<void>(gameId, {
     mutationFn: () => api.deleteBacklogEntry(gameId),
     entry: () => null,
+    listEntry: () => null,
   });
 }
 

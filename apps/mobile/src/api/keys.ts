@@ -18,6 +18,8 @@ export const keys = {
   },
   backlog: {
     all: ["backlog"] as const,
+    /** Every cached list, whatever its filter and sort. */
+    lists: () => ["backlog", "list"] as const,
     list: (status: BacklogStatus | undefined, sort: BacklogSort) =>
       ["backlog", "list", status ?? "all", sort] as const,
     stats: () => ["backlog", "stats"] as const,
