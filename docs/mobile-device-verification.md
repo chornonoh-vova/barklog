@@ -462,8 +462,8 @@ VoiceOver:
 - `…` reads "More, <name>".
 - On a game detail, the rating button reads "Rating, 9 out of 10", or "Rate this
   game" when unrated.
-- Known gap: the detail's IGDB score and Home's "avg ★" stats line still read
-  the glyph.
+- The detail's IGDB score and Home's stats line read their spoken labels —
+  neither announces "black star".
 
 Scrolling: with 200 games on a physical iPhone, Home scrolls without stutter.
 If it stutters, see spec §3.4's fallback.
