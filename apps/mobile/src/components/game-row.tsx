@@ -85,7 +85,10 @@ export const GameRow = memo(function GameRow({
   return (
     <View style={card ? styles.cardSlot : undefined}>
       {body}
-      <View style={styles.menu}>{menu}</View>
+      {/* `box-none`: the strip above and below the button still opens the game. */}
+      <View style={styles.menu} pointerEvents="box-none">
+        {menu}
+      </View>
     </View>
   );
 });
