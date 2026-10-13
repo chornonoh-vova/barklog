@@ -4,19 +4,19 @@
 
 **Goal:** Title-case section headers, recent searches on the Search empty state, and the iPhone Duo verification pass.
 
-**Architecture:** Recent-search rules (`pushRecent`, `parseRecents`) are pure and tested; persistence is a thin AsyncStorage wrapper in the style of `storage/flag.ts`; the Search route owns the list, the search bar ref and the query, and hands callbacks to `SearchScreen`. A query is recorded from the result `Link`'s `onPress` (Stage 2 made results links).
+**Architecture:** Recent-search rules (`pushRecent`, `parseRecents`) are pure and tested; persistence is a thin AsyncStorage wrapper in the style of `storage/flag.ts`; the Search route owns the list, the search bar ref and the query, and hands callbacks to `SearchScreen`. A query is recorded when a result is opened, in `SearchScreen`'s existing `openGame` handler, just before it pushes the detail.
 
 **Tech Stack:** Expo SDK 57, expo-router 57 (`Stack.SearchBar` ref → `SearchBarCommands`), AsyncStorage, vitest.
 
-**Spec:** `docs/superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md` §4 (Stage 3). Builds on Stage 2 (branch `feat/hig-gaps`).
+**Spec:** `docs/superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md` §4 (Stage 3). Builds on Stage 2 (branch `feat/mobile-1.2`).
 
 ## Global Constraints
 
-- Same branch as Stage 2 (`feat/hig-gaps`) — Stage 3 is small and depends on Stage 2's links.
+- Same branch as Stages 1 and 2 (`feat/mobile-1.2`); all three stages merge together as mobile 1.2.0.
 - `Stack.SearchBar placement="stacked"` stays (user preference).
 - Up to 8 recents, newest first, case-insensitive de-duplication, trimmed, empty queries never stored.
 - Recents are device-local and cleared when `shouldClearCache` fires in `AuthGate`.
-- Haptics are unchanged from Stage 1 (§4.2): Stage 3 only verifies the context-menu path fires.
+- Haptics are unchanged from Stage 1 (§4.2): Stage 3 only verifies the Home row menu path fires.
 - Tests stay free of `react-native`/`expo-*` imports; lint `--max-warnings 0`; Prettier; conventional commits.
 
 ## Review Focus
@@ -220,7 +220,7 @@ const clear = useCallback(() => {
 
 passed as `recents`, `onPickRecent={pickRecent}`, `onClearRecents={clear}`, `onOpenResult={record}`.
 
-`search-screen.tsx`: in the `query.length < SEARCH_QUERY_MIN` branch, render `<RecentSearches recents={recents} onPick={onPickRecent} onClear={onClearRecents} />` when `recents.length > 0`, else today's `EmptyState`. Result rows pass `onPress={() => onOpenResult(debounced)}` to `GameRow` (it reaches `Link`'s `onPress`, which runs before navigation).
+`search-screen.tsx`: in the `query.length < SEARCH_QUERY_MIN` branch, render `<RecentSearches recents={recents} onPick={onPickRecent} onClear={onClearRecents} />` when `recents.length > 0`, else today's `EmptyState`. `openGame` calls `onOpenResult(debounced)` before `router.push(`/search/game/${id}`)`, and gains `onOpenResult` and `debounced` in its dependency list.
 
 - [ ] **Step 6:** tests + lint + types clean. Simulator: search "hades", open a result, go back, clear the field → "Recent: hades". Tap it → the field shows "hades" and results appear. Search "HADES", open a result → still one entry, at the top. Clear → empty state returns. Sign out and in → no recents.
 - [ ] **Step 7:** commit `feat(mobile): remember recent searches`.
@@ -233,7 +233,7 @@ passed as `recents`, `onPickRecent={pickRecent}`, `onClearRecents={clear}`, `onO
 
 **Precondition:** Xcode 27.1 with the iPhone Duo simulator in Device Hub. If it is not installed (`xcodebuild -version` reports 27.0), write the checklist only, ledger the pass as deferred, and finish.
 
-- [ ] **Step 1:** Append `## iPhone Duo (Stage 3)` with the spec §4.4 matrix — outer display portrait and landscape (tent), inner display open, inner display ½ Split View, live open/close/fold on Home, Search, game detail and the screenshot viewer — and checks: columns and detail split follow the fold without losing scroll position or the stack; tab bar placement on the inner display (and whether `sidebarAdaptable` does anything); no content under the status bar or camera region with asymmetric insets; sheets centred on the inner display; onboarding and screenshot viewer in every pose; the status haptic from the Home context menu (physical device).
+- [ ] **Step 1:** Append `## iPhone Duo (Stage 3)` with the spec §4.4 matrix — outer display portrait and landscape (tent), inner display open, inner display ½ Split View, live open/close/fold on Home, Search, game detail and the screenshot viewer — and checks: columns and detail split follow the fold without losing scroll position or the stack; tab bar placement on the inner display (and whether `sidebarAdaptable` does anything); no content under the status bar or camera region with asymmetric insets; sheets centred on the inner display; onboarding and screenshot viewer in every pose; the status haptic from the Home row menu (physical device).
 - [ ] **Step 2:** If Xcode 27.1 is available, build with it, run the matrix, record ✅ or the defect per cell; each defect in Stage 1–3 scope gets a `fix(mobile): …` commit.
 - [ ] **Step 3:** `pnpm --filter mobile test && pnpm --filter mobile lint && pnpm --filter mobile check-types && pnpm format:check` → pass.
 - [ ] **Step 4:** commit `docs: add iPhone Duo verification checklist`.

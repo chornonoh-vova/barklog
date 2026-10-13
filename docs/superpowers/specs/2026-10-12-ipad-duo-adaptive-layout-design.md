@@ -15,15 +15,15 @@ A review against Apple's Human Interface Guidelines found the layout gaps
 above plus a handful of general ones — an unconfirmed destructive action, a
 text glyph VoiceOver reads badly, no accessibility-size reflow, no context
 menus, nothing for pointer or keyboard. This document covers all of it in
-three stages, each shippable on its own and each getting its own
-implementation plan:
+three stages, each getting its own implementation plan. All three ship
+together as mobile 1.2.0, from one branch (`feat/mobile-1.2`):
 
 1. **Adaptive layout** — iPad and iPhone Duo support: width-based columns,
    the sidebar-adaptable tab bar, a two-column game detail, sheets on wide
    windows — plus a haptic on status change, pulled forward from polish.
 2. **HIG gaps** — destructive confirmation, rating accessibility,
-   accessibility-size reflow, context menus and previews, swipe actions,
-   pointer and keyboard.
+   accessibility-size reflow, a menu button on Home rows and swipe
+   actions. (Pointer and keyboard were dropped; see §3.6.)
 3. **Polish and Duo verification** — section header style, recent
    searches, and a full pass on the iPhone Duo simulator once Xcode 27.1 is
    installed.
@@ -51,6 +51,8 @@ implementation plan:
 - **Mac Catalyst / "Designed for iPad" on Mac.** Not tested, not promised.
 - **Explore redesign.** Its horizontal shelves already use extra width by
   showing more tiles.
+- **Pointer hover on React Native rows and hardware-keyboard shortcuts.**
+  Both need local native modules; dropped 2026-10-13 (§3.6).
 - **Account deletion discoverability** (App Review keeps missing it behind
   avatar → Security). Real, but a separate spec.
 
@@ -264,7 +266,7 @@ change, not removal, not navigation.
   describes. If the request then fails, the existing error alert and
   rollback are the correction — no second haptic.
 - Living in the mutation hook means every path that changes status gets it
-  for free, including Stage 2's context menu.
+  for free, including Stage 2's row menu.
 - **Decision is pure:** `features/backlog/status-haptic.ts` —
   `shouldPlayStatusHaptic(previous: BacklogStatus | null | undefined, next:
 BacklogStatus): boolean` is `previous !== next`. `undefined` (detail not
@@ -323,7 +325,7 @@ confirm.
   shows `Alert.alert` with title `Remove “<name>”?`, message `Its status and
 rating will be lost.`, and buttons `Cancel` (cancel style) and `Remove`
   (destructive style).
-- Used by the detail toolbar menu, the row context menu (§3.4) and the swipe
+- Used by the detail toolbar menu, the Home row menu (§3.4) and the swipe
   action (§3.5), so all three paths behave the same.
 - Undo was considered and rejected: iOS has no system toast to host it, and a
   custom one is more UI than the problem deserves.
@@ -358,45 +360,43 @@ sizes so text gets the full width.
 
 Checked at AX3 and AX5 on iPhone and iPad.
 
-### 3.4 Context menus with previews
+### 3.4 Row menus on Home
 
-Long-press (or right-click / two-finger click on iPad) on any game in a list
-shows a preview of its detail screen and a menu. Built on expo-router's
-`Link` with `Link.Trigger`, `Link.Preview` and `Link.Menu` / `Link.MenuAction`
-(present in expo-router 57), which also makes the row a real link —
-tapping navigates through the `href` instead of `router.push`.
+Each Home row and card gets a visible `…` button that opens a menu. A
+visible button rather than a long-press context menu, because a long-press
+is invisible until someone tries it, and a button is reachable the same way
+by touch, VoiceOver, Switch Control and pointer. (Decided 2026-10-13,
+replacing the earlier `Link.Preview` / `Link.Menu` design.)
 
-- **GameRow and GameTile** take `href` instead of `onPress(id)`; each screen
-  passes its own tab-scoped detail route (`/game/[id]`, `/search/game/[id]`,
-  `/explore/game/[id]`), preserving the rule that a push stays in its tab.
-- **Home rows** (the only list that knows each game's entry): `Status ▸`
-  submenu with the four statuses (current one checked), `Share`, and
-  `Remove from Backlog…` (destructive → §3.1).
-- **Search, Explore, Similar Games and Share-sheet results:** preview and
-  `Share` only. `GameSummaryWire` carries no backlog entry, and the upsert
-  endpoint takes the rating with the status, so a status change from a
-  summary would send `rating: null` and wipe an existing rating. Adding from
-  these lists stays one tap away on the detail screen.
+- **Built from `@expo/ui`**, the same `Menu` in a `Host` that `EntryActions`
+  and `StatusFilter` already use — no new native code. A single tap opens it.
+- **Placement:** trailing edge, where the row's chevron is today; on Home the
+  `…` replaces the chevron. The button is a sibling of the row's `Pressable`,
+  not inside it, so a tap on the button never also opens the game. Tapping
+  anywhere else on the row still opens the game.
+- **Items:** `Status ▸` (a submenu holding an inline `Picker` of the four
+  statuses, current one checked — the pattern `EntryActions` uses), `Share`,
+  a divider, and `Remove from Backlog…` (destructive role → §3.1).
+- **VoiceOver:** the button reads `More, <game name>`; the row itself keeps
+  its own label (§3.2).
+- **Home only.** Search, Explore, Similar Games and Share-sheet results get no
+  menu. `GameSummaryWire` carries no backlog entry, and the upsert endpoint
+  takes the rating with the status, so a status change from a summary would
+  send `rating: null` and wipe an existing rating. That leaves Share as the
+  only item, and a one-item menu on every result is clutter; Share stays on
+  the detail screen.
 - Status changes go through `useUpsertBacklogEntry` (so they play §2.6a's
   haptic) and the same `wouldExceedSlots` gate as `EntryActions`; a blocked
   change opens the paywall.
-- Share reuses `gameShareContent`, which already takes `{ slug, name }`, so
-  summaries share without fetching detail.
-- Shape (verified against expo-router 57's `LinkWithPreview`): `<Link href
-asChild push>` → `<Link.Trigger>` around a single `Pressable`, then
-  `<Link.Preview />` and `<Link.Menu>` as direct children of `Link`. The menu
-  must be a `Link.Menu` element, not a wrapper component, so hooks live in a
-  row component that builds the element. `href` must not change while a
-  preview is open. `Link`'s own `onPress` runs before navigation, which is
-  where Stage 3 records recent searches.
-- `GameDetailScreen` takes `gameHref(id)` instead of `onOpenGame(id)`, so
-  Similar Games tiles link within the current tab.
+- Share goes through a `shareGame({ slug, name })` helper extracted from the
+  detail screen's toolbar action, so both share the same content.
+- Navigation is unchanged: rows keep `onPress` → `router.push` within their
+  tab.
 
-Risk: `Link.Preview` mounts the destination route to render the preview.
-If that costs a detail fetch per long-press on slow networks, it is
-acceptable (the user is about to open it anyway); if preview rendering is
-broken under the transparent detail header, ship menus without
-`Link.Preview` and record why.
+Cost: one SwiftUI `Host` per mounted Home row. `SectionList` virtualizes, so
+only visible rows pay it. Checked by scrolling a 200-game backlog on a
+physical iPhone; if it stutters, the fallback is a plain `Pressable` `…`
+that opens `ActionSheetIOS` (core React Native, still no native module).
 
 ### 3.5 Swipe actions on Home
 
@@ -406,49 +406,21 @@ dependency; the root layout gains the `GestureHandlerRootView` it needs). It goe
 a confirmation after a full swipe feels broken.
 
 Cards (2+ columns) get no swipe — swiping cards in a grid is not an iOS
-pattern; the context menu covers them. Status changes stay in the context
-menu; a swipe that silently advances status is too easy to trigger by
-accident.
+pattern; the `…` menu covers them. Status changes stay in the menu; a swipe
+that silently advances status is too easy to trigger by accident.
 
-### 3.6 Pointer
+### 3.6 Pointer and keyboard — dropped
 
-Navigation bar items, tab bar, SwiftUI buttons and menus get pointer effects
-from UIKit already. React Native `Pressable` rows, cards, tiles and
-screenshots do not.
+Decided 2026-10-13: no local native modules and no keyboard shortcuts.
 
-- React Native's `Pressable` hover (`onHoverIn`) is web-only on iOS in RN
-  0.86 (`HoverState.js`), and `@expo/ui` has no `hoverEffect` modifier.
-- First, a quick check: with `Link.Trigger` from §3.4 in place, does the row
-  get a native pointer highlight? If yes, done.
-- If not: a local Expo module `modules/pointer-hover` exposing a view that
-  adds a `UIPointerInteraction` with the `.highlight` / `.lift` effect, and
-  wrap `GameRow`, `GameTile` and the screenshot thumbnails in it.
-- If neither works in the timebox, drop it and record the finding; it is not
-  worth a fork of `Pressable`.
-
-### 3.7 Hardware keyboard
-
-iPad users with a keyboard expect, and the HIG lists, standard shortcuts.
-React Native has no `UIKeyCommand` API on iOS.
-
-- Local Expo module `modules/key-commands` that registers `UIKeyCommand`s on
-  the root view controller and emits events to JS; a `useKeyCommand(...)`
-  hook registers while a screen is focused. The action is a selector added to
-  `UIViewController` by extension, so whichever controller in the responder
-  chain sees it first — including a presented modal, whose chain reaches the
-  root through its presenter — can forward it.
-- `⌘F` focuses the search bar through `Stack.SearchBar`'s `ref`
-  (`SearchBarCommands.focus`), via a one-shot "focus requested" flag the
-  Search route takes when it gains focus.
-- Shortcuts, each shown in the ⌘-hold discoverability overlay with a title:
-  - `⌘F` — Find: switch to the Search tab and focus the search bar.
-  - `⌘R` — Refresh: refetch the focused tab's queries.
-  - `⌘1` / `⌘2` / `⌘3` — Home / Explore / Search (only if `NativeTabs` does
-    not already provide these on iPadOS — check first).
-  - `Esc` — close the screenshot viewer (sheets already handle it).
-- Arrow-key focus through lists is **out of scope**: it needs UIKit's focus
-  system on native collection views, which React Native views do not take
-  part in.
+- **Pointer:** tab bar, navigation bar, SwiftUI buttons and menus — including
+  §3.4's `…` button — already get pointer effects from UIKit. React Native
+  `Pressable` rows, cards, tiles and screenshots get none: RN 0.86's hover is
+  web-only on iOS and `@expo/ui` has no hover modifier, so adding one needs a
+  native module. Accepted.
+- **Keyboard:** only what the system gives — typing into the search field,
+  Esc dismissing sheets, the tab bar's own shortcuts if iPadOS adds them. No
+  `⌘F` / `⌘R` / `⌘1–3`; React Native has no `UIKeyCommand` API.
 
 ---
 
@@ -465,7 +437,7 @@ both row and card modes.
 ### 4.2 Haptics
 
 Moved to Stage 1 (§2.6a). Stage 3 only checks it still fires from the
-context menu and swipe paths Stage 2 adds.
+row menu path Stage 2 adds.
 
 ### 4.3 Recent searches
 
@@ -481,7 +453,8 @@ are none.
 - Tapping a recent query fills the search bar through `Stack.SearchBar`'s
   `ref` (`SearchBarCommands.setText`, verified in react-native-screens 4.26)
   and runs the search.
-- Recorded from `Link`'s `onPress` on a Search result (§3.4).
+- Recorded when a Search result is opened, in the row's existing `onPress`
+  handler, just before it pushes the detail.
 - Recents are local to the device and cleared on sign-out alongside the
   query cache (`should-clear-cache.ts`).
 
@@ -517,7 +490,6 @@ pre-commit to fixes for problems not yet seen.
 | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `sidebarAdaptable` misbehaves with `role="search"` or `minimizeBehavior` | Seen in the first iPad run; fall back to the plain tab bar on iPad (still correct, just less native). |
 | Clerk / RevenueCat views break in sheets                                 | Keep that one presentation full screen (§2.6).                                                        |
-| `Link.Preview` problems under the transparent detail header              | Ship menus without previews (§3.4).                                                                   |
-| No pointer API reachable from React Native                               | Timeboxed; drop and record (§3.6).                                                                    |
+| One SwiftUI `Host` per Home row stutters on long backlogs                | Check with 200 games; fall back to `Pressable` + `ActionSheetIOS` (§3.4).                             |
 | iPhone Duo behaviour differs from the third-party reports                | Stage 3 verifies on Apple's simulator before any Duo-specific code is written.                        |
 | iPhone landscape exposes clipped onboarding pages                        | Part of Stage 1 manual testing; fix in Stage 1.                                                       |
