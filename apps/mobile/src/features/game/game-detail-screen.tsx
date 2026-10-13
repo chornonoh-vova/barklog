@@ -17,6 +17,7 @@ import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { Screenshots } from "@/features/game/screenshots";
+import { confirmRemove } from "@/features/game/confirm-remove";
 import { gameShareContent } from "@/features/game/share";
 import { SimilarGames } from "@/features/game/similar-games";
 import { COLUMN_GAP, detailIsSplit } from "@/ui/columns";
@@ -57,8 +58,12 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
         />
         {game.data?.backlogEntry == null ? null : (
           <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel="Backlog actions">
-            <Stack.Toolbar.MenuAction icon="trash" destructive onPress={() => remove.mutate()}>
-              Remove from Backlog
+            <Stack.Toolbar.MenuAction
+              icon="trash"
+              destructive
+              onPress={() => confirmRemove(game.data?.name ?? "this game", () => remove.mutate())}
+            >
+              Remove from Backlog…
             </Stack.Toolbar.MenuAction>
           </Stack.Toolbar.Menu>
         )}
