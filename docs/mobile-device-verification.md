@@ -418,3 +418,51 @@ swipe and routes it to `onRequestClose`); tapping the avatar again reopens it.
 
 Release: 13" iPad screenshots for App Store Connect; version bump — this is a
 native change and cannot ship over the air.
+
+## HIG gaps (Stage 2, 2026-10-13)
+
+Signed in, with a backlog of a few games in every status, on an iPhone and on
+the 13" iPad (2+ columns). Part of mobile 1.2.0.
+
+Remove confirmation: on a game detail, `…` → Remove from Backlog… shows
+"Remove “<name>”?" with Cancel and Remove. Cancel leaves the game; Remove
+deletes it. Same alert from the Home row menu and from the swipe.
+
+Home row menu:
+
+- Each Home row and card shows `ellipsis.circle` at the trailing edge instead
+  of the chevron. Search, Explore, Similar Games and the Share sheet are
+  unchanged.
+- Tapping `…` opens only the menu, never the game. Tapping anywhere else on the
+  row or card opens the game in the Home tab.
+- Status ▸ has the current status checked. Pick another status: the row moves
+  to that section, the `★` rating is unchanged, and a physical iPhone plays
+  the success haptic.
+- As a free user at the slot limit, moving a Completed game to Playing opens
+  the paywall and changes nothing.
+- Share opens the share sheet with the game's IGDB link.
+- On iPad with a pointer, `…` highlights on hover.
+
+Swipe (single column only): swipe a Home row left → red Remove. Tap it → the
+row closes and the alert shows. Cancel keeps the row. On the iPad grid, cards
+do not swipe.
+
+Accessibility text sizes (Settings → Accessibility → Display & Text Size →
+Larger Text, AX3 and AX5):
+
+- Game detail: the cover sits above the title, and the status and rating buttons
+  stack.
+- Home: the Show/filter control stacks, and row subtitles wrap to 2 lines.
+- At the largest standard size (not AX) everything stays side by side.
+
+VoiceOver:
+
+- A Home row reads "<name>, Playing, rated 9 out of 10" — never "black star".
+- `…` reads "More, <name>".
+- On a game detail, the rating button reads "Rating, 9 out of 10", or "Rate this
+  game" when unrated.
+- Known gap: the detail's IGDB score and Home's "avg ★" stats line still read
+  the glyph.
+
+Scrolling: with 200 games on a physical iPhone, Home scrolls without stutter.
+If it stutters, see spec §3.4's fallback.
