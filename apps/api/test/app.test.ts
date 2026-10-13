@@ -177,6 +177,9 @@ test("a 4xx HTTPException keeps its message, because it is useful", async () => 
 
 test("one request log line per request, carrying the same traceId", async () => {
   const response = await callApi(harness.app, "/nope");
+  // honoLogger writes the line once the body has been streamed out, which a
+  // real server always does; app.request() leaves that to the caller.
+  await response.text();
 
   const requestLines = logs.records.filter((record) => record.category.includes("http"));
   expect(requestLines).toHaveLength(1);

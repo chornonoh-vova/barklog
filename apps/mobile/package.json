@@ -55,6 +55,6 @@
     "eslint": "catalog:eslint9",
     "sf-symbols-typescript": "2.2.0",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:vitest4"
   }
 }
