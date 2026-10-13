@@ -379,3 +379,136 @@ section exists; checks 60 and 62 are regressions that already happened once.
 - [ ] **66. The viewer works from all four routes**, including
       `/shared/game/[id]`, where it is a `Modal` presented over a
       `fullScreenModal`. That nesting is the one most likely to misbehave.
+
+## iPad and adaptive layout (2026-10-12)
+
+Spec: `docs/superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md` §2.
+Needs a fresh `pnpm --filter mobile prebuild` (app.json and expo-haptics changed).
+There is no iPhone Duo simulator before Xcode 27.1; dragging the iPad Split View
+divider is the stand-in for folding.
+
+| Device              | Pose                             | Home | Search | Detail | Sheets | Notes |
+| ------------------- | -------------------------------- | ---- | ------ | ------ | ------ | ----- |
+| iPad Pro 13" (M5)   | landscape, full, sidebar open    |      |        |        |        |       |
+| iPad Pro 13" (M5)   | landscape, full, sidebar hidden  |      |        |        |        |       |
+| iPad Pro 13" (M5)   | portrait, full                   |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ⅓ Split View                     |      |        |        |        |       |
+| iPad Pro 11" (M5)   | landscape + portrait, full       |      |        |        |        |       |
+| iPad Pro 11" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad mini (A17 Pro) | portrait full (expect 2 columns) |      |        |        |        |       |
+| iPad mini (A17 Pro) | ⅓ Split View (expect 1 column)   |      |        |        |        |       |
+| iPhone 17 Pro       | portrait (must match main)       |      |        |        |        |       |
+| iPhone 17 Pro Max   | landscape (expect 2 columns)     |      |        |        |        |       |
+
+For every row: Home with and without a filter, Home empty state, Search
+empty / results / no results, game detail, paywall, profile, shared (via the
+share extension), onboarding (reset it via the dev menu or reinstall),
+screenshot viewer rotation, pull to refresh, Dynamic Type at default and AX3.
+
+Live resize: with Home scrolled halfway and a game detail pushed in the
+Search tab, drag the divider full → ½ → ⅓ → full. Expect columns to re-flow,
+no crash, scroll position kept, the Search tab's detail still on top.
+
+Haptic (physical iPhone only — simulators do not play haptics): add a game →
+buzz; change Playing → Completed → buzz; change only the rating → no buzz.
+
+Rotation inside modals (iPhone): open the screenshot viewer, rotate to
+landscape — the shot turns with the phone and fills the height; rotate back.
+Same for the profile screen. React Native `Modal`s are portrait-only unless
+given `supportedOrientations`.
+
+Profile sheet: swiping it down closes it (React Native blocks the native
+swipe and routes it to `onRequestClose`); tapping the avatar again reopens it.
+
+Release: 13" iPad screenshots for App Store Connect; version bump — this is a
+native change and cannot ship over the air.
+
+## HIG gaps (Stage 2, 2026-10-13)
+
+Signed in, with a backlog of a few games in every status, on an iPhone and on
+the 13" iPad (2+ columns). Part of mobile 1.2.0.
+
+Remove confirmation: on a game detail, `…` → Remove from Backlog… shows
+"Remove “<name>”?" with Cancel and Remove. Cancel leaves the game; Remove
+deletes it. Same alert from the Home row menu.
+
+Home row menu:
+
+- Each Home row and card shows `ellipsis.circle` at the trailing edge instead
+  of the chevron. Search, Explore, Similar Games and the Share sheet are
+  unchanged.
+- Tapping `…` opens only the menu, never the game. Tapping anywhere else on the
+  row or card opens the game in the Home tab.
+- Status ▸ has the current status checked. Pick another status: the row moves
+  to that section, the `★` rating is unchanged, and a physical iPhone plays
+  the success haptic.
+- As a free user at the slot limit, moving a Completed game to Playing opens
+  the paywall and changes nothing.
+- Share opens the share sheet with the game's IGDB link.
+- On iPad with a pointer, `…` highlights on hover.
+
+Accessibility text sizes (Settings → Accessibility → Display & Text Size →
+Larger Text, AX3 and AX5):
+
+- Game detail: the cover sits above the title, and the status and rating buttons
+  stack.
+- Home: the Show/filter control stacks, and row subtitles wrap to 2 lines.
+- At the largest standard size (not AX) everything stays side by side.
+
+VoiceOver:
+
+- A Home row reads "<name>, Playing, rated 9 out of 10" — never "black star".
+- `…` reads "More, <name>".
+- On a game detail, the rating button reads "Rating, 9 out of 10", or "Rate this
+  game" when unrated.
+- The detail's IGDB score and Home's stats line read their spoken labels —
+  neither announces "black star".
+
+Scrolling: with 200 games on a physical iPhone, Home scrolls without stutter.
+If it stutters, see spec §3.4's fallback.
+
+## Polish (Stage 3, 2026-10-13)
+
+Section headers: Home and Share-sheet sections read "Playing 3" in title case
+and headline weight, not small caps, and the count sits on the title's baseline.
+
+Recent searches:
+
+1. Search "hades", open a result, go back, and clear the field. Expect a
+   "Recent" list showing "hades".
+2. Tap "hades". The field shows "hades" and results appear.
+3. Search "HADES" and open a result. There is still one entry, at the top.
+4. Tap Clear. The "Fetch a game" empty state returns.
+5. Sign out and sign in as another account. There are no recents.
+
+Haptic (physical iPhone): a status change from the Home row menu plays the
+success haptic once.
+
+## iPhone Duo (Stage 3)
+
+Needs Xcode 27.1 and its iPhone Duo simulator (Device Hub). Not run yet: only
+Xcode 27.0 is installed.
+
+For each pose:
+
+- outer display, portrait
+- outer display, landscape (tent)
+- inner display, open
+- inner display in ½ Split View
+
+…on each screen: Home, Search (with results and with recents), game detail and
+the screenshot viewer.
+
+- Columns and the detail split follow the available width.
+- No content sits under the status bar or camera region with asymmetric
+  insets.
+- Sheets (Share, paywall, profile) centre on the inner display.
+- Onboarding and the screenshot viewer lay out in every pose.
+
+Live: with Home scrolled halfway and a game detail pushed in the Search tab,
+open, close and fold the device. Expect the columns to reflow without losing
+the scroll position or the pushed stack.
+
+Tab bar on the inner display: note where it sits, and whether
+`sidebarAdaptable` offers the sidebar there.

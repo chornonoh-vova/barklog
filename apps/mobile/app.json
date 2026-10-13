@@ -2,15 +2,15 @@
   "expo": {
     "name": "Barklog",
     "slug": "barklog",
-    "version": "1.1.0",
-    "orientation": "portrait",
+    "version": "1.2.0",
+    "orientation": "default",
     "icon": "./assets/icon/icon.png",
     "scheme": "barklog",
     "userInterfaceStyle": "automatic",
     "platforms": ["ios"],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
       "associatedDomains": ["applinks:barklog.gg"],
       "entitlements": {

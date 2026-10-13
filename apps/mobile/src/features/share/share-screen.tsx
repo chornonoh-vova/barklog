@@ -14,6 +14,8 @@ import { toShareSections, type ShareSection } from "@/features/share/sections";
 import { SearchingState } from "@/features/share/searching-state";
 import { ShareHeader } from "@/features/share/share-header";
 import { Screen, SectionHeader } from "@/theme";
+import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
+import { useSideInsets } from "@/ui/use-side-insets";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
@@ -23,7 +25,7 @@ const keyExtractor = (item: GameSummaryWire) => String(item.id);
 const renderSectionHeader = ({ section }: { section: ShareSection }) =>
   section.title === null ? null : (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
     </View>
   );
 
@@ -44,6 +46,8 @@ export function ShareScreen({
 }) {
   const identify = useIdentifyShare(url);
   const backToHome = { label: "Back to Home", onPress: onGoHome };
+  const sideInsets = useSideInsets();
+  const subtitleLines = useIsAccessibilitySize() ? 2 : 1;
 
   const sections = useMemo(
     () =>
@@ -60,10 +64,11 @@ export function ShareScreen({
         title={item.name}
         subtitle={summarySubtitle(item)}
         coverImageId={item.coverImageId}
+        subtitleLines={subtitleLines}
         onPress={onSelect}
       />
     ),
-    [onSelect],
+    [onSelect, subtitleLines],
   );
 
   // `isPending` first: the settled branches below all read as terminal, and one
@@ -85,7 +90,7 @@ export function ShareScreen({
         <SectionList
           style={Screen.fill}
           // `flexGrow: 1`, or the empty component is clipped — see `theme.ts`.
-          contentContainerStyle={Screen.listContent}
+          contentContainerStyle={[Screen.listContent, sideInsets]}
           sections={sections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}

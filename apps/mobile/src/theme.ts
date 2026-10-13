@@ -29,25 +29,26 @@ export const ShelfTitle = {
 } as const;
 
 /** `listContent` must grow, or a `ListEmptyComponent` — cloned straight into
- * the content container — has no height and gets clipped. */
+ * the content container — has no height and gets clipped. `groupedFill` is the
+ * background a grid of cards sits on. */
 export const Screen = {
   fill: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  groupedFill: { flex: 1, backgroundColor: PlatformColor("systemGroupedBackground") },
   listContent: { flexGrow: 1 },
 } as const;
 
+const SECTION_HEADER_INSETS = { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6 } as const;
+
 /** Shared by the two `SectionList` screens. Opaque, or sticky headers show the
- * rows sliding under them. */
+ * rows sliding under them — so the grouped variant has to match the grouped
+ * list behind it, or it shows as a white band over a grey grid. */
 export const SectionHeader = {
-  container: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 6,
-    backgroundColor: PlatformColor("systemBackground"),
+  container: { ...SECTION_HEADER_INSETS, backgroundColor: PlatformColor("systemBackground") },
+  groupedContainer: {
+    ...SECTION_HEADER_INSETS,
+    backgroundColor: PlatformColor("systemGroupedBackground"),
   },
-  title: {
-    ...Type.footnote,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-    color: PlatformColor("secondaryLabel"),
-  },
+  /** iOS 26 plain-list headers are title case in headline weight, not the
+   * old small caps. */
+  title: { ...Type.headline, color: PlatformColor("label") },
 } as const;

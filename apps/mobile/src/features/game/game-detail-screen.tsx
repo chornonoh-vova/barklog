@@ -1,24 +1,21 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { PlatformColor, ScrollView, Share, StyleSheet } from "react-native";
+import { PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
-import {
-  useBacklogStats,
-  useDeleteBacklogEntry,
-  useGame,
-  usePremium,
-  useUpsertBacklogEntry,
-} from "@/api/hooks";
+import { useDeleteBacklogEntry, useGame, useUpsertBacklogEntry } from "@/api/hooks";
 import { QueryBoundary } from "@/components/query-boundary";
-import { activeSlotsUsed } from "@/features/backlog/slots";
+import { useSlotState } from "@/features/backlog/use-slot-state";
 import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";
 import { ExpandableSummary } from "@/features/game/expandable-summary";
 import { Hero } from "@/features/game/hero";
 import { IgdbAttribution } from "@/features/game/igdb-attribution";
 import { Screenshots } from "@/features/game/screenshots";
-import { gameShareContent } from "@/features/game/share";
+import { confirmRemove } from "@/features/game/confirm-remove";
+import { shareGame } from "@/features/game/share-game";
 import { SimilarGames } from "@/features/game/similar-games";
+import { COLUMN_GAP, detailIsSplit } from "@/ui/columns";
+import { useMeasuredWidth } from "@/ui/use-measured-width";
 
 export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => void }) {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,15 +24,13 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const upsert = useUpsertBacklogEntry(gameId);
   const remove = useDeleteBacklogEntry(gameId);
   const router = useRouter();
-  const premium = usePremium();
-  const stats = useBacklogStats();
-  const activeCount = stats.data === undefined ? undefined : activeSlotsUsed(stats.data);
+  const { premium, activeCount } = useSlotState();
+  const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
+  const split = detailIsSplit(width, fontScale);
 
   const gameData = game.data;
   const onShare = useCallback(() => {
-    if (gameData === undefined) return;
-    const { content, options } = gameShareContent(gameData);
-    void Share.share(content, options).catch(() => {});
+    if (gameData !== undefined) shareGame(gameData);
   }, [gameData]);
 
   return (
@@ -53,41 +48,67 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
         />
         {game.data?.backlogEntry == null ? null : (
           <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel="Backlog actions">
-            <Stack.Toolbar.MenuAction icon="trash" destructive onPress={() => remove.mutate()}>
-              Remove from Backlog
+            <Stack.Toolbar.MenuAction
+              icon="trash"
+              destructive
+              onPress={() => confirmRemove(game.data?.name ?? "this game", () => remove.mutate())}
+            >
+              Remove from Backlog…
             </Stack.Toolbar.MenuAction>
           </Stack.Toolbar.Menu>
         )}
       </Stack.Toolbar>
 
       <QueryBoundary query={game}>
-        {(data) => (
-          <ScrollView
-            style={styles.scroll}
-            contentInsetAdjustmentBehavior="automatic"
-            showsVerticalScrollIndicator={false}
-          >
-            <Hero game={data} />
+        {(data) => {
+          const overview = (
+            <>
+              <Hero game={data} />
 
-            <EntryActions
-              entry={data.backlogEntry}
-              premium={premium}
-              activeCount={activeCount}
-              onBlocked={() => router.push("/paywall")}
-              onUpsert={(input) => upsert.mutate(input)}
-            />
+              <EntryActions
+                entry={data.backlogEntry}
+                premium={premium}
+                activeCount={activeCount}
+                onBlocked={() => router.push("/paywall")}
+                onUpsert={(input) => upsert.mutate(input)}
+              />
 
-            {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
+              {data.summary === null ? null : <ExpandableSummary summary={data.summary} />}
+            </>
+          );
 
-            <Screenshots screenshots={data.screenshots} />
+          return (
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={sideInsets}
+              onLayout={onLayout}
+              contentInsetAdjustmentBehavior="automatic"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Wide: what you act on to the left, facts to the right. The
+                  shelves stay full width below either way — horizontal
+                  scrolling is the one part that already uses the width. */}
+              {split ? (
+                <View style={styles.split}>
+                  <View style={styles.primary}>{overview}</View>
+                  <View style={styles.secondary}>
+                    <DetailRows game={data} />
+                  </View>
+                </View>
+              ) : (
+                overview
+              )}
 
-            <DetailRows game={data} />
+              <Screenshots screenshots={data.screenshots} />
 
-            <SimilarGames gameId={gameId} onPressGame={onOpenGame} />
+              {split ? null : <DetailRows game={data} />}
 
-            <IgdbAttribution slug={data.slug} />
-          </ScrollView>
-        )}
+              <SimilarGames gameId={gameId} onPressGame={onOpenGame} />
+
+              <IgdbAttribution slug={data.slug} />
+            </ScrollView>
+          );
+        }}
       </QueryBoundary>
     </>
   );
@@ -95,4 +116,9 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: PlatformColor("systemBackground") },
+  split: { flexDirection: "row", gap: COLUMN_GAP },
+  // 3:2 so the 132pt cover and a three-line title are not squeezed at 700pt.
+  primary: { flex: 3 },
+  // Hero's own top inset, so the two columns start level.
+  secondary: { flex: 2, paddingTop: 8 },
 });

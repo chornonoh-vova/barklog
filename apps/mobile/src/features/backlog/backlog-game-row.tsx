@@ -1,0 +1,72 @@
+import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
+import { useRouter } from "expo-router";
+
+import { useDeleteBacklogEntry, useUpsertBacklogEntry } from "@/api/hooks";
+import { GameRow, type GameRowVariant } from "@/components/game-row";
+import { BacklogRowMenu } from "@/features/backlog/backlog-row-menu";
+import { confirmRemove } from "@/features/game/confirm-remove";
+import { rowSubtitle, rowSubtitleSpoken } from "@/features/game/format";
+import { shareGame } from "@/features/game/share-game";
+import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
+
+/**
+ * A Home row with the backlog's own menu. Home is the one list that knows each
+ * game's entry, rating included — so it is the one list that may change status
+ * without wiping the rating (spec §3.4).
+ */
+export function BacklogGameRow({
+  entry,
+  variant,
+  subtitleLines,
+  premium,
+  activeCount,
+  onPress,
+}: {
+  entry: BacklogListItemWire;
+  variant: GameRowVariant;
+  subtitleLines: number;
+  /** From the screen, read once: a subscription per row would re-render every
+   * row whenever stats refetch. */
+  premium: boolean | undefined;
+  activeCount: number | undefined;
+  onPress: (id: number) => void;
+}) {
+  const upsert = useUpsertBacklogEntry(entry.gameId);
+  const remove = useDeleteBacklogEntry(entry.gameId);
+  const router = useRouter();
+
+  const setStatus = (next: BacklogStatus) => {
+    if (next === entry.status) return;
+
+    if (wouldExceedSlots({ premium, activeCount, from: entry.status, to: next })) {
+      router.push("/paywall");
+      return;
+    }
+
+    upsert.mutate({ status: next, rating: entry.rating });
+  };
+
+  const askRemove = () => confirmRemove(entry.game.name, () => remove.mutate());
+
+  return (
+    <GameRow
+      id={entry.gameId}
+      title={entry.game.name}
+      subtitle={rowSubtitle(entry)}
+      spokenSubtitle={rowSubtitleSpoken(entry)}
+      coverImageId={entry.game.coverImageId}
+      variant={variant}
+      subtitleLines={subtitleLines}
+      onPress={onPress}
+      menu={
+        <BacklogRowMenu
+          name={entry.game.name}
+          status={entry.status}
+          onStatus={setStatus}
+          onShare={() => shareGame(entry.game)}
+          onRemove={askRemove}
+        />
+      }
+    />
+  );
+}

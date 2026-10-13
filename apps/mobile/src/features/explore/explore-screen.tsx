@@ -1,3 +1,4 @@
+import { SEARCH_LIMIT_MAX } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
@@ -8,6 +9,11 @@ import { ErrorState, LoadingState } from "@/components/query-states";
 import { GameShelf } from "@/features/explore/game-shelf";
 import { toShelves } from "@/features/explore/shelves";
 import { Screen } from "@/theme";
+import { useSideInsets } from "@/ui/use-side-insets";
+
+// The most the API serves. The default 20 runs out before the edge of a wide
+// window — iPad landscape with the sidebar hidden shows a shelf ending mid-screen.
+const SHELF_LIMIT = SEARCH_LIMIT_MAX;
 
 const EMPTY_CATALOGUE = (
   <EmptyState
@@ -19,10 +25,11 @@ const EMPTY_CATALOGUE = (
 );
 
 export function ExploreScreen() {
-  const popular = useGameFeed("popular");
-  const upcoming = useGameFeed("upcoming");
-  const recent = useGameFeed("recent");
+  const popular = useGameFeed("popular", SHELF_LIMIT);
+  const upcoming = useGameFeed("upcoming", SHELF_LIMIT);
+  const recent = useGameFeed("recent", SHELF_LIMIT);
   const router = useRouter();
+  const sideInsets = useSideInsets();
 
   // Each tab owns its own detail route so a push stays in the current tab: a
   // bare `/game/${id}` resolves to `(home)` and switches tabs.
@@ -50,7 +57,7 @@ export function ExploreScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, sideInsets]}
       refreshControl={
         <RefreshControl
           refreshing={feeds.some((feed) => feed.isRefetching)}

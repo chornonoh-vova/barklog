@@ -1,4 +1,9 @@
-import type { BacklogStatsWire, BacklogStatus, GameSummaryWire } from "@repo/contracts";
+import {
+  RATING_MAX,
+  type BacklogStatsWire,
+  type BacklogStatus,
+  type GameSummaryWire,
+} from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 /** `en-GB` is fixed, not taken from the device: these are catalogue dates, and
@@ -51,22 +56,46 @@ export function summarySubtitle(game: GameSummaryWire): string | null {
   return releaseYear(game.firstReleaseDate);
 }
 
+/** "12,481 ratings" — shared by the visible and spoken rating lines. */
+const ratingsCount = (count: number) =>
+  `${count.toLocaleString("en-GB")} ${count === 1 ? "rating" : "ratings"}`;
+
+/** "12 games" — shared by the visible and spoken stats lines. */
+const gamesCount = (total: number) => `${total} ${total === 1 ? "game" : "games"}`;
+
 export function ratingLine(input: {
   totalRating: number | null;
   totalRatingCount: number;
 }): string | null {
   if (input.totalRating === null) return null;
 
-  const count = input.totalRatingCount.toLocaleString("en-GB");
-  const noun = input.totalRatingCount === 1 ? "rating" : "ratings";
+  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${ratingsCount(input.totalRatingCount)}`;
+}
 
-  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${count} ${noun}`;
+/** `ratingLine` for VoiceOver: IGDB scores are out of 100, and `★` reads as
+ * "black star". */
+export function ratingLineSpoken(input: {
+  totalRating: number | null;
+  totalRatingCount: number;
+}): string | null {
+  if (input.totalRating === null) return null;
+
+  return `Rated ${Math.round(input.totalRating)} out of 100, from ${ratingsCount(input.totalRatingCount)}`;
 }
 
 export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
-  const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
+  const games = gamesCount(stats.total);
 
   return stats.averageRating === null ? games : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
+}
+
+/** `statsLine` for VoiceOver, without the glyph. */
+export function statsLineSpoken(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
+  const games = gamesCount(stats.total);
+
+  return stats.averageRating === null
+    ? games
+    : `${games}, average rating ${stats.averageRating} out of ${RATING_MAX}`;
 }
 
 export function statusLabel(status: BacklogStatus): string {
@@ -86,7 +115,23 @@ export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
 }
 
 export function ratingButtonLabel(rating: number | null): string {
-  return rating === null ? "" : String(rating);
+  return rating === null ? "Rate" : String(rating);
+}
+
+export function ratingButtonSymbol(rating: number | null): SFSymbol {
+  return rating === null ? "star" : "star.fill";
+}
+
+/** For VoiceOver: the visible label is a bare number beside a star. */
+export function ratingSpoken(rating: number | null): string {
+  return rating === null ? "Rate this game" : `Rating, ${rating} out of ${RATING_MAX}`;
+}
+
+/** `rowSubtitle` without the `★`, which VoiceOver reads as "black star". */
+export function rowSubtitleSpoken(entry: { status: BacklogStatus; rating: number | null }): string {
+  return entry.rating === null
+    ? statusLabel(entry.status)
+    : `${statusLabel(entry.status)}, rated ${entry.rating} out of ${RATING_MAX}`;
 }
 
 export function rowSubtitle(entry: { status: BacklogStatus; rating: number | null }): string {
