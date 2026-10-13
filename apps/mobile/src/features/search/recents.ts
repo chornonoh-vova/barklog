@@ -19,7 +19,9 @@ export function parseRecents(raw: string | null): string[] {
     if (!Array.isArray(parsed)) return [];
 
     return parsed
-      .filter((item): item is string => typeof item === "string" && item !== "")
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter((item) => item !== "")
       .slice(0, RECENT_LIMIT);
   } catch {
     return [];

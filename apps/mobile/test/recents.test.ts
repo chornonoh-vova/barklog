@@ -55,6 +55,10 @@ describe("parseRecents", () => {
     expect(parseRecents('["hades", 3, null, "", "zelda"]')).toEqual(["hades", "zelda"]);
   });
 
+  it("trims entries and drops whitespace-only ones", () => {
+    expect(parseRecents('["  hades ", "   ", "zelda"]')).toEqual(["hades", "zelda"]);
+  });
+
   it("caps an oversized list", () => {
     const raw = JSON.stringify(Array.from({ length: 20 }, (_, i) => `g${i}`));
     expect(parseRecents(raw)).toHaveLength(RECENT_LIMIT);

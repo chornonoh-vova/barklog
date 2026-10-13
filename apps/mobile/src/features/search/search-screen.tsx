@@ -1,6 +1,6 @@
 import { SEARCH_QUERY_MIN, type GameSummaryWire } from "@repo/contracts";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
 
 import { useSearchGames } from "@/api/hooks";
@@ -45,14 +45,22 @@ export function SearchScreen({
   // Out here, not in the render prop: memoised, so `FlatList` keeps its rows.
   const rows = useMemo(() => chunk(search.data?.items ?? [], columns), [search.data, columns]);
 
+  // The query the visible results belong to. While the next query loads, the
+  // previous results stay on screen (`keepPreviousData`), and a tap on one of
+  // them was found by the previous query, not by `debounced`.
+  const [shownQuery, setShownQuery] = useState(debounced);
+  if (search.data !== undefined && !search.isPlaceholderData && shownQuery !== debounced) {
+    setShownQuery(debounced);
+  }
+
   // Recorded on open, not on every keystroke: a query worth remembering is one
   // that found the game.
   const openGame = useCallback(
     (id: number) => {
-      onOpenResult(debounced);
+      onOpenResult(shownQuery);
       router.push(`/search/game/${id}`);
     },
-    [onOpenResult, debounced, router],
+    [onOpenResult, shownQuery, router],
   );
 
   const renderItem = useCallback(
@@ -111,7 +119,7 @@ export function SearchScreen({
               title="No games found"
               systemImage="magnifyingglass"
               illustration="explore"
-              description={`Nothing in the catalogue matches "${debounced}".`}
+              description={`Nothing in the catalogue matches "${shownQuery}".`}
             />
           }
         />

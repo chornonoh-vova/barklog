@@ -3,8 +3,8 @@ import { Alert } from "react-native";
 import { removeConfirmCopy } from "@/features/game/remove-confirm";
 
 /**
- * The one path to removing a game — toolbar, row menu and swipe all come
- * through here, so they all confirm. Undo was rejected: iOS has no system
+ * The one path to removing a game — the toolbar and the row menu both come
+ * through here, so they both confirm. Undo was rejected: iOS has no system
  * toast to host it.
  */
 export function confirmRemove(gameName: string, onConfirm: () => void): void {
