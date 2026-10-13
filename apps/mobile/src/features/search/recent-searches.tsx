@@ -10,7 +10,7 @@ export function RecentSearches({
   onPick,
   onClear,
 }: {
-  recents: string[];
+  recents: readonly string[];
   onPick: (query: string) => void;
   onClear: () => void;
 }) {

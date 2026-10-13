@@ -23,9 +23,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
+    // Recents are device-local but personal: the next account must not see
+    // them. First, so the mounted Search route hears it before `clear()`.
+    if (shouldClearRecents(previous.current, userId)) clearRecents(queryClient);
     if (shouldClearCache(previous.current, userId)) queryClient.clear();
-    // Recents are device-local but personal: the next account must not see them.
-    if (shouldClearRecents(previous.current, userId)) void clearRecents();
     if (userId !== undefined) previous.current = userId;
   }, [isLoaded, userId, queryClient]);
 

@@ -29,7 +29,7 @@ export function SearchScreen({
   onOpenResult,
 }: {
   query: string;
-  recents: string[];
+  recents: readonly string[];
   onPickRecent: (query: string) => void;
   onClearRecents: () => void;
   /** Called with the query a result was found by, as that result opens. */
