@@ -8,6 +8,7 @@ import RevenueCatUI from "react-native-purchases-ui";
 
 import { useIsPremium } from "@/api/hooks";
 import { prefersSheet } from "@/ui/columns";
+import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 
 /**
  * Not Clerk's `UserButton`: it finds its parent by walking the responder chain,
@@ -59,6 +60,7 @@ export function ProfileToolbar() {
         visible={isOpen}
         animationType="slide"
         presentationStyle={prefersSheet(width) ? "pageSheet" : "fullScreen"}
+        supportedOrientations={MODAL_ORIENTATIONS}
         onRequestClose={() => setIsOpen(false)}
       >
         <UserProfileView style={styles.profile} onDismiss={() => setIsOpen(false)} />

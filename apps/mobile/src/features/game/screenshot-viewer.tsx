@@ -12,6 +12,7 @@ import { RemoteImage } from "@/components/remote-image";
 import { screenshotLabel } from "@/features/game/screenshot-label";
 import { screenshotUrl } from "@/igdb-image";
 import { SHOT_ASPECT } from "@/theme";
+import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 import { GLASS_STYLE } from "@/ui/platform-glass";
 
 /** A page-style SwiftUI `TabView`, so paging and rotation are UIKit's. */
@@ -29,7 +30,13 @@ export function ScreenshotViewer({
   const size = { width, height: width / SHOT_ASPECT };
 
   return (
-    <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal
+      visible
+      animationType="fade"
+      presentationStyle="fullScreen"
+      supportedOrientations={MODAL_ORIENTATIONS}
+      onRequestClose={onClose}
+    >
       <Host style={styles.host} colorScheme="dark">
         <Overlay alignment="topTrailing">
           <TabView

@@ -413,6 +413,11 @@ no crash, scroll position kept, the Search tab's detail still on top.
 Haptic (physical iPhone only — simulators do not play haptics): add a game →
 buzz; change Playing → Completed → buzz; change only the rating → no buzz.
 
+Rotation inside modals (iPhone): open the screenshot viewer, rotate to
+landscape — the shot turns with the phone and fills the height; rotate back.
+Same for the profile screen. React Native `Modal`s are portrait-only unless
+given `supportedOrientations`.
+
 Profile sheet: swiping it down closes it (React Native blocks the native
 swipe and routes it to `onRequestClose`); tapping the avatar again reopens it.
 
