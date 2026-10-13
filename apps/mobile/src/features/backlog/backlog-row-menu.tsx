@@ -6,13 +6,13 @@ import {
   labelStyle,
   pickerStyle,
   tag,
+  tint,
 } from "@expo/ui/swift-ui/modifiers";
 import type { BacklogStatus } from "@repo/contracts";
 import { PlatformColor, StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel, statusSymbol } from "@/features/game/format";
-import { Brand } from "@/theme";
 
 /**
  * The `…` on a Home row. A visible button rather than a long-press menu: it is
@@ -33,7 +33,9 @@ export function BacklogRowMenu({
   onRemove: () => void;
 }) {
   return (
-    <Host style={styles.host} seedColor={Brand.tint}>
+    // Label-coloured, not the brand tint: menu icons follow the host's tint,
+    // and a menu of brand-coloured icons reads as a row of links.
+    <Host style={styles.host} seedColor={PlatformColor("label")}>
       <Menu
         label="More"
         systemImage="ellipsis.circle"
@@ -64,6 +66,8 @@ export function BacklogRowMenu({
           systemImage="trash"
           role="destructive"
           onPress={onRemove}
+          // The role reddens the title only; the icon follows the tint.
+          modifiers={[tint(PlatformColor("systemRed"))]}
         />
       </Menu>
     </Host>
