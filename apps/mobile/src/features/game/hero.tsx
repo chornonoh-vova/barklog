@@ -2,7 +2,7 @@ import type { GameDetailResponse } from "@repo/contracts";
 import { PlatformColor, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import { Cover } from "@/components/cover";
-import { metaLine, ratingLine } from "@/features/game/format";
+import { metaLine, ratingLine, ratingLineSpoken } from "@/features/game/format";
 import { Type } from "@/theme";
 import { isAccessibilitySize } from "@/ui/text-size";
 
@@ -26,7 +26,11 @@ export function Hero({ game }: { game: GameDetailResponse }) {
           </Text>
           {developer === null ? null : <Text style={styles.developer}>{developer}</Text>}
           {meta === null ? null : <Text style={styles.meta}>{meta}</Text>}
-          {rating === null ? null : <Text style={styles.meta}>{rating}</Text>}
+          {rating === null ? null : (
+            <Text style={styles.meta} accessibilityLabel={ratingLineSpoken(game) ?? undefined}>
+              {rating}
+            </Text>
+          )}
         </View>
       </View>
     </View>

@@ -6,11 +6,13 @@ import {
   ratingButtonLabel,
   ratingButtonSymbol,
   ratingLine,
+  ratingLineSpoken,
   ratingSpoken,
   releaseDateLine,
   releaseYear,
   rowSubtitle,
   rowSubtitleSpoken,
+  statsLineSpoken,
   statusButtonLabel,
   statusButtonSymbol,
   statusLabel,
@@ -167,5 +169,35 @@ describe("rowSubtitleSpoken", () => {
 
   it("is the status alone when unrated", () => {
     expect(rowSubtitleSpoken({ status: "waiting", rating: null })).toBe("Waiting");
+  });
+});
+
+describe("ratingLineSpoken", () => {
+  it("reads the IGDB score out of 100 with its count", () => {
+    expect(ratingLineSpoken({ totalRating: 95.6231, totalRatingCount: 12481 })).toBe(
+      "Rated 96 out of 100, from 12,481 ratings",
+    );
+  });
+
+  it("says rating for a single rating", () => {
+    expect(ratingLineSpoken({ totalRating: 80, totalRatingCount: 1 })).toBe(
+      "Rated 80 out of 100, from 1 rating",
+    );
+  });
+
+  it("returns null for an unrated game", () => {
+    expect(ratingLineSpoken({ totalRating: null, totalRatingCount: 0 })).toBeNull();
+  });
+});
+
+describe("statsLineSpoken", () => {
+  it("reads the average without the star glyph", () => {
+    expect(statsLineSpoken({ total: 12, averageRating: 7.5 })).toBe(
+      "12 games, average rating 7.5 out of 10",
+    );
+  });
+
+  it("is the count alone with no ratings", () => {
+    expect(statsLineSpoken({ total: 1, averageRating: null })).toBe("1 game");
   });
 });

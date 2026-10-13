@@ -22,7 +22,7 @@ import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
-import { statsLine } from "@/features/game/format";
+import { statsLine, statsLineSpoken } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -103,7 +103,11 @@ export function BacklogScreen() {
   const listHeader = (
     <View style={styles.header}>
       <StatusFilter value={filter} onChange={setFilter} />
-      {stats.data ? <Text style={styles.stats}>{statsLine(stats.data)}</Text> : null}
+      {stats.data ? (
+        <Text style={styles.stats} accessibilityLabel={statsLineSpoken(stats.data)}>
+          {statsLine(stats.data)}
+        </Text>
+      ) : null}
       {slots === null ? null : (
         <Pressable
           style={styles.slotsTarget}

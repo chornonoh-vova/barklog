@@ -68,10 +68,33 @@ export function ratingLine(input: {
   return `★ ${Math.round(input.totalRating)}${SEPARATOR}${count} ${noun}`;
 }
 
+/** `ratingLine` for VoiceOver: IGDB scores are out of 100, and `★` reads as
+ * "black star". */
+export function ratingLineSpoken(input: {
+  totalRating: number | null;
+  totalRatingCount: number;
+}): string | null {
+  if (input.totalRating === null) return null;
+
+  const count = input.totalRatingCount.toLocaleString("en-GB");
+  const noun = input.totalRatingCount === 1 ? "rating" : "ratings";
+
+  return `Rated ${Math.round(input.totalRating)} out of 100, from ${count} ${noun}`;
+}
+
 export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
   const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
 
   return stats.averageRating === null ? games : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
+}
+
+/** `statsLine` for VoiceOver, without the glyph. */
+export function statsLineSpoken(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
+  const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
+
+  return stats.averageRating === null
+    ? games
+    : `${games}, average rating ${stats.averageRating} out of ${RATING_MAX}`;
 }
 
 export function statusLabel(status: BacklogStatus): string {
