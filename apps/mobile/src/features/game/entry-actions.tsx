@@ -1,5 +1,6 @@
 import { HStack, Menu, Picker, Text } from "@expo/ui/swift-ui";
 import {
+  accessibilityLabel,
   buttonStyle,
   clipShape,
   controlSize,
@@ -13,6 +14,8 @@ import { PlatformColor, StyleSheet } from "react-native";
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import {
   ratingButtonLabel,
+  ratingButtonSymbol,
+  ratingSpoken,
   statusButtonLabel,
   statusButtonSymbol,
   statusLabel,
@@ -45,12 +48,14 @@ export function EntryActions({
       <HStack>
         {status === null ? null : (
           <Menu
-            label={`★ ${ratingButtonLabel(rating)}`.trim()}
+            label={ratingButtonLabel(rating)}
+            systemImage={ratingButtonSymbol(rating)}
             modifiers={[
               buttonStyle("bordered"),
               controlSize("large"),
               clipShape("capsule"),
               foregroundStyle(rating === null ? PlatformColor("label") : Brand.tint),
+              accessibilityLabel(ratingSpoken(rating)),
             ]}
           >
             <Picker

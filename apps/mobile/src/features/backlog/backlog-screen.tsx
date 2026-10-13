@@ -21,7 +21,7 @@ import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
-import { rowSubtitle, statsLine } from "@/features/game/format";
+import { rowSubtitle, rowSubtitleSpoken, statsLine } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -72,6 +72,7 @@ export function BacklogScreen() {
           id={entry.gameId}
           title={entry.game.name}
           subtitle={rowSubtitle(entry)}
+          spokenSubtitle={rowSubtitleSpoken(entry)}
           coverImageId={entry.game.coverImageId}
           variant={variant}
           onPress={openGame}

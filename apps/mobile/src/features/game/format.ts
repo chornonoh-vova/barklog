@@ -1,4 +1,9 @@
-import type { BacklogStatsWire, BacklogStatus, GameSummaryWire } from "@repo/contracts";
+import {
+  RATING_MAX,
+  type BacklogStatsWire,
+  type BacklogStatus,
+  type GameSummaryWire,
+} from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 /** `en-GB` is fixed, not taken from the device: these are catalogue dates, and
@@ -86,7 +91,23 @@ export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
 }
 
 export function ratingButtonLabel(rating: number | null): string {
-  return rating === null ? "" : String(rating);
+  return rating === null ? "Rate" : String(rating);
+}
+
+export function ratingButtonSymbol(rating: number | null): SFSymbol {
+  return rating === null ? "star" : "star.fill";
+}
+
+/** For VoiceOver: the visible label is a bare number beside a star. */
+export function ratingSpoken(rating: number | null): string {
+  return rating === null ? "Rate this game" : `Rating, ${rating} out of ${RATING_MAX}`;
+}
+
+/** `rowSubtitle` without the `★`, which VoiceOver reads as "black star". */
+export function rowSubtitleSpoken(entry: { status: BacklogStatus; rating: number | null }): string {
+  return entry.rating === null
+    ? statusLabel(entry.status)
+    : `${statusLabel(entry.status)}, rated ${entry.rating} out of ${RATING_MAX}`;
 }
 
 export function rowSubtitle(entry: { status: BacklogStatus; rating: number | null }): string {

@@ -17,6 +17,7 @@ export const GameRow = memo(function GameRow({
   id,
   title,
   subtitle,
+  spokenSubtitle,
   coverImageId,
   variant = "row",
   onPress,
@@ -24,10 +25,14 @@ export const GameRow = memo(function GameRow({
   id: number;
   title: string;
   subtitle: string | null;
+  /** What VoiceOver reads instead of `subtitle`, when the visible one uses glyphs. */
+  spokenSubtitle?: string | null;
   coverImageId: string | null;
   variant?: GameRowVariant;
   onPress: (id: number) => void;
 }) {
+  const spoken = spokenSubtitle === undefined ? subtitle : spokenSubtitle;
+
   return (
     <Pressable
       onPress={() => onPress(id)}
@@ -39,7 +44,7 @@ export const GameRow = memo(function GameRow({
         ];
       }}
       accessibilityRole="button"
-      accessibilityLabel={subtitle === null ? title : `${title}, ${subtitle}`}
+      accessibilityLabel={spoken === null ? title : `${title}, ${spoken}`}
     >
       <Cover imageId={coverImageId} size="small" width={COVER_WIDTH} />
 

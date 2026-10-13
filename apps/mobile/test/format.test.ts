@@ -4,10 +4,13 @@ import { describe, expect, it } from "vitest";
 import {
   metaLine,
   ratingButtonLabel,
+  ratingButtonSymbol,
   ratingLine,
+  ratingSpoken,
   releaseDateLine,
   releaseYear,
   rowSubtitle,
+  rowSubtitleSpoken,
   statusButtonLabel,
   statusButtonSymbol,
   statusLabel,
@@ -112,8 +115,8 @@ describe("ratingButtonLabel", () => {
     expect(ratingButtonLabel(8)).toBe("8");
   });
 
-  it("shows nothing but the symbol when unrated", () => {
-    expect(ratingButtonLabel(null)).toBe("");
+  it("invites a rating when unrated", () => {
+    expect(ratingButtonLabel(null)).toBe("Rate");
   });
 });
 
@@ -134,5 +137,35 @@ describe("releaseDateLine", () => {
 
   it("says unknown when there is no date", () => {
     expect(releaseDateLine(null)).toBe("Unknown");
+  });
+});
+
+describe("ratingButtonSymbol", () => {
+  it("is an outline star when unrated", () => {
+    expect(ratingButtonSymbol(null)).toBe("star");
+  });
+
+  it("is a filled star when rated", () => {
+    expect(ratingButtonSymbol(7)).toBe("star.fill");
+  });
+});
+
+describe("ratingSpoken", () => {
+  it("reads the rating out of the maximum", () => {
+    expect(ratingSpoken(9)).toBe("Rating, 9 out of 10");
+  });
+
+  it("invites a rating when unrated", () => {
+    expect(ratingSpoken(null)).toBe("Rate this game");
+  });
+});
+
+describe("rowSubtitleSpoken", () => {
+  it("never contains the star glyph", () => {
+    expect(rowSubtitleSpoken({ status: "playing", rating: 9 })).toBe("Playing, rated 9 out of 10");
+  });
+
+  it("is the status alone when unrated", () => {
+    expect(rowSubtitleSpoken({ status: "waiting", rating: null })).toBe("Waiting");
   });
 });
