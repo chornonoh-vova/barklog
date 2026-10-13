@@ -1,9 +1,17 @@
 import { SymbolView } from "expo-symbols";
 import { memo } from "react";
-import { Pressable, PlatformColor, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  PlatformColor,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import { Cover } from "@/components/cover";
 import { Type } from "@/theme";
+import { isAccessibilitySize } from "@/ui/text-size";
 
 const COVER_WIDTH = 44;
 
@@ -31,6 +39,8 @@ export const GameRow = memo(function GameRow({
   variant?: GameRowVariant;
   onPress: (id: number) => void;
 }) {
+  const { fontScale } = useWindowDimensions();
+  const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
   const spoken = spokenSubtitle === undefined ? subtitle : spokenSubtitle;
 
   return (
@@ -53,7 +63,7 @@ export const GameRow = memo(function GameRow({
           {title}
         </Text>
         {subtitle === null ? null : (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={styles.subtitle} numberOfLines={subtitleLines}>
             {subtitle}
           </Text>
         )}

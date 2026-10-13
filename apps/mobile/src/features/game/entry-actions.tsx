@@ -1,4 +1,4 @@
-import { HStack, Menu, Picker, Text } from "@expo/ui/swift-ui";
+import { HStack, Menu, Picker, Text, VStack } from "@expo/ui/swift-ui";
 import {
   accessibilityLabel,
   buttonStyle,
@@ -9,7 +9,7 @@ import {
   tag,
 } from "@expo/ui/swift-ui/modifiers";
 import { RATING_MAX, RATING_MIN, type BacklogEntryWire, type BacklogStatus } from "@repo/contracts";
-import { PlatformColor, StyleSheet } from "react-native";
+import { PlatformColor, StyleSheet, useWindowDimensions } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import {
@@ -24,6 +24,7 @@ import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 import { Brand } from "@/theme";
 import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
+import { isAccessibilitySize } from "@/ui/text-size";
 
 const NO_RATING = 0;
 const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RATING_MIN + i);
@@ -43,9 +44,12 @@ export function EntryActions({
 }) {
   const status = entry?.status ?? null;
   const rating = entry?.rating ?? null;
+  const { fontScale } = useWindowDimensions();
+  // Two large capsules side by side truncate at accessibility sizes.
+  const Container = isAccessibilitySize(fontScale) ? VStack : HStack;
   return (
     <MeasuredHost style={styles.host}>
-      <HStack>
+      <Container>
         {status === null ? null : (
           <Menu
             label={ratingButtonLabel(rating)}
@@ -108,7 +112,7 @@ export function EntryActions({
             ))}
           </Picker>
         </Menu>
-      </HStack>
+      </Container>
     </MeasuredHost>
   );
 }
