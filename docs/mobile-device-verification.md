@@ -466,3 +466,48 @@ VoiceOver:
 
 Scrolling: with 200 games on a physical iPhone, Home scrolls without stutter.
 If it stutters, see spec §3.4's fallback.
+
+## Polish (Stage 3, 2026-10-13)
+
+Section headers: Home and Share-sheet sections read "Playing 3" in title case
+and headline weight, not small caps, and the count sits on the title's baseline.
+
+Recent searches:
+
+1. Search "hades", open a result, go back, and clear the field. Expect a
+   "Recent" list showing "hades".
+2. Tap "hades". The field shows "hades" and results appear.
+3. Search "HADES" and open a result. There is still one entry, at the top.
+4. Tap Clear. The "Fetch a game" empty state returns.
+5. Sign out and sign in as another account. There are no recents.
+
+Haptic (physical iPhone): a status change from the Home row menu plays the
+success haptic once.
+
+## iPhone Duo (Stage 3)
+
+Needs Xcode 27.1 and its iPhone Duo simulator (Device Hub). Not run yet: only
+Xcode 27.0 is installed.
+
+For each pose:
+
+- outer display, portrait
+- outer display, landscape (tent)
+- inner display, open
+- inner display in ½ Split View
+
+…on each screen: Home, Search (with results and with recents), game detail and
+the screenshot viewer.
+
+- Columns and the detail split follow the available width.
+- No content sits under the status bar or camera region with asymmetric
+  insets.
+- Sheets (Share, paywall, profile) centre on the inner display.
+- Onboarding and the screenshot viewer lay out in every pose.
+
+Live: with Home scrolled halfway and a game detail pushed in the Search tab,
+open, close and fold the device. Expect the columns to reflow without losing
+the scroll position or the pushed stack.
+
+Tab bar on the inner display: note where it sits, and whether
+`sidebarAdaptable` offers the sidebar there.
