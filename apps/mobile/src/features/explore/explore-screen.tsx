@@ -1,3 +1,4 @@
+import { SEARCH_LIMIT_MAX } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
@@ -10,6 +11,10 @@ import { toShelves } from "@/features/explore/shelves";
 import { Screen } from "@/theme";
 import { useSideInsets } from "@/ui/use-side-insets";
 
+// The most the API serves. The default 20 runs out before the edge of a wide
+// window — iPad landscape with the sidebar hidden shows a shelf ending mid-screen.
+const SHELF_LIMIT = SEARCH_LIMIT_MAX;
+
 const EMPTY_CATALOGUE = (
   <EmptyState
     title="Nothing to sniff out yet"
@@ -20,9 +25,9 @@ const EMPTY_CATALOGUE = (
 );
 
 export function ExploreScreen() {
-  const popular = useGameFeed("popular");
-  const upcoming = useGameFeed("upcoming");
-  const recent = useGameFeed("recent");
+  const popular = useGameFeed("popular", SHELF_LIMIT);
+  const upcoming = useGameFeed("upcoming", SHELF_LIMIT);
+  const recent = useGameFeed("recent", SHELF_LIMIT);
   const router = useRouter();
   const sideInsets = useSideInsets();
 
