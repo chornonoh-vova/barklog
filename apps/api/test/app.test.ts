@@ -192,7 +192,8 @@ test("one request log line per request, carrying the same traceId", async () => 
 });
 
 test("the probes are not request-logged", async () => {
-  await callApi(harness.app, "/healthz");
+  // Drain the body, or honoLogger would not have written a line either way.
+  await (await callApi(harness.app, "/healthz")).text();
 
   expect(logs.records.filter((record) => record.category.includes("http"))).toEqual([]);
 });
