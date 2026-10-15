@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { SearchBarCommands } from "react-native-screens";
 
 import { ProfileToolbar } from "@/components/profile-toolbar";
@@ -12,6 +13,7 @@ export default function SearchRoute() {
   const queryClient = useQueryClient();
   const recents = useRecents();
   const searchBar = useRef<SearchBarCommands>(null);
+  const { t } = useTranslation();
 
   const record = useCallback(
     (searched: string) => recordRecent(queryClient, searched),
@@ -28,12 +30,12 @@ export default function SearchRoute() {
 
   return (
     <>
-      <Stack.Title large>Search</Stack.Title>
+      <Stack.Title large>{t("tabs.search")}</Stack.Title>
       <ProfileToolbar />
       <Stack.SearchBar
         ref={searchBar}
         placement="stacked"
-        placeholder="Search games"
+        placeholder={t("search.placeholder")}
         onChangeText={(event) => setQuery(event.nativeEvent.text)}
       />
       <SearchScreen

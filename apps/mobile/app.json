@@ -17,7 +17,8 @@
         "com.apple.security.application-groups": ["group.gg.barklog.app"]
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "plugins": [
@@ -55,8 +56,23 @@
         }
       ],
       "@clerk/expo",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "uk", "ru", "de", "es"]
+          }
+        }
+      ],
       "./plugins/with-pods-uuid-collision-fix"
     ],
+    "locales": {
+      "en": "./locales/en.json",
+      "uk": "./locales/uk.json",
+      "ru": "./locales/ru.json",
+      "de": "./locales/de.json",
+      "es": "./locales/es.json"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

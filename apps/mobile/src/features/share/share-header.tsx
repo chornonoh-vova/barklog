@@ -2,18 +2,20 @@ import type { ShareBasis, ShareSourceWire } from "@repo/contracts";
 import { openURL } from "expo-linking";
 import { SymbolView } from "expo-symbols";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
-import { UNAVAILABLE_NOTICE } from "@/features/share/empty-states";
 import { displayHost } from "@/features/share/host";
 import { RemoteImage } from "@/components/remote-image";
 import { sourceThumbSize } from "@/features/share/source-thumb";
 import { Type } from "@/theme";
 
 export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis: ShareBasis }) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.header}>
-      <Text style={styles.question}>Which game is this?</Text>
+      <Text style={styles.question}>{t("share.question")}</Text>
 
       <View style={styles.source}>
         <SourceCover source={source} />
@@ -80,6 +82,8 @@ function SourceCover({ source }: { source: ShareSourceWire }) {
  * `PlatformColor`, and `theme.ts` keeps hex literals out of the app.
  */
 function FallbackNotice() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.notice}>
       <View style={styles.noticeFill} />
@@ -91,7 +95,7 @@ function FallbackNotice() {
           tintColor={PlatformColor("systemOrange")}
         />
       </View>
-      <Text style={styles.noticeText}>{UNAVAILABLE_NOTICE}</Text>
+      <Text style={styles.noticeText}>{t("share.unavailableNotice")}</Text>
     </View>
   );
 }

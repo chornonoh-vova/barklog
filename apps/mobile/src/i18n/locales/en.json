@@ -1,0 +1,199 @@
+{
+  "common": {
+    "tryAgain": "Try Again",
+    "close": "Close",
+    "share": "Share",
+    "cancel": "Cancel",
+    "or": " or "
+  },
+  "tabs": {
+    "home": "Home",
+    "explore": "Explore",
+    "search": "Search"
+  },
+  "profile": {
+    "manageSubscription": "Barklog Premium, manage subscription",
+    "openAccount": "Open account"
+  },
+  "status": {
+    "waiting": "Waiting",
+    "playing": "Playing",
+    "completed": "Completed",
+    "abandoned": "Abandoned"
+  },
+  "backlog": {
+    "empty": {
+      "title": "Your backlog is empty",
+      "description": "Add the games you own, and what you're playing stays at the top."
+    },
+    "emptyFilter": {
+      "waiting": {
+        "title": "Nothing waiting",
+        "description": "Games you mean to play, but haven't started."
+      },
+      "playing": {
+        "title": "Nothing in progress",
+        "description": "Games you're in the middle of."
+      },
+      "completed": {
+        "title": "Nothing finished yet",
+        "description": "Games you saw all the way through."
+      },
+      "abandoned": {
+        "title": "Nothing abandoned",
+        "description": "Games you gave up on. No judgement."
+      }
+    },
+    "findGame": "Find a Game",
+    "exploreGames": "Or explore games",
+    "slotsFull": "All spots full — finish a game to free one",
+    "slotsUsed": "{{used}} of {{total}} spots used",
+    "slotsHint": "{{slots}}. Tap to see Barklog Premium.",
+    "filterAll": "All",
+    "filterShow": "Show",
+    "more": "More",
+    "moreFor": "More, {{name}}",
+    "statusMenu": "Status",
+    "removeFromBacklog": "Remove from Backlog…"
+  },
+  "game": {
+    "ratingsCount_one": "{{count, number}} rating",
+    "ratingsCount_other": "{{count, number}} ratings",
+    "gamesCount_one": "{{count, number}} game",
+    "gamesCount_other": "{{count, number}} games",
+    "ratedSpoken": "Rated {{rating}} out of 100, from {{ratings}}",
+    "averageRating": "avg ★{{rating}}",
+    "averageRatingSpoken": "average rating {{rating}} out of {{max}}",
+    "addToBacklog": "Add to Backlog",
+    "rate": "Rate",
+    "rateSpoken": "Rate this game",
+    "ratingSpoken": "Rating, {{rating}} out of {{max}}",
+    "statusRatedSpoken": "{{status}}, rated {{rating}} out of {{max}}",
+    "unknownDate": "Unknown",
+    "noRating": "No rating",
+    "shareGame": "Share game",
+    "backlogActions": "Backlog actions",
+    "thisGame": "this game",
+    "released": "Released",
+    "type": "Type",
+    "genres": "Genres",
+    "platforms": "Platforms",
+    "developers": "Developers",
+    "publishers": "Publishers",
+    "summary": "Summary",
+    "summaryMore": "MORE",
+    "summaryLess": "LESS",
+    "similarGames": "Similar Games",
+    "screenshots": "Screenshots",
+    "screenshotLabel": "Screenshot {{index}} of {{total}}",
+    "opensFullScreen": "Opens full screen",
+    "closeScreenshots": "Close screenshots",
+    "attribution": "Powered by IGDB",
+    "removeTitle": "Remove “{{name}}”?",
+    "removeMessage": "Its status and rating will be lost.",
+    "removeConfirm": "Remove"
+  },
+  "explore": {
+    "popular": "Most Popular",
+    "upcoming": "Upcoming",
+    "recent": "Recently Released",
+    "emptyTitle": "Nothing to sniff out yet",
+    "emptyDescription": "The catalogue is still syncing. Check back shortly."
+  },
+  "search": {
+    "placeholder": "Search games",
+    "promptTitle": "Fetch a game",
+    "promptDescription": "Type a title. Two characters is enough to start.",
+    "noResultsTitle": "No games found",
+    "noResultsDescription": "Nothing in the catalogue matches \"{{query}}\".",
+    "recent": "Recent",
+    "clear": "Clear",
+    "clearRecents": "Clear recent searches",
+    "searchFor": "Search for {{query}}"
+  },
+  "share": {
+    "title": "Shared",
+    "backToHome": "Back to Home",
+    "searchInstead": "Search Instead",
+    "openOn": "Open on {{host}}",
+    "question": "Which game is this?",
+    "searching": "Working out which game this is",
+    "noLinkTitle": "No link in that share",
+    "noLinkDescription": "Barklog needs a web link. Share the page itself rather than a screenshot of it.",
+    "unreadableTitle": "Could not read that share",
+    "unreadableDescription": "Barklog could not open what was shared. Try sharing the video again.",
+    "unavailableNotice": "We couldn't tell which game this is, so these are matches for the title instead.",
+    "noMatchTitle": "No match in the catalogue",
+    "noMatchNone": "We couldn't tell which game this is, even after searching the web. Open the original page to check.",
+    "noMatchUnknown": "We couldn't tell which game this is about.",
+    "noMatchGuesses": "We think this is about {{guesses}}, but it isn't in the catalogue yet.",
+    "sectionTitle": "Matches for the title",
+    "sectionAuthor": "Games {{author}} usually covers",
+    "sectionAuthorUnknown": "Games this source usually covers",
+    "sectionWeb": "Matches from a web search"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "continue": "Continue",
+    "start": "Start",
+    "welcomeTitle": "Welcome to Barklog",
+    "welcomeDescription": "Barklog holds the games you're playing and the ones you keep meaning to start.",
+    "backlogTitle": "Managing your game backlog",
+    "backlogDescription": "Add a game, then mark it waiting, playing, completed, or abandoned. Abandoned is a real answer.",
+    "exploreTitle": "Exploring games",
+    "exploreDescription": "See what's popular, what's coming out, and what just landed. Or search by name if you already know what you want.",
+    "shareTitle": "Share a video, pick the game",
+    "shareDescription": "Share a YouTube or TikTok video and pick the game — Barklog fetches the candidates for you.",
+    "igdbTitle": "All game data is powered by IGDB",
+    "igdbDescription": "Every cover, release date, platform, and summary in Barklog comes from IGDB, a games database its community maintains."
+  },
+  "errors": {
+    "genericTitle": "Something went wrong",
+    "genericDescription": "Please try again.",
+    "offlineTitle": "You're offline",
+    "offlineDescription": "Barklog could not reach the server. Check your connection.",
+    "rateLimitedTitle": "Slow down a moment",
+    "rateLimitedDescription": "You've made a lot of requests. Try again shortly.",
+    "serverTitle": "Barklog is having trouble",
+    "serverDescription": "The server couldn't answer. Try again in a moment."
+  },
+  "apiErrors": {
+    "unauthorized": {
+      "title": "You're signed out",
+      "description": "Sign in again to keep going."
+    },
+    "game_not_found": {
+      "title": "Game not found",
+      "description": "That game isn't in the catalogue."
+    },
+    "backlog_entry_not_found": {
+      "title": "Not in your backlog",
+      "description": "That game isn't in your backlog any more."
+    },
+    "backlog_cap_reached": {
+      "title": "Your backlog is full",
+      "description_one": "Finish a game to free a spot, or go Premium.",
+      "description_other": "Finish {{count}} games to free a spot, or go Premium."
+    },
+    "share_invalid_url": {
+      "title": "Can't open that link",
+      "description": "Barklog needs an https web address."
+    },
+    "share_source_gone": {
+      "title": "That page is gone",
+      "description": "It may be private or removed."
+    },
+    "share_source_blocked": {
+      "title": "That site said no",
+      "description": "It would not let us read the page."
+    },
+    "share_source_unreadable": {
+      "title": "Nothing to read there",
+      "description": "We opened that link but could not find a title on it."
+    },
+    "share_fetch_failed": {
+      "title": "Couldn't read that link",
+      "description": "That link could not be read right now. Try again shortly."
+    }
+  }
+}

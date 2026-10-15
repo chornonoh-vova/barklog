@@ -1,9 +1,10 @@
+import type { ParseKeys } from "i18next";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { IllustrationName } from "@/components/illustrations";
 
-/** No react-native or @expo/ui anywhere in this module's graph — both imports
- * above are types, which erase at compile — so the copy is testable in plain
+/** No react-native or @expo/ui anywhere in this module's graph — every import
+ * above is a type, which erases at compile — so the pages are testable in plain
  * Node. */
 export interface OnboardingPage {
   id: string;
@@ -11,8 +12,9 @@ export interface OnboardingPage {
    * of its own and falls back to this. */
   systemImage: SFSymbol;
   illustration?: IllustrationName;
-  title: string;
-  description: string;
+  /** Keys, not copy: read at render, after i18n is set up. */
+  titleKey: ParseKeys;
+  descriptionKey: ParseKeys;
 }
 
 export const IGDB_PAGE_ID = "igdb";
@@ -24,32 +26,29 @@ export const ONBOARDING_PAGES = [
     id: "welcome",
     illustration: "default",
     systemImage: "pawprint.fill",
-    title: "Welcome to Barklog",
-    description: "Barklog holds the games you're playing and the ones you keep meaning to start.",
+    titleKey: "onboarding.welcomeTitle",
+    descriptionKey: "onboarding.welcomeDescription",
   },
   {
     id: "backlog",
     illustration: "backlog",
     systemImage: "checklist",
-    title: "Managing your game backlog",
-    description:
-      "Add a game, then mark it waiting, playing, completed, or abandoned. Abandoned is a real answer.",
+    titleKey: "onboarding.backlogTitle",
+    descriptionKey: "onboarding.backlogDescription",
   },
   {
     id: "explore",
     illustration: "explore",
     systemImage: "sparkle.magnifyingglass",
-    title: "Exploring games",
-    description:
-      "See what's popular, what's coming out, and what just landed. Or search by name if you already know what you want.",
+    titleKey: "onboarding.exploreTitle",
+    descriptionKey: "onboarding.exploreDescription",
   },
   {
     id: "share",
     illustration: "share",
     systemImage: "square.and.arrow.up",
-    title: "Share a video, pick the game",
-    description:
-      "Share a YouTube or TikTok video and pick the game — Barklog fetches the candidates for you.",
+    titleKey: "onboarding.shareTitle",
+    descriptionKey: "onboarding.shareDescription",
   },
   {
     id: IGDB_PAGE_ID,
@@ -58,9 +57,8 @@ export const ONBOARDING_PAGES = [
     // put `page.illustration` out of reach at every call site.
     illustration: undefined,
     systemImage: "books.vertical.fill",
-    title: "All game data is powered by IGDB",
-    description:
-      "Every cover, release date, platform, and summary in Barklog comes from IGDB, a games database its community maintains.",
+    titleKey: "onboarding.igdbTitle",
+    descriptionKey: "onboarding.igdbDescription",
   },
 ] as const satisfies readonly OnboardingPage[];
 

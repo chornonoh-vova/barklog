@@ -6,15 +6,7 @@ import {
 } from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-/** `en-GB` is fixed, not taken from the device: these are catalogue dates, and
- * a stable format keeps the detail rows from reflowing. */
-
-const STATUS_LABELS: Record<BacklogStatus, string> = {
-  waiting: "Waiting",
-  playing: "Playing",
-  completed: "Completed",
-  abandoned: "Abandoned",
-};
+import { formatLocale, i18n } from "@/i18n/instance";
 
 const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
   waiting: "clock",
@@ -57,11 +49,10 @@ export function summarySubtitle(game: GameSummaryWire): string | null {
 }
 
 /** "12,481 ratings" — shared by the visible and spoken rating lines. */
-const ratingsCount = (count: number) =>
-  `${count.toLocaleString("en-GB")} ${count === 1 ? "rating" : "ratings"}`;
+const ratingsCount = (count: number) => i18n.t("game.ratingsCount", { count });
 
 /** "12 games" — shared by the visible and spoken stats lines. */
-const gamesCount = (total: number) => `${total} ${total === 1 ? "game" : "games"}`;
+const gamesCount = (count: number) => i18n.t("game.gamesCount", { count });
 
 export function ratingLine(input: {
   totalRating: number | null;
@@ -80,13 +71,18 @@ export function ratingLineSpoken(input: {
 }): string | null {
   if (input.totalRating === null) return null;
 
-  return `Rated ${Math.round(input.totalRating)} out of 100, from ${ratingsCount(input.totalRatingCount)}`;
+  return i18n.t("game.ratedSpoken", {
+    rating: Math.round(input.totalRating),
+    ratings: ratingsCount(input.totalRatingCount),
+  });
 }
 
 export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
   const games = gamesCount(stats.total);
 
-  return stats.averageRating === null ? games : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
+  return stats.averageRating === null
+    ? games
+    : `${games}${SEPARATOR}${i18n.t("game.averageRating", { rating: stats.averageRating })}`;
 }
 
 /** `statsLine` for VoiceOver, without the glyph. */
@@ -95,11 +91,11 @@ export function statsLineSpoken(stats: Pick<BacklogStatsWire, "total" | "average
 
   return stats.averageRating === null
     ? games
-    : `${games}, average rating ${stats.averageRating} out of ${RATING_MAX}`;
+    : `${games}, ${i18n.t("game.averageRatingSpoken", { rating: stats.averageRating, max: RATING_MAX })}`;
 }
 
 export function statusLabel(status: BacklogStatus): string {
-  return STATUS_LABELS[status];
+  return i18n.t(`status.${status}`);
 }
 
 export function statusSymbol(status: BacklogStatus): SFSymbol {
@@ -107,7 +103,7 @@ export function statusSymbol(status: BacklogStatus): SFSymbol {
 }
 
 export function statusButtonLabel(status: BacklogStatus | null): string {
-  return status === null ? "Add to Backlog" : statusLabel(status);
+  return status === null ? i18n.t("game.addToBacklog") : statusLabel(status);
 }
 
 export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
@@ -115,7 +111,7 @@ export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
 }
 
 export function ratingButtonLabel(rating: number | null): string {
-  return rating === null ? "Rate" : String(rating);
+  return rating === null ? i18n.t("game.rate") : String(rating);
 }
 
 export function ratingButtonSymbol(rating: number | null): SFSymbol {
@@ -124,14 +120,20 @@ export function ratingButtonSymbol(rating: number | null): SFSymbol {
 
 /** For VoiceOver: the visible label is a bare number beside a star. */
 export function ratingSpoken(rating: number | null): string {
-  return rating === null ? "Rate this game" : `Rating, ${rating} out of ${RATING_MAX}`;
+  return rating === null
+    ? i18n.t("game.rateSpoken")
+    : i18n.t("game.ratingSpoken", { rating, max: RATING_MAX });
 }
 
 /** `rowSubtitle` without the `★`, which VoiceOver reads as "black star". */
 export function rowSubtitleSpoken(entry: { status: BacklogStatus; rating: number | null }): string {
   return entry.rating === null
     ? statusLabel(entry.status)
-    : `${statusLabel(entry.status)}, rated ${entry.rating} out of ${RATING_MAX}`;
+    : i18n.t("game.statusRatedSpoken", {
+        status: statusLabel(entry.status),
+        rating: entry.rating,
+        max: RATING_MAX,
+      });
 }
 
 export function rowSubtitle(entry: { status: BacklogStatus; rating: number | null }): string {
@@ -140,10 +142,12 @@ export function rowSubtitle(entry: { status: BacklogStatus; rating: number | nul
     : `${statusLabel(entry.status)}${SEPARATOR}★${entry.rating}`;
 }
 
+/** Region-qualified (`en-GB`, not the device's `en-US`): a catalogue date reads
+ * day-first wherever the app's language allows it. */
 export function releaseDateLine(iso: string | null): string {
-  if (iso === null) return "Unknown";
+  if (iso === null) return i18n.t("game.unknownDate");
 
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(formatLocale(), {
     day: "numeric",
     month: "long",
     year: "numeric",

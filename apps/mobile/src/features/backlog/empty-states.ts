@@ -2,37 +2,23 @@ import type { BacklogStatus } from "@repo/contracts";
 
 import type { EmptyStateContent } from "@/components/empty-state";
 import { statusSymbol } from "@/features/game/format";
+import { i18n } from "@/i18n/instance";
 
-export const EMPTY_BACKLOG: EmptyStateContent = {
-  title: "Your backlog is empty",
-  systemImage: "gamecontroller",
-  illustration: "backlog",
-  description: "Add the games you own, and what you're playing stays at the top.",
-};
+/** Functions, not constants: the copy is read at render, after i18n is set up. */
+export function emptyBacklog(): EmptyStateContent {
+  return {
+    title: i18n.t("backlog.empty.title"),
+    systemImage: "gamecontroller",
+    illustration: "backlog",
+    description: i18n.t("backlog.empty.description"),
+  };
+}
 
-export const EMPTY_FILTER: Record<BacklogStatus, EmptyStateContent> = {
-  waiting: {
-    title: "Nothing waiting",
-    systemImage: statusSymbol("waiting"),
+export function emptyFilter(status: BacklogStatus): EmptyStateContent {
+  return {
+    title: i18n.t(`backlog.emptyFilter.${status}.title`),
+    systemImage: statusSymbol(status),
     illustration: "backlog",
-    description: "Games you mean to play, but haven't started.",
-  },
-  playing: {
-    title: "Nothing in progress",
-    systemImage: statusSymbol("playing"),
-    illustration: "backlog",
-    description: "Games you're in the middle of.",
-  },
-  completed: {
-    title: "Nothing finished yet",
-    systemImage: statusSymbol("completed"),
-    illustration: "backlog",
-    description: "Games you saw all the way through.",
-  },
-  abandoned: {
-    title: "Nothing abandoned",
-    systemImage: statusSymbol("abandoned"),
-    illustration: "backlog",
-    description: "Games you gave up on. No judgement.",
-  },
-};
+    description: i18n.t(`backlog.emptyFilter.${status}.description`),
+  };
+}

@@ -1,5 +1,7 @@
 import type { GameSummaryWire, ShareBasis } from "@repo/contracts";
 
+import { i18n } from "@/i18n/instance";
+
 /**
  * Kept free of react-native for the same reason as `empty-states.ts`: the copy
  * and the grouping are the parts worth testing, and they stay runnable in
@@ -25,11 +27,13 @@ export function toShareSections(
 
   const title =
     basis === "title"
-      ? "Matches for the title"
+      ? i18n.t("share.sectionTitle")
       : basis === "author"
-        ? `Games ${author ?? "this source"} usually covers`
+        ? author === null
+          ? i18n.t("share.sectionAuthorUnknown")
+          : i18n.t("share.sectionAuthor", { author })
         : basis === "web"
-          ? "Matches from a web search"
+          ? i18n.t("share.sectionWeb")
           : // `unavailable` has the rows a `title` basis would, but a header
             // would claim a match the server disclaimed.
             null;

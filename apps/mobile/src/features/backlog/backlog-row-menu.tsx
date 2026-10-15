@@ -13,6 +13,7 @@ import { PlatformColor, StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel, statusSymbol } from "@/features/game/format";
+import { i18n } from "@/i18n/instance";
 
 /**
  * The `…` on a Home row. A visible button rather than a long-press menu: it is
@@ -32,21 +33,23 @@ export function BacklogRowMenu({
   onShare: () => void;
   onRemove: () => void;
 }) {
+  // `i18n.t`, not `useTranslation`: that would subscribe every row to a
+  // language change, and iOS relaunches the app on one anyway.
   return (
     // Label-coloured, not the brand tint: menu icons follow the host's tint,
     // and a menu of brand-coloured icons reads as a row of links.
     <Host style={styles.host} seedColor={PlatformColor("label")}>
       <Menu
-        label="More"
+        label={i18n.t("backlog.more")}
         systemImage="ellipsis.circle"
         modifiers={[
           labelStyle("iconOnly"),
           buttonStyle("borderless"),
           foregroundStyle(PlatformColor("secondaryLabel")),
-          accessibilityLabel(`More, ${name}`),
+          accessibilityLabel(i18n.t("backlog.moreFor", { name })),
         ]}
       >
-        <Menu label="Status" systemImage={statusSymbol(status)}>
+        <Menu label={i18n.t("backlog.statusMenu")} systemImage={statusSymbol(status)}>
           <Picker
             selection={status}
             onSelectionChange={(selection) => onStatus(selection as BacklogStatus)}
@@ -59,10 +62,14 @@ export function BacklogRowMenu({
             ))}
           </Picker>
         </Menu>
-        <Button label="Share" systemImage="square.and.arrow.up" onPress={onShare} />
+        <Button
+          label={i18n.t("common.share")}
+          systemImage="square.and.arrow.up"
+          onPress={onShare}
+        />
         <Divider />
         <Button
-          label="Remove from Backlog…"
+          label={i18n.t("backlog.removeFromBacklog")}
           systemImage="trash"
           role="destructive"
           onPress={onRemove}

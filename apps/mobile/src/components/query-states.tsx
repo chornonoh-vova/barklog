@@ -1,4 +1,5 @@
 import { Host, ProgressView } from "@expo/ui/swift-ui";
+import { useTranslation } from "react-i18next";
 
 import { errorCopy } from "@/api/error-copy";
 import { EmptyState } from "@/components/empty-state";
@@ -13,13 +14,14 @@ export function LoadingState() {
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const { title, description } = errorCopy(error);
+  const { t } = useTranslation();
 
   return (
     <EmptyState
       title={title}
       systemImage="exclamationmark.triangle"
       description={description}
-      action={{ label: "Try Again", onPress: onRetry }}
+      action={{ label: t("common.tryAgain"), onPress: onRetry }}
       fullscreen
     />
   );

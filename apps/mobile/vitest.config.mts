@@ -10,6 +10,7 @@ export default defineConfig({
     // @expo/ui imports.
     include: ["test/**/*.test.ts"],
     environment: "node",
+    setupFiles: ["test/setup.ts"],
   },
   resolve: {
     // Mirrors the `@/*` path in tsconfig.json so tests and source agree.

@@ -1,6 +1,7 @@
 import { HStack, Menu, Picker, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import { buttonStyle, clipShape, pickerStyle, tag } from "@expo/ui/swift-ui/modifiers";
 import type { BacklogStatus } from "@repo/contracts";
+import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
@@ -19,9 +20,10 @@ export function StatusFilter({
   onChange: (status: BacklogStatus | undefined) => void;
 }) {
   const ax = useIsAccessibilitySize();
+  const { t } = useTranslation();
   const menu = (
     <Menu
-      label={value ? statusLabel(value) : "All"}
+      label={value ? statusLabel(value) : t("backlog.filterAll")}
       systemImage="line.3.horizontal.decrease"
       modifiers={[buttonStyle(GLASS_PROMINENT_STYLE), clipShape("capsule")]}
     >
@@ -32,7 +34,7 @@ export function StatusFilter({
         }
         modifiers={[pickerStyle("inline")]}
       >
-        <Text modifiers={[tag(ALL)]}>All</Text>
+        <Text modifiers={[tag(ALL)]}>{t("backlog.filterAll")}</Text>
         {STATUS_ORDER.map((status) => (
           <Text key={status} modifiers={[tag(status)]}>
             {statusLabel(status)}
@@ -46,12 +48,12 @@ export function StatusFilter({
     <MeasuredHost style={styles.host}>
       {ax ? (
         <VStack alignment="leading">
-          <Text>Show</Text>
+          <Text>{t("backlog.filterShow")}</Text>
           {menu}
         </VStack>
       ) : (
         <HStack>
-          <Text>Show</Text>
+          <Text>{t("backlog.filterShow")}</Text>
           <Spacer />
           {menu}
         </HStack>

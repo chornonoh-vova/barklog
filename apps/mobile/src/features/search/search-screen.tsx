@@ -1,6 +1,7 @@
 import { SEARCH_QUERY_MIN, type GameSummaryWire } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, StyleSheet } from "react-native";
 
 import { useSearchGames } from "@/api/hooks";
@@ -42,6 +43,7 @@ export function SearchScreen({
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
+  const { t } = useTranslation();
   // Out here, not in the render prop: memoised, so `FlatList` keeps its rows.
   const rows = useMemo(() => chunk(search.data?.items ?? [], columns), [search.data, columns]);
 
@@ -90,10 +92,10 @@ export function SearchScreen({
 
     return (
       <EmptyState
-        title="Fetch a game"
+        title={t("search.promptTitle")}
         systemImage="magnifyingglass"
         illustration="explore"
-        description="Type a title. Two characters is enough to start."
+        description={t("search.promptDescription")}
         fullscreen
       />
     );
@@ -116,10 +118,10 @@ export function SearchScreen({
           contentInsetAdjustmentBehavior="automatic"
           ListEmptyComponent={
             <EmptyState
-              title="No games found"
+              title={t("search.noResultsTitle")}
               systemImage="magnifyingglass"
               illustration="explore"
-              description={`Nothing in the catalogue matches "${shownQuery}".`}
+              description={t("search.noResultsDescription", { query: shownQuery })}
             />
           }
         />

@@ -55,18 +55,40 @@ describe("errorCopy", () => {
     expect(copy.description).toBe("Game 999 is not in the mirror.");
   });
 
-  it("a 402 explains the slot mechanic rather than saying try again", () => {
+  it("uses the app's copy for a coded problem, not the server's", () => {
     const copy = errorCopy(
       new ApiError({
-        status: 402,
-        type: "https://barklog.gg/problems/payment-required",
-        title: "Payment Required",
-        detail: "A free backlog holds 10 unfinished games.",
+        status: 422,
+        type: "https://barklog.gg/problems/unprocessable-content",
+        title: "Unprocessable Content",
+        code: "share_source_blocked",
+        detail: "That site would not let us read the page.",
       }),
     );
 
-    expect(copy.title).toBe("Your backlog is full");
-    expect(copy.description).toContain("10 unfinished games");
+    expect(copy).toEqual({
+      title: "That site said no",
+      description: "It would not let us read the page.",
+    });
+  });
+
+  it("a full backlog says how many games it takes to free a spot", () => {
+    const capped = (toFree: number) =>
+      errorCopy(
+        new ApiError({
+          status: 402,
+          type: "https://barklog.gg/problems/payment-required",
+          title: "Payment Required",
+          code: "backlog_cap_reached",
+          toFree,
+        }),
+      );
+
+    expect(capped(1)).toEqual({
+      title: "Your backlog is full",
+      description: "Finish a game to free a spot, or go Premium.",
+    });
+    expect(capped(3).description).toBe("Finish 3 games to free a spot, or go Premium.");
   });
 
   it("falls back to generic copy for a non-ApiError value", () => {

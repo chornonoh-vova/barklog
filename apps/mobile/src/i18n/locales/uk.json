@@ -1,0 +1,205 @@
+{
+  "common": {
+    "tryAgain": "Спробувати ще раз",
+    "close": "Закрити",
+    "share": "Поділитися",
+    "cancel": "Скасувати",
+    "or": " або "
+  },
+  "tabs": {
+    "home": "Головна",
+    "explore": "Огляд",
+    "search": "Пошук"
+  },
+  "profile": {
+    "manageSubscription": "Barklog Premium, керувати підпискою",
+    "openAccount": "Відкрити акаунт"
+  },
+  "status": {
+    "waiting": "У черзі",
+    "playing": "Граю",
+    "completed": "Пройдено",
+    "abandoned": "Покинуто"
+  },
+  "backlog": {
+    "empty": {
+      "title": "Твій беклог порожній",
+      "description": "Додай свої ігри, і те, у що граєш зараз, завжди буде вгорі."
+    },
+    "emptyFilter": {
+      "waiting": {
+        "title": "У черзі порожньо",
+        "description": "Ігри, до яких ще не дійшли руки."
+      },
+      "playing": {
+        "title": "Зараз нічого не проходиш",
+        "description": "Ігри, які ти саме проходиш."
+      },
+      "completed": {
+        "title": "Ще нічого не пройдено",
+        "description": "Ігри, пройдені до самого кінця."
+      },
+      "abandoned": {
+        "title": "Нічого не покинуто",
+        "description": "Ігри, які довелося покинути. Без осуду."
+      }
+    },
+    "findGame": "Знайти гру",
+    "exploreGames": "Або переглянути ігри",
+    "slotsFull": "Усі місця зайняті — пройди гру, щоб звільнити одне",
+    "slotsUsed": "Зайнято {{used}} з {{total}} місць",
+    "slotsHint": "{{slots}}. Торкнись, щоб побачити Barklog Premium.",
+    "filterAll": "Усі",
+    "filterShow": "Показати",
+    "more": "Більше",
+    "moreFor": "Більше, {{name}}",
+    "statusMenu": "Статус",
+    "removeFromBacklog": "Видалити з беклогу…"
+  },
+  "game": {
+    "ratingsCount_one": "{{count, number}} оцінка",
+    "ratingsCount_few": "{{count, number}} оцінки",
+    "ratingsCount_many": "{{count, number}} оцінок",
+    "ratingsCount_other": "{{count, number}} оцінки",
+    "gamesCount_one": "{{count, number}} гра",
+    "gamesCount_few": "{{count, number}} гри",
+    "gamesCount_many": "{{count, number}} ігор",
+    "gamesCount_other": "{{count, number}} гри",
+    "ratedSpoken": "Оцінка {{rating}} зі 100, {{ratings}}",
+    "averageRating": "сер. ★{{rating}}",
+    "averageRatingSpoken": "середня оцінка {{rating}} з {{max}}",
+    "addToBacklog": "Додати в беклог",
+    "rate": "Оцінити",
+    "rateSpoken": "Оцінити гру",
+    "ratingSpoken": "Оцінка, {{rating}} з {{max}}",
+    "statusRatedSpoken": "{{status}}, оцінка {{rating}} з {{max}}",
+    "unknownDate": "Невідомо",
+    "noRating": "Без оцінки",
+    "shareGame": "Поділитися грою",
+    "backlogActions": "Дії з беклогом",
+    "thisGame": "цю гру",
+    "released": "Дата виходу",
+    "type": "Тип",
+    "genres": "Жанри",
+    "platforms": "Платформи",
+    "developers": "Розробники",
+    "publishers": "Видавці",
+    "summary": "Опис",
+    "summaryMore": "БІЛЬШЕ",
+    "summaryLess": "МЕНШЕ",
+    "similarGames": "Схожі ігри",
+    "screenshots": "Скриншоти",
+    "screenshotLabel": "Скриншот {{index}} з {{total}}",
+    "opensFullScreen": "Відкриває на весь екран",
+    "closeScreenshots": "Закрити скриншоти",
+    "attribution": "Дані надає IGDB",
+    "removeTitle": "Видалити «{{name}}»?",
+    "removeMessage": "Статус і оцінку буде втрачено.",
+    "removeConfirm": "Видалити"
+  },
+  "explore": {
+    "popular": "Найпопулярніші",
+    "upcoming": "Незабаром",
+    "recent": "Нещодавно вийшли",
+    "emptyTitle": "Поки нема чого винюхувати",
+    "emptyDescription": "Каталог ще синхронізується. Зазирни трохи згодом."
+  },
+  "search": {
+    "placeholder": "Шукати ігри",
+    "promptTitle": "Знайдімо гру",
+    "promptDescription": "Введи назву. Для початку вистачить двох символів.",
+    "noResultsTitle": "Ігор не знайдено",
+    "noResultsDescription": "У каталозі немає нічого за запитом «{{query}}».",
+    "recent": "Нещодавні",
+    "clear": "Очистити",
+    "clearRecents": "Очистити нещодавні пошуки",
+    "searchFor": "Шукати {{query}}"
+  },
+  "share": {
+    "title": "Поділилися",
+    "backToHome": "На головну",
+    "searchInstead": "Шукати вручну",
+    "openOn": "Відкрити на {{host}}",
+    "question": "Що це за гра?",
+    "searching": "З'ясовуємо, що це за гра",
+    "noLinkTitle": "Тут немає посилання",
+    "noLinkDescription": "Barklog потрібне вебпосилання. Поділися самою сторінкою, а не її скриншотом.",
+    "unreadableTitle": "Не вдалося прочитати вміст",
+    "unreadableDescription": "Barklog не зміг відкрити те, чим поділилися. Спробуй поділитися відео ще раз.",
+    "unavailableNotice": "Ми не змогли визначити гру, тож ось збіги за назвою.",
+    "noMatchTitle": "У каталозі немає збігів",
+    "noMatchNone": "Ми не змогли визначити гру навіть після пошуку в інтернеті. Відкрий оригінальну сторінку, щоб перевірити.",
+    "noMatchUnknown": "Ми не змогли визначити, про яку це гру.",
+    "noMatchGuesses": "Схоже, це про {{guesses}}, але цієї гри ще немає в каталозі.",
+    "sectionTitle": "Збіги за назвою",
+    "sectionAuthor": "Ігри, які зазвичай висвітлює {{author}}",
+    "sectionAuthorUnknown": "Ігри, які зазвичай висвітлює це джерело",
+    "sectionWeb": "Збіги з пошуку в інтернеті"
+  },
+  "onboarding": {
+    "skip": "Пропустити",
+    "continue": "Далі",
+    "start": "Почати",
+    "welcomeTitle": "Вітаємо в Barklog",
+    "welcomeDescription": "Barklog зберігає ігри, у які ти граєш, і ті, які все збираєшся почати.",
+    "backlogTitle": "Керуй своїм беклогом",
+    "backlogDescription": "Додай гру й познач її: у черзі, граю, пройдено чи покинуто. «Покинуто» — теж нормальна відповідь.",
+    "exploreTitle": "Шукай нові ігри",
+    "exploreDescription": "Дивись, що популярне, що скоро вийде і що щойно з'явилося. Або шукай за назвою, якщо вже знаєш, чого хочеш.",
+    "shareTitle": "Поділися відео — обери гру",
+    "shareDescription": "Поділися відео з YouTube чи TikTok і обери гру — Barklog сам знайде варіанти.",
+    "igdbTitle": "Усі дані про ігри — від IGDB",
+    "igdbDescription": "Кожна обкладинка, дата виходу, платформа й опис у Barklog беруться з IGDB — бази даних ігор, яку підтримує спільнота."
+  },
+  "errors": {
+    "genericTitle": "Щось пішло не так",
+    "genericDescription": "Спробуй ще раз.",
+    "offlineTitle": "Немає з'єднання",
+    "offlineDescription": "Barklog не може зв'язатися з сервером. Перевір підключення.",
+    "rateLimitedTitle": "Не так швидко",
+    "rateLimitedDescription": "Забагато запитів. Спробуй трохи згодом.",
+    "serverTitle": "У Barklog проблеми",
+    "serverDescription": "Сервер не відповів. Спробуй за мить."
+  },
+  "apiErrors": {
+    "unauthorized": {
+      "title": "Сеанс завершився",
+      "description": "Увійди знову, щоб продовжити."
+    },
+    "game_not_found": {
+      "title": "Гру не знайдено",
+      "description": "Цієї гри немає в каталозі."
+    },
+    "backlog_entry_not_found": {
+      "title": "Немає в беклозі",
+      "description": "Цієї гри вже немає у твоєму беклозі."
+    },
+    "backlog_cap_reached": {
+      "title": "Беклог заповнено",
+      "description_one": "Пройди {{count}} гру, щоб звільнити місце, або оформи Premium.",
+      "description_few": "Пройди {{count}} гри, щоб звільнити місце, або оформи Premium.",
+      "description_many": "Пройди {{count}} ігор, щоб звільнити місце, або оформи Premium.",
+      "description_other": "Пройди {{count}} гри, щоб звільнити місце, або оформи Premium."
+    },
+    "share_invalid_url": {
+      "title": "Не вдається відкрити посилання",
+      "description": "Barklog потрібна вебадреса з https."
+    },
+    "share_source_gone": {
+      "title": "Сторінки більше немає",
+      "description": "Можливо, вона приватна або видалена."
+    },
+    "share_source_blocked": {
+      "title": "Сайт не пустив",
+      "description": "Він не дозволив нам прочитати сторінку."
+    },
+    "share_source_unreadable": {
+      "title": "Нема що читати",
+      "description": "Ми відкрили посилання, але не знайшли на сторінці назви."
+    },
+    "share_fetch_failed": {
+      "title": "Не вдалося прочитати посилання",
+      "description": "Зараз не вдається прочитати це посилання. Спробуй трохи згодом."
+    }
+  }
+}

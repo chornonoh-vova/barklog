@@ -1,5 +1,7 @@
 import { FREE_ACTIVE_SLOTS, SLOT_CONSUMING_STATUSES, type BacklogStatsWire } from "@repo/contracts";
 
+import { i18n } from "@/i18n/instance";
+
 /**
  * The server counts with `SLOT_CONSUMING_STATUSES`; derive from the same
  * constant rather than restating `waiting + playing`, so making a status
@@ -15,7 +17,7 @@ export function slotsLabel(stats: BacklogStatsWire | undefined, premium: boolean
 
   const used = activeSlotsUsed(stats);
 
-  if (used >= FREE_ACTIVE_SLOTS) return "All spots full — finish a game to free one";
+  if (used >= FREE_ACTIVE_SLOTS) return i18n.t("backlog.slotsFull");
 
-  return `${used} of ${FREE_ACTIVE_SLOTS} spots used`;
+  return i18n.t("backlog.slotsUsed", { used, total: FREE_ACTIVE_SLOTS });
 }

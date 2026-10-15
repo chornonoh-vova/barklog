@@ -1,6 +1,7 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   PlatformColor,
   Pressable,
@@ -17,7 +18,7 @@ import { GameGridRow } from "@/components/game-grid-row";
 import { LoadingState } from "@/components/query-states";
 import { QueryBoundary } from "@/components/query-boundary";
 import { BacklogGameRow } from "@/features/backlog/backlog-game-row";
-import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
+import { emptyBacklog, emptyFilter } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
@@ -62,6 +63,7 @@ export function BacklogScreen() {
   const grid = columns > 1;
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
   const slotState = useSlotState();
+  const { t } = useTranslation();
 
   // Home: the only screen a user reaches without having just tapped something.
   useReviewPrompt();
@@ -97,9 +99,12 @@ export function BacklogScreen() {
   if (filter === undefined && backlog.data?.items.length === 0) {
     return (
       <EmptyState
-        {...EMPTY_BACKLOG}
-        action={{ label: "Find a Game", onPress: () => router.navigate("/search") }}
-        secondaryAction={{ label: "Or explore games", onPress: () => router.navigate("/explore") }}
+        {...emptyBacklog()}
+        action={{ label: t("backlog.findGame"), onPress: () => router.navigate("/search") }}
+        secondaryAction={{
+          label: t("backlog.exploreGames"),
+          onPress: () => router.navigate("/explore"),
+        }}
         fullscreen
       />
     );
@@ -119,7 +124,7 @@ export function BacklogScreen() {
         <Pressable
           style={styles.slotsTarget}
           accessibilityRole="button"
-          accessibilityLabel={`${slots}. Tap to see Barklog Premium.`}
+          accessibilityLabel={t("backlog.slotsHint", { slots })}
           onPress={() => router.push("/paywall")}
         >
           <Text style={styles.slots}>{slots}</Text>
@@ -140,9 +145,7 @@ export function BacklogScreen() {
           renderItem={renderItem}
           renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
           ListHeaderComponent={listHeader}
-          ListEmptyComponent={
-            filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
-          }
+          ListEmptyComponent={filter === undefined ? null : <EmptyState {...emptyFilter(filter)} />}
           refreshControl={
             <RefreshControl
               refreshing={backlog.isRefetching}

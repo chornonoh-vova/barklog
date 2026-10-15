@@ -1,34 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { NO_LINK, UNAVAILABLE_NOTICE, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { noLink, noMatch, unreadable } from "@/features/share/empty-states";
 
-describe("NO_LINK", () => {
+describe("noLink", () => {
   it("is the state for a share that resolved with no link in it", () => {
-    expect(NO_LINK.title).not.toBe("");
-    expect(NO_LINK.systemImage).not.toBe("");
-    expect(NO_LINK.description).toMatch(/web link/);
-    expect(NO_LINK.description).toMatch(/screenshot/);
+    expect(noLink().title).not.toBe("");
+    expect(noLink().systemImage).not.toBe("");
+    expect(noLink().description).toMatch(/web link/);
+    expect(noLink().description).toMatch(/screenshot/);
   });
 });
 
-describe("UNREADABLE", () => {
+describe("unreadable", () => {
   it("is the state for a share whose payload never resolved", () => {
-    expect(UNREADABLE.title).not.toBe("");
-    expect(UNREADABLE.systemImage).not.toBe("");
-    expect(UNREADABLE.description).not.toBe("");
+    expect(unreadable().title).not.toBe("");
+    expect(unreadable().systemImage).not.toBe("");
+    expect(unreadable().description).not.toBe("");
   });
 
-  it("does not give NO_LINK's advice, which would be wrong for this cause", () => {
-    expect(UNREADABLE.title).not.toBe(NO_LINK.title);
-    expect(UNREADABLE.description).not.toBe(NO_LINK.description);
-    expect(UNREADABLE.description).not.toMatch(/screenshot/);
-  });
-});
-
-describe("UNAVAILABLE_NOTICE", () => {
-  it("says the matches came from the title, not an identified game", () => {
-    expect(UNAVAILABLE_NOTICE).toMatch(/matches for the title/);
-    expect(UNAVAILABLE_NOTICE).not.toBe("");
+  it("does not give noLink's advice, which would be wrong for this cause", () => {
+    expect(unreadable().title).not.toBe(noLink().title);
+    expect(unreadable().description).not.toBe(noLink().description);
+    expect(unreadable().description).not.toMatch(/screenshot/);
   });
 });
 
@@ -41,13 +34,13 @@ describe("noMatch", () => {
 
   it("names a single guess", () => {
     expect(noMatch("title", ["Resident Evil 4"]).description).toBe(
-      "We think this is about Resident Evil 4, but it is not in the catalogue yet.",
+      "We think this is about Resident Evil 4, but it isn't in the catalogue yet.",
     );
   });
 
   it("joins several guesses into one sentence", () => {
     expect(noMatch("author", ["Hollow Knight", "Silksong"]).description).toBe(
-      "We think this is about Hollow Knight or Silksong, but it is not in the catalogue yet.",
+      "We think this is about Hollow Knight or Silksong, but it isn't in the catalogue yet.",
     );
   });
 
@@ -70,7 +63,7 @@ describe("noMatch", () => {
   });
 
   it("reads differently from the other states, which are different situations", () => {
-    const titles = [noMatch("title", []).title, NO_LINK.title, UNREADABLE.title];
+    const titles = [noMatch("title", []).title, noLink().title, unreadable().title];
 
     expect(new Set(titles).size).toBe(titles.length);
   });
@@ -78,8 +71,8 @@ describe("noMatch", () => {
 
 describe("share illustrations", () => {
   it("gives both share failure states the share mascot", () => {
-    expect(NO_LINK.illustration).toBe("share");
-    expect(UNREADABLE.illustration).toBe("share");
+    expect(noLink().illustration).toBe("share");
+    expect(unreadable().illustration).toBe("share");
   });
 
   it("gives no-match the share mascot on every basis", () => {

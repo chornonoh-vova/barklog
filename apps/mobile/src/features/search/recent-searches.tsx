@@ -1,4 +1,5 @@
 import { SymbolView } from "expo-symbols";
+import { useTranslation } from "react-i18next";
 import { PlatformColor, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Screen, Type } from "@/theme";
@@ -15,6 +16,7 @@ export function RecentSearches({
   onClear: () => void;
 }) {
   const sideInsets = useSideInsets();
+  const { t } = useTranslation();
 
   return (
     <ScrollView
@@ -26,15 +28,15 @@ export function RecentSearches({
     >
       <View style={styles.header}>
         <Text style={styles.title} accessibilityRole="header">
-          Recent
+          {t("search.recent")}
         </Text>
         <Pressable
           style={styles.clear}
           onPress={onClear}
           accessibilityRole="button"
-          accessibilityLabel="Clear recent searches"
+          accessibilityLabel={t("search.clearRecents")}
         >
-          <Text style={styles.clearLabel}>Clear</Text>
+          <Text style={styles.clearLabel}>{t("search.clear")}</Text>
         </Pressable>
       </View>
 
@@ -44,7 +46,7 @@ export function RecentSearches({
           onPress={() => onPick(query)}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}
           accessibilityRole="button"
-          accessibilityLabel={`Search for ${query}`}
+          accessibilityLabel={t("search.searchFor", { query })}
         >
           <SymbolView
             name="clock.arrow.circlepath"

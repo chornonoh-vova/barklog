@@ -1,0 +1,205 @@
+{
+  "common": {
+    "tryAgain": "Попробовать снова",
+    "close": "Закрыть",
+    "share": "Поделиться",
+    "cancel": "Отменить",
+    "or": " или "
+  },
+  "tabs": {
+    "home": "Главная",
+    "explore": "Обзор",
+    "search": "Поиск"
+  },
+  "profile": {
+    "manageSubscription": "Barklog Premium, управлять подпиской",
+    "openAccount": "Открыть аккаунт"
+  },
+  "status": {
+    "waiting": "В очереди",
+    "playing": "Играю",
+    "completed": "Пройдено",
+    "abandoned": "Заброшено"
+  },
+  "backlog": {
+    "empty": {
+      "title": "Твой бэклог пуст",
+      "description": "Добавь свои игры, и то, во что играешь сейчас, всегда будет наверху."
+    },
+    "emptyFilter": {
+      "waiting": {
+        "title": "В очереди пусто",
+        "description": "Игры, до которых ещё не дошли руки."
+      },
+      "playing": {
+        "title": "Сейчас ничего не проходишь",
+        "description": "Игры, которые ты как раз проходишь."
+      },
+      "completed": {
+        "title": "Пока ничего не пройдено",
+        "description": "Игры, пройденные до самого конца."
+      },
+      "abandoned": {
+        "title": "Ничего не заброшено",
+        "description": "Игры, которые пришлось бросить. Без осуждения."
+      }
+    },
+    "findGame": "Найти игру",
+    "exploreGames": "Или посмотреть игры",
+    "slotsFull": "Все места заняты — пройди игру, чтобы освободить одно",
+    "slotsUsed": "Занято {{used}} из {{total}} мест",
+    "slotsHint": "{{slots}}. Нажми, чтобы посмотреть Barklog Premium.",
+    "filterAll": "Все",
+    "filterShow": "Показать",
+    "more": "Ещё",
+    "moreFor": "Ещё, {{name}}",
+    "statusMenu": "Статус",
+    "removeFromBacklog": "Удалить из бэклога…"
+  },
+  "game": {
+    "ratingsCount_one": "{{count, number}} оценка",
+    "ratingsCount_few": "{{count, number}} оценки",
+    "ratingsCount_many": "{{count, number}} оценок",
+    "ratingsCount_other": "{{count, number}} оценки",
+    "gamesCount_one": "{{count, number}} игра",
+    "gamesCount_few": "{{count, number}} игры",
+    "gamesCount_many": "{{count, number}} игр",
+    "gamesCount_other": "{{count, number}} игры",
+    "ratedSpoken": "Оценка {{rating}} из 100, {{ratings}}",
+    "averageRating": "ср. ★{{rating}}",
+    "averageRatingSpoken": "средняя оценка {{rating}} из {{max}}",
+    "addToBacklog": "Добавить в бэклог",
+    "rate": "Оценить",
+    "rateSpoken": "Оценить игру",
+    "ratingSpoken": "Оценка, {{rating}} из {{max}}",
+    "statusRatedSpoken": "{{status}}, оценка {{rating}} из {{max}}",
+    "unknownDate": "Неизвестно",
+    "noRating": "Без оценки",
+    "shareGame": "Поделиться игрой",
+    "backlogActions": "Действия с бэклогом",
+    "thisGame": "эту игру",
+    "released": "Дата выхода",
+    "type": "Тип",
+    "genres": "Жанры",
+    "platforms": "Платформы",
+    "developers": "Разработчики",
+    "publishers": "Издатели",
+    "summary": "Описание",
+    "summaryMore": "ЕЩЁ",
+    "summaryLess": "СВЕРНУТЬ",
+    "similarGames": "Похожие игры",
+    "screenshots": "Скриншоты",
+    "screenshotLabel": "Скриншот {{index}} из {{total}}",
+    "opensFullScreen": "Открывает на весь экран",
+    "closeScreenshots": "Закрыть скриншоты",
+    "attribution": "Данные предоставлены IGDB",
+    "removeTitle": "Удалить «{{name}}»?",
+    "removeMessage": "Статус и оценка будут потеряны.",
+    "removeConfirm": "Удалить"
+  },
+  "explore": {
+    "popular": "Самые популярные",
+    "upcoming": "Скоро выйдут",
+    "recent": "Недавно вышли",
+    "emptyTitle": "Пока нечего вынюхивать",
+    "emptyDescription": "Каталог ещё синхронизируется. Загляни чуть позже."
+  },
+  "search": {
+    "placeholder": "Искать игры",
+    "promptTitle": "Давай найдём игру",
+    "promptDescription": "Введи название. Для начала хватит двух символов.",
+    "noResultsTitle": "Игры не найдены",
+    "noResultsDescription": "В каталоге ничего не нашлось по запросу «{{query}}».",
+    "recent": "Недавние",
+    "clear": "Очистить",
+    "clearRecents": "Очистить недавние поиски",
+    "searchFor": "Искать {{query}}"
+  },
+  "share": {
+    "title": "Поделились",
+    "backToHome": "На главную",
+    "searchInstead": "Искать вручную",
+    "openOn": "Открыть на {{host}}",
+    "question": "Что это за игра?",
+    "searching": "Выясняем, что это за игра",
+    "noLinkTitle": "Здесь нет ссылки",
+    "noLinkDescription": "Barklog нужна веб-ссылка. Поделись самой страницей, а не её скриншотом.",
+    "unreadableTitle": "Не удалось прочитать",
+    "unreadableDescription": "Barklog не смог открыть то, чем поделились. Попробуй поделиться видео ещё раз.",
+    "unavailableNotice": "Мы не смогли определить игру, поэтому вот совпадения по названию.",
+    "noMatchTitle": "В каталоге нет совпадений",
+    "noMatchNone": "Мы не смогли определить игру даже после поиска в интернете. Открой исходную страницу, чтобы проверить.",
+    "noMatchUnknown": "Мы не смогли определить, о какой это игре.",
+    "noMatchGuesses": "Похоже, это про {{guesses}}, но этой игры ещё нет в каталоге.",
+    "sectionTitle": "Совпадения по названию",
+    "sectionAuthor": "Игры, которые обычно освещает {{author}}",
+    "sectionAuthorUnknown": "Игры, которые обычно освещает этот источник",
+    "sectionWeb": "Совпадения из поиска в интернете"
+  },
+  "onboarding": {
+    "skip": "Пропустить",
+    "continue": "Далее",
+    "start": "Начать",
+    "welcomeTitle": "Добро пожаловать в Barklog",
+    "welcomeDescription": "Barklog хранит игры, в которые ты играешь, и те, которые всё собираешься начать.",
+    "backlogTitle": "Управляй своим бэклогом",
+    "backlogDescription": "Добавь игру и отметь её: в очереди, играю, пройдено или заброшено. «Заброшено» — тоже нормальный ответ.",
+    "exploreTitle": "Ищи новые игры",
+    "exploreDescription": "Смотри, что популярно, что скоро выйдет и что только что появилось. Или ищи по названию, если уже знаешь, чего хочешь.",
+    "shareTitle": "Поделись видео — выбери игру",
+    "shareDescription": "Поделись видео из YouTube или TikTok и выбери игру — Barklog сам найдёт варианты.",
+    "igdbTitle": "Все данные об играх — от IGDB",
+    "igdbDescription": "Каждая обложка, дата выхода, платформа и описание в Barklog берутся из IGDB — базы данных игр, которую поддерживает сообщество."
+  },
+  "errors": {
+    "genericTitle": "Что-то пошло не так",
+    "genericDescription": "Попробуй ещё раз.",
+    "offlineTitle": "Нет соединения",
+    "offlineDescription": "Barklog не может связаться с сервером. Проверь подключение.",
+    "rateLimitedTitle": "Не так быстро",
+    "rateLimitedDescription": "Слишком много запросов. Попробуй чуть позже.",
+    "serverTitle": "У Barklog проблемы",
+    "serverDescription": "Сервер не ответил. Попробуй через мгновение."
+  },
+  "apiErrors": {
+    "unauthorized": {
+      "title": "Сеанс завершился",
+      "description": "Войди снова, чтобы продолжить."
+    },
+    "game_not_found": {
+      "title": "Игра не найдена",
+      "description": "Этой игры нет в каталоге."
+    },
+    "backlog_entry_not_found": {
+      "title": "Нет в бэклоге",
+      "description": "Этой игры уже нет в твоём бэклоге."
+    },
+    "backlog_cap_reached": {
+      "title": "Бэклог заполнен",
+      "description_one": "Пройди {{count}} игру, чтобы освободить место, или оформи Premium.",
+      "description_few": "Пройди {{count}} игры, чтобы освободить место, или оформи Premium.",
+      "description_many": "Пройди {{count}} игр, чтобы освободить место, или оформи Premium.",
+      "description_other": "Пройди {{count}} игры, чтобы освободить место, или оформи Premium."
+    },
+    "share_invalid_url": {
+      "title": "Не получается открыть ссылку",
+      "description": "Barklog нужен веб-адрес с https."
+    },
+    "share_source_gone": {
+      "title": "Страницы больше нет",
+      "description": "Возможно, она приватная или удалена."
+    },
+    "share_source_blocked": {
+      "title": "Сайт не пустил",
+      "description": "Он не дал нам прочитать страницу."
+    },
+    "share_source_unreadable": {
+      "title": "Нечего читать",
+      "description": "Мы открыли ссылку, но не нашли на странице названия."
+    },
+    "share_fetch_failed": {
+      "title": "Не удалось прочитать ссылку",
+      "description": "Сейчас не получается прочитать эту ссылку. Попробуй чуть позже."
+    }
+  }
+}
