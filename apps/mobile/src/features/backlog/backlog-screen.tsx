@@ -148,7 +148,11 @@ export function BacklogScreen() {
           ListEmptyComponent={filter === undefined ? null : <EmptyState {...emptyFilter(filter)} />}
           refreshControl={
             <RefreshControl
-              refreshing={backlog.isRefetching}
+              // A filter's first load shows the previous list as placeholder
+              // data, which counts as refetching. Only a pull should show the
+              // spinner; otherwise it pushes the content down and the large
+              // title jumps.
+              refreshing={backlog.isRefetching && !backlog.isPlaceholderData}
               onRefresh={() => {
                 void backlog.refetch();
                 void stats.refetch();

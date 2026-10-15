@@ -50,6 +50,9 @@ export function useBacklog(
   return useQuery({
     queryKey: keys.backlog.list(status, sort),
     queryFn: () => api.listBacklog({ status, sort }),
+    // A new filter is a new query; without this it starts pending, and Home
+    // swaps the whole list — the filter in its header included — for a spinner.
+    placeholderData: keepPreviousData,
   });
 }
 
