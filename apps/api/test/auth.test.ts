@@ -24,6 +24,7 @@ test("everything else is 401 without a session", async () => {
   expect(await response.json()).toMatchObject({
     type: "https://barklog.gg/problems/unauthorized",
     status: 401,
+    code: "unauthorized",
   });
 });
 

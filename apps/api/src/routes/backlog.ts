@@ -66,7 +66,7 @@ export function backlogRoutes(deps: AppDeps) {
         const { status, rating } = c.req.valid("json");
 
         if (!(await gameExists(deps.db, gameId))) {
-          throw problems.create("NOT_FOUND", {
+          throw problems.create("GAME_NOT_FOUND", {
             detail: `Game ${gameId} is not in the mirror.`,
           });
         }
@@ -115,12 +115,12 @@ export function backlogRoutes(deps: AppDeps) {
           // game frees nothing usable. Say how many it actually takes.
           const toFree = outcome.activeCount - FREE_ACTIVE_SLOTS + 1;
 
-          throw problems.create("SUBSCRIPTION_REQUIRED", {
+          throw problems.create("BACKLOG_CAP_REACHED", {
             detail:
               toFree > 1
                 ? `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games and you have ${outcome.activeCount}. Finish ${toFree} to free a spot, or subscribe for unlimited.`
                 : `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games. Finish one to free a spot, or subscribe for unlimited.`,
-            extensions: { activeCount: outcome.activeCount, limit: FREE_ACTIVE_SLOTS },
+            extensions: { activeCount: outcome.activeCount, limit: FREE_ACTIVE_SLOTS, toFree },
           });
         }
 
@@ -132,7 +132,7 @@ export function backlogRoutes(deps: AppDeps) {
 
       const removed = await deleteBacklogEntry(deps.db, c.get("userId"), gameId);
       if (!removed) {
-        throw problems.create("NOT_FOUND", {
+        throw problems.create("BACKLOG_ENTRY_NOT_FOUND", {
           detail: `No backlog entry for game ${gameId}.`,
         });
       }

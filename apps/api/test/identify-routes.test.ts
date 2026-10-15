@@ -169,7 +169,7 @@ test("an unparseable url is 422, naming the url field via the schema, not the re
   expect(response.status).toBe(422);
   expect(body.errors[0]?.field).toBe("url");
   // The schema hook's shape, not the registry's — pins that this reaches
-  // valibot's rejection and not `UNPROCESSABLE_SHARE`.
+  // valibot's rejection and not `SHARE_SOURCE_UNREADABLE`.
   expect(body.type).toBe("about:blank");
 });
 
@@ -183,12 +183,13 @@ test("turns an unreadable page into a 422", async () => {
   });
 
   const response = await identifyOn(app.app);
-  const body = (await response.json()) as { type: string };
+  const body = (await response.json()) as { type: string; code: string };
 
   expect(response.status).toBe(422);
+  expect(body.code).toBe("share_source_unreadable");
   // The registry's shape, not the schema hook's — pins that an unreadable
-  // page reaches `UNPROCESSABLE_SHARE`, not schema validation.
-  expect(body.type).toBe(problems.get("UNPROCESSABLE_SHARE").type);
+  // page reaches `SHARE_SOURCE_UNREADABLE`, not schema validation.
+  expect(body.type).toBe(problems.get("SHARE_SOURCE_UNREADABLE").type);
   await app.close();
 });
 
@@ -233,6 +234,7 @@ test("a gone source is 404, not a 502", async () => {
   const response = await identifyOn(app.app);
 
   expect(response.status).toBe(404);
+  expect(await response.json()).toMatchObject({ code: "share_source_gone" });
   await app.close();
 });
 
@@ -246,9 +248,10 @@ test("a metadata outage is 502", async () => {
   });
 
   const response = await identifyOn(app.app);
-  const body = (await response.json()) as { detail?: string };
+  const body = (await response.json()) as { detail?: string; code?: string };
 
   expect(response.status).toBe(502);
+  expect(body.code).toBe("share_fetch_failed");
   // The 5xx must not leak the upstream exception message.
   expect(body.detail ?? "").not.toContain("500");
   await app.close();

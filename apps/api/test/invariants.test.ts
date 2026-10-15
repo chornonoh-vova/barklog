@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 
+import { PROBLEM_CODES } from "@repo/contracts";
 import { hc } from "hono/client";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
@@ -122,15 +123,27 @@ test("the registry's type URIs are the library's slugs", () => {
   expect(problems.types().map((key) => problems.get(key).type)).toEqual([
     "https://barklog.gg/problems/unauthorized",
     "https://barklog.gg/problems/not-found",
+    "https://barklog.gg/problems/not-found",
+    "https://barklog.gg/problems/not-found",
     "https://barklog.gg/problems/payment-required",
     "https://barklog.gg/problems/content-too-large",
     "https://barklog.gg/problems/unsupported-media-type",
     "https://barklog.gg/problems/unprocessable-content",
+    "https://barklog.gg/problems/not-found",
+    "https://barklog.gg/problems/unprocessable-content",
+    "https://barklog.gg/problems/unprocessable-content",
+    "https://barklog.gg/problems/bad-gateway",
     "https://barklog.gg/problems/unprocessable-content",
     "https://barklog.gg/problems/too-many-requests",
     "https://barklog.gg/problems/bad-gateway",
     "https://barklog.gg/problems/service-unavailable",
   ]);
+});
+
+test("every code the app can translate is emitted by exactly one problem type", () => {
+  const codes = problems.types().flatMap((key) => problems.get(key).code ?? []);
+
+  expect(codes.toSorted()).toEqual([...PROBLEM_CODES].sort());
 });
 
 test("sync status reports the last run, and null before the worker has ever run", async () => {
