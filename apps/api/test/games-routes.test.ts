@@ -236,7 +236,9 @@ test("game details must never enter a shared cache: two users, same request, no 
 });
 
 test("an unmirrored id is 404 and a non-numeric id is 422", async () => {
-  expect((await callApi(harness.app, "/api/games/999999")).status).toBe(404);
+  const missing = await callApi(harness.app, "/api/games/999999");
+  expect(missing.status).toBe(404);
+  expect(await missing.json()).toMatchObject({ code: "game_not_found" });
   expect((await callApi(harness.app, "/api/games/abc")).status).toBe(422);
 });
 

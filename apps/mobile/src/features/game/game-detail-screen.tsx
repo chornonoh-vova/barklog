@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
 import { useDeleteBacklogEntry, useGame, useUpsertBacklogEntry } from "@/api/hooks";
@@ -27,6 +28,7 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
   const { premium, activeCount } = useSlotState();
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const split = detailIsSplit(width, fontScale);
+  const { t } = useTranslation();
 
   const gameData = game.data;
   const onShare = useCallback(() => {
@@ -42,18 +44,20 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
           icon="square.and.arrow.up"
-          accessibilityLabel="Share game"
+          accessibilityLabel={t("game.shareGame")}
           disabled={game.data === undefined}
           onPress={onShare}
         />
         {game.data?.backlogEntry == null ? null : (
-          <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel="Backlog actions">
+          <Stack.Toolbar.Menu icon="ellipsis" accessibilityLabel={t("game.backlogActions")}>
             <Stack.Toolbar.MenuAction
               icon="trash"
               destructive
-              onPress={() => confirmRemove(game.data?.name ?? "this game", () => remove.mutate())}
+              onPress={() =>
+                confirmRemove(game.data?.name ?? t("game.thisGame"), () => remove.mutate())
+              }
             >
-              Remove from Backlog…
+              {t("backlog.removeFromBacklog")}
             </Stack.Toolbar.MenuAction>
           </Stack.Toolbar.Menu>
         )}

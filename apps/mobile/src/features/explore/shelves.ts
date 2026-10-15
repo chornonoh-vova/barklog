@@ -1,12 +1,11 @@
 import type { GameFeed, GameListResponse, GameSummaryWire } from "@repo/contracts";
 
+import { i18n } from "@/i18n/instance";
+
 const ROWS = 2;
 
-export const SHELVES = [
-  { feed: "popular", title: "Most Popular" },
-  { feed: "upcoming", title: "Upcoming" },
-  { feed: "recent", title: "Recently Released" },
-] as const satisfies readonly { feed: GameFeed; title: string }[];
+/** In shelf order. Each feed's title is its key under `explore`. */
+export const SHELVES = ["popular", "upcoming", "recent"] as const satisfies readonly GameFeed[];
 
 export interface Shelf {
   feed: GameFeed;
@@ -26,9 +25,11 @@ export function toColumns(items: GameSummaryWire[]): GameSummaryWire[][] {
 }
 
 export function toShelves(data: Partial<Record<GameFeed, GameListResponse>>): Shelf[] {
-  return SHELVES.flatMap(({ feed, title }) => {
+  return SHELVES.flatMap((feed) => {
     const items = data[feed]?.items ?? [];
 
-    return items.length === 0 ? [] : [{ feed, title, columns: toColumns(items) }];
+    return items.length === 0
+      ? []
+      : [{ feed, title: i18n.t(`explore.${feed}`), columns: toColumns(items) }];
   });
 }

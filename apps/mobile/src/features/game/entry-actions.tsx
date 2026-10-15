@@ -9,6 +9,7 @@ import {
   tag,
 } from "@expo/ui/swift-ui/modifiers";
 import { RATING_MAX, RATING_MIN, type BacklogEntryWire, type BacklogStatus } from "@repo/contracts";
+import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
@@ -46,6 +47,7 @@ export function EntryActions({
   const rating = entry?.rating ?? null;
   // Two large capsules side by side truncate at accessibility sizes.
   const Container = useIsAccessibilitySize() ? VStack : HStack;
+  const { t } = useTranslation();
   return (
     <MeasuredHost style={styles.host}>
       <Container>
@@ -71,7 +73,7 @@ export function EntryActions({
               }
               modifiers={[pickerStyle("inline")]}
             >
-              <Text modifiers={[tag(NO_RATING)]}>No rating</Text>
+              <Text modifiers={[tag(NO_RATING)]}>{t("game.noRating")}</Text>
               {RATINGS.map((value) => (
                 <Text key={value} modifiers={[tag(value)]}>
                   {String(value)}

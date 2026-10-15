@@ -58,7 +58,7 @@ export function gamesRoutes(deps: AppDeps) {
     (await deps.cache.get<number>(SEARCH_VERSION_KEY)) ?? 0;
 
   const notInMirror = (id: number) =>
-    problems.create("NOT_FOUND", { detail: `Game ${id} is not in the mirror.` });
+    problems.create("GAME_NOT_FOUND", { detail: `Game ${id} is not in the mirror.` });
 
   const cachedSearch = async (
     query: string,
@@ -154,7 +154,7 @@ export function gamesRoutes(deps: AppDeps) {
         // Unreachable over HTTP: `shareIdentifySchema` already validated `url`
         // with the same `isShareableUrl` predicate `normaliseShare` uses.
         // Kept for type narrowing only — do not chase a test for this branch.
-        throw problems.create("UNPROCESSABLE_SHARE", {
+        throw problems.create("SHARE_INVALID_URL", {
           detail: "That link cannot be opened. Barklog needs an https web address.",
         });
       }
@@ -200,17 +200,17 @@ export function gamesRoutes(deps: AppDeps) {
         );
       } catch (error) {
         if (error instanceof SourceGone) {
-          throw problems.create("NOT_FOUND", {
+          throw problems.create("SHARE_SOURCE_GONE", {
             detail: "That page is unavailable — it may be private or removed.",
           });
         }
         if (error instanceof SourceBlocked) {
-          throw problems.create("UNPROCESSABLE_SHARE", {
+          throw problems.create("SHARE_SOURCE_BLOCKED", {
             detail: "That site would not let us read the page.",
           });
         }
         if (error instanceof SourceUnreadable) {
-          throw problems.create("UNPROCESSABLE_SHARE", {
+          throw problems.create("SHARE_SOURCE_UNREADABLE", {
             detail: "We opened that link but could not find a title on it.",
           });
         }
@@ -226,7 +226,7 @@ export function gamesRoutes(deps: AppDeps) {
           errorClass: error instanceof Error ? error.constructor.name : typeof error,
         });
         // A fixed string: a 5xx must never carry the upstream message.
-        throw problems.create("BAD_GATEWAY", {
+        throw problems.create("SHARE_FETCH_FAILED", {
           detail: "That link could not be read right now. Try again shortly.",
         });
       }

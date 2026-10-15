@@ -1,11 +1,13 @@
 import type { ShareBasis } from "@repo/contracts";
 
 import type { EmptyStateContent } from "@/components/empty-state";
+import { i18n } from "@/i18n/instance";
 
 /**
  * The copy lives here, imported as a type only, so this module keeps
  * react-native and @expo/ui out of its graph and stays testable in plain
- * Node — the same shape as `features/backlog/empty-states.ts`.
+ * Node — the same shape as `features/backlog/empty-states.ts`. Functions, not
+ * constants, so the copy is read at render, after i18n is set up.
  */
 
 /**
@@ -13,31 +15,28 @@ import type { EmptyStateContent } from "@/components/empty-state";
  * url in it. Distinct from still resolving, which is transient and gets a
  * spinner instead.
  */
-export const NO_LINK: EmptyStateContent = {
-  title: "No link in that share",
-  systemImage: "link",
-  illustration: "share",
-  description: "Barklog needs a web link. Share the page itself rather than a screenshot of it.",
-};
+export function noLink(): EmptyStateContent {
+  return {
+    title: i18n.t("share.noLinkTitle"),
+    systemImage: "link",
+    illustration: "share",
+    description: i18n.t("share.noLinkDescription"),
+  };
+}
 
 /**
  * Resolution itself failed: iOS never handed the payload over in a readable
- * form. Separate from `NO_LINK` because that copy's advice — share the video,
+ * form. Separate from `noLink` because that copy's advice — share the video,
  * not a screenshot — is wrong when the share was fine and the read was not.
  */
-export const UNREADABLE: EmptyStateContent = {
-  title: "Could not read that share",
-  systemImage: "exclamationmark.triangle",
-  illustration: "share",
-  description: "Barklog could not open what was shared. Try sharing the video again.",
-};
-
-/**
- * Shown above the results on the `unavailable` basis only: extraction itself
- * failed, so the matches come from searching the source's raw title instead.
- */
-export const UNAVAILABLE_NOTICE =
-  "We couldn't tell which game this is, so these are matches for the title instead.";
+export function unreadable(): EmptyStateContent {
+  return {
+    title: i18n.t("share.unreadableTitle"),
+    systemImage: "exclamationmark.triangle",
+    illustration: "share",
+    description: i18n.t("share.unreadableDescription"),
+  };
+}
 
 /**
  * Reads as a sentence when the guesses are joined, not as a debug dump.
@@ -51,14 +50,16 @@ export const UNAVAILABLE_NOTICE =
  */
 export function noMatch(basis: ShareBasis, guesses: string[]): EmptyStateContent {
   return {
-    title: "No match in the catalogue",
+    title: i18n.t("share.noMatchTitle"),
     systemImage: "magnifyingglass",
     illustration: "share",
     description:
       basis === "none"
-        ? "We couldn't tell which game this is, even after searching the web. Open the original page to check."
+        ? i18n.t("share.noMatchNone")
         : basis === "unavailable" || guesses.length === 0
-          ? "We couldn't tell which game this is about."
-          : `We think this is about ${guesses.join(" or ")}, but it is not in the catalogue yet.`,
+          ? i18n.t("share.noMatchUnknown")
+          : // Joined by hand, not i18next's `list` formatter: that needs
+            // `Intl.ListFormat`, which Hermes does not ship.
+            i18n.t("share.noMatchGuesses", { guesses: guesses.join(i18n.t("common.or")) }),
   };
 }

@@ -1,3 +1,6 @@
+// First, so every module below renders with copy from the first frame.
+import "@/i18n";
+
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClientProvider } from "@tanstack/react-query";

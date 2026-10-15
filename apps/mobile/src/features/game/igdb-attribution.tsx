@@ -1,29 +1,28 @@
-import { openURL } from "expo-linking";
-import { PlatformColor, StyleSheet, Text, View } from "react-native";
+import { Label, Link } from "@expo/ui/swift-ui";
+import { font } from "@expo/ui/swift-ui/modifiers";
+import { useTranslation } from "react-i18next";
+import { StyleSheet } from "react-native";
 
 import { gameUrl } from "@/igdb-url";
-import { Type } from "@/theme";
+import { MeasuredHost } from "@/ui/measured-host";
 
-/** The credit IGDB's terms require. An inner `Text` rather than a `Pressable`
- * around the line, so only the word is tappable and the sentence wraps as one. */
+/** The credit IGDB's terms require. SwiftUI's own `Link`, as on the onboarding
+ * IGDB page, so it reads as a link and carries the external-link symbol. */
 export function IgdbAttribution({ slug }: { slug: string }) {
-  const url = gameUrl(slug);
+  const { t } = useTranslation();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.line}>
-        Powered by{" "}
-        <Text style={styles.link} accessibilityRole="link" onPress={() => void openURL(url)}>
-          IGDB
-        </Text>{" "}
-        data
-      </Text>
-    </View>
+    <MeasuredHost style={styles.host}>
+      <Link destination={gameUrl(slug)} modifiers={[font({ textStyle: "footnote" })]}>
+        <Label title={t("game.attribution")} systemImage="arrow.up.right.square" />
+      </Link>
+    </MeasuredHost>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 16, paddingBottom: 32, alignItems: "center" },
-  line: { ...Type.footnote, color: PlatformColor("secondaryLabel") },
-  link: { ...Type.footnote, color: PlatformColor("link") },
+  // Full width, not `alignSelf: "center"`: the host measures only its height,
+  // so a centred one shrinks to nothing and the label collapses to its icon.
+  // SwiftUI centres the link inside it.
+  host: { marginHorizontal: 16, marginBottom: 32 },
 });

@@ -3,6 +3,7 @@ import { UserProfileView } from "@clerk/expo/native";
 import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import RevenueCatUI from "react-native-purchases-ui";
 
@@ -24,6 +25,7 @@ export function ProfileToolbar() {
   const [isOpen, setIsOpen] = useState(false);
   const premium = useIsPremium();
   const { width } = useWindowDimensions();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -37,14 +39,14 @@ export function ProfileToolbar() {
         {premium ? (
           <Stack.Toolbar.Button
             icon="star.fill"
-            accessibilityLabel="Barklog Premium — manage subscription"
+            accessibilityLabel={t("profile.manageSubscription")}
             onPress={() => void RevenueCatUI.presentCustomerCenter()}
           />
         ) : null}
         <Stack.Toolbar.View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Open account"
+            accessibilityLabel={t("profile.openAccount")}
             onPress={() => setIsOpen(true)}
             style={styles.button}
           >

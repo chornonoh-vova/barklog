@@ -1,6 +1,7 @@
 import { SEARCH_LIMIT_MAX } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
 import { useGameFeed } from "@/api/hooks";
@@ -15,21 +16,13 @@ import { useSideInsets } from "@/ui/use-side-insets";
 // window — iPad landscape with the sidebar hidden shows a shelf ending mid-screen.
 const SHELF_LIMIT = SEARCH_LIMIT_MAX;
 
-const EMPTY_CATALOGUE = (
-  <EmptyState
-    title="Nothing to sniff out yet"
-    systemImage="safari"
-    illustration="explore"
-    description="The catalogue is still syncing. Check back shortly."
-  />
-);
-
 export function ExploreScreen() {
   const popular = useGameFeed("popular", SHELF_LIMIT);
   const upcoming = useGameFeed("upcoming", SHELF_LIMIT);
   const recent = useGameFeed("recent", SHELF_LIMIT);
   const router = useRouter();
   const sideInsets = useSideInsets();
+  const { t } = useTranslation();
 
   // Each tab owns its own detail route so a push stays in the current tab: a
   // bare `/game/${id}` resolves to `(home)` and switches tabs.
@@ -51,7 +44,16 @@ export function ExploreScreen() {
 
     const failed = feeds.find((feed) => feed.isError);
 
-    return failed ? <ErrorState error={failed.error} onRetry={refetchAll} /> : EMPTY_CATALOGUE;
+    return failed ? (
+      <ErrorState error={failed.error} onRetry={refetchAll} />
+    ) : (
+      <EmptyState
+        title={t("explore.emptyTitle")}
+        systemImage="safari"
+        illustration="explore"
+        description={t("explore.emptyDescription")}
+      />
+    );
   }
 
   return (

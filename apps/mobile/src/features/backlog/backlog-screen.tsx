@@ -1,6 +1,7 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   PlatformColor,
   Pressable,
@@ -17,12 +18,11 @@ import { GameGridRow } from "@/components/game-grid-row";
 import { LoadingState } from "@/components/query-states";
 import { QueryBoundary } from "@/components/query-boundary";
 import { BacklogGameRow } from "@/features/backlog/backlog-game-row";
-import { EMPTY_BACKLOG, EMPTY_FILTER } from "@/features/backlog/empty-states";
+import { emptyBacklog, emptyFilter } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { useSlotState } from "@/features/backlog/use-slot-state";
-import { statsLine, statsLineSpoken } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -62,6 +62,7 @@ export function BacklogScreen() {
   const grid = columns > 1;
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
   const slotState = useSlotState();
+  const { t } = useTranslation();
 
   // Home: the only screen a user reaches without having just tapped something.
   useReviewPrompt();
@@ -92,14 +93,19 @@ export function BacklogScreen() {
     [backlog.data, filter, columns],
   );
 
-  if (backlog.isPending) return <LoadingState />;
+  // Only the first load replaces the screen. A filter's first load keeps the
+  // list, and the filter in its header, mounted and spins inside it instead.
+  if (backlog.isPending && filter === undefined) return <LoadingState />;
 
   if (filter === undefined && backlog.data?.items.length === 0) {
     return (
       <EmptyState
-        {...EMPTY_BACKLOG}
-        action={{ label: "Find a Game", onPress: () => router.navigate("/search") }}
-        secondaryAction={{ label: "Or explore games", onPress: () => router.navigate("/explore") }}
+        {...emptyBacklog()}
+        action={{ label: t("backlog.findGame"), onPress: () => router.navigate("/search") }}
+        secondaryAction={{
+          label: t("backlog.exploreGames"),
+          onPress: () => router.navigate("/explore"),
+        }}
         fullscreen
       />
     );
@@ -110,16 +116,11 @@ export function BacklogScreen() {
   const listHeader = (
     <View style={styles.header}>
       <StatusFilter value={filter} onChange={setFilter} />
-      {stats.data ? (
-        <Text style={styles.stats} accessibilityLabel={statsLineSpoken(stats.data)}>
-          {statsLine(stats.data)}
-        </Text>
-      ) : null}
       {slots === null ? null : (
         <Pressable
           style={styles.slotsTarget}
           accessibilityRole="button"
-          accessibilityLabel={`${slots}. Tap to see Barklog Premium.`}
+          accessibilityLabel={t("backlog.slotsHint", { slots })}
           onPress={() => router.push("/paywall")}
         >
           <Text style={styles.slots}>{slots}</Text>
@@ -128,34 +129,40 @@ export function BacklogScreen() {
     </View>
   );
 
-  return (
-    <QueryBoundary query={backlog}>
-      {() => (
-        <SectionList
-          style={grid ? styles.groupedList : styles.list}
-          onLayout={onLayout}
-          contentContainerStyle={[styles.listContent, sideInsets]}
-          sections={sections}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={
-            filter === undefined ? null : <EmptyState {...EMPTY_FILTER[filter]} />
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={backlog.isRefetching}
-              onRefresh={() => {
-                void backlog.refetch();
-                void stats.refetch();
-              }}
-            />
-          }
-          contentInsetAdjustmentBehavior="automatic"
-          stickySectionHeadersEnabled
+  const list = (
+    <SectionList
+      style={grid ? styles.groupedList : styles.list}
+      onLayout={onLayout}
+      contentContainerStyle={[styles.listContent, sideInsets]}
+      sections={sections}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
+      ListHeaderComponent={listHeader}
+      ListEmptyComponent={
+        backlog.isPending ? (
+          <LoadingState />
+        ) : filter === undefined ? null : (
+          <EmptyState {...emptyFilter(filter)} />
+        )
+      }
+      refreshControl={
+        <RefreshControl
+          refreshing={backlog.isRefetching}
+          onRefresh={() => {
+            void backlog.refetch();
+            void stats.refetch();
+          }}
         />
-      )}
+      }
+      contentInsetAdjustmentBehavior="automatic"
+      stickySectionHeadersEnabled
+    />
+  );
+
+  return (
+    <QueryBoundary query={backlog} loading={list}>
+      {() => list}
     </QueryBoundary>
   );
 }
@@ -164,13 +171,7 @@ const styles = StyleSheet.create({
   list: Screen.fill,
   groupedList: Screen.groupedFill,
   listContent: Screen.listContent,
-  header: { paddingTop: 8, gap: 4 },
-  stats: {
-    ...Type.footnote,
-    color: PlatformColor("secondaryLabel"),
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
+  header: { paddingTop: 8, paddingBottom: 8, gap: 4 },
   // A footnote line leaves this control about 26pt tall, and it is a real
   // control on the most-visited screen, so it owes the 44pt minimum. A minimum
   // rather than a fixed height, so a larger text size grows it instead of

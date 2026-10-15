@@ -12,7 +12,6 @@ import {
   releaseYear,
   rowSubtitle,
   rowSubtitleSpoken,
-  statsLineSpoken,
   statusButtonLabel,
   statusButtonSymbol,
   statusLabel,
@@ -187,17 +186,5 @@ describe("ratingLineSpoken", () => {
 
   it("returns null for an unrated game", () => {
     expect(ratingLineSpoken({ totalRating: null, totalRatingCount: 0 })).toBeNull();
-  });
-});
-
-describe("statsLineSpoken", () => {
-  it("reads the average without the star glyph", () => {
-    expect(statsLineSpoken({ total: 12, averageRating: 7.5 })).toBe(
-      "12 games, average rating 7.5 out of 10",
-    );
-  });
-
-  it("is the count alone with no ratings", () => {
-    expect(statsLineSpoken({ total: 1, averageRating: null })).toBe("1 game");
   });
 });

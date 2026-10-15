@@ -62,11 +62,33 @@ export interface BacklogStatsWire {
   averageRating: number | null;
 }
 
+/**
+ * Stable, machine-readable reasons a client can look up in its own copy. The
+ * `title` and `detail` beside them stay English and stay sent, for builds that
+ * predate the code.
+ */
+export const PROBLEM_CODES = [
+  "unauthorized",
+  "game_not_found",
+  "backlog_entry_not_found",
+  "backlog_cap_reached",
+  "share_invalid_url",
+  "share_source_gone",
+  "share_source_blocked",
+  "share_source_unreadable",
+  "share_fetch_failed",
+] as const;
+
+export type ProblemCode = (typeof PROBLEM_CODES)[number];
+
 export interface ProblemDocument {
   type: string;
   title: string;
   status: number;
+  code?: ProblemCode;
   detail?: string;
+  /** `backlog_cap_reached`: how many games to finish to free one spot. */
+  toFree?: number;
   instance?: string;
   traceId?: string;
   errors?: { field: string; message: string }[];

@@ -1,5 +1,6 @@
 import type { GameSummaryWire } from "@repo/contracts";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { useSimilarGames } from "@/api/hooks";
@@ -18,6 +19,7 @@ export function SimilarGames({
 }) {
   const similar = useSimilarGames(gameId);
   const items = similar.data?.items ?? [];
+  const { t } = useTranslation();
 
   const renderItem = useCallback(
     ({ item }: { item: GameSummaryWire }) => (
@@ -36,7 +38,7 @@ export function SimilarGames({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>Similar Games</Text>
+      <Text style={styles.title}>{t("game.similarGames")}</Text>
 
       <FlatList
         horizontal

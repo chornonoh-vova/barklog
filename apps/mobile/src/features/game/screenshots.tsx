@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, PlatformColor, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { RemoteImage } from "@/components/remote-image";
@@ -11,12 +12,13 @@ const SHOT_WIDTH = 280;
 
 export function Screenshots({ screenshots }: { screenshots: string[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   if (screenshots.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={ShelfTitle}>Screenshots</Text>
+      <Text style={ShelfTitle}>{t("game.screenshots")}</Text>
 
       <FlatList
         horizontal
@@ -31,7 +33,7 @@ export function Screenshots({ screenshots }: { screenshots: string[] }) {
             style={({ pressed }) => [styles.shot, pressed && styles.pressed]}
             accessibilityRole="button"
             accessibilityLabel={screenshotLabel(index, screenshots.length)}
-            accessibilityHint="Opens full screen"
+            accessibilityHint={t("game.opensFullScreen")}
           >
             <RemoteImage source={{ uri: screenshotUrl(item, "med") }} style={styles.image} />
           </Pressable>

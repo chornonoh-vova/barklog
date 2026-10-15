@@ -23,6 +23,34 @@ describe("toApiError", () => {
     expect(error.traceId).toBe("01JQ8F3K2M9X7YB4NDVWZP6HRC");
   });
 
+  it("reads the code and how many games free a spot", () => {
+    const error = toApiError(response(402), {
+      type: "https://barklog.gg/problems/payment-required",
+      title: "Payment Required",
+      status: 402,
+      code: "backlog_cap_reached",
+      detail: "A free backlog holds 10 unfinished games.",
+      activeCount: 11,
+      limit: 10,
+      toFree: 2,
+    });
+
+    expect(error.code).toBe("backlog_cap_reached");
+    expect(error.toFree).toBe(2);
+  });
+
+  it("drops a code this build has no copy for, so the detail shows instead", () => {
+    const error = toApiError(response(409), {
+      title: "Conflict",
+      status: 409,
+      code: "from_a_newer_api",
+      detail: "Something new went wrong.",
+    });
+
+    expect(error.code).toBeUndefined();
+    expect(error.detail).toBe("Something new went wrong.");
+  });
+
   it("keeps the validation issues from a 422", () => {
     const error = toApiError(response(422), {
       type: "about:blank",

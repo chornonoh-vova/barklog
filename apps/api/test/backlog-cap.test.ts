@@ -206,8 +206,17 @@ test("a lapsed subscriber above the cap keeps everything and is told the real di
   const blocked = await callApi(harness.app, "/api/backlog/1", put({ status: "playing" }));
   expect(blocked.status).toBe(402);
 
-  const problem = (await blocked.json()) as { detail: string; activeCount: number };
+  const problem = (await blocked.json()) as {
+    code: string;
+    detail: string;
+    activeCount: number;
+    limit: number;
+    toFree: number;
+  };
+  expect(problem.code).toBe("backlog_cap_reached");
   expect(problem.activeCount).toBe(GAME_COUNT - 1);
+  expect(problem.limit).toBe(FREE_ACTIVE_SLOTS);
+  expect(problem.toFree).toBe(GAME_COUNT - FREE_ACTIVE_SLOTS);
   expect(problem.detail).toContain(`Finish ${GAME_COUNT - FREE_ACTIVE_SLOTS}`);
 });
 

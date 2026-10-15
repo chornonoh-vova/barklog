@@ -1,23 +1,26 @@
 import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { useTranslation } from "react-i18next";
 
 const { Trigger } = NativeTabs;
 const { Icon, Label } = Trigger;
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
+
   return (
     <NativeTabs minimizeBehavior="onScrollDown" sidebarAdaptable>
       <Trigger name="(home)">
-        <Label>Home</Label>
+        <Label>{t("tabs.home")}</Label>
         <Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
       </Trigger>
 
       <Trigger name="explore">
-        <Label>Explore</Label>
+        <Label>{t("tabs.explore")}</Label>
         <Icon sf={{ default: "safari", selected: "safari.fill" }} md="explore" />
       </Trigger>
 
       <Trigger name="search" role="search">
-        <Label>Search</Label>
+        <Label>{t("tabs.search")}</Label>
         <Icon sf="magnifyingglass" md="search" />
       </Trigger>
     </NativeTabs>

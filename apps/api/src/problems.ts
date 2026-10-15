@@ -10,25 +10,36 @@ import {
   type ProblemDetailsInput,
 } from "hono-problem-details";
 import { standardSchemaProblemHook } from "hono-problem-details/standard-schema";
+import type { ProblemCode } from "@repo/contracts";
 
 export const PROBLEM_BASE = "https://barklog.gg/problems";
 
-function definition(status: number) {
+/**
+ * `code` marks the problems the app shows to a person: it translates by code
+ * and falls back to `detail` for one it does not know.
+ */
+function definition(status: number, code?: ProblemCode) {
   const slug = statusToSlug(status);
   const title = statusToPhrase(status);
 
   if (!slug || !title) throw new Error(`No problem definition for HTTP ${status}`);
 
-  return { type: `${PROBLEM_BASE}/${slug}`, status, title };
+  return { type: `${PROBLEM_BASE}/${slug}`, status, title, code };
 }
 
 export const problems = createProblemTypeRegistry({
-  UNAUTHORIZED: definition(401),
+  UNAUTHORIZED: definition(401, "unauthorized"),
   NOT_FOUND: definition(404),
-  SUBSCRIPTION_REQUIRED: definition(402),
+  GAME_NOT_FOUND: definition(404, "game_not_found"),
+  BACKLOG_ENTRY_NOT_FOUND: definition(404, "backlog_entry_not_found"),
+  BACKLOG_CAP_REACHED: definition(402, "backlog_cap_reached"),
   CONTENT_TOO_LARGE: definition(413),
   UNSUPPORTED_MEDIA_TYPE: definition(415),
-  UNPROCESSABLE_SHARE: definition(422),
+  SHARE_INVALID_URL: definition(422, "share_invalid_url"),
+  SHARE_SOURCE_GONE: definition(404, "share_source_gone"),
+  SHARE_SOURCE_BLOCKED: definition(422, "share_source_blocked"),
+  SHARE_SOURCE_UNREADABLE: definition(422, "share_source_unreadable"),
+  SHARE_FETCH_FAILED: definition(502, "share_fetch_failed"),
   UNPROCESSABLE_WEBHOOK: definition(422),
   TOO_MANY_REQUESTS: definition(429),
   BAD_GATEWAY: definition(502),

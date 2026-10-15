@@ -512,3 +512,42 @@ the scroll position or the pushed stack.
 
 Tab bar on the inner display: note where it sits, and whether
 `sidebarAdaptable` offers the sidebar there.
+
+## Localization (1.2)
+
+The app follows the device language and ships English, Ukrainian, Russian,
+German and Spanish. Switch per app in Settings -> Barklog -> Language; iOS
+relaunches the app. A language the app does not ship falls back to English.
+
+Settings offers the Language row only after a rebuild with the new
+`expo-localization` plugin config; a JS reload is not enough.
+
+Full pass in Ukrainian and in Russian:
+
+- Tabs, the large titles, and the search field placeholder.
+- Home: the empty backlog, each status filter's empty state, the segmented
+  filter's selected label and its VoiceOver names, and the free-slots line.
+- Plurals on a game's rating line pick each form: "1 оцінка", "3 оцінки",
+  "5 оцінок", "21 оцінка". Hermes has no `Intl.PluralRules`, so this is the
+  check that the polyfill loaded; Node-based tests cannot catch it.
+- Game detail: the status and rating menus, detail rows, the release date
+  ("22 лютого 2022 р."), Summary MORE/LESS, the IGDB credit with its link.
+- The remove alert from the row menu and the toolbar: the title quotes the
+  game name in «».
+- Share a link: the searching state, each section header, no-match copy, and
+  an unreadable or gone page, which shows the app's own wording rather than
+  the server's English.
+- Onboarding (reset it first) on every page.
+- Clerk sign-in and the profile sheet, the paywall and Customer Center: their
+  native UI follows the app language. The paywall's own copy comes from the
+  RevenueCat dashboard and stays English until it is translated there.
+- VoiceOver on a Home row and the rating button reads the translated labels.
+
+Truncation pass in German and in Spanish, on a compact iPhone and on iPad
+landscape:
+
+- Tab labels, the segmented filter with each status selected (German
+  "Abgebrochen" or "Durchgespielt" beside four icons is the tightest), the two
+  capsule buttons on game detail, the free-slots line, and the onboarding
+  Skip/Continue buttons.
+- At an accessibility text size, the filter falls back to the "Show" menu.

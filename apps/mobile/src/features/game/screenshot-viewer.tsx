@@ -6,6 +6,7 @@ import {
   padding,
   tabViewStyle,
 } from "@expo/ui/swift-ui/modifiers";
+import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, useWindowDimensions } from "react-native";
 
 import { RemoteImage } from "@/components/remote-image";
@@ -28,6 +29,7 @@ export function ScreenshotViewer({
   const window = useWindowDimensions();
   const width = Math.min(window.width, window.height * SHOT_ASPECT);
   const size = { width, height: width / SHOT_ASPECT };
+  const { t } = useTranslation();
 
   return (
     <Modal
@@ -68,7 +70,7 @@ export function ScreenshotViewer({
               modifiers={[
                 buttonStyle(GLASS_STYLE),
                 padding({ top: 8, trailing: 16 }),
-                accessibilityLabel("Close screenshots"),
+                accessibilityLabel(t("game.closeScreenshots")),
               ]}
             >
               <Image systemName="xmark" />

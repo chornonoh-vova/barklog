@@ -1,14 +1,17 @@
 import { Host, ProgressView } from "@expo/ui/swift-ui";
+import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Mascot } from "@/components/mascot";
 import { Type } from "@/theme";
 
 export function SearchingState() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.root}>
       <Mascot illustration="share" />
-      <Text style={styles.label}>Working out which game this is</Text>
+      <Text style={styles.label}>{t("share.searching")}</Text>
       <Host style={styles.spinner}>
         <ProgressView />
       </Host>
