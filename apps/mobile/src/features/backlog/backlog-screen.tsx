@@ -23,7 +23,6 @@ import { toRowSections, toSections, type BacklogRowSection } from "@/features/ba
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { useSlotState } from "@/features/backlog/use-slot-state";
-import { statsLine, statsLineSpoken } from "@/features/game/format";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -115,11 +114,6 @@ export function BacklogScreen() {
   const listHeader = (
     <View style={styles.header}>
       <StatusFilter value={filter} onChange={setFilter} />
-      {stats.data ? (
-        <Text style={styles.stats} accessibilityLabel={statsLineSpoken(stats.data)}>
-          {statsLine(stats.data)}
-        </Text>
-      ) : null}
       {slots === null ? null : (
         <Pressable
           style={styles.slotsTarget}
@@ -171,13 +165,7 @@ const styles = StyleSheet.create({
   list: Screen.fill,
   groupedList: Screen.groupedFill,
   listContent: Screen.listContent,
-  header: { paddingTop: 8, gap: 4 },
-  stats: {
-    ...Type.footnote,
-    color: PlatformColor("secondaryLabel"),
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
+  header: { paddingTop: 8, paddingBottom: 8, gap: 4 },
   // A footnote line leaves this control about 26pt tall, and it is a real
   // control on the most-visited screen, so it owes the 44pt minimum. A minimum
   // rather than a fixed height, so a larger text size grows it instead of

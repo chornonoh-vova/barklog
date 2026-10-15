@@ -59,11 +59,7 @@
   "game": {
     "ratingsCount_one": "{{count, number}} rating",
     "ratingsCount_other": "{{count, number}} ratings",
-    "gamesCount_one": "{{count, number}} game",
-    "gamesCount_other": "{{count, number}} games",
     "ratedSpoken": "Rated {{rating}} out of 100, from {{ratings}}",
-    "averageRating": "avg ★{{rating}}",
-    "averageRatingSpoken": "average rating {{rating}} out of {{max}}",
     "addToBacklog": "Add to Backlog",
     "rate": "Rate",
     "rateSpoken": "Rate this game",

@@ -1,9 +1,4 @@
-import {
-  RATING_MAX,
-  type BacklogStatsWire,
-  type BacklogStatus,
-  type GameSummaryWire,
-} from "@repo/contracts";
+import { RATING_MAX, type BacklogStatus, type GameSummaryWire } from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import { formatLocale, i18n } from "@/i18n/instance";
@@ -51,9 +46,6 @@ export function summarySubtitle(game: GameSummaryWire): string | null {
 /** "12,481 ratings" — shared by the visible and spoken rating lines. */
 const ratingsCount = (count: number) => i18n.t("game.ratingsCount", { count });
 
-/** "12 games" — shared by the visible and spoken stats lines. */
-const gamesCount = (count: number) => i18n.t("game.gamesCount", { count });
-
 export function ratingLine(input: {
   totalRating: number | null;
   totalRatingCount: number;
@@ -75,23 +67,6 @@ export function ratingLineSpoken(input: {
     rating: Math.round(input.totalRating),
     ratings: ratingsCount(input.totalRatingCount),
   });
-}
-
-export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
-  const games = gamesCount(stats.total);
-
-  return stats.averageRating === null
-    ? games
-    : `${games}${SEPARATOR}${i18n.t("game.averageRating", { rating: stats.averageRating })}`;
-}
-
-/** `statsLine` for VoiceOver, without the glyph. */
-export function statsLineSpoken(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
-  const games = gamesCount(stats.total);
-
-  return stats.averageRating === null
-    ? games
-    : `${games}, ${i18n.t("game.averageRatingSpoken", { rating: stats.averageRating, max: RATING_MAX })}`;
 }
 
 export function statusLabel(status: BacklogStatus): string {

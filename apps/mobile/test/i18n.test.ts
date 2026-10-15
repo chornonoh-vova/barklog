@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { errorCopy } from "@/api/error-copy";
 import { ApiError } from "@/api/errors";
-import { ratingLine, releaseDateLine, statsLine } from "@/features/game/format";
+import { ratingLine, releaseDateLine } from "@/features/game/format";
 import { i18n, initI18n, LANGUAGES, resources, type Language } from "@/i18n/instance";
 
 import appJson from "../app.json";
@@ -112,7 +112,9 @@ describe("plurals", () => {
     initI18n("uk");
 
     // U+00A0, the no-break space uk-UA groups with.
-    expect(statsLine({ total: 12_485, averageRating: null })).toBe("12\u00a0485 ігор");
+    expect(ratingLine({ totalRating: 80, totalRatingCount: 12_485 })).toBe(
+      "★ 80 · 12\u00a0485 оцінок",
+    );
   });
 });
 
