@@ -93,7 +93,9 @@ export function BacklogScreen() {
     [backlog.data, filter, columns],
   );
 
-  if (backlog.isPending) return <LoadingState />;
+  // Only the first load replaces the screen. A filter's first load keeps the
+  // list, and the filter in its header, mounted and spins inside it instead.
+  if (backlog.isPending && filter === undefined) return <LoadingState />;
 
   if (filter === undefined && backlog.data?.items.length === 0) {
     return (
@@ -127,36 +129,40 @@ export function BacklogScreen() {
     </View>
   );
 
-  return (
-    <QueryBoundary query={backlog}>
-      {() => (
-        <SectionList
-          style={grid ? styles.groupedList : styles.list}
-          onLayout={onLayout}
-          contentContainerStyle={[styles.listContent, sideInsets]}
-          sections={sections}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={filter === undefined ? null : <EmptyState {...emptyFilter(filter)} />}
-          refreshControl={
-            <RefreshControl
-              // A filter's first load shows the previous list as placeholder
-              // data, which counts as refetching. Only a pull should show the
-              // spinner; otherwise it pushes the content down and the large
-              // title jumps.
-              refreshing={backlog.isRefetching && !backlog.isPlaceholderData}
-              onRefresh={() => {
-                void backlog.refetch();
-                void stats.refetch();
-              }}
-            />
-          }
-          contentInsetAdjustmentBehavior="automatic"
-          stickySectionHeadersEnabled
+  const list = (
+    <SectionList
+      style={grid ? styles.groupedList : styles.list}
+      onLayout={onLayout}
+      contentContainerStyle={[styles.listContent, sideInsets]}
+      sections={sections}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
+      ListHeaderComponent={listHeader}
+      ListEmptyComponent={
+        backlog.isPending ? (
+          <LoadingState />
+        ) : filter === undefined ? null : (
+          <EmptyState {...emptyFilter(filter)} />
+        )
+      }
+      refreshControl={
+        <RefreshControl
+          refreshing={backlog.isRefetching}
+          onRefresh={() => {
+            void backlog.refetch();
+            void stats.refetch();
+          }}
         />
-      )}
+      }
+      contentInsetAdjustmentBehavior="automatic"
+      stickySectionHeadersEnabled
+    />
+  );
+
+  return (
+    <QueryBoundary query={backlog} loading={list}>
+      {() => list}
     </QueryBoundary>
   );
 }

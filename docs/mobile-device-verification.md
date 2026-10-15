@@ -525,8 +525,11 @@ Settings offers the Language row only after a rebuild with the new
 Full pass in Ukrainian and in Russian:
 
 - Tabs, the large titles, and the search field placeholder.
-- Home: the empty backlog, each status filter's empty state, the stats line
-  ("1 гра", "3 гри", "12 ігор"), and the free-slots line.
+- Home: the empty backlog, each status filter's empty state, the segmented
+  filter's selected label and its VoiceOver names, and the free-slots line.
+- Plurals on a game's rating line pick each form: "1 оцінка", "3 оцінки",
+  "5 оцінок", "21 оцінка". Hermes has no `Intl.PluralRules`, so this is the
+  check that the polyfill loaded; Node-based tests cannot catch it.
 - Game detail: the status and rating menus, detail rows, the release date
   ("22 лютого 2022 р."), Summary MORE/LESS, the IGDB credit with its link.
 - The remove alert from the row menu and the toolbar: the title quotes the
@@ -543,5 +546,8 @@ Full pass in Ukrainian and in Russian:
 Truncation pass in German and in Spanish, on a compact iPhone and on iPad
 landscape:
 
-- Tab labels, the status filter menu, the two capsule buttons on game detail,
-  the free-slots line, and the onboarding Skip/Continue buttons.
+- Tab labels, the segmented filter with each status selected (German
+  "Abgebrochen" or "Durchgespielt" beside four icons is the tightest), the two
+  capsule buttons on game detail, the free-slots line, and the onboarding
+  Skip/Continue buttons.
+- At an accessibility text size, the filter falls back to the "Show" menu.
