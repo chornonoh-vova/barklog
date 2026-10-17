@@ -32,6 +32,7 @@
       "expo-router",
       "expo-image",
       "expo-system-ui",
+      "expo-status-bar",
       [
         "expo-splash-screen",
         {
@@ -53,19 +54,7 @@
           }
         }
       ],
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "enableSceneSupport": true
-          }
-        }
-      ],
       "@clerk/expo",
-<<<<<<< HEAD
-      "expo-image",
-      "expo-status-bar",
-=======
       [
         "expo-localization",
         {
@@ -74,7 +63,6 @@
           }
         }
       ],
->>>>>>> origin/main
       "./plugins/with-pods-uuid-collision-fix"
     ],
     "locales": {
