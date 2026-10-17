@@ -2,8 +2,8 @@
   "expo": {
     "name": "Barklog",
     "slug": "barklog",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.2.0",
+    "orientation": "default",
     "icon": "./assets/icon/icon.png",
     "scheme": "barklog",
     "userInterfaceStyle": "automatic",
@@ -12,7 +12,7 @@
     ],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
       "associatedDomains": [
         "applinks:barklog.gg"
@@ -23,11 +23,15 @@
         ]
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "plugins": [
+      "expo-secure-store",
       "expo-router",
+      "expo-image",
+      "expo-system-ui",
       [
         "expo-splash-screen",
         {
@@ -36,7 +40,6 @@
           "imageWidth": 180
         }
       ],
-      "expo-secure-store",
       [
         "expo-sharing",
         {
@@ -50,11 +53,37 @@
           }
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true
+          }
+        }
+      ],
       "@clerk/expo",
+<<<<<<< HEAD
       "expo-image",
       "expo-status-bar",
+=======
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "uk", "ru", "de", "es"]
+          }
+        }
+      ],
+>>>>>>> origin/main
       "./plugins/with-pods-uuid-collision-fix"
     ],
+    "locales": {
+      "en": "./locales/en.json",
+      "uk": "./locales/uk.json",
+      "ru": "./locales/ru.json",
+      "de": "./locales/de.json",
+      "es": "./locales/es.json"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

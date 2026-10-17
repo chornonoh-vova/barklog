@@ -1,5 +1,6 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ShareScreen } from "@/features/share/share-screen";
 import { useSharedUrl } from "@/features/share/use-shared-url";
@@ -7,6 +8,7 @@ import { useSharedUrl } from "@/features/share/use-shared-url";
 export default function SharedIndex() {
   const router = useRouter();
   const { url, isPending, error, clear } = useSharedUrl();
+  const { t } = useTranslation();
 
   /**
    * `clear()` before every exit: without it the payload survives in the App
@@ -35,14 +37,18 @@ export default function SharedIndex() {
 
   return (
     <>
-      <Stack.Title large>Shared</Stack.Title>
+      <Stack.Title large>{t("share.title")}</Stack.Title>
 
       {/* A toolbar button, not `Stack.Screen.BackButton`: this is the root of a
           modal with nothing behind it to pop to, and leaving needs to clear the
           payload as well as navigate. Icon-only, like the `star.fill` button in
           `components/profile-toolbar.tsx`. */}
       <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button icon="xmark" accessibilityLabel="Close" onPress={goHome} />
+        <Stack.Toolbar.Button
+          icon="xmark"
+          accessibilityLabel={t("common.close")}
+          onPress={goHome}
+        />
       </Stack.Toolbar>
 
       <ShareScreen

@@ -26,6 +26,7 @@ import {
   tabViewStyle,
 } from "@expo/ui/swift-ui/modifiers";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";
 
 import { SYMBOL_SIZE } from "@/components/illustrations";
@@ -38,6 +39,7 @@ import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES } from "./pages";
 
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [selection, setSelection] = useState<string>(ONBOARDING_PAGES[0].id);
+  const { t } = useTranslation();
 
   const next = nextPageId(selection);
   const isLast = next === undefined;
@@ -55,7 +57,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           {/* `hidden`, not a conditional render: the row keeps its height on the
               last page, so the pages below it do not shift up under the dots. */}
           <Button
-            label="Skip"
+            label={t("onboarding.skip")}
             onPress={onComplete}
             modifiers={[buttonStyle("plain"), hidden(isLast)]}
           />
@@ -98,7 +100,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
                     multilineTextAlignment("center"),
                   ]}
                 >
-                  {page.title}
+                  {t(page.titleKey)}
                 </Text>
                 <Text
                   modifiers={[
@@ -109,7 +111,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
                     fixedSize({ vertical: true }),
                   ]}
                 >
-                  {page.description}
+                  {t(page.descriptionKey)}
                 </Text>
                 {page.id === IGDB_PAGE_ID ? (
                   <Link
@@ -125,7 +127,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
         </TabView>
 
         <Button
-          label={isLast ? "Start" : "Continue"}
+          label={isLast ? t("onboarding.start") : t("onboarding.continue")}
           onPress={advance}
           modifiers={[
             buttonStyle(GLASS_PROMINENT_STYLE),

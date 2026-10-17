@@ -13,8 +13,8 @@
     "deps:down": "docker compose -f deps.compose.yaml down"
   },
   "devDependencies": {
-    "prettier": "^3.9.6",
-    "turbo": "^2.10.11",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.7",
     "typescript": "catalog:"
   },
   "packageManager": "pnpm@12.3.4",

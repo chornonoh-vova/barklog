@@ -21,9 +21,15 @@ describe("coverUrl", () => {
 });
 
 describe("screenshotUrl", () => {
-  it("builds a medium screenshot URL", () => {
-    expect(screenshotUrl("sc8xyz")).toBe(
+  it("builds a medium screenshot URL for the detail row's tiles", () => {
+    expect(screenshotUrl("sc8xyz", "med")).toBe(
       "https://images.igdb.com/igdb/image/upload/t_screenshot_med_2x/sc8xyz.jpg",
+    );
+  });
+
+  it("builds a huge screenshot URL for the full-screen viewer", () => {
+    expect(screenshotUrl("sc8xyz", "huge")).toBe(
+      "https://images.igdb.com/igdb/image/upload/t_screenshot_huge_2x/sc8xyz.jpg",
     );
   });
 });

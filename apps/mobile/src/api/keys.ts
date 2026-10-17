@@ -4,6 +4,8 @@ import type { BacklogSort, BacklogStatus, GameFeed } from "@repo/contracts";
 export const keys = {
   /** Entitlement only — slot counts come from `backlog.stats`. */
   me: () => ["me"] as const,
+  /** Device-local, never fetched: see `features/search/recents-storage.ts`. */
+  recents: () => ["recents"] as const,
   games: {
     search: (q: string, limit: number, offset: number) =>
       ["games", "search", q, limit, offset] as const,
@@ -18,6 +20,8 @@ export const keys = {
   },
   backlog: {
     all: ["backlog"] as const,
+    /** Every cached list, whatever its filter and sort. */
+    lists: () => ["backlog", "list"] as const,
     list: (status: BacklogStatus | undefined, sort: BacklogSort) =>
       ["backlog", "list", status ?? "all", sort] as const,
     stats: () => ["backlog", "stats"] as const,

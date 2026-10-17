@@ -1,15 +1,7 @@
-import type { BacklogStatsWire, BacklogStatus, GameSummaryWire } from "@repo/contracts";
+import { RATING_MAX, type BacklogStatus, type GameSummaryWire } from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-/** `en-GB` is fixed, not taken from the device: these are catalogue dates, and
- * a stable format keeps the detail rows from reflowing. */
-
-const STATUS_LABELS: Record<BacklogStatus, string> = {
-  waiting: "Waiting",
-  playing: "Playing",
-  completed: "Completed",
-  abandoned: "Abandoned",
-};
+import { formatLocale, i18n } from "@/i18n/instance";
 
 const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
   waiting: "clock",
@@ -51,26 +43,34 @@ export function summarySubtitle(game: GameSummaryWire): string | null {
   return releaseYear(game.firstReleaseDate);
 }
 
+/** "12,481 ratings" — shared by the visible and spoken rating lines. */
+const ratingsCount = (count: number) => i18n.t("game.ratingsCount", { count });
+
 export function ratingLine(input: {
   totalRating: number | null;
   totalRatingCount: number;
 }): string | null {
   if (input.totalRating === null) return null;
 
-  const count = input.totalRatingCount.toLocaleString("en-GB");
-  const noun = input.totalRatingCount === 1 ? "rating" : "ratings";
-
-  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${count} ${noun}`;
+  return `★ ${Math.round(input.totalRating)}${SEPARATOR}${ratingsCount(input.totalRatingCount)}`;
 }
 
-export function statsLine(stats: Pick<BacklogStatsWire, "total" | "averageRating">): string {
-  const games = `${stats.total} ${stats.total === 1 ? "game" : "games"}`;
+/** `ratingLine` for VoiceOver: IGDB scores are out of 100, and `★` reads as
+ * "black star". */
+export function ratingLineSpoken(input: {
+  totalRating: number | null;
+  totalRatingCount: number;
+}): string | null {
+  if (input.totalRating === null) return null;
 
-  return stats.averageRating === null ? games : `${games}${SEPARATOR}avg ★${stats.averageRating}`;
+  return i18n.t("game.ratedSpoken", {
+    rating: Math.round(input.totalRating),
+    ratings: ratingsCount(input.totalRatingCount),
+  });
 }
 
 export function statusLabel(status: BacklogStatus): string {
-  return STATUS_LABELS[status];
+  return i18n.t(`status.${status}`);
 }
 
 export function statusSymbol(status: BacklogStatus): SFSymbol {
@@ -78,7 +78,7 @@ export function statusSymbol(status: BacklogStatus): SFSymbol {
 }
 
 export function statusButtonLabel(status: BacklogStatus | null): string {
-  return status === null ? "Add to Backlog" : statusLabel(status);
+  return status === null ? i18n.t("game.addToBacklog") : statusLabel(status);
 }
 
 export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
@@ -86,7 +86,29 @@ export function statusButtonSymbol(status: BacklogStatus | null): SFSymbol {
 }
 
 export function ratingButtonLabel(rating: number | null): string {
-  return rating === null ? "" : String(rating);
+  return rating === null ? i18n.t("game.rate") : String(rating);
+}
+
+export function ratingButtonSymbol(rating: number | null): SFSymbol {
+  return rating === null ? "star" : "star.fill";
+}
+
+/** For VoiceOver: the visible label is a bare number beside a star. */
+export function ratingSpoken(rating: number | null): string {
+  return rating === null
+    ? i18n.t("game.rateSpoken")
+    : i18n.t("game.ratingSpoken", { rating, max: RATING_MAX });
+}
+
+/** `rowSubtitle` without the `★`, which VoiceOver reads as "black star". */
+export function rowSubtitleSpoken(entry: { status: BacklogStatus; rating: number | null }): string {
+  return entry.rating === null
+    ? statusLabel(entry.status)
+    : i18n.t("game.statusRatedSpoken", {
+        status: statusLabel(entry.status),
+        rating: entry.rating,
+        max: RATING_MAX,
+      });
 }
 
 export function rowSubtitle(entry: { status: BacklogStatus; rating: number | null }): string {
@@ -95,10 +117,12 @@ export function rowSubtitle(entry: { status: BacklogStatus; rating: number | nul
     : `${statusLabel(entry.status)}${SEPARATOR}★${entry.rating}`;
 }
 
+/** Region-qualified (`en-GB`, not the device's `en-US`): a catalogue date reads
+ * day-first wherever the app's language allows it. */
 export function releaseDateLine(iso: string | null): string {
-  if (iso === null) return "Unknown";
+  if (iso === null) return i18n.t("game.unknownDate");
 
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(formatLocale(), {
     day: "numeric",
     month: "long",
     year: "numeric",

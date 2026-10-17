@@ -2,10 +2,15 @@ import { BACKLOG_STATUSES } from "@repo/contracts";
 import { describe, expect, it } from "vitest";
 
 import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES, pageIndex } from "@/features/onboarding/pages";
+import { i18n } from "@/i18n/instance";
+
+const title = (page: (typeof ONBOARDING_PAGES)[number]) => i18n.t(page.titleKey);
+const description = (page: (typeof ONBOARDING_PAGES)[number] | undefined) =>
+  page === undefined ? undefined : i18n.t(page.descriptionKey);
 
 describe("ONBOARDING_PAGES", () => {
   it("is the five pages, in the agreed order", () => {
-    expect(ONBOARDING_PAGES.map((page) => page.title)).toEqual([
+    expect(ONBOARDING_PAGES.map(title)).toEqual([
       "Welcome to Barklog",
       "Managing your game backlog",
       "Exploring games",
@@ -22,8 +27,8 @@ describe("ONBOARDING_PAGES", () => {
 
   it("gives every page copy to show", () => {
     for (const page of ONBOARDING_PAGES) {
-      expect(page.title.length).toBeGreaterThan(0);
-      expect(page.description.length).toBeGreaterThan(0);
+      expect(title(page).length).toBeGreaterThan(0);
+      expect(description(page)?.length).toBeGreaterThan(0);
       expect(page.systemImage.length).toBeGreaterThan(0);
     }
   });
@@ -40,15 +45,15 @@ describe("ONBOARDING_PAGES", () => {
     expect(page).toBeDefined();
 
     for (const status of BACKLOG_STATUSES) {
-      expect(page?.description.toLowerCase()).toMatch(new RegExp(`\\b${status}\\b`));
+      expect(description(page)?.toLowerCase()).toMatch(new RegExp(`\\b${status}\\b`));
     }
   });
 
   it("names both launch platforms on the share page", () => {
     const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "share");
 
-    expect(page?.description).toContain("YouTube");
-    expect(page?.description).toContain("TikTok");
+    expect(description(page)).toContain("YouTube");
+    expect(description(page)).toContain("TikTok");
   });
 
   it("emphasizes the user's choice on the share page, not automatic resolution", () => {
@@ -56,7 +61,7 @@ describe("ONBOARDING_PAGES", () => {
     // "nitpick" — it does not detect automatic-add copy.
     const page = ONBOARDING_PAGES.find((candidate) => candidate.id === "share");
 
-    expect(page?.description).toMatch(/\b(pick|choose|select)\b/i);
+    expect(description(page)).toMatch(/\b(pick|choose|select)\b/i);
   });
 });
 

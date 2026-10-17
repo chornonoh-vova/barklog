@@ -1,7 +1,7 @@
 import { BACKLOG_STATUSES, type BacklogListItemWire, type BacklogStatus } from "@repo/contracts";
 import { describe, expect, it } from "vitest";
 
-import { STATUS_ORDER, toSections } from "@/features/backlog/sections";
+import { STATUS_ORDER, toRowSections, toSections } from "@/features/backlog/sections";
 
 let nextId = 1;
 
@@ -86,5 +86,47 @@ describe("toSections — filtered", () => {
 
   it("returns no sections when the filter matches nothing", () => {
     expect(toSections([], "abandoned")).toEqual([]);
+  });
+});
+
+describe("toRowSections", () => {
+  it("chunks each section's items into rows of the column count", () => {
+    const sections = toSections(
+      [entry("playing"), entry("playing"), entry("playing"), entry("waiting")],
+      undefined,
+    );
+
+    const rows = toRowSections(sections, 2);
+
+    expect(rows.map((s) => s.data.map((row) => row.length))).toEqual([[2, 1], [1]]);
+  });
+
+  it("keeps the section's item count, not its row count", () => {
+    const rows = toRowSections(toSections([entry("playing"), entry("playing")], undefined), 2);
+
+    expect(rows[0]?.count).toBe(2);
+    expect(rows[0]?.data).toHaveLength(1);
+  });
+
+  it("keeps status and title", () => {
+    const rows = toRowSections(toSections([entry("completed")], undefined), 3);
+
+    expect(rows[0]?.status).toBe("completed");
+    expect(rows[0]?.title).toBe("Completed");
+  });
+
+  it("gives one item per row for one column, so the phone layout is unchanged", () => {
+    const first = entry("playing", "First");
+    const second = entry("playing", "Second");
+    const rows = toRowSections(toSections([first, second], undefined), 1);
+
+    expect(rows[0]?.data.map((row) => row.map((i) => i.game.name))).toEqual([
+      ["First"],
+      ["Second"],
+    ]);
+  });
+
+  it("returns no sections for no sections", () => {
+    expect(toRowSections([], 3)).toEqual([]);
   });
 });

@@ -50,6 +50,7 @@ test("a PUT for a game outside the mirror is 404, not a foreign-key crash", asyn
   expect(response.status).toBe(404);
   expect(await response.json()).toMatchObject({
     type: "https://barklog.gg/problems/not-found",
+    code: "game_not_found",
   });
 });
 
@@ -131,6 +132,7 @@ test("DELETE removes once and is 404 the second time", async () => {
 
   const again = await callApi(harness.app, "/api/backlog/1", { method: "DELETE" });
   expect(again.status).toBe(404);
+  expect(await again.json()).toMatchObject({ code: "backlog_entry_not_found" });
 });
 
 test("the list is the caller's own, joined to game summaries", async () => {

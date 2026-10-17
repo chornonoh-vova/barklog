@@ -1,5 +1,6 @@
-import { HStack, Menu, Picker, Text } from "@expo/ui/swift-ui";
+import { HStack, Menu, Picker, Text, VStack } from "@expo/ui/swift-ui";
 import {
+  accessibilityLabel,
   buttonStyle,
   clipShape,
   controlSize,
@@ -8,11 +9,14 @@ import {
   tag,
 } from "@expo/ui/swift-ui/modifiers";
 import { RATING_MAX, RATING_MIN, type BacklogEntryWire, type BacklogStatus } from "@repo/contracts";
+import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import {
   ratingButtonLabel,
+  ratingButtonSymbol,
+  ratingSpoken,
   statusButtonLabel,
   statusButtonSymbol,
   statusLabel,
@@ -21,6 +25,7 @@ import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 import { Brand } from "@/theme";
 import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
+import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 
 const NO_RATING = 0;
 const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RATING_MIN + i);
@@ -40,17 +45,22 @@ export function EntryActions({
 }) {
   const status = entry?.status ?? null;
   const rating = entry?.rating ?? null;
+  // Two large capsules side by side truncate at accessibility sizes.
+  const Container = useIsAccessibilitySize() ? VStack : HStack;
+  const { t } = useTranslation();
   return (
     <MeasuredHost style={styles.host}>
-      <HStack>
+      <Container>
         {status === null ? null : (
           <Menu
-            label={`★ ${ratingButtonLabel(rating)}`.trim()}
+            label={ratingButtonLabel(rating)}
+            systemImage={ratingButtonSymbol(rating)}
             modifiers={[
               buttonStyle("bordered"),
               controlSize("large"),
               clipShape("capsule"),
               foregroundStyle(rating === null ? PlatformColor("label") : Brand.tint),
+              accessibilityLabel(ratingSpoken(rating)),
             ]}
           >
             <Picker
@@ -63,7 +73,7 @@ export function EntryActions({
               }
               modifiers={[pickerStyle("inline")]}
             >
-              <Text modifiers={[tag(NO_RATING)]}>No rating</Text>
+              <Text modifiers={[tag(NO_RATING)]}>{t("game.noRating")}</Text>
               {RATINGS.map((value) => (
                 <Text key={value} modifiers={[tag(value)]}>
                   {String(value)}
@@ -103,7 +113,7 @@ export function EntryActions({
             ))}
           </Picker>
         </Menu>
-      </HStack>
+      </Container>
     </MeasuredHost>
   );
 }

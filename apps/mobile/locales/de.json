@@ -1,0 +1,5 @@
+{
+  "ios": {
+    "NSFaceIDUsageDescription": "Erlaube Barklog, Face ID zu verwenden."
+  }
+}

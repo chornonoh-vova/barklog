@@ -8,7 +8,7 @@ import { useApi } from "@/api/provider";
 import { refreshSubscription } from "@/purchases/refresh";
 import { markPaywallSeen } from "@/review/session";
 
-/** A dismissible `fullScreenModal` from `_layout.tsx` — an offer, not a wall. */
+/** A dismissible modal from `_layout.tsx` — an offer, not a wall. */
 export default function Paywall() {
   const queryClient = useQueryClient();
   const api = useApi();

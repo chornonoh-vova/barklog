@@ -1,6 +1,7 @@
 import type { GameSummaryWire } from "@repo/contracts";
 import { openURL } from "expo-linking";
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { SectionList, StyleSheet, Text, View } from "react-native";
 
 import { useIdentifyShare } from "@/api/hooks";
@@ -8,12 +9,14 @@ import { EmptyState } from "@/components/empty-state";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { summarySubtitle } from "@/features/game/format";
-import { NO_LINK, UNREADABLE, noMatch } from "@/features/share/empty-states";
+import { noLink, noMatch, unreadable } from "@/features/share/empty-states";
 import { displayHost } from "@/features/share/host";
 import { toShareSections, type ShareSection } from "@/features/share/sections";
 import { SearchingState } from "@/features/share/searching-state";
 import { ShareHeader } from "@/features/share/share-header";
 import { Screen, SectionHeader } from "@/theme";
+import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
+import { useSideInsets } from "@/ui/use-side-insets";
 
 const keyExtractor = (item: GameSummaryWire) => String(item.id);
 
@@ -23,7 +26,7 @@ const keyExtractor = (item: GameSummaryWire) => String(item.id);
 const renderSectionHeader = ({ section }: { section: ShareSection }) =>
   section.title === null ? null : (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{section.title.toUpperCase()}</Text>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
     </View>
   );
 
@@ -43,7 +46,10 @@ export function ShareScreen({
   onSearch: () => void;
 }) {
   const identify = useIdentifyShare(url);
-  const backToHome = { label: "Back to Home", onPress: onGoHome };
+  const { t } = useTranslation();
+  const backToHome = { label: t("share.backToHome"), onPress: onGoHome };
+  const sideInsets = useSideInsets();
+  const subtitleLines = useIsAccessibilitySize() ? 2 : 1;
 
   const sections = useMemo(
     () =>
@@ -60,10 +66,11 @@ export function ShareScreen({
         title={item.name}
         subtitle={summarySubtitle(item)}
         coverImageId={item.coverImageId}
+        subtitleLines={subtitleLines}
         onPress={onSelect}
       />
     ),
-    [onSelect],
+    [onSelect, subtitleLines],
   );
 
   // `isPending` first: the settled branches below all read as terminal, and one
@@ -71,12 +78,12 @@ export function ShareScreen({
   if (isPending) return <SearchingState />;
 
   if (error !== null) {
-    return <EmptyState {...UNREADABLE} action={backToHome} />;
+    return <EmptyState {...unreadable()} action={backToHome} fullscreen />;
   }
 
   // Without this branch the disabled query stays pending forever.
   if (url === null) {
-    return <EmptyState {...NO_LINK} action={backToHome} />;
+    return <EmptyState {...noLink()} action={backToHome} fullscreen />;
   }
 
   return (
@@ -85,7 +92,7 @@ export function ShareScreen({
         <SectionList
           style={Screen.fill}
           // `flexGrow: 1`, or the empty component is clipped — see `theme.ts`.
-          contentContainerStyle={Screen.listContent}
+          contentContainerStyle={[Screen.listContent, sideInsets]}
           sections={sections}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -97,12 +104,12 @@ export function ShareScreen({
           ListEmptyComponent={
             <EmptyState
               {...noMatch(data.basis, data.guesses)}
-              action={{ label: "Search Instead", onPress: onSearch }}
+              action={{ label: t("share.searchInstead"), onPress: onSearch }}
               // The last resort: nothing was identified, so hand the source back.
               secondaryAction={
                 data.basis === "none"
                   ? {
-                      label: `Open on ${displayHost(data.source.pageUrl)}`,
+                      label: t("share.openOn", { host: displayHost(data.source.pageUrl) }),
                       onPress: () => void openURL(data.source.pageUrl),
                     }
                   : undefined

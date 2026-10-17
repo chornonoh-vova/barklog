@@ -41,6 +41,7 @@ export function createRequest(deps: ApiClientDeps): Request {
         status: 401,
         type: "about:blank",
         title: "Not signed in",
+        code: "unauthorized",
         detail: "No session token is available.",
       });
     }

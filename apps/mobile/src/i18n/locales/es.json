@@ -1,0 +1,197 @@
+{
+  "common": {
+    "tryAgain": "Reintentar",
+    "close": "Cerrar",
+    "share": "Compartir",
+    "cancel": "Cancelar",
+    "or": " o "
+  },
+  "tabs": {
+    "home": "Inicio",
+    "explore": "Explorar",
+    "search": "Buscar"
+  },
+  "profile": {
+    "manageSubscription": "Barklog Premium, gestionar suscripción",
+    "openAccount": "Abrir cuenta"
+  },
+  "status": {
+    "waiting": "Pendiente",
+    "playing": "Jugando",
+    "completed": "Completado",
+    "abandoned": "Abandonado"
+  },
+  "backlog": {
+    "empty": {
+      "title": "Tu backlog está vacío",
+      "description": "Añade los juegos que tienes y lo que estés jugando se quedará arriba."
+    },
+    "emptyFilter": {
+      "waiting": {
+        "title": "Nada pendiente",
+        "description": "Juegos que quieres jugar pero aún no has empezado."
+      },
+      "playing": {
+        "title": "Nada en curso",
+        "description": "Juegos que tienes a medias."
+      },
+      "completed": {
+        "title": "Aún nada completado",
+        "description": "Juegos que terminaste de principio a fin."
+      },
+      "abandoned": {
+        "title": "Nada abandonado",
+        "description": "Juegos que dejaste. Sin juzgar."
+      }
+    },
+    "findGame": "Buscar un juego",
+    "exploreGames": "O explorar juegos",
+    "slotsFull": "Todos los huecos ocupados: termina un juego para liberar uno",
+    "slotsUsed": "{{used}} de {{total}} huecos ocupados",
+    "slotsHint": "{{slots}}. Toca para ver Barklog Premium.",
+    "filterAll": "Todos",
+    "filterShow": "Mostrar",
+    "more": "Más",
+    "moreFor": "Más, {{name}}",
+    "statusMenu": "Estado",
+    "removeFromBacklog": "Quitar del backlog…"
+  },
+  "game": {
+    "ratingsCount_one": "{{count, number}} valoración",
+    "ratingsCount_many": "{{count, number}} de valoraciones",
+    "ratingsCount_other": "{{count, number}} valoraciones",
+    "ratedSpoken": "Valorado con {{rating}} de 100, a partir de {{ratings}}",
+    "addToBacklog": "Añadir al backlog",
+    "rate": "Valorar",
+    "rateSpoken": "Valorar este juego",
+    "ratingSpoken": "Valoración, {{rating}} de {{max}}",
+    "statusRatedSpoken": "{{status}}, valorado con {{rating}} de {{max}}",
+    "unknownDate": "Desconocida",
+    "noRating": "Sin valoración",
+    "shareGame": "Compartir juego",
+    "backlogActions": "Acciones del backlog",
+    "thisGame": "este juego",
+    "released": "Lanzamiento",
+    "type": "Tipo",
+    "genres": "Géneros",
+    "platforms": "Plataformas",
+    "developers": "Desarrolladoras",
+    "publishers": "Editoras",
+    "summary": "Resumen",
+    "summaryMore": "MÁS",
+    "summaryLess": "MENOS",
+    "similarGames": "Juegos similares",
+    "screenshots": "Capturas",
+    "screenshotLabel": "Captura {{index}} de {{total}}",
+    "opensFullScreen": "Se abre a pantalla completa",
+    "closeScreenshots": "Cerrar capturas",
+    "attribution": "Datos de IGDB",
+    "removeTitle": "¿Quitar «{{name}}»?",
+    "removeMessage": "Se perderán su estado y su valoración.",
+    "removeConfirm": "Quitar"
+  },
+  "explore": {
+    "popular": "Más populares",
+    "upcoming": "Próximamente",
+    "recent": "Lanzamientos recientes",
+    "emptyTitle": "Aún no hay nada que olfatear",
+    "emptyDescription": "El catálogo todavía se está sincronizando. Vuelve en un rato."
+  },
+  "search": {
+    "placeholder": "Buscar juegos",
+    "promptTitle": "Busca un juego",
+    "promptDescription": "Escribe un título. Con dos caracteres basta para empezar.",
+    "noResultsTitle": "No se encontraron juegos",
+    "noResultsDescription": "Nada en el catálogo coincide con «{{query}}».",
+    "recent": "Recientes",
+    "clear": "Borrar",
+    "clearRecents": "Borrar búsquedas recientes",
+    "searchFor": "Buscar {{query}}"
+  },
+  "share": {
+    "title": "Compartido",
+    "backToHome": "Volver al inicio",
+    "searchInstead": "Mejor buscar",
+    "openOn": "Abrir en {{host}}",
+    "question": "¿Qué juego es este?",
+    "searching": "Averiguando qué juego es",
+    "noLinkTitle": "No hay ningún enlace",
+    "noLinkDescription": "Barklog necesita un enlace web. Comparte la página en sí, no una captura de ella.",
+    "unreadableTitle": "No se pudo leer el contenido",
+    "unreadableDescription": "Barklog no pudo abrir lo que se compartió. Prueba a compartir el vídeo de nuevo.",
+    "unavailableNotice": "No pudimos saber qué juego es, así que estas son coincidencias con el título.",
+    "noMatchTitle": "Sin coincidencias en el catálogo",
+    "noMatchNone": "No pudimos saber qué juego es, ni siquiera buscando en la web. Abre la página original para comprobarlo.",
+    "noMatchUnknown": "No pudimos saber de qué juego se trata.",
+    "noMatchGuesses": "Creemos que trata de {{guesses}}, pero aún no está en el catálogo.",
+    "sectionTitle": "Coincidencias con el título",
+    "sectionAuthor": "Juegos que suele cubrir {{author}}",
+    "sectionAuthorUnknown": "Juegos que suele cubrir esta fuente",
+    "sectionWeb": "Coincidencias de una búsqueda web"
+  },
+  "onboarding": {
+    "skip": "Omitir",
+    "continue": "Continuar",
+    "start": "Empezar",
+    "welcomeTitle": "Te damos la bienvenida a Barklog",
+    "welcomeDescription": "Barklog guarda los juegos a los que juegas y los que siempre quieres empezar.",
+    "backlogTitle": "Gestiona tu backlog de juegos",
+    "backlogDescription": "Añade un juego y márcalo como pendiente, jugando, completado o abandonado. Abandonado es una respuesta válida.",
+    "exploreTitle": "Explora juegos",
+    "exploreDescription": "Mira lo más popular, lo que está por salir y lo que acaba de llegar. O busca por nombre si ya sabes lo que quieres.",
+    "shareTitle": "Comparte un vídeo, elige el juego",
+    "shareDescription": "Comparte un vídeo de YouTube o TikTok y elige el juego: Barklog te trae las opciones.",
+    "igdbTitle": "Todos los datos de juegos vienen de IGDB",
+    "igdbDescription": "Cada portada, fecha de lanzamiento, plataforma y resumen de Barklog viene de IGDB, una base de datos de juegos que mantiene su comunidad."
+  },
+  "errors": {
+    "genericTitle": "Algo salió mal",
+    "genericDescription": "Inténtalo de nuevo.",
+    "offlineTitle": "Sin conexión",
+    "offlineDescription": "Barklog no pudo conectar con el servidor. Revisa tu conexión.",
+    "rateLimitedTitle": "Más despacio",
+    "rateLimitedDescription": "Has hecho muchas solicitudes. Inténtalo de nuevo en breve.",
+    "serverTitle": "Barklog tiene problemas",
+    "serverDescription": "El servidor no respondió. Inténtalo de nuevo en un momento."
+  },
+  "apiErrors": {
+    "unauthorized": {
+      "title": "Has cerrado sesión",
+      "description": "Vuelve a iniciar sesión para continuar."
+    },
+    "game_not_found": {
+      "title": "Juego no encontrado",
+      "description": "Ese juego no está en el catálogo."
+    },
+    "backlog_entry_not_found": {
+      "title": "No está en tu backlog",
+      "description": "Ese juego ya no está en tu backlog."
+    },
+    "backlog_cap_reached": {
+      "title": "Tu backlog está lleno",
+      "description_one": "Termina un juego para liberar un hueco, o hazte Premium.",
+      "description_many": "Termina {{count}} de juegos para liberar un hueco, o hazte Premium.",
+      "description_other": "Termina {{count}} juegos para liberar un hueco, o hazte Premium."
+    },
+    "share_invalid_url": {
+      "title": "No se puede abrir el enlace",
+      "description": "Barklog necesita una dirección web https."
+    },
+    "share_source_gone": {
+      "title": "Esa página ya no existe",
+      "description": "Puede que sea privada o que la hayan eliminado."
+    },
+    "share_source_blocked": {
+      "title": "El sitio no nos dejó",
+      "description": "No nos permitió leer la página."
+    },
+    "share_source_unreadable": {
+      "title": "Nada que leer",
+      "description": "Abrimos el enlace, pero no encontramos ningún título."
+    },
+    "share_fetch_failed": {
+      "title": "No se pudo leer el enlace",
+      "description": "Ahora mismo no se puede leer ese enlace. Inténtalo de nuevo en breve."
+    }
+  }
+}

@@ -333,3 +333,221 @@ sheet, which no test off-device can reach. Boxes stay unticked until run.
 - [ ] **57. A game with punctuation in its name shares cleanly.** Find a title
       with a colon or dash — "NieR:Automata", "Hollow Knight: Silksong". The
       Mail subject must keep the punctuation verbatim, unescaped.
+
+## Screenshot viewer checks
+
+The first `Host` in the app to live inside a react-native `Modal`, and the
+second place a hosted RN view sits inside a SwiftUI pager. Both are why this
+section exists; checks 60 and 62 are regressions that already happened once.
+
+- [ ] **58. The viewer fades in, and swiping actually pages.** It is mounted
+      only once a shot is tapped, so the enter animation happens on mount —
+      check it is not an abrupt cut. Open a game with several screenshots, tap
+      one, swipe sideways. If the pager is dead, `pointerEvents="none"` on the
+      hosted `RemoteImage` has come off — a hosted RN view swallows the swipe
+      otherwise, which is what `Mascot` documents for the onboarding pager.
+- [ ] **59. The viewer opens on the shot that was tapped**, not on the first
+      one. Tap the fourth tile in the row and check the dots agree.
+- [ ] **60. Every page draws its shot — none render black.** Swipe the whole
+      way through twice, so pages get recycled. A black page means the hosted
+      image lost its size: `RNHostView` must stay on `matchContents` with an
+      explicitly sized child, because the other branch pushes SwiftUI's size
+      into Yoga from `onGeometryChange`, which never fires for a page the
+      `UIPageViewController` recycled at zero.
+- [ ] **61. The dots stay readable on a game with many screenshots.** IGDB
+      routinely returns 10–20. SwiftUI's page dots neither scroll nor compress,
+      so if they crowd the bottom edge, switch `indexDisplayMode` to `'never'`
+      and put a controlled "3 of 12" counter there instead.
+- [ ] **62. The close button clears the status bar, and rotation is clean.**
+      The host takes no `ignoreSafeArea` — that applied to the whole host and
+      put the ✕ under the battery icon. Rotate to landscape mid-swipe: the page
+      must not half-scroll or land between two shots, and the shot must resize
+      with the window — the page box is clamped against window height as well
+      as width, so a wide, short window must not overflow it.
+- [ ] **63. The backdrop is black in light mode too.** The host is pinned to
+      true black and `colorScheme="dark"`, so a phone in light mode must still
+      show a black surround with light dots and a legible glass close button.
+- [ ] **64. Full-size shots are sharp.** The viewer requests
+      `t_screenshot_huge_2x` while the row keeps `t_screenshot_med_2x`. A soft,
+      upscaled-looking image means the viewer is still on the row's transform.
+- [ ] **65. VoiceOver reads each shot and the close button.** Swipe through
+      with VoiceOver on: each page announces "Screenshot N of M" from
+      `screenshotLabel`, and the ✕ announces as "Close screenshots". Neither
+      comes from the system — @expo/ui 57's `ButtonRole` has no `close`, so the
+      glyph is an explicit `xmark` `Image` and the name an `accessibilityLabel`
+      modifier.
+- [ ] **66. The viewer works from all four routes**, including
+      `/shared/game/[id]`, where it is a `Modal` presented over a
+      `fullScreenModal`. That nesting is the one most likely to misbehave.
+
+## iPad and adaptive layout (2026-10-12)
+
+Spec: `docs/superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md` §2.
+Needs a fresh `pnpm --filter mobile prebuild` (app.json and expo-haptics changed).
+There is no iPhone Duo simulator before Xcode 27.1; dragging the iPad Split View
+divider is the stand-in for folding.
+
+| Device              | Pose                             | Home | Search | Detail | Sheets | Notes |
+| ------------------- | -------------------------------- | ---- | ------ | ------ | ------ | ----- |
+| iPad Pro 13" (M5)   | landscape, full, sidebar open    |      |        |        |        |       |
+| iPad Pro 13" (M5)   | landscape, full, sidebar hidden  |      |        |        |        |       |
+| iPad Pro 13" (M5)   | portrait, full                   |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad Pro 13" (M5)   | ⅓ Split View                     |      |        |        |        |       |
+| iPad Pro 11" (M5)   | landscape + portrait, full       |      |        |        |        |       |
+| iPad Pro 11" (M5)   | ½ Split View                     |      |        |        |        |       |
+| iPad mini (A17 Pro) | portrait full (expect 2 columns) |      |        |        |        |       |
+| iPad mini (A17 Pro) | ⅓ Split View (expect 1 column)   |      |        |        |        |       |
+| iPhone 17 Pro       | portrait (must match main)       |      |        |        |        |       |
+| iPhone 17 Pro Max   | landscape (expect 2 columns)     |      |        |        |        |       |
+
+For every row: Home with and without a filter, Home empty state, Search
+empty / results / no results, game detail, paywall, profile, shared (via the
+share extension), onboarding (reset it via the dev menu or reinstall),
+screenshot viewer rotation, pull to refresh, Dynamic Type at default and AX3.
+
+Live resize: with Home scrolled halfway and a game detail pushed in the
+Search tab, drag the divider full → ½ → ⅓ → full. Expect columns to re-flow,
+no crash, scroll position kept, the Search tab's detail still on top.
+
+Haptic (physical iPhone only — simulators do not play haptics): add a game →
+buzz; change Playing → Completed → buzz; change only the rating → no buzz.
+
+Rotation inside modals (iPhone): open the screenshot viewer, rotate to
+landscape — the shot turns with the phone and fills the height; rotate back.
+Same for the profile screen. React Native `Modal`s are portrait-only unless
+given `supportedOrientations`.
+
+Profile sheet: swiping it down closes it (React Native blocks the native
+swipe and routes it to `onRequestClose`); tapping the avatar again reopens it.
+
+Release: 13" iPad screenshots for App Store Connect; version bump — this is a
+native change and cannot ship over the air.
+
+## HIG gaps (Stage 2, 2026-10-13)
+
+Signed in, with a backlog of a few games in every status, on an iPhone and on
+the 13" iPad (2+ columns). Part of mobile 1.2.0.
+
+Remove confirmation: on a game detail, `…` → Remove from Backlog… shows
+"Remove “<name>”?" with Cancel and Remove. Cancel leaves the game; Remove
+deletes it. Same alert from the Home row menu.
+
+Home row menu:
+
+- Each Home row and card shows `ellipsis.circle` at the trailing edge instead
+  of the chevron. Search, Explore, Similar Games and the Share sheet are
+  unchanged.
+- Tapping `…` opens only the menu, never the game. Tapping anywhere else on the
+  row or card opens the game in the Home tab.
+- Status ▸ has the current status checked. Pick another status: the row moves
+  to that section, the `★` rating is unchanged, and a physical iPhone plays
+  the success haptic.
+- As a free user at the slot limit, moving a Completed game to Playing opens
+  the paywall and changes nothing.
+- Share opens the share sheet with the game's IGDB link.
+- On iPad with a pointer, `…` highlights on hover.
+
+Accessibility text sizes (Settings → Accessibility → Display & Text Size →
+Larger Text, AX3 and AX5):
+
+- Game detail: the cover sits above the title, and the status and rating buttons
+  stack.
+- Home: the Show/filter control stacks, and row subtitles wrap to 2 lines.
+- At the largest standard size (not AX) everything stays side by side.
+
+VoiceOver:
+
+- A Home row reads "<name>, Playing, rated 9 out of 10" — never "black star".
+- `…` reads "More, <name>".
+- On a game detail, the rating button reads "Rating, 9 out of 10", or "Rate this
+  game" when unrated.
+- The detail's IGDB score and Home's stats line read their spoken labels —
+  neither announces "black star".
+
+Scrolling: with 200 games on a physical iPhone, Home scrolls without stutter.
+If it stutters, see spec §3.4's fallback.
+
+## Polish (Stage 3, 2026-10-13)
+
+Section headers: Home and Share-sheet sections read "Playing 3" in title case
+and headline weight, not small caps, and the count sits on the title's baseline.
+
+Recent searches:
+
+1. Search "hades", open a result, go back, and clear the field. Expect a
+   "Recent" list showing "hades".
+2. Tap "hades". The field shows "hades" and results appear.
+3. Search "HADES" and open a result. There is still one entry, at the top.
+4. Tap Clear. The "Fetch a game" empty state returns.
+5. Sign out and sign in as another account. There are no recents.
+
+Haptic (physical iPhone): a status change from the Home row menu plays the
+success haptic once.
+
+## iPhone Duo (Stage 3)
+
+Needs Xcode 27.1 and its iPhone Duo simulator (Device Hub). Not run yet: only
+Xcode 27.0 is installed.
+
+For each pose:
+
+- outer display, portrait
+- outer display, landscape (tent)
+- inner display, open
+- inner display in ½ Split View
+
+…on each screen: Home, Search (with results and with recents), game detail and
+the screenshot viewer.
+
+- Columns and the detail split follow the available width.
+- No content sits under the status bar or camera region with asymmetric
+  insets.
+- Sheets (Share, paywall, profile) centre on the inner display.
+- Onboarding and the screenshot viewer lay out in every pose.
+
+Live: with Home scrolled halfway and a game detail pushed in the Search tab,
+open, close and fold the device. Expect the columns to reflow without losing
+the scroll position or the pushed stack.
+
+Tab bar on the inner display: note where it sits, and whether
+`sidebarAdaptable` offers the sidebar there.
+
+## Localization (1.2)
+
+The app follows the device language and ships English, Ukrainian, Russian,
+German and Spanish. Switch per app in Settings -> Barklog -> Language; iOS
+relaunches the app. A language the app does not ship falls back to English.
+
+Settings offers the Language row only after a rebuild with the new
+`expo-localization` plugin config; a JS reload is not enough.
+
+Full pass in Ukrainian and in Russian:
+
+- Tabs, the large titles, and the search field placeholder.
+- Home: the empty backlog, each status filter's empty state, the segmented
+  filter's selected label and its VoiceOver names, and the free-slots line.
+- Plurals on a game's rating line pick each form: "1 оцінка", "3 оцінки",
+  "5 оцінок", "21 оцінка". Hermes has no `Intl.PluralRules`, so this is the
+  check that the polyfill loaded; Node-based tests cannot catch it.
+- Game detail: the status and rating menus, detail rows, the release date
+  ("22 лютого 2022 р."), Summary MORE/LESS, the IGDB credit with its link.
+- The remove alert from the row menu and the toolbar: the title quotes the
+  game name in «».
+- Share a link: the searching state, each section header, no-match copy, and
+  an unreadable or gone page, which shows the app's own wording rather than
+  the server's English.
+- Onboarding (reset it first) on every page.
+- Clerk sign-in and the profile sheet, the paywall and Customer Center: their
+  native UI follows the app language. The paywall's own copy comes from the
+  RevenueCat dashboard and stays English until it is translated there.
+- VoiceOver on a Home row and the rating button reads the translated labels.
+
+Truncation pass in German and in Spanish, on a compact iPhone and on iPad
+landscape:
+
+- Tab labels, the segmented filter with each status selected (German
+  "Abgebrochen" or "Durchgespielt" beside four icons is the tightest), the two
+  capsule buttons on game detail, the free-slots line, and the onboarding
+  Skip/Continue buttons.
+- At an accessibility text size, the filter falls back to the "Show" menu.

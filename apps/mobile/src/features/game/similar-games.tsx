@@ -1,11 +1,12 @@
 import type { GameSummaryWire } from "@repo/contracts";
 import { useCallback } from "react";
-import { FlatList, PlatformColor, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { useSimilarGames } from "@/api/hooks";
 import { GameTile } from "@/components/game-tile";
 import { summarySubtitle } from "@/features/game/format";
-import { Type } from "@/theme";
+import { ShelfTitle } from "@/theme";
 
 const keyExtractor = (game: GameSummaryWire) => String(game.id);
 
@@ -18,6 +19,7 @@ export function SimilarGames({
 }) {
   const similar = useSimilarGames(gameId);
   const items = similar.data?.items ?? [];
+  const { t } = useTranslation();
 
   const renderItem = useCallback(
     ({ item }: { item: GameSummaryWire }) => (
@@ -36,7 +38,7 @@ export function SimilarGames({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>Similar Games</Text>
+      <Text style={styles.title}>{t("game.similarGames")}</Text>
 
       <FlatList
         horizontal
@@ -52,6 +54,6 @@ export function SimilarGames({
 
 const styles = StyleSheet.create({
   section: { gap: 8, paddingBottom: 32 },
-  title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
+  title: ShelfTitle,
   row: { gap: 12, paddingHorizontal: 16 },
 });

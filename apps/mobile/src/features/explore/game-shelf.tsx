@@ -1,11 +1,11 @@
 import type { GameSummaryWire } from "@repo/contracts";
 import { useCallback } from "react";
-import { FlatList, PlatformColor, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { GameTile } from "@/components/game-tile";
 import { summarySubtitle } from "@/features/game/format";
 import type { Shelf } from "@/features/explore/shelves";
-import { Type } from "@/theme";
+import { ShelfTitle } from "@/theme";
 
 const keyExtractor = (column: GameSummaryWire[]) => String(column[0]?.id);
 
@@ -52,7 +52,7 @@ export function GameShelf({
 
 const styles = StyleSheet.create({
   shelf: { gap: 8, paddingVertical: 12 },
-  title: { ...Type.headline, color: PlatformColor("label"), paddingHorizontal: 16 },
+  title: ShelfTitle,
   columns: { gap: 12, paddingHorizontal: 16 },
   column: { gap: 12 },
 });

@@ -1,10 +1,13 @@
-import type { ProblemDocument } from "@repo/contracts";
+import { PROBLEM_CODES, type ProblemCode, type ProblemDocument } from "@repo/contracts";
 
 export class ApiError extends Error {
   readonly status: number;
   readonly type: string;
   readonly title: string;
+  /** Present only for a code this build has copy for. */
+  readonly code?: ProblemCode;
   readonly detail?: string;
+  readonly toFree?: number;
   readonly traceId?: string;
   readonly errors?: { field: string; message: string }[];
   /** Seconds, from `Retry-After`. */
@@ -14,7 +17,9 @@ export class ApiError extends Error {
     status: number;
     type: string;
     title: string;
+    code?: ProblemCode;
     detail?: string;
+    toFree?: number;
     traceId?: string;
     errors?: { field: string; message: string }[];
     retryAfter?: number;
@@ -31,7 +36,9 @@ export class ApiError extends Error {
     this.status = fields.status;
     this.type = fields.type;
     this.title = fields.title;
+    this.code = fields.code;
     this.detail = fields.detail;
+    this.toFree = fields.toFree;
     this.traceId = fields.traceId;
     this.errors = fields.errors;
     this.retryAfter = fields.retryAfter;
@@ -40,6 +47,10 @@ export class ApiError extends Error {
 
 function isProblemDocument(body: unknown): body is Partial<ProblemDocument> {
   return typeof body === "object" && body !== null && !Array.isArray(body);
+}
+
+function isProblemCode(value: unknown): value is ProblemCode {
+  return PROBLEM_CODES.includes(value as ProblemCode);
 }
 
 /** `response.status` wins over the body's, which a proxy may have rewritten. */
@@ -52,7 +63,10 @@ export function toApiError(response: Response, body: unknown, retryAfter?: numbe
     status: response.status,
     type: str(problem?.type) ?? "about:blank",
     title: str(problem?.title) ?? (response.statusText || "Request failed"),
+    // A code from a newer API is dropped, so `errorCopy` falls back to `detail`.
+    code: isProblemCode(problem?.code) ? problem.code : undefined,
     detail: str(problem?.detail),
+    toFree: typeof problem?.toFree === "number" ? problem.toFree : undefined,
     traceId: str(problem?.traceId),
     errors: Array.isArray(problem?.errors) ? problem.errors : undefined,
     retryAfter,
