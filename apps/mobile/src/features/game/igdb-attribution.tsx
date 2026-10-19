@@ -1,10 +1,10 @@
-import { Label, Link } from "@expo/ui/swift-ui";
+import { Host, Label, Link } from "@expo/ui/swift-ui";
 import { font } from "@expo/ui/swift-ui/modifiers";
 import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";
 
 import { gameUrl } from "@/igdb-url";
-import { MeasuredHost } from "@/ui/measured-host";
+import { Brand } from "@/theme";
 
 /** The credit IGDB's terms require. SwiftUI's own `Link`, as on the onboarding
  * IGDB page, so it reads as a link and carries the external-link symbol. */
@@ -12,11 +12,16 @@ export function IgdbAttribution({ slug }: { slug: string }) {
   const { t } = useTranslation();
 
   return (
-    <MeasuredHost style={styles.host}>
+    <Host
+      style={styles.host}
+      alignment="center"
+      matchContents={{ vertical: true }}
+      seedColor={Brand.tint}
+    >
       <Link destination={gameUrl(slug)} modifiers={[font({ textStyle: "footnote" })]}>
         <Label title={t("game.attribution")} systemImage="arrow.up.right.square" />
       </Link>
-    </MeasuredHost>
+    </Host>
   );
 }
 
