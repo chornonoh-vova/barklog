@@ -1,9 +1,11 @@
 // First, so every module below renders with copy from the first frame.
 import "@/i18n";
+import "@/observe";
 
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ObserveRoot } from "expo-observe";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
@@ -18,7 +20,7 @@ import { createQueryClient } from "@/query-client";
 import { Screen } from "@/theme";
 import { prefersSheet } from "@/ui/columns";
 
-export default function RootLayout() {
+function RootLayout() {
   const colorScheme = useColorScheme();
   // Read at presentation time. An open sheet keeps its style if the window
   // later resizes; UIKit already turns a page sheet full screen in compact width.
@@ -63,3 +65,6 @@ export default function RootLayout() {
     </ClerkProvider>
   );
 }
+
+// Measures Time to First Render; Time to Interactive is marked in `@/splash`.
+export default ObserveRoot.wrap(RootLayout);
