@@ -1,4 +1,4 @@
-import { HStack, Menu, Picker, Text, VStack } from "@expo/ui/swift-ui";
+import { Host, HStack, Menu, Picker, Text, VStack } from "@expo/ui/swift-ui";
 import {
   accessibilityLabel,
   buttonStyle,
@@ -23,7 +23,6 @@ import {
 } from "@/features/game/format";
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 import { Brand } from "@/theme";
-import { MeasuredHost } from "@/ui/measured-host";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 
@@ -49,7 +48,12 @@ export function EntryActions({
   const Container = useIsAccessibilitySize() ? VStack : HStack;
   const { t } = useTranslation();
   return (
-    <MeasuredHost style={styles.host}>
+    <Host
+      style={styles.host}
+      alignment="center"
+      matchContents={{ vertical: true }}
+      seedColor={Brand.tint}
+    >
       <Container>
         {status === null ? null : (
           <Menu
@@ -114,7 +118,7 @@ export function EntryActions({
           </Picker>
         </Menu>
       </Container>
-    </MeasuredHost>
+    </Host>
   );
 }
 

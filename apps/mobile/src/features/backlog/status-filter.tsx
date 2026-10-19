@@ -1,4 +1,4 @@
-import { Image, Menu, Picker, Text, VStack } from "@expo/ui/swift-ui";
+import { Host, Image, Menu, Picker, Text, VStack } from "@expo/ui/swift-ui";
 import {
   accessibilityLabel,
   buttonStyle,
@@ -13,7 +13,7 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel, statusSymbol } from "@/features/game/format";
-import { MeasuredHost } from "@/ui/measured-host";
+import { Brand } from "@/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 
@@ -41,7 +41,12 @@ export function StatusFilter({
   // Five segments of text truncate at accessibility sizes, so those keep the menu.
   if (ax) {
     return (
-      <MeasuredHost style={styles.host}>
+      <Host
+        style={styles.host}
+        alignment="center"
+        matchContents={{ vertical: true }}
+        seedColor={Brand.tint}
+      >
         <VStack alignment="leading">
           <Text>{t("backlog.filterShow")}</Text>
           <Menu
@@ -62,14 +67,19 @@ export function StatusFilter({
             </Picker>
           </Menu>
         </VStack>
-      </MeasuredHost>
+      </Host>
     );
   }
 
   // Like Mail's category switcher: the selected segment names itself, the rest
   // are icons that VoiceOver still reads by name.
   return (
-    <MeasuredHost style={styles.host}>
+    <Host
+      style={styles.host}
+      alignment="center"
+      matchContents={{ vertical: true }}
+      seedColor={Brand.tint}
+    >
       <Picker
         selection={selected}
         onSelectionChange={select}
@@ -89,7 +99,7 @@ export function StatusFilter({
           ),
         )}
       </Picker>
-    </MeasuredHost>
+    </Host>
   );
 }
 

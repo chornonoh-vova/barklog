@@ -65,6 +65,7 @@
       "expo-image",
       "expo-status-bar",
       "@clerk/expo",
+      "@clerk/expo-native-components",
       "./plugins/with-pods-uuid-collision-fix"
     ],
     "locales": {

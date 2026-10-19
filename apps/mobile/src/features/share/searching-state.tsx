@@ -12,7 +12,7 @@ export function SearchingState() {
     <View style={styles.root}>
       <Mascot illustration="share" />
       <Text style={styles.label}>{t("share.searching")}</Text>
-      <Host style={styles.spinner}>
+      <Host style={styles.spinner} alignment="center">
         <ProgressView />
       </Host>
     </View>

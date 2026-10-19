@@ -1,4 +1,4 @@
-import { Button, VStack } from "@expo/ui/swift-ui";
+import { Button, Host, VStack } from "@expo/ui/swift-ui";
 import { buttonStyle, controlSize } from "@expo/ui/swift-ui/modifiers";
 import { SymbolView } from "expo-symbols";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
@@ -6,8 +6,7 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import { SYMBOL_SIZE, type IllustrationName } from "@/components/illustrations";
 import { Mascot } from "@/components/mascot";
-import { Type } from "@/theme";
-import { MeasuredHost } from "@/ui/measured-host";
+import { Brand, Type } from "@/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 
 export interface EmptyStateContent {
@@ -63,7 +62,12 @@ export function EmptyState({
       <Text style={styles.description}>{description}</Text>
 
       {action || secondaryAction ? (
-        <MeasuredHost style={styles.actions}>
+        <Host
+          style={styles.actions}
+          alignment="center"
+          matchContents={{ vertical: true }}
+          seedColor={Brand.tint}
+        >
           <VStack spacing={8}>
             {action ? (
               <Button
@@ -80,7 +84,7 @@ export function EmptyState({
               />
             ) : null}
           </VStack>
-        </MeasuredHost>
+        </Host>
       ) : null}
     </View>
   );
