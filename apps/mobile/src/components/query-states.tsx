@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 
 export function LoadingState() {
   return (
-    <Host style={{ flex: 1 }}>
+    <Host style={{ flex: 1 }} alignment="center">
       <ProgressView />
     </Host>
   );

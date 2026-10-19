@@ -27,6 +27,7 @@ export function MeasuredHost({
   return (
     <Host
       style={[style, { minHeight }]}
+      alignment="center"
       matchContents={{ vertical: true }}
       seedColor={Brand.tint}
       onLayoutContent={onLayoutContent}
