@@ -1,5 +1,5 @@
 import { useUser } from "@clerk/expo";
-import { UserProfileView } from "@clerk/expo/native";
+import { UserProfileView } from "@clerk/expo/native-components";
 import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { useState } from "react";

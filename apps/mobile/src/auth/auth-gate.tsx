@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/expo";
-import { AuthView, useAuthViewState } from "@clerk/expo/native";
+import { AuthView, useAuthViewState } from "@clerk/expo/native-components";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, type ReactNode } from "react";
 

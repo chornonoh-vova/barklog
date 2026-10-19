@@ -142,7 +142,7 @@ export function BacklogScreen() {
       ListEmptyComponent={
         backlog.isPending ? (
           <LoadingState />
-        ) : filter === undefined ? null : (
+        ) : filter === undefined ? undefined : (
           <EmptyState {...emptyFilter(filter)} />
         )
       }

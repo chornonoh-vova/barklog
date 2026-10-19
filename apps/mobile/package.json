@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@clerk/expo": "^4.10.1",
+    "@clerk/expo-native-components": "^0.2.0",
     "@expo/ui": "~58.0.20",
     "@formatjs/intl-pluralrules": "^6.3.15",
     "@react-native-async-storage/async-storage": "2.2.0",
