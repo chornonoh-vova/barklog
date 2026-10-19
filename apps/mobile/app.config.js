@@ -47,6 +47,17 @@ export default ({ config }) => {
         [APP_GROUPS_ENTITLEMENT]: [appGroupIdentifier],
       },
     },
+    plugins: config.plugins?.map((plugin) =>
+      Array.isArray(plugin) && plugin[0] === "expo-sharing"
+        ? [
+            plugin[0],
+            {
+              ...plugin[1],
+              ios: { ...plugin[1]?.ios, appGroupId: appGroupIdentifier },
+            },
+          ]
+        : plugin,
+    ),
     android: {
       ...config.android,
       package: bundleIdentifier,
