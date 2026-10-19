@@ -1,5 +1,5 @@
 {
-  "extends": ["expo/tsconfig.base", "@repo/typescript-config/expo.json"],
+  "extends": ["expo/tsconfig.base.json", "@repo/typescript-config/expo.json"],
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
