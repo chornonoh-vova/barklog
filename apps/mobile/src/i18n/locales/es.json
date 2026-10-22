@@ -193,5 +193,8 @@
       "title": "No se pudo leer el enlace",
       "description": "Ahora mismo no se puede leer ese enlace. Inténtalo de nuevo en breve."
     }
+  },
+  "widget": {
+    "signedOut": "Abre Barklog para ver tu backlog."
   }
 }

@@ -19,6 +19,7 @@ import { PurchasesProvider } from "@/purchases/provider";
 import { createQueryClient } from "@/query-client";
 import { Screen } from "@/theme";
 import { prefersSheet } from "@/ui/columns";
+import { WidgetSync } from "@/widgets/widget-sync";
 
 function RootLayout() {
   const colorScheme = useColorScheme();
@@ -54,6 +55,7 @@ function RootLayout() {
                       <Stack.Screen name="shared" options={{ presentation: modal }} />
                       <Stack.Screen name="paywall" options={{ presentation: modal }} />
                     </Stack>
+                    <WidgetSync />
                   </AuthGate>
                 </OnboardingGate>
               </View>

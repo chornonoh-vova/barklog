@@ -54,6 +54,40 @@
         }
       ],
       [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "BacklogWidget",
+              "displayName": "Barklog",
+              "description": "Your Playing, Waiting, Completed or Abandoned games.",
+              "ios": {
+                "supportedFamilies": ["systemSmall", "systemMedium"],
+                "contentMarginsDisabled": true,
+                "initialLayout": "./src/widgets/backlog-widget.tsx",
+                "configuration": {
+                  "title": "Section",
+                  "description": "Which part of your backlog to show.",
+                  "parameters": {
+                    "section": {
+                      "title": "Section",
+                      "type": "enum",
+                      "default": "playing",
+                      "values": [
+                        { "name": "Playing", "value": "playing" },
+                        { "name": "Waiting", "value": "waiting" },
+                        { "name": "Completed", "value": "completed" },
+                        { "name": "Abandoned", "value": "abandoned" }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      [
         "expo-localization",
         {
           "supportedLocales": {

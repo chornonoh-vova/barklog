@@ -191,5 +191,8 @@
       "title": "Couldn't read that link",
       "description": "That link could not be read right now. Try again shortly."
     }
+  },
+  "widget": {
+    "signedOut": "Open Barklog to see your backlog."
   }
 }

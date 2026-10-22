@@ -11,7 +11,7 @@ export type BacklogListFilter = BacklogStatus | "all";
 
 /** `ORDER_BY` in `packages/db/src/queries/backlog.ts`, game id breaking ties.
  * Unrated sorts as 0, below `RATING_MIN`, matching `NULLS LAST`. */
-function compare(sort: BacklogSort, a: BacklogListItemWire, b: BacklogListItemWire): number {
+export function compare(sort: BacklogSort, a: BacklogListItemWire, b: BacklogListItemWire): number {
   const primary =
     sort === "updated_at"
       ? b.updatedAt.localeCompare(a.updatedAt)

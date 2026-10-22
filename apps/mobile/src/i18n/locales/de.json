@@ -191,5 +191,8 @@
       "title": "Link nicht lesbar",
       "description": "Der Link lässt sich gerade nicht lesen. Versuch es gleich noch mal."
     }
+  },
+  "widget": {
+    "signedOut": "Öffne Barklog, um deinen Backlog zu sehen."
   }
 }
