@@ -1,6 +1,6 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlatformColor,
@@ -16,9 +16,11 @@ import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
 import { LoadingState } from "@/components/query-states";
+import { UpdatingPill } from "@/components/updating-pill";
 import { QueryBoundary } from "@/components/query-boundary";
 import { BacklogGameRow } from "@/features/backlog/backlog-game-row";
 import { emptyBacklog, emptyFilter } from "@/features/backlog/empty-states";
+import { showUpdatingPill } from "@/features/backlog/loading-state";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
@@ -70,6 +72,14 @@ export function BacklogScreen() {
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
   const slotState = useSlotState();
   const { t } = useTranslation();
+  // Only a pull the user started shows the native spinner; background
+  // revalidation of cached data shows the pill instead.
+  const [userRefreshing, setUserRefreshing] = useState(false);
+  const updating = showUpdatingPill({
+    hasData: backlog.data !== undefined,
+    isFetching: backlog.isFetching || stats.isFetching,
+    userRefreshing,
+  });
 
   // Home: the only screen a user reaches without having just tapped something.
   useReviewPrompt();
@@ -155,10 +165,12 @@ export function BacklogScreen() {
       }
       refreshControl={
         <RefreshControl
-          refreshing={backlog.isRefetching}
+          refreshing={userRefreshing}
           onRefresh={() => {
-            void backlog.refetch();
-            void stats.refetch();
+            setUserRefreshing(true);
+            void Promise.allSettled([backlog.refetch(), stats.refetch()]).then(() =>
+              setUserRefreshing(false),
+            );
           }}
         />
       }
@@ -168,9 +180,12 @@ export function BacklogScreen() {
   );
 
   return (
-    <QueryBoundary query={backlog} loading={list}>
-      {() => list}
-    </QueryBoundary>
+    <>
+      <QueryBoundary query={backlog} loading={list}>
+        {() => list}
+      </QueryBoundary>
+      <UpdatingPill visible={updating} />
+    </>
   );
 }
 

@@ -54,7 +54,8 @@
     "more": "Más",
     "moreFor": "Más, {{name}}",
     "statusMenu": "Estado",
-    "removeFromBacklog": "Quitar del backlog…"
+    "removeFromBacklog": "Quitar del backlog…",
+    "updating": "Actualizando…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} valoración",

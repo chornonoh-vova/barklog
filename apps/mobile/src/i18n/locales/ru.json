@@ -54,7 +54,8 @@
     "more": "Ещё",
     "moreFor": "Ещё, {{name}}",
     "statusMenu": "Статус",
-    "removeFromBacklog": "Удалить из бэклога…"
+    "removeFromBacklog": "Удалить из бэклога…",
+    "updating": "Обновление…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} оценка",
