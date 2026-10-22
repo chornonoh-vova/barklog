@@ -1,3 +1,5 @@
+import { widgetRoute } from "@/widgets/links";
+
 /**
  * `redirectSystemPath` returns a path to navigate to — there is no return
  * value meaning "stay where you are". So a share has to land on a route, which
@@ -10,7 +12,10 @@
  */
 export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
   try {
-    return new URL(path).hostname === "expo-sharing" ? "/shared" : path;
+    const url = new URL(path);
+    if (url.hostname === "expo-sharing") return "/shared";
+
+    return widgetRoute(url) ?? path;
   } catch {
     // Not a URL at all: hand expo-router the path untouched rather than
     // swallowing a deep link this function does not own.

@@ -1,6 +1,6 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
-import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlatformColor,
@@ -22,6 +22,7 @@ import { emptyBacklog, emptyFilter } from "@/features/backlog/empty-states";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
+import { parseStatusParam } from "@/features/backlog/status-param";
 import { useSlotState } from "@/features/backlog/use-slot-state";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
@@ -51,10 +52,16 @@ const renderGroupedSectionHeader = ({ section }: { section: BacklogRowSection })
   sectionHeader(section, true);
 
 export function BacklogScreen() {
-  const [filter, setFilter] = useState<BacklogStatus | undefined>(undefined);
+  const router = useRouter();
+  // The filter lives in `?status=`, so a widget tap and the user's own pick set
+  // the same thing.
+  const filter = parseStatusParam(useLocalSearchParams<{ status?: string }>().status);
+  const setFilter = useCallback(
+    (status: BacklogStatus | undefined) => router.setParams({ status }),
+    [router],
+  );
   const backlog = useBacklog(filter);
   const stats = useBacklogStats();
-  const router = useRouter();
   const premium = useIsPremium();
   const slots = slotsLabel(stats.data, premium);
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
