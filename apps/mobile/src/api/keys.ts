@@ -1,4 +1,4 @@
-import type { BacklogSort, BacklogStatus, GameFeed } from "@repo/contracts";
+import type { GameFeed } from "@repo/contracts";
 
 /** `stats` sits under `backlog` so one invalidation sweeps list and counts. */
 export const keys = {
@@ -20,10 +20,8 @@ export const keys = {
   },
   backlog: {
     all: ["backlog"] as const,
-    /** Every cached list, whatever its filter and sort. */
-    lists: () => ["backlog", "list"] as const,
-    list: (status: BacklogStatus | undefined, sort: BacklogSort) =>
-      ["backlog", "list", status ?? "all", sort] as const,
+    /** The whole backlog; Home's filters are derived from it (see `useBacklog`). */
+    list: () => ["backlog", "list"] as const,
     stats: () => ["backlog", "stats"] as const,
   },
 } as const;

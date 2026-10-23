@@ -4,10 +4,10 @@ import { useBacklog } from "@/api/hooks";
 
 import { pushBacklog } from "./sync";
 
-/** Observes Home's unfiltered list for the widget, so it stays fresh — and
- * refetches on invalidation — even while Home shows a filter. */
+/** Observes the backlog for the widget, so it stays fresh — and refetches on
+ * invalidation — whether or not Home is mounted. */
 export function WidgetSync() {
-  const { data } = useBacklog(undefined);
+  const { data } = useBacklog();
 
   useEffect(() => {
     if (data !== undefined) pushBacklog(data);

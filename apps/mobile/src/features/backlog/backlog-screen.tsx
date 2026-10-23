@@ -62,7 +62,7 @@ export function BacklogScreen() {
     (status: BacklogStatus | undefined) => router.setParams({ status }),
     [router],
   );
-  const backlog = useBacklog(filter);
+  const backlog = useBacklog();
   const stats = useBacklogStats();
   const premium = useIsPremium();
   const slots = slotsLabel(stats.data, premium);
@@ -110,11 +110,12 @@ export function BacklogScreen() {
     [backlog.data, filter, columns],
   );
 
-  // Only the first load replaces the screen. A filter's first load keeps the
-  // list, and the filter in its header, mounted and spins inside it instead.
-  if (backlog.isPending && filter === undefined) return <LoadingState />;
+  // One list behind every filter, so only the first load ever waits.
+  if (backlog.isPending) return <LoadingState />;
 
-  if (filter === undefined && backlog.data?.items.length === 0) {
+  // An empty backlog has nothing to filter: a widget link to a status still
+  // lands on the state that offers a way to add a game.
+  if (backlog.data?.items.length === 0) {
     return (
       <EmptyState
         {...emptyBacklog()}
@@ -157,11 +158,7 @@ export function BacklogScreen() {
       renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
       ListHeaderComponent={listHeader}
       ListEmptyComponent={
-        backlog.isPending ? (
-          <LoadingState />
-        ) : filter === undefined ? undefined : (
-          <EmptyState {...emptyFilter(filter)} />
-        )
+        filter === undefined ? undefined : <EmptyState {...emptyFilter(filter)} />
       }
       refreshControl={
         <RefreshControl
@@ -181,9 +178,7 @@ export function BacklogScreen() {
 
   return (
     <>
-      <QueryBoundary query={backlog} loading={list}>
-        {() => list}
-      </QueryBoundary>
+      <QueryBoundary query={backlog}>{() => list}</QueryBoundary>
       <UpdatingPill visible={updating} />
     </>
   );

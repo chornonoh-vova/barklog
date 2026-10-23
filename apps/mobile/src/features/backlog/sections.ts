@@ -16,14 +16,16 @@ export interface BacklogSection {
   data: BacklogListItemWire[];
 }
 
+/** `items` is the whole backlog: the filter is applied here, not by the
+ * server, so switching it never waits on a fetch. */
 export function toSections(
   items: BacklogListItemWire[],
   filter: BacklogStatus | undefined,
 ): BacklogSection[] {
   if (filter !== undefined) {
-    return items.length === 0
-      ? []
-      : [{ status: filter, title: null, count: items.length, data: items }];
+    const data = items.filter((item) => item.status === filter);
+
+    return data.length === 0 ? [] : [{ status: filter, title: null, count: data.length, data }];
   }
 
   const grouped = new Map<BacklogStatus, BacklogListItemWire[]>();

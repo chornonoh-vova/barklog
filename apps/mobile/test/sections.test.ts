@@ -87,6 +87,22 @@ describe("toSections — filtered", () => {
   it("returns no sections when the filter matches nothing", () => {
     expect(toSections([], "abandoned")).toEqual([]);
   });
+
+  it("keeps only entries of the filtered status, in API order", () => {
+    const sections = toSections(
+      [entry("playing", "A"), entry("waiting"), entry("playing", "B")],
+      "playing",
+    );
+
+    expect(sections).toHaveLength(1);
+    expect(sections[0]?.title).toBeNull();
+    expect(sections[0]?.count).toBe(2);
+    expect(sections[0]?.data.map((i) => i.game.name)).toEqual(["A", "B"]);
+  });
+
+  it("returns no sections when no entry has the filtered status", () => {
+    expect(toSections([entry("waiting")], "abandoned")).toEqual([]);
+  });
 });
 
 describe("toRowSections", () => {

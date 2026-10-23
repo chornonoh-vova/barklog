@@ -1,7 +1,7 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { describe, expect, it } from "vitest";
 
-import { patchBacklogList, patchBacklogStats } from "@/features/backlog/optimistic-list";
+import { compare, patchBacklogList, patchBacklogStats } from "@/features/backlog/optimistic-list";
 
 const entry = (gameId: number, status: BacklogStatus, rating: number | null = null) =>
   ({
@@ -27,50 +27,17 @@ describe("patchBacklogList", () => {
   const list = { items: [entry(1, "playing", 9), entry(2, "waiting")] };
 
   it("drops a removed game", () => {
-    expect(
-      patchBacklogList(list, "all", "updated_at", 1, null, NOW).items.map((i) => i.gameId),
-    ).toEqual([2]);
+    expect(patchBacklogList(list, 1, null, NOW).items.map((i) => i.gameId)).toEqual([2]);
   });
 
   it("moves an edited game to the front of a list sorted by last update", () => {
-    const next = patchBacklogList(
-      list,
-      "all",
-      "updated_at",
-      2,
-      { status: "playing", rating: null },
-      NOW,
-    );
+    const next = patchBacklogList(list, 2, { status: "playing", rating: null }, NOW);
 
     expect(next.items.map((i) => i.gameId)).toEqual([2, 1]);
   });
 
-  it("re-places a re-rated game in a list sorted by rating, unrated last", () => {
-    const rated = { items: [entry(1, "playing", 9), entry(2, "playing", 5), entry(3, "playing")] };
-
-    const up = patchBacklogList(rated, "all", "rating", 2, { status: "playing", rating: 10 }, NOW);
-    expect(up.items.map((i) => i.gameId)).toEqual([2, 1, 3]);
-
-    const cleared = patchBacklogList(
-      rated,
-      "all",
-      "rating",
-      1,
-      { status: "playing", rating: null },
-      NOW,
-    );
-    expect(cleared.items.map((i) => i.gameId)).toEqual([2, 1, 3]);
-  });
-
   it("moves a game to its new status and keeps the rating it was given", () => {
-    const next = patchBacklogList(
-      list,
-      "all",
-      "updated_at",
-      1,
-      { status: "completed", rating: 9 },
-      NOW,
-    );
+    const next = patchBacklogList(list, 1, { status: "completed", rating: 9 }, NOW);
 
     expect(next.items[0]).toMatchObject({
       gameId: 1,
@@ -81,38 +48,22 @@ describe("patchBacklogList", () => {
     expect(next.items[1]).toBe(list.items[1]);
   });
 
-  it("drops a game from a filtered list it no longer belongs to", () => {
-    const playing = { items: [entry(1, "playing")] };
-
-    expect(
-      patchBacklogList(
-        playing,
-        "playing",
-        "updated_at",
-        1,
-        { status: "completed", rating: null },
-        NOW,
-      ).items,
-    ).toEqual([]);
-  });
-
-  it("keeps a game in a filtered list it still belongs to", () => {
-    const playing = { items: [entry(1, "playing")] };
-
-    expect(
-      patchBacklogList(playing, "playing", "updated_at", 1, { status: "playing", rating: 7 }, NOW)
-        .items[0],
-    ).toMatchObject({ rating: 7 });
-  });
-
   it("leaves a list without the game untouched", () => {
-    expect(patchBacklogList(list, "all", "updated_at", 99, null, NOW)).toBe(list);
+    expect(patchBacklogList(list, 99, null, NOW)).toBe(list);
   });
 
   it("does not mutate its input", () => {
-    patchBacklogList(list, "all", "updated_at", 1, { status: "abandoned", rating: null }, NOW);
+    patchBacklogList(list, 1, { status: "abandoned", rating: null }, NOW);
 
     expect(list.items[0]?.status).toBe("playing");
+  });
+});
+
+describe("compare", () => {
+  it("sorts by rating with unrated last, like the server's NULLS LAST", () => {
+    const items = [entry(3, "playing"), entry(1, "playing", 5), entry(2, "playing", 9)];
+
+    expect(items.sort((a, b) => compare("rating", a, b)).map((i) => i.gameId)).toEqual([2, 1, 3]);
   });
 });
 

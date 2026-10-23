@@ -64,24 +64,11 @@ describe("createEndpoints", () => {
     expect(calls[0]?.options).toEqual({ query: { limit: 6 } });
   });
 
-  it("lists the backlog with the default sort and no status filter", async () => {
+  it("lists the whole backlog, leaving the sort to the server's default", async () => {
     const { request, calls } = spy();
     await createEndpoints(request).listBacklog();
 
-    expect(calls[0]).toEqual({
-      path: "/api/backlog",
-      options: { query: { status: undefined, sort: "updated_at" } },
-    });
-  });
-
-  it("lists the backlog filtered by status", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).listBacklog({ status: "playing" });
-
-    expect(calls[0]).toEqual({
-      path: "/api/backlog",
-      options: { query: { status: "playing", sort: "updated_at" } },
-    });
+    expect(calls[0]).toEqual({ path: "/api/backlog", options: {} });
   });
 
   it("fetches stats", async () => {

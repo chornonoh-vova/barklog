@@ -6,9 +6,6 @@ import type {
   BacklogStatus,
 } from "@repo/contracts";
 
-/** The list key's filter segment: a status, or `"all"` (see `keys.backlog.list`). */
-export type BacklogListFilter = BacklogStatus | "all";
-
 /** `ORDER_BY` in `packages/db/src/queries/backlog.ts`, game id breaking ties.
  * Unrated sorts as 0, below `RATING_MIN`, matching `NULLS LAST`. */
 export function compare(sort: BacklogSort, a: BacklogListItemWire, b: BacklogListItemWire): number {
@@ -30,14 +27,13 @@ export function compare(sort: BacklogSort, a: BacklogListItemWire, b: BacklogLis
  * a removal. A list without the game is returned as is: a summary-less game
  * cannot be added here, and the refetch brings it in.
  *
- * A changed row is re-placed by the list's sort, not left where it was: an
- * edit bumps `updatedAt`, and a row that jumps when the refetch lands reads as
- * a second change. Only that row moves — the rest keep the server's order.
+ * A changed row is re-placed by last update, the server's default order, not
+ * left where it was: an edit bumps `updatedAt`, and a row that jumps when the
+ * refetch lands reads as a second change. Only that row moves — the rest keep
+ * the server's order.
  */
 export function patchBacklogList(
   list: BacklogListResponse,
-  filter: BacklogListFilter,
-  sort: BacklogSort,
   gameId: number,
   next: { status: BacklogStatus; rating: number | null } | null,
   now: string,
@@ -46,11 +42,10 @@ export function patchBacklogList(
   if (item === undefined) return list;
 
   const rest = list.items.filter((candidate) => candidate.gameId !== gameId);
-  if (next === null || (filter !== "all" && filter !== next.status))
-    return { ...list, items: rest };
+  if (next === null) return { ...list, items: rest };
 
   const changed = { ...item, ...next, updatedAt: now };
-  const at = rest.findIndex((other) => compare(sort, changed, other) < 0);
+  const at = rest.findIndex((other) => compare("updated_at", changed, other) < 0);
 
   return {
     ...list,

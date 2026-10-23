@@ -11,7 +11,6 @@ import {
   SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
   type BacklogListResponse,
-  type BacklogSort,
   type BacklogStatsWire,
   type BacklogStatus,
   type GameDetailResponse,
@@ -24,11 +23,7 @@ import { notificationAsync, NotificationFeedbackType } from "expo-haptics";
 import { router } from "expo-router";
 import { Alert } from "react-native";
 
-import {
-  patchBacklogList,
-  patchBacklogStats,
-  type BacklogListFilter,
-} from "@/features/backlog/optimistic-list";
+import { patchBacklogList, patchBacklogStats } from "@/features/backlog/optimistic-list";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 
 import { errorCopy } from "./error-copy";
@@ -41,16 +36,12 @@ function alertOnMutationError(error: unknown): void {
   Alert.alert(title, description);
 }
 
-export function useBacklog(
-  status: BacklogStatus | undefined,
-  sort: BacklogSort = "updated_at",
-): UseQueryResult<BacklogListResponse> {
+/** The whole backlog: Home filters it on the device, so a filter switch
+ * never fetches. */
+export function useBacklog(): UseQueryResult<BacklogListResponse> {
   const api = useApi();
 
-  return useQuery({
-    queryKey: keys.backlog.list(status, sort),
-    queryFn: () => api.listBacklog({ status, sort }),
-  });
+  return useQuery({ queryKey: keys.backlog.list(), queryFn: () => api.listBacklog() });
 }
 
 export function useBacklogStats(): UseQueryResult<BacklogStatsWire> {
@@ -139,7 +130,7 @@ function useBacklogEntryMutation<TInput>(
       const key = keys.games.detail(gameId);
       await Promise.all([
         queryClient.cancelQueries({ queryKey: key }),
-        queryClient.cancelQueries({ queryKey: keys.backlog.lists() }),
+        queryClient.cancelQueries({ queryKey: keys.backlog.list() }),
         queryClient.cancelQueries({ queryKey: keys.backlog.stats() }),
       ]);
       const previous = queryClient.getQueryData<GameDetailResponse>(key);
@@ -162,33 +153,25 @@ function useBacklogEntryMutation<TInput>(
         });
       }
 
-      // Lists too, or Home keeps showing the old row until the refetch lands
-      // — a removal that seems not to have worked invites a second tap.
-      const lists = queryClient.getQueriesData<BacklogListResponse>({
-        queryKey: keys.backlog.lists(),
-      });
+      // The list too, or Home keeps showing the old row until the refetch
+      // lands — a removal that seems not to have worked invites a second tap.
+      // Its filters are derived from it, so they follow.
+      const list = queryClient.getQueryData<BacklogListResponse>(keys.backlog.list());
 
-      for (const [listKey, list] of lists) {
-        if (list === undefined) continue;
-        const filter = listKey[2] as BacklogListFilter;
-        const sort = listKey[3] as BacklogSort;
-        queryClient.setQueryData(
-          listKey,
-          patchBacklogList(list, filter, sort, gameId, change, now),
-        );
+      if (list !== undefined) {
+        queryClient.setQueryData(keys.backlog.list(), patchBacklogList(list, gameId, change, now));
       }
 
       // Stats too: Home gates slot moves on these counts, so a stale count
       // sends the next move to the paywall, or lets one past it, until the
       // refetch. The old status comes from the detail when it is cached, and
-      // from any list holding the game when it is not — Home's row menu acts
+      // from the list when it is not — Home's row menu acts
       // without opening the detail. Unknown either way: leave the counts be.
       const stats = queryClient.getQueryData<BacklogStatsWire>(keys.backlog.stats());
       const from =
         previous !== undefined
           ? (previous.backlogEntry?.status ?? null)
-          : lists.flatMap(([, list]) => list?.items ?? []).find((item) => item.gameId === gameId)
-              ?.status;
+          : list?.items.find((item) => item.gameId === gameId)?.status;
 
       if (stats !== undefined && from !== undefined) {
         queryClient.setQueryData(
@@ -199,7 +182,7 @@ function useBacklogEntryMutation<TInput>(
 
       options.onApply?.(previous?.backlogEntry, input);
 
-      return { previous, lists, stats };
+      return { previous, list, stats };
     },
 
     onError: (error, _input, context) => {
@@ -207,9 +190,7 @@ function useBacklogEntryMutation<TInput>(
         queryClient.setQueryData(keys.games.detail(gameId), context.previous);
       }
 
-      for (const [listKey, list] of context?.lists ?? []) {
-        queryClient.setQueryData(listKey, list);
-      }
+      if (context?.list) queryClient.setQueryData(keys.backlog.list(), context.list);
 
       if (context?.stats) queryClient.setQueryData(keys.backlog.stats(), context.stats);
 

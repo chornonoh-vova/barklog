@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query-persist-client";
 import { describe, expect, it } from "vitest";
 
+import { keys } from "@/api/keys";
 import {
   guardPersistence,
   PERSIST_MAX_AGE,
@@ -17,7 +18,7 @@ import {
   shouldPersistQuery,
 } from "@/query-persist-policy";
 
-const LIST = ["backlog", "list", "all", "updated_at"];
+const LIST = keys.backlog.list();
 
 describe("persistKey", () => {
   // One user's cached backlog must never rehydrate into another's session.
@@ -31,11 +32,6 @@ describe("shouldPersistQuery", () => {
   it("persists Home's unfiltered list and the stats", () => {
     expect(shouldPersistQuery(LIST, "success")).toBe(true);
     expect(shouldPersistQuery(["backlog", "stats"], "success")).toBe(true);
-  });
-
-  it("does not persist filtered or re-sorted lists", () => {
-    expect(shouldPersistQuery(["backlog", "list", "playing", "updated_at"], "success")).toBe(false);
-    expect(shouldPersistQuery(["backlog", "list", "all", "rating"], "success")).toBe(false);
   });
 
   it("does not persist search, recents, or other queries", () => {
@@ -58,9 +54,7 @@ describe("retainPersistedQueries", () => {
 
     expect(client.getQueryDefaults(LIST).gcTime).toBe(PERSIST_MAX_AGE);
     expect(client.getQueryDefaults(["backlog", "stats"]).gcTime).toBe(PERSIST_MAX_AGE);
-    expect(client.getQueryDefaults(["backlog", "list", "playing", "updated_at"]).gcTime).toBe(
-      undefined,
-    );
+    expect(client.getQueryDefaults(["games", "detail", 1]).gcTime).toBe(undefined);
   });
 });
 

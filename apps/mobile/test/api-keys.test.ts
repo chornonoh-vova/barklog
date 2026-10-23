@@ -23,19 +23,8 @@ describe("query keys", () => {
     expect(keys.games.detail(1942)).toEqual(["games", "detail", 1942]);
   });
 
-  it("keys the backlog list by its filter, so All and a status differ", () => {
-    expect(keys.backlog.list(undefined, "updated_at")).toEqual([
-      "backlog",
-      "list",
-      "all",
-      "updated_at",
-    ]);
-    expect(keys.backlog.list("playing", "updated_at")).toEqual([
-      "backlog",
-      "list",
-      "playing",
-      "updated_at",
-    ]);
+  it("keys Home's single backlog list", () => {
+    expect(keys.backlog.list()).toEqual(["backlog", "list"]);
   });
 
   it("keys stats under the backlog namespace so one invalidation covers both", () => {
