@@ -10,6 +10,9 @@ export const PHONE_INSETS = { top: 59, left: 0, right: 0, bottom: 34 };
 
 export type Insets = typeof PHONE_INSETS;
 
+/** iPhone Duo with its tab sidebar on the right, in place of the home indicator's side. */
+export const DUO_INSETS: Insets = { ...PHONE_INSETS, right: 60 };
+
 /** What the `useSafeAreaInsets` mock in `setup.ts` reports. A mock rather than
  * a provider: `renderRouter` mounts its own `SafeAreaProvider`, which would
  * override one around it. */

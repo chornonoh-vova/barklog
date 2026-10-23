@@ -3,9 +3,9 @@ import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
 import { SimilarGames } from "@/features/game/similar-games";
 import { gameSummary } from "@test/fixtures";
-import { scrollViewAround, sidePadding } from "@test/queries";
+import { shelfInsets } from "@test/queries";
 import { fakeEndpoints, renderWithProviders } from "@test/render";
-import { PHONE_INSETS } from "@test/window";
+import { DUO_INSETS } from "@test/window";
 
 const list = (...ids: number[]): GameListResponse =>
   ({ items: ids.map((id) => gameSummary({ id })) }) as GameListResponse;
@@ -54,16 +54,14 @@ describe("SimilarGames", () => {
     const api = fakeEndpoints({ similarGames: async () => list(2, 3) });
     await renderWithProviders(<SimilarGames gameId={7} onPressGame={jest.fn()} />, {
       api,
-      insets: { ...PHONE_INSETS, right: 60 },
+      insets: DUO_INSETS,
     });
 
-    const row = scrollViewAround(await screen.findByRole("button", { name: "Game 2, 2020" }), {
-      horizontal: true,
-    });
-    expect(sidePadding(row)).toEqual({
+    const game = await screen.findByRole("button", { name: "Game 2, 2020" });
+    expect(shelfInsets(game, "Similar Games")).toEqual({
       frame: { left: undefined, right: undefined },
       content: { left: 16, right: 76 },
+      title: { left: 16, right: 76 },
     });
-    expect(screen.getByText("Similar Games")).toHaveStyle({ paddingLeft: 16, paddingRight: 76 });
   });
 });

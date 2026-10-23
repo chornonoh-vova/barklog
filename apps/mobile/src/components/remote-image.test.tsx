@@ -1,15 +1,12 @@
-import { render, screen } from "@testing-library/react-native";
+import { render } from "@testing-library/react-native";
 
 import { RemoteImage } from "@/components/remote-image";
 import { useImageTransition } from "@/ui/use-reduced-motion";
+import { nativeView } from "@test/queries";
 
 jest.mock("@/ui/use-reduced-motion", () => ({ useImageTransition: jest.fn(() => 150) }));
 
-function image() {
-  const [view] = screen.container.queryAll((node) => node.type === "ViewManagerAdapter_ExpoImage");
-  if (view === undefined) throw new Error("no image rendered");
-  return view;
-}
+const image = () => nativeView("ViewManagerAdapter_ExpoImage");
 
 const uri = "https://example.com/cover.jpg";
 

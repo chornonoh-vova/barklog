@@ -3,9 +3,9 @@ import { screen, userEvent } from "@testing-library/react-native";
 import { GameShelf } from "@/features/explore/game-shelf";
 import { toColumns } from "@/features/explore/shelves";
 import { gameSummary } from "@test/fixtures";
-import { scrollViewAround, sidePadding } from "@test/queries";
+import { shelfInsets } from "@test/queries";
 import { renderWithProviders } from "@test/render";
-import { PHONE_INSETS } from "@test/window";
+import { DUO_INSETS } from "@test/window";
 
 const shelf = {
   feed: "popular" as const,
@@ -44,18 +44,17 @@ describe("GameShelf", () => {
   it("runs the list under the side safe areas, so covers scroll beneath a tab sidebar", async () => {
     // iPhone Duo with the tab sidebar on the right.
     await renderWithProviders(<GameShelf shelf={shelf} onPressGame={jest.fn()} />, {
-      insets: { ...PHONE_INSETS, right: 60 },
+      insets: DUO_INSETS,
     });
 
-    const list = scrollViewAround(screen.getByRole("button", { name: "Hades, 2020" }), {
-      horizontal: true,
-    });
-    // The list spans the whole width; only its content is inset, so the first
-    // and last covers rest clear of the sidebar.
-    expect(sidePadding(list)).toEqual({
+    // The list spans the whole width; only its content and title are inset, so
+    // the first and last covers rest clear of the sidebar.
+    expect(
+      shelfInsets(screen.getByRole("button", { name: "Hades, 2020" }), "Most Popular"),
+    ).toEqual({
       frame: { left: undefined, right: undefined },
       content: { left: 16, right: 76 },
+      title: { left: 16, right: 76 },
     });
-    expect(screen.getByText("Most Popular")).toHaveStyle({ paddingLeft: 16, paddingRight: 76 });
   });
 });

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, userEvent } from "@testing-library/react-nat
 import { PlatformColor, Pressable, Text } from "react-native";
 
 import { GameRow } from "@/components/game-row";
+import { nativeView, nativeViews } from "@test/queries";
 
 const props = {
   id: 7,
@@ -12,9 +13,7 @@ const props = {
 };
 
 const symbols = () =>
-  screen.container
-    .queryAll((node) => node.type === "ViewManagerAdapter_SymbolModule")
-    .map((node) => node.props.name as string);
+  nativeViews("ViewManagerAdapter_SymbolModule").map((node) => node.props.name as string);
 
 /** A finger down and held: Pressable's own responder grant, short of a release. */
 const pressIn = (element: Parameters<typeof fireEvent>[0]) =>
@@ -80,10 +79,7 @@ describe("GameRow", () => {
   it("shows the cover", async () => {
     await render(<GameRow {...props} />);
 
-    const [cover] = screen.container.queryAll(
-      (node) => node.type === "ViewManagerAdapter_ExpoImage",
-    );
-    expect(cover?.props.source).toEqual([
+    expect(nativeView("ViewManagerAdapter_ExpoImage").props.source).toEqual([
       expect.objectContaining({ uri: expect.stringContaining("/t_cover_small_2x/co1abc.jpg") }),
     ]);
   });

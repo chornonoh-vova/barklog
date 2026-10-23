@@ -1,15 +1,7 @@
 import { render, screen } from "@testing-library/react-native";
 
 import { Cover } from "@/components/cover";
-
-/** expo-image and expo-symbols render opaque native views: read the props they were given. */
-const nativeViews = (type: string) => screen.container.queryAll((node) => node.type === type);
-
-function nativeView(type: string) {
-  const [view] = nativeViews(type);
-  if (view === undefined) throw new Error(`no ${type} rendered`);
-  return view;
-}
+import { nativeView, nativeViews } from "@test/queries";
 
 describe("Cover", () => {
   it("loads the IGDB cover at the requested size", async () => {

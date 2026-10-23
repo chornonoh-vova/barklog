@@ -4,14 +4,8 @@ import { testRouter } from "expo-router/testing-library";
 import { gameDetail, gameSummary, identifyResponse } from "@test/fixtures";
 import { share } from "@test/mocks/native";
 
-import {
-  fakeServer,
-  markOnboardingSeen,
-  pressHeaderButton,
-  renderApp,
-  requests,
-  type ServerRoutes,
-} from "./app";
+import { fakeServer, markOnboardingSeen, renderApp, requests, type ServerRoutes } from "./app";
+import { pressHeaderButton } from "@test/queries";
 
 const VIDEO = "https://www.youtube.com/watch?v=abc";
 

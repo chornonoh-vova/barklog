@@ -1,12 +1,9 @@
-import { render, screen } from "@testing-library/react-native";
+import { render } from "@testing-library/react-native";
 
 import { Mascot } from "@/components/mascot";
+import { nativeView } from "@test/queries";
 
-function image() {
-  const [view] = screen.container.queryAll((node) => node.type === "ViewManagerAdapter_ExpoImage");
-  if (view === undefined) throw new Error("no image rendered");
-  return view;
-}
+const image = () => nativeView("ViewManagerAdapter_ExpoImage");
 
 describe("Mascot", () => {
   it("shows the named illustration, whole, at its fixed size", async () => {

@@ -5,6 +5,7 @@ import { BacklogScreen } from "@/features/backlog/backlog-screen";
 import { backlogItem, backlogList, me } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders } from "@test/render";
 import { setWindow, TABLET } from "@test/window";
+import { scrollViewAround } from "@test/queries";
 
 type HostElement = ReturnType<typeof screen.getByText>;
 
@@ -25,12 +26,7 @@ function renderHome(backlog = backlogList(), { premium = false, initialUrl = "/"
 }
 
 /** The list's scroll view, found from a row inside it. */
-function listOf(element: HostElement): HostElement {
-  let node: HostElement | null = element;
-  while (node !== null && node.type !== "RCTScrollView") node = node.parent;
-  if (node === null) throw new Error("not inside a scroll view");
-  return node;
-}
+const listOf = (element: HostElement) => scrollViewAround(element, { horizontal: false });
 
 type RefreshControlProps = { refreshing: boolean; onRefresh: () => void };
 

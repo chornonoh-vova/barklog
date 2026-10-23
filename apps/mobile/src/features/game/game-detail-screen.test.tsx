@@ -15,8 +15,14 @@ import {
   me,
 } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders, testQueryClient } from "@test/render";
-import { scrollViewAround, sidePadding } from "@test/queries";
-import { PHONE_INSETS, setWindow, TABLET, type Insets } from "@test/window";
+import {
+  ancestor,
+  navigationBar,
+  navigationBarItem,
+  scrollViewAround,
+  sidePadding,
+} from "@test/queries";
+import { DUO_INSETS, setWindow, TABLET, type Insets } from "@test/window";
 
 const onOpenGame = jest.fn();
 
@@ -44,35 +50,6 @@ function renderDetail(
   return renderRouterWithProviders(routes, { initialUrl: "/game/7", api, ...options });
 }
 
-type BarItem = {
-  accessibilityLabel: string;
-  type: "button" | "menu";
-  disabled?: boolean;
-  onPress?: () => void;
-  menu?: { items: { title: string; destructive?: boolean; onPress: () => void }[] };
-};
-
-type HeaderConfig = { title: string; headerRightBarButtonItems?: BarItem[] };
-
-/** What the screen hands the native navigation bar: its title and toolbar items. */
-function header(): HeaderConfig {
-  type Node = { type: string; props: Record<string, unknown>; children: unknown[] | null };
-  const find = (node: unknown): Node | undefined => {
-    if (node === null || typeof node !== "object") return undefined;
-    if (Array.isArray(node)) return node.map(find).find(Boolean);
-    const element = node as Node;
-    if (element.type === "RNSScreenStackHeaderConfig") return element;
-    return find(element.children);
-  };
-  const config = find(screen.toJSON());
-  if (config === undefined) throw new Error("no navigation bar");
-  return config.props as unknown as HeaderConfig;
-}
-
-function toolbarItem(label: string): BarItem | undefined {
-  return header().headerRightBarButtonItems?.find((item) => item.accessibilityLabel === label);
-}
-
 /** Every text on screen, in reading order. */
 function textsInOrder(): string[] {
   const texts: string[] = [];
@@ -94,7 +71,7 @@ describe("GameDetailScreen", () => {
 
     expect(await screen.findByText("Summary")).toBeOnTheScreen();
     expect(api.getGame).toHaveBeenCalledWith(7);
-    expect(header().title).toBe("Hades");
+    expect(navigationBar().title).toBe("Hades");
     for (const text of [
       "Hades",
       "A game about games.",
@@ -111,11 +88,11 @@ describe("GameDetailScreen", () => {
     await renderRouterWithProviders(routes, { initialUrl: "/game/7", api });
 
     expect(screen.getByRole("progressbar")).toBeOnTheScreen();
-    expect(header().title).toBe("");
-    expect(toolbarItem("Backlog actions")).toBeUndefined();
+    expect(navigationBar().title).toBe("");
+    expect(navigationBarItem("Backlog actions")).toBeUndefined();
 
     const share = jest.spyOn(Share, "share");
-    const button = toolbarItem("Share game");
+    const button = navigationBarItem("Share game");
     expect(button?.disabled).toBe(true);
     // Disabled natively; the handler holds back too, with nothing to share yet.
     await act(async () => button?.onPress?.());
@@ -218,7 +195,7 @@ describe("GameDetailScreen", () => {
     await renderDetail([gameDetail({ id: 7, name: "Hades", slug: "hades" })]);
     await screen.findByText("Summary");
 
-    const button = toolbarItem("Share game");
+    const button = navigationBarItem("Share game");
     expect(button?.disabled).toBe(false);
     await act(async () => button?.onPress?.());
 
@@ -232,7 +209,7 @@ describe("GameDetailScreen", () => {
     await renderDetail([gameDetail({ id: 7 })]);
     await screen.findByText("Summary");
 
-    expect(toolbarItem("Backlog actions")).toBeUndefined();
+    expect(navigationBarItem("Backlog actions")).toBeUndefined();
   });
 
   it("asks before removing from the toolbar, and removes only on the destructive button", async () => {
@@ -243,7 +220,7 @@ describe("GameDetailScreen", () => {
     ]);
     await screen.findByText("Summary");
 
-    const menu = toolbarItem("Backlog actions");
+    const menu = navigationBarItem("Backlog actions");
     expect(menu?.type).toBe("menu");
     const remove = menu?.menu?.items.find((item) => item.title === "Remove from Backlog…");
     expect(remove?.destructive).toBe(true);
@@ -258,7 +235,7 @@ describe("GameDetailScreen", () => {
 
     expect(api.deleteBacklogEntry).toHaveBeenCalledWith(7);
     expect(await screen.findByRole("menu", { name: "Add to Backlog" })).toBeOnTheScreen();
-    await waitFor(() => expect(toolbarItem("Backlog actions")).toBeUndefined());
+    await waitFor(() => expect(navigationBarItem("Backlog actions")).toBeUndefined());
   });
 
   it("opens a similar game through the caller", async () => {
@@ -296,7 +273,7 @@ describe("GameDetailScreen", () => {
   it("insets the details but lets the shelves run under a tab sidebar", async () => {
     // iPhone Duo with the tab sidebar on the right.
     await renderDetail([gameDetail({ id: 7, screenshots: ["shot"] })], {
-      insets: { ...PHONE_INSETS, right: 60 },
+      insets: DUO_INSETS,
     });
 
     const shot = await screen.findByRole("button", { name: "Screenshot 1 of 1" });
@@ -310,10 +287,10 @@ describe("GameDetailScreen", () => {
       right: 76,
     });
     // The details still keep clear of it.
-    let details: ReturnType<typeof screen.getByText> | null = screen.getByText("Release");
-    while (details !== null && details.props.style?.paddingRight === undefined) {
-      details = details.parent;
-    }
+    const details = ancestor(
+      screen.getByText("Release"),
+      (node) => node.props.style?.paddingRight !== undefined,
+    );
     expect(details).toHaveStyle({ paddingLeft: 0, paddingRight: 60 });
   });
 });

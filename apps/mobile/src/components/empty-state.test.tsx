@@ -1,21 +1,13 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 
 import { EmptyState } from "@/components/empty-state";
+import { nativeView, nativeViews } from "@test/queries";
 
 const content = {
   title: "Nothing here",
   systemImage: "tray" as const,
   description: "Add a game to get started.",
 };
-
-/** expo-image and expo-symbols render opaque native views: read the props they were given. */
-const nativeViews = (type: string) => screen.container.queryAll((node) => node.type === type);
-
-function nativeView(type: string) {
-  const [view] = nativeViews(type);
-  if (view === undefined) throw new Error(`no ${type} rendered`);
-  return view;
-}
 
 describe("EmptyState", () => {
   it("shows the title and description", async () => {

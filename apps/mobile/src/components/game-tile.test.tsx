@@ -2,6 +2,7 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 
 import { GameTile } from "@/components/game-tile";
 import { setWindow } from "@test/window";
+import { nativeView } from "@test/queries";
 
 const props = {
   id: 3,
@@ -29,10 +30,7 @@ describe("GameTile", () => {
   it("shows the sharper big cover", async () => {
     await render(<GameTile {...props} />);
 
-    const [cover] = screen.container.queryAll(
-      (node) => node.type === "ViewManagerAdapter_ExpoImage",
-    );
-    expect(cover?.props.source).toEqual([
+    expect(nativeView("ViewManagerAdapter_ExpoImage").props.source).toEqual([
       expect.objectContaining({ uri: expect.stringContaining("/t_cover_big_2x/co2xyz.jpg") }),
     ]);
   });

@@ -1,9 +1,9 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
 import { Screenshots } from "@/features/game/screenshots";
-import { scrollViewAround, sidePadding } from "@test/queries";
+import { shelfInsets } from "@test/queries";
 import { renderWithProviders } from "@test/render";
-import { PHONE_INSETS } from "@test/window";
+import { DUO_INSETS } from "@test/window";
 
 describe("Screenshots", () => {
   it("renders nothing for a game without screenshots", async () => {
@@ -41,16 +41,15 @@ describe("Screenshots", () => {
 
   it("runs under the side safe areas, so shots scroll beneath a tab sidebar", async () => {
     await renderWithProviders(<Screenshots screenshots={["shotA", "shotB"]} />, {
-      insets: { ...PHONE_INSETS, right: 60 },
+      insets: DUO_INSETS,
     });
 
-    const list = scrollViewAround(screen.getByRole("button", { name: "Screenshot 1 of 2" }), {
-      horizontal: true,
-    });
-    expect(sidePadding(list)).toEqual({
+    expect(
+      shelfInsets(screen.getByRole("button", { name: "Screenshot 1 of 2" }), "Screenshots"),
+    ).toEqual({
       frame: { left: undefined, right: undefined },
       content: { left: 16, right: 76 },
+      title: { left: 16, right: 76 },
     });
-    expect(screen.getByText("Screenshots")).toHaveStyle({ paddingLeft: 16, paddingRight: 76 });
   });
 });

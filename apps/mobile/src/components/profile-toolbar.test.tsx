@@ -8,8 +8,7 @@ import { me } from "@test/fixtures";
 import { clerk } from "@test/mocks/native";
 import { fakeEndpoints, renderRouterWithProviders } from "@test/render";
 import { setWindow, TABLET } from "@test/window";
-
-type BarButtonItem = { accessibilityLabel?: string; sfSymbolName?: string; onPress: () => void };
+import { nativeView, navigationBars, type BarItem } from "@test/queries";
 
 async function renderToolbar({ premium = false } = {}) {
   const api = fakeEndpoints({ getMe: async () => me({ premium }) });
@@ -22,15 +21,10 @@ async function renderToolbar({ premium = false } = {}) {
 }
 
 /** `Stack.Toolbar.Button`s become native bar button items, which have no view to query. */
-function barButtons(): BarButtonItem[] {
-  const [header] = screen.container.queryAll((node) => node.type === "RNSScreenStackHeaderConfig");
-  return (header?.props.headerRightBarButtonItems ?? []) as BarButtonItem[];
-}
+const barButtons = (): BarItem[] => navigationBars()[0]?.items ?? [];
 
 function profileModal() {
-  const [modal] = screen.container.queryAll((node) => node.type === "Modal");
-  if (modal === undefined) throw new Error("the profile modal is not mounted");
-  return modal;
+  return nativeView("Modal");
 }
 
 const openAccount = () => screen.getByRole("button", { name: "Open account" });
@@ -39,11 +33,9 @@ describe("ProfileToolbar", () => {
   it("shows the signed-in user's avatar", async () => {
     await renderToolbar();
 
-    const [avatar] = screen.container.queryAll(
-      (node) => node.type === "ViewManagerAdapter_ExpoImage",
-    );
-    expect(openAccount()).toContainElement(avatar ?? null);
-    expect(avatar?.props.source).toEqual([expect.objectContaining({ uri: clerk.imageUrl })]);
+    const avatar = nativeView("ViewManagerAdapter_ExpoImage");
+    expect(openAccount()).toContainElement(avatar);
+    expect(avatar.props.source).toEqual([expect.objectContaining({ uri: clerk.imageUrl })]);
   });
 
   it("offers no subscription button to a free user", async () => {
@@ -56,7 +48,7 @@ describe("ProfileToolbar", () => {
     await renderToolbar({ premium: true });
 
     await waitFor(() => expect(barButtons()).toHaveLength(1));
-    const [star] = barButtons() as [BarButtonItem];
+    const [star] = barButtons() as [BarItem];
     expect(star).toEqual(
       expect.objectContaining({
         sfSymbolName: "star.fill",
@@ -64,7 +56,7 @@ describe("ProfileToolbar", () => {
       }),
     );
 
-    await act(async () => star.onPress());
+    await act(async () => star.onPress?.());
 
     expect(RevenueCatUI.presentCustomerCenter).toHaveBeenCalledTimes(1);
   });

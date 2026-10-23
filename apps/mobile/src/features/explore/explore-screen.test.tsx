@@ -5,6 +5,7 @@ import { ExploreScreen } from "@/features/explore/explore-screen";
 import { ApiError } from "@/lib/api/errors";
 import { gameSummary } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders } from "@test/render";
+import { scrollViewAround } from "@test/queries";
 
 type HostElement = ReturnType<typeof screen.getByText>;
 
@@ -29,12 +30,7 @@ function renderExplore(feeds: Feeds) {
 }
 
 /** The screen's scroll view, found from something inside it. */
-function scrollViewOf(element: HostElement): HostElement {
-  let node: HostElement | null = element;
-  while (node !== null && node.type !== "RCTScrollView") node = node.parent;
-  if (node === null) throw new Error("not inside a scroll view");
-  return node;
-}
+const scrollViewOf = (element: HostElement) => scrollViewAround(element, { horizontal: false });
 
 describe("ExploreScreen", () => {
   it("shows a spinner while the feeds load", async () => {
