@@ -5,6 +5,7 @@
 **Goal:** Put each backlog entry write in one deep module on each side of the wire. The server applies it under the free-tier cap. The device applies it optimistically, behind a slot check made at tap time. The device stops keeping a second copy of the counts, and an account switch no longer depends on doing things in a set order.
 
 **Architecture:**
+
 - **Server:** `apps/api/src/backlog/entry-write.ts` owns the transaction that used to be inline in `PUT /api/backlog/:gameId`. A missing `rating` now means "keep it".
 - **Device:** `src/features/backlog/entry-writes.ts` is a plain core over a `QueryClient`, the API and an effects object. A thin `useBacklogEntry(gameId)` hook wires real effects into it.
 - **Counts:** derived from the one backlog list, so the stats query goes.
@@ -41,11 +42,13 @@
 ### Task 1: The upsert query keeps a rating that isn't given
 
 **Files:**
+
 - Modify: `packages/db/src/queries/backlog.ts:121-147` (`upsertBacklogEntry`)
 - Test: `packages/db/test/backlog-queries.test.ts`
 - Add: `CONTEXT.md` (already written, uncommitted)
 
 **Interfaces:**
+
 - Produces: `upsertBacklogEntry(db: Queryable, input: { userId: string; gameId: number; status: BacklogStatusValue; rating?: number | null }): Promise<{ entry: BacklogEntry; created: boolean }>`. With `rating === undefined`, an insert stores `null` and a conflict update leaves `rating` out of `set`.
 
 - [ ] **Step 1: Write the failing tests** in `backlog-queries.test.ts`:
@@ -62,6 +65,7 @@
 ### Task 2: The server's backlog entry write module
 
 **Files:**
+
 - Create: `apps/api/src/backlog/entry-write.ts`
 - Modify: `apps/api/src/routes/backlog.ts:62-125` (the PUT handler)
 - Modify: `packages/contracts/src/backlog.ts:20` (doc comment on `backlogUpsertSchema` only)
@@ -69,8 +73,10 @@
 - Modify: `apps/api/test/backlog-cap.test.ts` (keep the HTTP-only tests, move the rest)
 
 **Interfaces:**
+
 - Consumes: Task 1's optional `rating`.
 - Produces:
+
   ```ts
   export type EntryWriteOutcome =
     | { kind: "saved"; entry: BacklogEntry; created: boolean }
@@ -113,6 +119,7 @@
   - `saved`: `toBacklogEntry`, with 201 or 200 as now.
 
   Drop the imports the route no longer uses.
+
 - [ ] **Step 5: Reduce `backlog-cap.test.ts` to the HTTP shape.** Keep `"a free user fills every slot, and the next unfinished add is 402"` and the lapsed-subscriber test, which pins the `Finish N` copy and `code`. Add `"a move without rating keeps it"`: PUT `{status:"completed", rating:8}` to game 1, then `{status:"playing"}`. Expect 200 and a body matching `{ status: "playing", rating: 8 }`.
 - [ ] **Step 6: Document the rule** in the comment above `backlogUpsertSchema`: "`rating` left out keeps the stored rating; `null` clears it."
 - [ ] **Step 7: Run** `pnpm test`, `pnpm check-types` and `pnpm lint` in `apps/api`, then `pnpm check-types` in `packages/contracts`. Expected: PASS. That includes `backlog-routes.test.ts` as it is.
@@ -123,11 +130,13 @@
 ### Task 3: One entitlement read for `/me` and `/subscription/refresh`
 
 **Files:**
+
 - Modify: `apps/api/src/entitlement.ts`
 - Modify: `apps/api/src/routes/me.ts`, `apps/api/src/routes/subscription.ts`
 - Test: `apps/api/test/entitlement.test.ts`
 
 **Interfaces:**
+
 - Produces: `readEntitlement(db: Queryable, userId: string, now: Date): Promise<MeResponse>`. It returns `{ premium: isPremium(row, now), entitlement: row === null ? null : toEntitlement(row) }`. `MeResponse` comes from `@repo/contracts`.
 
 - [ ] **Step 1: Write the failing tests** in `entitlement.test.ts`, using the `createTestApp()` db and `upsertSubscription`:
@@ -143,6 +152,7 @@
 ### Task 4: Counts come from the backlog list
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/backlog/slots.ts`
 - Modify: `apps/mobile/src/features/backlog/use-slot-state.ts` (temporary, deleted in Task 5)
 - Modify: `apps/mobile/src/features/backlog/backlog-screen.tsx` (stats query, pill, pull-to-refresh)
@@ -155,6 +165,7 @@
 - Test: `test/slots.test.ts`, `test/optimistic-list.test.ts`, `test/api-keys.test.ts`, `test/api-endpoints.test.ts`, `test/query-persist-policy.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `activeSlotsUsed(items: readonly BacklogListItemWire[]): number`, which counts items whose status is in `SLOT_CONSUMING_STATUSES`.
   - `countStatus(items: readonly BacklogListItemWire[], status: BacklogStatus): number`.
@@ -181,6 +192,7 @@
 ### Task 5: The device's backlog entry write module
 
 **Files:**
+
 - Create: `apps/mobile/src/features/backlog/entry-writes.ts`
 - Modify: `apps/mobile/src/api/hooks.ts` (replace `useBacklogEntryMutation`, `useUpsertBacklogEntry` and `useDeleteBacklogEntry` with `useBacklogEntry`)
 - Modify: `apps/mobile/src/api/endpoints.ts:52-56` (`rating` optional, and left out of the body when `undefined`)
@@ -193,6 +205,7 @@
 - Modify: `apps/mobile/test/api-endpoints.test.ts`
 
 **Interfaces:**
+
 - Consumes: `activeSlotsUsed(items)` from Task 4, `wouldExceedSlots` (unchanged), `patchBacklogList` (unchanged), `shouldPlayStatusHaptic` (unchanged).
 - Produces:
   ```ts
@@ -216,6 +229,7 @@
   `upsertBacklogEntry(gameId, input: { status: BacklogStatus; rating?: number | null })` sends `{ status }` alone when `rating` is `undefined`.
 
 **How the core behaves** (this is what the tests pin):
+
 - **The slot check** runs before anything else, from `queryClient.getQueryData(keys.me())?.premium`, the cached list's `activeSlotsUsed`, and `from`. `from` is the cached detail's `backlogEntry?.status` when the detail is cached, otherwise the list item's status, otherwise `null`. If `wouldExceedSlots` says yes, call `effects.openPaywall()` and stop: no cache change and no request.
 - **Each write runs as a mutation** through `new MutationObserver(queryClient, options).mutate(input)`. That way it uses the client's mutation defaults (`retry: false`) and network mode, the same as `useMutation`. The returned promise never rejects, so `.catch` it.
 - **`onMutate`** keeps today's logic minus stats: cancel the detail and the list, patch the detail entry and the list with `patchBacklogList`, then play the haptic if `shouldPlayStatusHaptic(previous?.status, status)`. For `move`, the cached entry's rating fills the optimistic `{status, rating}` (`null` for a new entry), and the request leaves `rating` out. For `remove`, the change is `null` and no haptic plays.
@@ -255,6 +269,7 @@
 ### Task 6: Recents leave the query cache
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/search/recents-storage.ts` (rewrite)
 - Modify: `apps/mobile/src/app/(tabs)/search/index.tsx`
 - Modify: `apps/mobile/src/auth/auth-gate.tsx` (`clearDeviceData` and its ordering comment)
@@ -263,6 +278,7 @@
 - Modify: `apps/mobile/test/api-keys.test.ts` (delete the recents key test, if present)
 
 **Interfaces:**
+
 - Produces:
   - `useRecents(): readonly string[]`, via `useSyncExternalStore`.
   - `recordRecent(query: string): Promise<void>`
@@ -295,11 +311,13 @@
 ### Task 7: One entitlement refresh after a purchase
 
 **Files:**
+
 - Modify: `apps/mobile/src/purchases/refresh.ts`
 - Modify: `apps/mobile/src/purchases/provider.tsx:58`, `apps/mobile/src/app/paywall.tsx:33-36`
 - Create: `apps/mobile/test/refresh-entitlement.test.ts`
 
 **Interfaces:**
+
 - Produces: `refreshEntitlement(api: Pick<Endpoints, "refreshSubscription">, queryClient: QueryClient): Promise<void>`. It awaits `refreshSubscription(api)`, then invalidates `keys.me()`. It never rejects.
 
 - [ ] **Step 1: Write the failing tests,** using `vi.stubGlobal("__DEV__", false)` and a real `createQueryClient()` seeded with `keys.me()`:

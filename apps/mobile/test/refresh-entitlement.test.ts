@@ -27,9 +27,7 @@ describe("refreshEntitlement", () => {
   it("invalidates me only after the server has re-read", async () => {
     const queryClient = seeded();
     let release!: () => void;
-    const refreshSubscription = vi.fn(
-      () => new Promise<void>((resolve) => (release = resolve)),
-    );
+    const refreshSubscription = vi.fn(() => new Promise<void>((resolve) => (release = resolve)));
 
     const done = refreshEntitlement({ refreshSubscription } as never, queryClient);
     await Promise.resolve();
