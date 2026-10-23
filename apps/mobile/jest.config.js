@@ -18,6 +18,9 @@ module.exports = {
   // iOS, not the universal preset: the app ships only there, so `Platform.OS`
   // and `.ios.tsx` resolution match the device.
   preset: "jest-expo/ios",
+  // A fixed path, so CI can keep the transform cache between runs: the
+  // jest-expo, expo-router and React Native graph is slow to transform cold.
+  cacheDirectory: "<rootDir>/node_modules/.cache/jest",
   // Call history resets per test, and `jest.spyOn` spies are restored, so a
   // spy (say, on `fetch` or `Alert.alert`) never outlives its test.
   clearMocks: true,

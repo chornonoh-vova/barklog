@@ -36,13 +36,19 @@ jobs:
       # each package's built .d.ts.
       - run: pnpm build
       - run: pnpm format:check
-      - run: pnpm lint
-      - run: pnpm check-types
-      # The suites start Postgres and Valkey through Testcontainers on the
-      # runner's Docker daemon. No secrets: the only credential-dependent test
-      # is packages/igdb's contract test, which has its own config and its own
-      # scheduled workflow.
-      - run: pnpm test
+      # Mobile's Jest transform cache. Keyed on the lockfile and the Jest config,
+      # with a fallback to the last cache: a stale entry is only re-transformed.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: apps/mobile/node_modules/.cache/jest
+          key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
+          restore-keys: jest-${{ runner.os }}-
+      # One turbo run, so lint, types and tests overlap across packages instead
+      # of waiting on one another. The suites start Postgres and Valkey through
+      # Testcontainers on the runner's Docker daemon. No secrets: the only
+      # credential-dependent test is packages/igdb's contract test, which has
+      # its own config and its own scheduled workflow.
+      - run: pnpm turbo run lint check-types test
 
       # Mobile's Jest run writes coverage; a failed threshold still leaves a
       # report worth reading, hence `always()`.
