@@ -9,3 +9,6 @@ apps/mobile/ios
 # Drizzle's generated snapshots — reformatting them is a ~157-line diff of noise.
 packages/db/drizzle
 apps/mobile/android
+# Written by `eas metadata:pull` in its own JSON layout, which every pull
+# would restore; it mirrors App Store Connect rather than code we edit.
+apps/mobile/store.config.json
