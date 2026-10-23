@@ -19,7 +19,7 @@ A change of a backlog entry's status. A move keeps the rating.
 _Avoid_: status update, transition
 
 **Backlog entry write**:
-Any add, move, re-rating or removal of a backlog entry. The server applies it under the free-tier cap; the device applies it optimistically first.
+Any add, move, re-rating or removal of a backlog entry. The server applies it under the free-tier cap; the device shows it once the server has, by refetching.
 _Avoid_: upsert (outside the db query), mutation
 
 ### Device

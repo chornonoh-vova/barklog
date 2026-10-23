@@ -43,7 +43,7 @@ export function createEndpoints(request: Request) {
         body: { url: input.url, limit: input.limit ?? IDENTIFY_LIMIT_DEFAULT },
       }),
 
-    // The server's default order, which `patchBacklogList` mirrors.
+    // The server's default order; `compare` in `features/backlog/order.ts` mirrors it.
     listBacklog: () => request<BacklogListResponse>("/api/backlog"),
 
     // A missing `rating` keeps the stored one and `null` clears it, so a move

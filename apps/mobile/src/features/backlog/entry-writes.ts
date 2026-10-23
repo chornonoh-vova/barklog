@@ -3,7 +3,6 @@ import type {
   BacklogListResponse,
   BacklogStatus,
   GameDetailResponse,
-  GameSummaryWire,
   MeResponse,
 } from "@repo/contracts";
 import { MutationObserver, type QueryClient } from "@tanstack/react-query";
@@ -11,7 +10,6 @@ import { MutationObserver, type QueryClient } from "@tanstack/react-query";
 import type { Endpoints } from "@/api/endpoints";
 import { isApiError } from "@/api/errors";
 import { keys } from "@/api/keys";
-import { patchBacklogList } from "@/features/backlog/optimistic-list";
 import { activeSlotsUsed } from "@/features/backlog/slots";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
@@ -24,29 +22,18 @@ export interface EntryWriteEffects {
 }
 
 /** Each promise settles once the write has, and never rejects: a failure is
- * already handled by the rollback, alert or paywall. */
+ * already handled by the alert or paywall. */
 export interface EntryWrites {
   move(gameId: number, status: BacklogStatus): Promise<void>;
   rate(gameId: number, status: BacklogStatus, rating: number | null): Promise<void>;
   remove(gameId: number): Promise<void>;
 }
 
-/** What the entry becomes, in the detail and in cached lists; `null` removes it. */
-type Change = { status: BacklogStatus; rating: number | null } | null;
-
-/** The list's shape only: the list is persisted, and detail fields would bloat it. */
-function toSummary(game: GameDetailResponse): GameSummaryWire {
-  return {
-    id: game.id,
-    name: game.name,
-    slug: game.slug,
-    coverImageId: game.coverImageId,
-    firstReleaseDate: game.firstReleaseDate,
-    totalRating: game.totalRating,
-    totalRatingCount: game.totalRatingCount,
-  };
-}
-
+/**
+ * Writes are not applied to the cache ahead of the server: each one refetches
+ * the game and the backlog once it lands, and the screens show what comes back.
+ * A guess would need a snapshot and a rollback for every way it can be wrong.
+ */
 export function createEntryWrites(
   queryClient: QueryClient,
   api: Pick<Endpoints, "upsertBacklogEntry" | "deleteBacklogEntry">,
@@ -81,68 +68,18 @@ export function createEntryWrites(
   const write = (
     gameId: number,
     request: () => Promise<unknown>,
-    change: () => Change,
+    status: BacklogStatus | null,
   ): Promise<void> => {
+    // Read at tap time: the refetch after the write replaces it.
+    const from = cachedEntry(gameId)?.status;
     const observer = new MutationObserver(queryClient, {
       mutationFn: request,
 
-      onMutate: async () => {
-        const key = keys.games.detail(gameId);
-        await Promise.all([
-          queryClient.cancelQueries({ queryKey: key }),
-          queryClient.cancelQueries({ queryKey: keys.backlog.list() }),
-        ]);
-        const previous = queryClient.getQueryData<GameDetailResponse>(key);
-        const next = change();
-        const now = new Date().toISOString();
-
-        if (previous) {
-          queryClient.setQueryData<GameDetailResponse>(key, {
-            ...previous,
-            backlogEntry:
-              next === null
-                ? null
-                : {
-                    gameId,
-                    status: next.status,
-                    rating: next.rating,
-                    addedAt: previous.backlogEntry?.addedAt ?? now,
-                    updatedAt: now,
-                  },
-          });
-        }
-
-        // The list too, or Home keeps showing the old row until the refetch
-        // lands — a removal that seems not to have worked invites a second tap.
-        // Its filters are derived from it, so they follow. An add from a game's
-        // page joins it too: slots are counted from the list, so a second add
-        // before the refetch must see the first.
-        const list = getList();
-
-        if (list !== undefined) {
-          queryClient.setQueryData(
-            keys.backlog.list(),
-            patchBacklogList(list, gameId, next, now, previous && toSummary(previous)),
-          );
-        }
-
-        // At apply time, not on success: the screen already shows the new status,
-        // and a haptic that waits on the network lands after the change it marks.
-        // A failure is corrected by the rollback and alert in `onError`.
-        if (next !== null && shouldPlayStatusHaptic(previous?.backlogEntry?.status, next.status)) {
-          effects.playStatusHaptic();
-        }
-
-        return { previous, list };
+      onSuccess: () => {
+        if (status !== null && shouldPlayStatusHaptic(from, status)) effects.playStatusHaptic();
       },
 
-      onError: (error, _input, context) => {
-        if (context?.previous) {
-          queryClient.setQueryData(keys.games.detail(gameId), context.previous);
-        }
-
-        if (context?.list) queryClient.setQueryData(keys.backlog.list(), context.list);
-
+      onError: (error) => {
         // No Alert: a sheet plus an alert is two dismissals for one event.
         if (isApiError(error) && error.status === 402) {
           // The slot check let this through, so the cached entitlement or
@@ -161,8 +98,8 @@ export function createEntryWrites(
       },
     });
 
-    // Reset once settled: an attached observer keeps the mutation, and its
-    // `{ previous, list }` snapshot, out of the cache's gc for the session.
+    // Reset once settled: an attached observer keeps the mutation out of the
+    // cache's gc for the session.
     return observer.mutate().then(
       () => observer.reset(),
       () => observer.reset(),
@@ -176,13 +113,8 @@ export function createEntryWrites(
         return;
       }
 
-      // The request leaves `rating` out so the server keeps the stored one;
-      // the cache shows that same rating meanwhile.
-      await write(
-        gameId,
-        () => api.upsertBacklogEntry(gameId, { status }),
-        () => ({ status, rating: cachedEntry(gameId)?.rating ?? null }),
-      );
+      // `rating` left out, so the server keeps the stored one.
+      await write(gameId, () => api.upsertBacklogEntry(gameId, { status }), status);
     },
 
     rate: async (gameId, status, rating) => {
@@ -191,18 +123,9 @@ export function createEntryWrites(
         return;
       }
 
-      await write(
-        gameId,
-        () => api.upsertBacklogEntry(gameId, { status, rating }),
-        () => ({ status, rating }),
-      );
+      await write(gameId, () => api.upsertBacklogEntry(gameId, { status, rating }), status);
     },
 
-    remove: (gameId) =>
-      write(
-        gameId,
-        () => api.deleteBacklogEntry(gameId),
-        () => null,
-      ),
+    remove: (gameId) => write(gameId, () => api.deleteBacklogEntry(gameId), null),
   };
 }

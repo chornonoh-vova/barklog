@@ -105,37 +105,105 @@ const getDetail = (id: number) =>
 const getList = () => queryClient.getQueryData<BacklogListResponse>(keys.backlog.list());
 
 describe("createEntryWrites", () => {
-  it("a move keeps the cached rating and sends no rating", async () => {
+  it("a move sends no rating, so the server keeps it", async () => {
     queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "completed", rating: 8 }));
-    const pending = deferred();
-    api.upsertBacklogEntry.mockReturnValue(pending.promise);
 
-    const done = writes.move(1, "abandoned");
+    await writes.move(1, "abandoned");
 
-    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
     expect(api.upsertBacklogEntry).toHaveBeenCalledWith(1, { status: "abandoned" });
-    expect(getDetail(1)?.backlogEntry).toMatchObject({ status: "abandoned", rating: 8 });
-
-    pending.resolve();
-    await done;
   });
 
-  it("a move patches the cached list at tap time", async () => {
-    queryClient.setQueryData(keys.backlog.list(), {
-      items: [item(1, "waiting"), item(2, "playing")],
-    });
+  // No guess at what the server will say: the refetch shows the change.
+  it("leaves the cache as is and refetches it once the server answers", async () => {
+    const list = { items: [item(1, "waiting"), item(2, "playing")] };
+    const game = detail(1, { status: "waiting", rating: null });
+    queryClient.setQueryData(keys.backlog.list(), list);
+    queryClient.setQueryData(keys.games.detail(1), game);
     const pending = deferred();
     api.upsertBacklogEntry.mockReturnValue(pending.promise);
 
     const done = writes.move(1, "completed");
 
     await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
-    expect(getList()?.items.find((i) => i.gameId === 1)?.status).toBe("completed");
+    expect(getList()).toBe(list);
+    expect(getDetail(1)).toBe(game);
+    expect(queryClient.getQueryState(keys.backlog.list())?.isInvalidated).toBe(false);
 
     pending.resolve();
     await done;
+
+    expect(queryClient.getQueryState(keys.backlog.list())?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(keys.games.detail(1))?.isInvalidated).toBe(true);
   });
 
+  it("a 402 opens the paywall without an alert", async () => {
+    const list = { items: [item(1, "completed", 8)] };
+    queryClient.setQueryData(keys.me(), me(false));
+    queryClient.setQueryData(keys.backlog.list(), list);
+    api.upsertBacklogEntry.mockRejectedValue(
+      new ApiError({ status: 402, type: "about:blank", title: "Payment Required" }),
+    );
+
+    await writes.move(1, "playing");
+
+    expect(getList()).toBe(list);
+    expect(effects.openPaywall).toHaveBeenCalledTimes(1);
+    expect(effects.alertError).not.toHaveBeenCalled();
+    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(queryClient.getQueryState(keys.me())?.isInvalidated).toBe(true);
+  });
+
+  it("any other failure alerts", async () => {
+    queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "waiting")] });
+    const error = new ApiError({ status: 500, type: "about:blank", title: "Server Error" });
+    api.upsertBacklogEntry.mockRejectedValue(error);
+
+    await writes.move(1, "playing");
+
+    expect(effects.alertError).toHaveBeenCalledTimes(1);
+    expect(effects.alertError).toHaveBeenCalledWith(error);
+    expect(effects.openPaywall).not.toHaveBeenCalled();
+    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+  });
+
+  it("the haptic plays once the server confirms a status change, not on a re-rate", async () => {
+    queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "waiting", rating: null }));
+    const pending = deferred();
+    api.upsertBacklogEntry.mockReturnValue(pending.promise);
+
+    const moved = writes.move(1, "playing");
+
+    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
+    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    pending.resolve();
+    await moved;
+    expect(effects.playStatusHaptic).toHaveBeenCalledTimes(1);
+
+    queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "playing", rating: null }));
+    api.upsertBacklogEntry.mockResolvedValue({});
+    await writes.rate(1, "playing", 9);
+
+    expect(effects.playStatusHaptic).toHaveBeenCalledTimes(1);
+  });
+
+  // Home acts without opening the game's page, so the list knows the old status.
+  it("a re-rate from Home reads the old status from the list and stays quiet", async () => {
+    queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "completed", 8)] });
+
+    await writes.rate(1, "completed", 5);
+
+    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+  });
+
+  it("remove plays no haptic and refetches the backlog", async () => {
+    queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "waiting")] });
+
+    await writes.remove(1);
+
+    expect(api.deleteBacklogEntry).toHaveBeenCalledWith(1);
+    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(queryClient.getQueryState(keys.backlog.list())?.isInvalidated).toBe(true);
+  });
   it("a slot-consuming move at the cap opens the paywall and writes nothing", async () => {
     const list = fullList();
     const game = detail(99, null);
@@ -149,38 +217,6 @@ describe("createEntryWrites", () => {
     expect(api.upsertBacklogEntry).not.toHaveBeenCalled();
     expect(getList()).toBe(list);
     expect(getDetail(99)).toBe(game);
-  });
-
-  it("an add from a game's page counts toward the slots before the refetch", async () => {
-    queryClient.setQueryData(keys.me(), me(false));
-    queryClient.setQueryData(keys.backlog.list(), {
-      items: Array.from({ length: FREE_ACTIVE_SLOTS - 1 }, (_, i) => item(i + 1, "waiting")),
-    });
-    queryClient.setQueryData(keys.games.detail(98), detail(98, null));
-    queryClient.setQueryData(keys.games.detail(99), detail(99, null));
-    const pending = deferred();
-    api.upsertBacklogEntry.mockReturnValue(pending.promise);
-
-    const first = writes.move(98, "waiting");
-    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
-
-    // The added row carries a summary, not the page's detail fields.
-    expect(getList()?.items[0]).toEqual({
-      gameId: 98,
-      status: "waiting",
-      rating: null,
-      addedAt: expect.any(String),
-      updatedAt: expect.any(String),
-      game: summary(98),
-    });
-
-    await writes.move(99, "playing");
-
-    expect(effects.openPaywall).toHaveBeenCalledTimes(1);
-    expect(api.upsertBacklogEntry).toHaveBeenCalledTimes(1);
-
-    pending.resolve();
-    await first;
   });
 
   it("an unknown entitlement never blocks", async () => {
@@ -211,98 +247,6 @@ describe("createEntryWrites", () => {
 
     expect(api.upsertBacklogEntry).toHaveBeenCalledWith(1, { status: "waiting", rating: 7 });
     expect(effects.openPaywall).not.toHaveBeenCalled();
-  });
-
-  it("a 402 rolls back and opens the paywall without an alert", async () => {
-    const list = { items: [item(1, "completed", 8)] };
-    const game = detail(1, { status: "completed", rating: 8 });
-    queryClient.setQueryData(keys.me(), me(false));
-    queryClient.setQueryData(keys.backlog.list(), list);
-    queryClient.setQueryData(keys.games.detail(1), game);
-    api.upsertBacklogEntry.mockRejectedValue(
-      new ApiError({ status: 402, type: "about:blank", title: "Payment Required" }),
-    );
-
-    await writes.move(1, "playing");
-
-    expect(getList()).toEqual(list);
-    expect(getDetail(1)).toEqual(game);
-    expect(effects.openPaywall).toHaveBeenCalledTimes(1);
-    expect(effects.alertError).not.toHaveBeenCalled();
-    expect(queryClient.getQueryState(keys.me())?.isInvalidated).toBe(true);
-  });
-
-  it("any other failure rolls back and alerts", async () => {
-    const list = { items: [item(1, "waiting")] };
-    const game = detail(1, { status: "waiting", rating: null });
-    queryClient.setQueryData(keys.backlog.list(), list);
-    queryClient.setQueryData(keys.games.detail(1), game);
-    const error = new ApiError({ status: 500, type: "about:blank", title: "Server Error" });
-    api.upsertBacklogEntry.mockRejectedValue(error);
-
-    await writes.move(1, "playing");
-
-    expect(getList()).toEqual(list);
-    expect(getDetail(1)).toEqual(game);
-    expect(effects.alertError).toHaveBeenCalledTimes(1);
-    expect(effects.alertError).toHaveBeenCalledWith(error);
-    expect(effects.openPaywall).not.toHaveBeenCalled();
-  });
-
-  it("the haptic plays at apply time on a status change, not on a re-rate", async () => {
-    queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "waiting", rating: null }));
-    const pending = deferred();
-    api.upsertBacklogEntry.mockReturnValue(pending.promise);
-
-    const moved = writes.move(1, "playing");
-
-    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
-    expect(effects.playStatusHaptic).toHaveBeenCalledTimes(1);
-    pending.resolve();
-    await moved;
-
-    api.upsertBacklogEntry.mockResolvedValue({});
-    await writes.rate(1, "playing", 9);
-
-    expect(api.upsertBacklogEntry).toHaveBeenCalledTimes(2);
-    expect(effects.playStatusHaptic).toHaveBeenCalledTimes(1);
-  });
-
-  it("remove drops the row and plays no haptic", async () => {
-    queryClient.setQueryData(keys.backlog.list(), {
-      items: [item(1, "waiting"), item(2, "playing")],
-    });
-    queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "waiting", rating: null }));
-    const pending = deferred();
-    api.deleteBacklogEntry.mockReturnValue(pending.promise);
-
-    const done = writes.remove(1);
-
-    await vi.waitFor(() => expect(api.deleteBacklogEntry).toHaveBeenCalledWith(1));
-    expect(getList()?.items.map((i) => i.gameId)).toEqual([2]);
-    expect(getDetail(1)?.backlogEntry).toBeNull();
-    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
-
-    pending.resolve();
-    await done;
-  });
-
-  it("a move from Home with only the list cached keeps the list item's rating", async () => {
-    queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "completed", 8)] });
-    const pending = deferred();
-    api.upsertBacklogEntry.mockReturnValue(pending.promise);
-
-    const done = writes.move(1, "abandoned");
-
-    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
-    expect(api.upsertBacklogEntry).toHaveBeenCalledWith(1, { status: "abandoned" });
-    expect(getList()?.items.find((i) => i.gameId === 1)).toMatchObject({
-      status: "abandoned",
-      rating: 8,
-    });
-
-    pending.resolve();
-    await done;
   });
 
   it("a settled write leaves no mutation in the cache once it is collectable", async () => {

@@ -35,8 +35,7 @@ export function retainPersistedQueries(queryClient: QueryClient): void {
 }
 
 /**
- * Restored data is a starting point, never fresh — it may even be an optimistic
- * edit saved just before the app was killed. Only what came from disk, though:
+ * Restored data is a starting point, never fresh. Only what came from disk, though:
  * Home's first fetch starts before the disk read ends, so a list updated after
  * `startedAt` is already newer, and one still in flight is left to finish
  * rather than cancelled and asked again.

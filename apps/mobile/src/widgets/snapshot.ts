@@ -1,7 +1,7 @@
 import { BACKLOG_STATUSES, type BacklogListItemWire, type BacklogStatus } from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-import { compare } from "@/features/backlog/optimistic-list";
+import { compare } from "@/features/backlog/order";
 import { statusLabel, statusSymbol } from "@/features/game/format";
 import { i18n } from "@/i18n/instance";
 
