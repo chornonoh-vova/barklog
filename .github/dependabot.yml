@@ -1,7 +1,13 @@
 # Workflow actions are pinned to commit SHAs, so a moved or hijacked tag cannot
 # change what runs. Dependabot keeps those pins current, one grouped PR a week,
-# with the release in the trailing comment. Only actions: npm dependencies are
-# updated deliberately, alongside the Expo SDK for apps/mobile.
+# with the release in the trailing comment. npm dependencies are updated
+# deliberately, alongside the Expo SDK for apps/mobile, so they are not here.
+#
+# Container images are pinned the same way, tag plus digest, in both
+# Dockerfiles and both compose files. Dependabot bumps the tag and the digest
+# together, again one grouped PR a week per ecosystem. The GHCR images in
+# compose.yaml use ${IMAGE_TAG:-main}, which Dependabot cannot resolve, so it
+# leaves them alone.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -10,4 +16,22 @@ updates:
       interval: weekly
     groups:
       actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /apps/landing
+    schedule:
+      interval: weekly
+    groups:
+      docker:
+        patterns: ["*"]
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      docker-compose:
         patterns: ["*"]

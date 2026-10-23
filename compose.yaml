@@ -132,7 +132,7 @@ services:
       start_period: 5s
 
   valkey:
-    image: valkey/valkey:9-alpine
+    image: valkey/valkey:9.1.2-alpine3.24@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11
     restart: unless-stopped
     # Persistence off: this holds a cache and rate-limit counters, all of which
     # are reconstructible. Same reasoning as deps.compose.yaml.

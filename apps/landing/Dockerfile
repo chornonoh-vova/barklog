@@ -8,7 +8,8 @@
 #
 #   docker build -f apps/landing/Dockerfile -t barklog-landing .
 
-FROM node:24-alpine AS base
+# Pinned by digest; Dependabot bumps tag and digest together (dependabot.yml).
+FROM node:24.22.1-alpine3.24@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     TURBO_TELEMETRY_DISABLED=1 \
     DO_NOT_TRACK=1
@@ -31,13 +32,16 @@ RUN pnpm exec turbo run build --filter=landing --ui=stream
 
 # ---------------------------------------------------------------------------
 # The runtime carries static files only — no node_modules reaches it, so there
-# is no prod-deps stage. nginx-unprivileged rather than nginx: the stock image
-# runs its master as root, and every other image in this repo runs unprivileged.
+# is no prod-deps stage. The stock image runs its master as root; every other
+# image in this repo runs unprivileged, so nginx.conf is replaced with one that
+# runs as the `nginx` user (see the header of that file).
 # ---------------------------------------------------------------------------
-FROM nginxinc/nginx-unprivileged:alpine AS landing
+FROM nginx:1.31.8-alpine@sha256:1ef7ca94d7879df82421428ce13bd1eaa412404953859cf7a5b6512c25e67a60 AS landing
+USER nginx
 # From the build context, not from `builder`: this is checked-in configuration
 # rather than build output, and copying it last keeps an edit to it from
 # invalidating the install and build layers above.
+COPY apps/landing/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY apps/landing/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY apps/landing/nginx/snippets/ /etc/nginx/snippets/
 COPY --from=builder /app/apps/landing/dist/ /usr/share/nginx/html/
