@@ -551,3 +551,21 @@ landscape:
   capsule buttons on game detail, the free-slots line, and the onboarding
   Skip/Continue buttons.
 - At an accessibility text size, the filter falls back to the "Show" menu.
+
+## Home Screen widget
+
+The widget's view runs only in the widget extension, so no unit test draws it;
+its data (`deriveSnapshot`, the tap links) is unit-tested. Check on a device,
+in light and dark mode:
+
+- Signed out, the widget asks to open Barklog, shows the mascot, and a tap
+  opens the app on Home.
+- An empty section shows its empty message, and a tap opens Home filtered to
+  that section.
+- Before a section is configured, the widget shows Playing.
+- Small: only the most recent game, with its rating, and a tap opens that
+  game. No count.
+- Medium and large: the section name and count, one cover per game, each
+  opening its game; a short shelf leaves its trailing slots empty, and a game
+  with no cover shows the controller symbol.
+- With the Home Screen set to tinted, covers render desaturated.

@@ -31,6 +31,14 @@ module.exports = {
     "<rootDir>/dist/",
     "<rootDir>/.expo/",
   ],
-  collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.d.ts", "!src/**/*.test.{ts,tsx}"],
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/*.test.{ts,tsx}",
+    // The `'widget'` directive compiles the view to a string for the widget
+    // extension's runtime, so Jest never runs it. Its data is covered through
+    // snapshot.ts and links.ts; the drawing is a device check.
+    "!src/features/widgets/backlog-widget.tsx",
+  ],
   coverageReporters: ["text-summary", "json-summary", "lcov"],
 };
