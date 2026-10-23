@@ -3,6 +3,7 @@ import type {
   BacklogListResponse,
   BacklogStatus,
   GameDetailResponse,
+  GameSummaryWire,
   MeResponse,
 } from "@repo/contracts";
 import { MutationObserver, type QueryClient } from "@tanstack/react-query";
@@ -32,6 +33,19 @@ export interface EntryWrites {
 
 /** What the entry becomes, in the detail and in cached lists; `null` removes it. */
 type Change = { status: BacklogStatus; rating: number | null } | null;
+
+/** The list's shape only: the list is persisted, and detail fields would bloat it. */
+function toSummary(game: GameDetailResponse): GameSummaryWire {
+  return {
+    id: game.id,
+    name: game.name,
+    slug: game.slug,
+    coverImageId: game.coverImageId,
+    firstReleaseDate: game.firstReleaseDate,
+    totalRating: game.totalRating,
+    totalRatingCount: game.totalRatingCount,
+  };
+}
 
 export function createEntryWrites(
   queryClient: QueryClient,
@@ -100,11 +114,16 @@ export function createEntryWrites(
 
         // The list too, or Home keeps showing the old row until the refetch
         // lands — a removal that seems not to have worked invites a second tap.
-        // Its filters are derived from it, so they follow.
+        // Its filters are derived from it, so they follow. An add from a game's
+        // page joins it too: slots are counted from the list, so a second add
+        // before the refetch must see the first.
         const list = getList();
 
         if (list !== undefined) {
-          queryClient.setQueryData(keys.backlog.list(), patchBacklogList(list, gameId, next, now));
+          queryClient.setQueryData(
+            keys.backlog.list(),
+            patchBacklogList(list, gameId, next, now, previous && toSummary(previous)),
+          );
         }
 
         // At apply time, not on success: the screen already shows the new status,

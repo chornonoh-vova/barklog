@@ -151,6 +151,38 @@ describe("createEntryWrites", () => {
     expect(getDetail(99)).toBe(game);
   });
 
+  it("an add from a game's page counts toward the slots before the refetch", async () => {
+    queryClient.setQueryData(keys.me(), me(false));
+    queryClient.setQueryData(keys.backlog.list(), {
+      items: Array.from({ length: FREE_ACTIVE_SLOTS - 1 }, (_, i) => item(i + 1, "waiting")),
+    });
+    queryClient.setQueryData(keys.games.detail(98), detail(98, null));
+    queryClient.setQueryData(keys.games.detail(99), detail(99, null));
+    const pending = deferred();
+    api.upsertBacklogEntry.mockReturnValue(pending.promise);
+
+    const first = writes.move(98, "waiting");
+    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
+
+    // The added row carries a summary, not the page's detail fields.
+    expect(getList()?.items[0]).toEqual({
+      gameId: 98,
+      status: "waiting",
+      rating: null,
+      addedAt: expect.any(String),
+      updatedAt: expect.any(String),
+      game: summary(98),
+    });
+
+    await writes.move(99, "playing");
+
+    expect(effects.openPaywall).toHaveBeenCalledTimes(1);
+    expect(api.upsertBacklogEntry).toHaveBeenCalledTimes(1);
+
+    pending.resolve();
+    await first;
+  });
+
   it("an unknown entitlement never blocks", async () => {
     queryClient.setQueryData(keys.backlog.list(), fullList());
     queryClient.setQueryData(keys.games.detail(99), detail(99, null));

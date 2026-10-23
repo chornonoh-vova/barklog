@@ -52,6 +52,25 @@ describe("patchBacklogList", () => {
     expect(patchBacklogList(list, 99, null, NOW)).toBe(list);
   });
 
+  it("leaves a list untouched by an add it has no summary for", () => {
+    expect(patchBacklogList(list, 99, { status: "waiting", rating: null }, NOW)).toBe(list);
+  });
+
+  it("adds a game it is given the summary for, at the front", () => {
+    const game = entry(99, "waiting").game;
+    const next = patchBacklogList(list, 99, { status: "waiting", rating: null }, NOW, game);
+
+    expect(next.items.map((i) => i.gameId)).toEqual([99, 1, 2]);
+    expect(next.items[0]).toEqual({
+      gameId: 99,
+      status: "waiting",
+      rating: null,
+      addedAt: NOW,
+      updatedAt: NOW,
+      game,
+    });
+  });
+
   it("does not mutate its input", () => {
     patchBacklogList(list, 1, { status: "abandoned", rating: null }, NOW);
 

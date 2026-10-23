@@ -3,6 +3,7 @@ import type {
   BacklogListResponse,
   BacklogSort,
   BacklogStatus,
+  GameSummaryWire,
 } from "@repo/contracts";
 
 /** `ORDER_BY` in `packages/db/src/queries/backlog.ts`, game id breaking ties.
@@ -23,8 +24,8 @@ export function compare(sort: BacklogSort, a: BacklogListItemWire, b: BacklogLis
 /**
  * A cached backlog list as it will look once a change lands, so Home moves or
  * drops the row at tap time instead of after the refetch. `next` is `null` for
- * a removal. A list without the game is returned as is: a summary-less game
- * cannot be added here, and the refetch brings it in.
+ * a removal. A game the list doesn't hold is added only when `game` gives its
+ * summary; without one the list is returned as is, and the refetch brings it in.
  *
  * A changed row is re-placed by last update, the server's default order, not
  * left where it was: an edit bumps `updatedAt`, and a row that jumps when the
@@ -36,14 +37,21 @@ export function patchBacklogList(
   gameId: number,
   next: { status: BacklogStatus; rating: number | null } | null,
   now: string,
+  game?: GameSummaryWire,
 ): BacklogListResponse {
   const item = list.items.find((candidate) => candidate.gameId === gameId);
-  if (item === undefined) return list;
-
   const rest = list.items.filter((candidate) => candidate.gameId !== gameId);
-  if (next === null) return { ...list, items: rest };
 
-  const changed = { ...item, ...next, updatedAt: now };
+  let changed: BacklogListItemWire;
+  if (item !== undefined) {
+    if (next === null) return { ...list, items: rest };
+    changed = { ...item, ...next, updatedAt: now };
+  } else if (next !== null && game !== undefined) {
+    changed = { gameId, ...next, addedAt: now, updatedAt: now, game };
+  } else {
+    return list;
+  }
+
   const at = rest.findIndex((other) => compare("updated_at", changed, other) < 0);
 
   return {
