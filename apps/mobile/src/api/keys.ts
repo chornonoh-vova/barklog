@@ -3,8 +3,6 @@ import type { GameFeed } from "@repo/contracts";
 export const keys = {
   /** Entitlement only — slot counts are derived from `backlog.list`. */
   me: () => ["me"] as const,
-  /** Device-local, never fetched: see `features/search/recents-storage.ts`. */
-  recents: () => ["recents"] as const,
   games: {
     search: (q: string, limit: number, offset: number) =>
       ["games", "search", q, limit, offset] as const,

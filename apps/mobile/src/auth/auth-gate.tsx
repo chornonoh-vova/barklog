@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { AuthView, useAuthViewState } from "@clerk/expo/native-components";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { clearRecents } from "@/features/search/recents-storage";
@@ -17,9 +17,9 @@ import { shouldClearCache, shouldClearDeviceData } from "./should-clear-cache";
  * mid-establishment from reading as signed-out and clearing the cache.
  */
 /** Recents, the saved query cache and the widget live on disk but are
- * personal: the next account must not see them. */
-function clearDeviceData(queryClient: QueryClient, userId: string | null): void {
-  clearRecents(queryClient);
+ * personal: the next account must not see them. Independent of each other. */
+function clearDeviceData(userId: string | null): void {
+  clearRecents();
   void clearPersistedCaches(userId);
   clearWidget();
 }
@@ -33,9 +33,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
-    // First, so the mounted Search route hears it before `clear()`.
-    if (shouldClearDeviceData(previous.current, userId))
-      clearDeviceData(queryClient, userId ?? null);
+    if (shouldClearDeviceData(previous.current, userId)) clearDeviceData(userId ?? null);
     if (shouldClearCache(previous.current, userId)) queryClient.clear();
     if (userId !== undefined) previous.current = userId;
   }, [isLoaded, userId, queryClient]);
