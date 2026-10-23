@@ -1,9 +1,16 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, PlatformColor, StyleSheet, Text } from "react-native";
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  PlatformColor,
+  StyleSheet,
+  Text,
+} from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 // Clears the tab bar, which floats above the bottom safe area.
 const ABOVE_TAB_BAR = 64;
@@ -13,6 +20,13 @@ const ABOVE_TAB_BAR = 64;
 export function UpdatingPill({ visible }: { visible: boolean }) {
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
+  const label = t("backlog.updating");
+
+  // iOS has no live regions, so VoiceOver hears the pill only when told. Once
+  // per appearance: re-announcing on every render would talk over the user.
+  useEffect(() => {
+    if (visible) AccessibilityInfo.announceForAccessibility(label);
+  }, [visible, label]);
 
   if (!visible) return null;
 
@@ -21,13 +35,15 @@ export function UpdatingPill({ visible }: { visible: boolean }) {
       entering={FadeIn}
       exiting={FadeOut}
       pointerEvents="none"
+      // One element, read as "Updating…, progress", not a spinner and a
+      // label VoiceOver visits separately.
+      accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={t("backlog.updating")}
-      accessibilityLiveRegion="polite"
+      accessibilityLabel={label}
       style={[styles.pill, { bottom: bottom + ABOVE_TAB_BAR }]}
     >
       <ActivityIndicator size="small" />
-      <Text style={styles.label}>{t("backlog.updating")}</Text>
+      <Text style={styles.label}>{label}</Text>
     </Animated.View>
   );
 }

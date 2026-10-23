@@ -1,6 +1,6 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 
-import { useBacklogEntry } from "@/api/hooks";
+import { useBacklogEntry } from "@/lib/api/hooks";
 import { GameRow, type GameRowVariant } from "@/components/game-row";
 import { BacklogRowMenu } from "@/features/backlog/backlog-row-menu";
 import { confirmRemove } from "@/features/game/confirm-remove";

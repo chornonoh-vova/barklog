@@ -3,8 +3,10 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"]
-    }
+      "@/assets/*": ["./assets/*"],
+      "@test/*": ["./test/*"]
+    },
+    "types": ["jest"]
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": ["node_modules", ".expo", "dist"]

@@ -1,6 +1,6 @@
 // First, so every module below renders with copy from the first frame.
-import "@/i18n";
-import "@/observe";
+import "@/lib/i18n";
+import "@/lib/observe";
 
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -11,15 +11,15 @@ import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { useColorScheme, useWindowDimensions, View } from "react-native";
 
-import { ApiProvider } from "@/api/provider";
-import { AuthGate } from "@/auth/auth-gate";
-import { CLERK_PUBLISHABLE_KEY } from "@/env";
-import { OnboardingGate } from "@/onboarding/onboarding-gate";
-import { PurchasesProvider } from "@/purchases/provider";
-import { createQueryClient } from "@/query-client";
-import { Screen } from "@/theme";
+import { ApiProvider } from "@/lib/api/provider";
+import { AuthGate } from "@/lib/auth/auth-gate";
+import { CLERK_PUBLISHABLE_KEY } from "@/lib/env";
+import { OnboardingGate } from "@/features/onboarding/onboarding-gate";
+import { PurchasesProvider } from "@/lib/purchases/provider";
+import { createQueryClient } from "@/lib/query/query-client";
+import { Screen } from "@/ui/theme";
 import { prefersSheet } from "@/ui/columns";
-import { WidgetSync } from "@/widgets/widget-sync";
+import { WidgetSync } from "@/features/widgets/widget-sync";
 
 function RootLayout() {
   const colorScheme = useColorScheme();

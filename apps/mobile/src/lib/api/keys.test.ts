@@ -1,0 +1,53 @@
+import { keys } from "@/lib/api/keys";
+
+describe("query keys", () => {
+  it("namespaces the backlog under its own root", () => {
+    expect(keys.backlog.all).toEqual(["backlog"]);
+  });
+
+  it("keys a search by its full argument set", () => {
+    expect(keys.games.search("zelda", 20, 0)).toEqual(["games", "search", "zelda", 20, 0]);
+  });
+
+  it("keys a feed by its name and limit", () => {
+    expect(keys.games.feed("popular", 20)).toEqual(["games", "feed", "popular", 20]);
+  });
+
+  it("distinguishes searches that differ only by page", () => {
+    expect(keys.games.search("zelda", 20, 0)).not.toEqual(keys.games.search("zelda", 20, 20));
+  });
+
+  it("keys a game detail by id", () => {
+    expect(keys.games.detail(1942)).toEqual(["games", "detail", 1942]);
+  });
+
+  it("keys Home's single backlog list", () => {
+    expect(keys.backlog.list()).toEqual(["backlog", "list"]);
+  });
+
+  it("keys similar games by id and limit", () => {
+    expect(keys.games.similar(1942, 12)).toEqual(["games", "similar", 1942, 12]);
+  });
+
+  it("keeps similar games outside the detail key, so a backlog write cannot clear it", () => {
+    expect(keys.games.similar(1942, 12)).not.toEqual(expect.arrayContaining(["detail"]));
+  });
+
+  it("is stable across calls", () => {
+    expect(keys.games.detail(1)).toEqual(keys.games.detail(1));
+  });
+
+  it("keys an identify by the shared url", () => {
+    expect(keys.games.identify("https://youtu.be/x")).toEqual([
+      "games",
+      "identify",
+      "https://youtu.be/x",
+    ]);
+  });
+
+  it("distinguishes two different shared urls", () => {
+    expect(keys.games.identify("https://youtu.be/a")).not.toEqual(
+      keys.games.identify("https://youtu.be/b"),
+    );
+  });
+});

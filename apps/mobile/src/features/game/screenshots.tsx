@@ -5,25 +5,27 @@ import { FlatList, PlatformColor, Pressable, StyleSheet, Text, View } from "reac
 import { RemoteImage } from "@/components/remote-image";
 import { screenshotLabel } from "@/features/game/screenshot-label";
 import { ScreenshotViewer } from "@/features/game/screenshot-viewer";
-import { screenshotUrl } from "@/igdb-image";
-import { SHOT_ASPECT, ShelfTitle } from "@/theme";
+import { screenshotUrl } from "@/lib/igdb/image";
+import { SHOT_ASPECT, ShelfTitle } from "@/ui/theme";
+import { useShelfInset } from "@/ui/use-shelf-inset";
 
 const SHOT_WIDTH = 280;
 
 export function Screenshots({ screenshots }: { screenshots: string[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const inset = useShelfInset();
   const { t } = useTranslation();
 
   if (screenshots.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={ShelfTitle}>{t("game.screenshots")}</Text>
+      <Text style={[ShelfTitle, inset]}>{t("game.screenshots")}</Text>
 
       <FlatList
         horizontal
         style={styles.shots}
-        contentContainerStyle={styles.shotsContent}
+        contentContainerStyle={[styles.shotsContent, inset]}
         data={screenshots}
         keyExtractor={(imageId) => imageId}
         showsHorizontalScrollIndicator={false}
@@ -54,7 +56,7 @@ export function Screenshots({ screenshots }: { screenshots: string[] }) {
 const styles = StyleSheet.create({
   container: { gap: 8 },
   shots: { marginBottom: 24 },
-  shotsContent: { paddingHorizontal: 16, gap: 12 },
+  shotsContent: { gap: 12 },
   shot: {
     width: SHOT_WIDTH,
     height: SHOT_WIDTH / SHOT_ASPECT,

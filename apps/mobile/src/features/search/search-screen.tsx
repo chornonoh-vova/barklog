@@ -4,15 +4,15 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, StyleSheet } from "react-native";
 
-import { useSearchGames } from "@/api/hooks";
+import { useSearchGames } from "@/lib/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
 import { summarySubtitle } from "@/features/game/format";
 import { RecentSearches } from "@/features/search/recent-searches";
-import { useDebounced } from "@/hooks/use-debounced";
-import { Screen } from "@/theme";
+import { useDebounced } from "@/lib/use-debounced";
+import { Screen } from "@/ui/theme";
 import { chunk, COLUMN_GAP, columnCount } from "@/ui/columns";
 import { isAccessibilitySize } from "@/ui/text-size";
 import { useMeasuredWidth } from "@/ui/use-measured-width";

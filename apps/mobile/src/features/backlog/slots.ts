@@ -5,7 +5,7 @@ import {
   type BacklogStatus,
 } from "@repo/contracts";
 
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 export function countStatus(items: readonly BacklogListItemWire[], status: BacklogStatus): number {
   return items.filter((item) => item.status === status).length;

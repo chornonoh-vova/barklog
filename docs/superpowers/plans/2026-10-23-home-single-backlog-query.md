@@ -35,10 +35,12 @@
 ### Task 1: `toSections` filters the full list
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/backlog/sections.ts` (`toSections`, filtered branch)
 - Test: `apps/mobile/test/sections.test.ts` (`describe("toSections — filtered")`)
 
 **Interfaces:**
+
 - Produces: `toSections(items: BacklogListItemWire[], filter: BacklogStatus | undefined): BacklogSection[]` (same signature). `items` is now always the **whole** backlog, and a filter keeps only entries with `status === filter`, in input order.
 
 - [ ] **Step 1: Write the failing tests** in the `toSections — filtered` block:
@@ -57,6 +59,7 @@ This works on its own: today a filtered list passed in already matches, so the e
 ### Task 2: One backlog query
 
 **Files:**
+
 - Modify: `apps/mobile/src/api/keys.ts` (`backlog.list`, remove `backlog.lists`)
 - Modify: `apps/mobile/src/api/hooks.ts` (`useBacklog`, `useBacklogEntryMutation` `onMutate`/`onError`)
 - Modify: `apps/mobile/src/features/backlog/optimistic-list.ts` (`patchBacklogList`, remove `BacklogListFilter`)
@@ -66,6 +69,7 @@ This works on its own: today a filtered list passed in already matches, so the e
 - Test: `apps/mobile/test/api-keys.test.ts`, `apps/mobile/test/optimistic-list.test.ts`, `apps/mobile/test/query-persist-policy.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1's `toSections` filtering.
 - Produces:
   - `keys.backlog.list(): readonly ["backlog", "list", "all", "updated_at"]` (no parameters). `keys.backlog.lists` is deleted.
@@ -100,9 +104,11 @@ This works on its own: today a filtered list passed in already matches, so the e
 With one query, a filter can no longer have a "first load" of its own. That removes the second loading path.
 
 **Files:**
+
 - Modify: `apps/mobile/src/features/backlog/backlog-screen.tsx` (the early returns, `ListEmptyComponent`, `QueryBoundary`)
 
 **Interfaces:**
+
 - Consumes: Task 2's `useBacklog()`.
 
 - [ ] **Step 1: Implement.**

@@ -37,7 +37,7 @@ only Apple's sandbox proves the purchase sheet and product configuration.
 ## Prerequisites
 
 1. `EXPO_PUBLIC_REVENUECAT_TEST_KEY` in `apps/mobile/.env`, set to the Test
-   Store API key from RevenueCat's dashboard. `src/env.ts` only reads this key
+   Store API key from RevenueCat's dashboard. `src/lib/env.ts` only reads this key
    under `__DEV__`, so an ordinary development build is enough for the Test
    Store pass:
 

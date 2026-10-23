@@ -175,7 +175,7 @@ type WidgetSection = { count: number; games: WidgetGame[] /* ≤3, by updatedAt 
 type WidgetSnapshot = {
   signedIn: boolean;
   sections: Record<BacklogStatus, WidgetSection>;
-  strings: { /* localized header + empty copy per status, signed-out copy */ };
+  strings: {/* localized header + empty copy per status, signed-out copy */};
 };
 ```
 
@@ -196,8 +196,8 @@ type WidgetSnapshot = {
   cleared (`shouldClearRecents`, which also covers a session revoked while the app
   was closed), also push `{ signedIn: false, ... }`, delete cached covers, and clear
   the persisted query cache. The next user's fresh fetch then repopulates the widget.
-  *(Builder-check answer, settled from the code.)*
-- Data from a *filtered* Home query is ignored (it only has one section). Mutations
+  _(Builder-check answer, settled from the code.)_
+- Data from a _filtered_ Home query is ignored (it only has one section). Mutations
   already invalidate `keys.backlog.all`, so the unfiltered query refetches when Home
   is mounted; if it is not observed, consider refetching it on mutation success so
   the widget stays current — builder's call.
@@ -242,11 +242,11 @@ via the config plugin if supported.
   native spinner for user-initiated pulls; background refetches never show the
   RefreshControl spinner.
 - Widget sync treats rehydrated data like any other data: whenever the unfiltered
-  list query has data, derive and push, deduped against the last push *in memory*
+  list query has data, derive and push, deduped against the last push _in memory_
   (nothing is read back from the widget, no extra persisted flag). Rehydrated data
   is the last successful fetch — what the widget already shows — so re-pushing it
   is harmless, and it fills the widget on the first launch after upgrading even if
-  the network is down. *(My call, from the builder check.)*
+  the network is down. _(My call, from the builder check.)_
 
 ## Left to the builder
 
@@ -269,7 +269,7 @@ via the config plugin if supported.
 
 - `expo-widgets` is young; `Link` inside widgets, file-path `Image`, and
   `ios.configuration` must be spiked first on a dev build before building the rest.
-  If one fails, fallbacks *(my call)*: no per-game `Link` → whole medium widget
+  If one fails, fallbacks _(my call)_: no per-game `Link` → whole medium widget
   opens Home on that section; no configuration → four widgets, one per section;
   no file-path images → stop and bring it back to the user before going further.
 - expo-router resolution of `/game/<id>` with four matching routes.

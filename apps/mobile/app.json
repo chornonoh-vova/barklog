@@ -7,20 +7,14 @@
     "icon": "./assets/icon/icon.png",
     "scheme": "barklog",
     "userInterfaceStyle": "automatic",
-    "platforms": [
-      "ios"
-    ],
+    "platforms": ["ios"],
     "ios": {
       "icon": "./assets/icon/Barklog.icon",
       "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
-      "associatedDomains": [
-        "applinks:barklog.gg"
-      ],
+      "associatedDomains": ["applinks:barklog.gg"],
       "entitlements": {
-        "com.apple.security.application-groups": [
-          "group.gg.barklog.app"
-        ]
+        "com.apple.security.application-groups": ["group.gg.barklog.app"]
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -64,7 +58,7 @@
               "ios": {
                 "supportedFamilies": ["systemSmall", "systemMedium"],
                 "contentMarginsDisabled": true,
-                "initialLayout": "./src/widgets/backlog-widget.tsx",
+                "initialLayout": "./src/features/widgets/backlog-widget.tsx",
                 "configuration": {
                   "title": "Section",
                   "description": "Which part of your backlog to show.",
@@ -124,9 +118,7 @@
                   "targetName": "expo-sharing-extension",
                   "bundleIdentifier": "gg.barklog.app.expo-sharing-extension",
                   "entitlements": {
-                    "com.apple.security.application-groups": [
-                      "group.gg.barklog.app"
-                    ]
+                    "com.apple.security.application-groups": ["group.gg.barklog.app"]
                   }
                 }
               ]

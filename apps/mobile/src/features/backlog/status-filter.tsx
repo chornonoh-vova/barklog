@@ -13,7 +13,7 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel, statusSymbol } from "@/features/game/format";
-import { Brand } from "@/theme";
+import { Brand } from "@/ui/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 

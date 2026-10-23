@@ -3,9 +3,9 @@ import { router } from "expo-router";
 import { useEffect } from "react";
 import RevenueCatUI from "react-native-purchases-ui";
 
-import { useApi } from "@/api/provider";
-import { refreshEntitlement } from "@/purchases/refresh";
-import { markPaywallSeen } from "@/review/session";
+import { useApi } from "@/lib/api/provider";
+import { refreshEntitlement } from "@/lib/purchases/refresh";
+import { markPaywallSeen } from "@/features/review/session";
 
 /** A dismissible modal from `_layout.tsx` — an offer, not a wall. */
 export default function Paywall() {

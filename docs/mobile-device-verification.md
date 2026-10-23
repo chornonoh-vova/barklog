@@ -49,7 +49,7 @@ pnpm --filter mobile ios
       biometric-enrollment prompt is not cut off mid-flow. If the native module
       ever reported `isAuthFlowComplete: false` persistently, sign-in would
       appear to hang forever on the auth screen. If that happens, the revert is
-      two lines in `src/auth/auth-gate.tsx`: render on `isSignedIn` from the
+      two lines in `src/lib/auth/auth-gate.tsx`: render on `isSignedIn` from the
       `useAuth` call already in that file.
 - [ ] **2. Sign in with Apple appears as an option** and completes. If Apple is
       absent from the options, prerequisites 2-3 are incomplete.
@@ -120,7 +120,7 @@ first: it is the one that can regress behaviour that already worked.
 
 - [ ] **19. A returning signed-in user still goes straight to the tabs.** This is
       check 3 again, re-run because the splash lifecycle moved out of
-      `src/auth/auth-gate.tsx` into `src/splash.ts`, which both gates now drive
+      `src/lib/auth/auth-gate.tsx` into `src/lib/splash.ts`, which both gates now drive
       through `useReleaseSplash`. No onboarding, no flash of the sign-in screen,
       and above all no splash that never goes away. A stuck splash means no gate
       ever reported itself ready; a splash that lifts too early means one
@@ -298,7 +298,7 @@ Boxes stay unticked here; the owner ticks them as each is verified.
 ## Share game link checks
 
 Added by the game detail share button. The payload itself is unit-tested in
-`apps/mobile/test/game-share.test.ts`; everything below is the native share
+`apps/mobile/src/features/game/share-game.test.ts`; everything below is the native share
 sheet, which no test off-device can reach. Boxes stay unticked until run.
 
 - [ ] **50. The share button sits left of the dots and survives backlog state
@@ -551,3 +551,21 @@ landscape:
   capsule buttons on game detail, the free-slots line, and the onboarding
   Skip/Continue buttons.
 - At an accessibility text size, the filter falls back to the "Show" menu.
+
+## Home Screen widget
+
+The widget's view runs only in the widget extension, so no unit test draws it;
+its data (`deriveSnapshot`, the tap links) is unit-tested. Check on a device,
+in light and dark mode:
+
+- Signed out, the widget asks to open Barklog, shows the mascot, and a tap
+  opens the app on Home.
+- An empty section shows its empty message, and a tap opens Home filtered to
+  that section.
+- Before a section is configured, the widget shows Playing.
+- Small: only the most recent game, with its rating, and a tap opens that
+  game. No count.
+- Medium and large: the section name and count, one cover per game, each
+  opening its game; a short shelf leaves its trailing slots empty, and a game
+  with no cover shows the controller symbol.
+- With the Home Screen set to tinted, covers render desaturated.

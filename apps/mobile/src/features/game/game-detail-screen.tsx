@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
-import { useBacklogEntry, useGame } from "@/api/hooks";
+import { useBacklogEntry, useGame } from "@/lib/api/hooks";
 import { QueryBoundary } from "@/components/query-boundary";
 import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";
@@ -77,9 +77,10 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
           );
 
           return (
+            // Side insets go on the content, not the page: the shelves inset
+            // themselves, so they can scroll under the side safe areas.
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={sideInsets}
               onLayout={onLayout}
               contentInsetAdjustmentBehavior="automatic"
               showsVerticalScrollIndicator={false}
@@ -87,24 +88,32 @@ export function GameDetailScreen({ onOpenGame }: { onOpenGame: (id: number) => v
               {/* Wide: what you act on to the left, facts to the right. The
                   shelves stay full width below either way — horizontal
                   scrolling is the one part that already uses the width. */}
-              {split ? (
-                <View style={styles.split}>
-                  <View style={styles.primary}>{overview}</View>
-                  <View style={styles.secondary}>
-                    <DetailRows game={data} />
+              <View style={sideInsets}>
+                {split ? (
+                  <View style={styles.split}>
+                    <View style={styles.primary}>{overview}</View>
+                    <View style={styles.secondary}>
+                      <DetailRows game={data} />
+                    </View>
                   </View>
-                </View>
-              ) : (
-                overview
-              )}
+                ) : (
+                  overview
+                )}
+              </View>
 
               <Screenshots screenshots={data.screenshots} />
 
-              {split ? null : <DetailRows game={data} />}
+              {split ? null : (
+                <View style={sideInsets}>
+                  <DetailRows game={data} />
+                </View>
+              )}
 
               <SimilarGames gameId={gameId} onPressGame={onOpenGame} />
 
-              <IgdbAttribution slug={data.slug} />
+              <View style={sideInsets}>
+                <IgdbAttribution slug={data.slug} />
+              </View>
             </ScrollView>
           );
         }}

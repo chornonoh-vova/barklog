@@ -21,7 +21,7 @@ import {
   statusButtonSymbol,
   statusLabel,
 } from "@/features/game/format";
-import { Brand } from "@/theme";
+import { Brand } from "@/ui/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 

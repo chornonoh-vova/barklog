@@ -2,7 +2,7 @@ import { SymbolView } from "expo-symbols";
 import { useTranslation } from "react-i18next";
 import { PlatformColor, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { Screen, Type } from "@/theme";
+import { Screen, Type } from "@/ui/theme";
 import { useSideInsets } from "@/ui/use-side-insets";
 
 /** The Search tab before anything is typed: the last few queries, newest first. */

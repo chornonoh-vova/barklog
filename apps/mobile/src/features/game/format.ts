@@ -1,7 +1,7 @@
 import { RATING_MAX, type BacklogStatus, type GameSummaryWire } from "@repo/contracts";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-import { formatLocale, i18n } from "@/i18n/instance";
+import { formatLocale, i18n } from "@/lib/i18n/instance";
 
 const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
   waiting: "clock",

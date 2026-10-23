@@ -2,8 +2,8 @@ import { SymbolView } from "expo-symbols";
 import { PlatformColor, StyleSheet, View } from "react-native";
 
 import { RemoteImage } from "@/components/remote-image";
-import { coverUrl, type CoverSize } from "@/igdb-image";
-import { COVER_ASPECT } from "@/theme";
+import { coverUrl, type CoverSize } from "@/lib/igdb/image";
+import { COVER_ASPECT } from "@/ui/theme";
 
 export function Cover({
   imageId,

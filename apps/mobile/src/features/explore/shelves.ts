@@ -1,6 +1,6 @@
 import type { GameFeed, GameListResponse, GameSummaryWire } from "@repo/contracts";
 
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 const ROWS = 2;
 

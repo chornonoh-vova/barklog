@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Mascot } from "@/components/mascot";
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 export function SearchingState() {
   const { t } = useTranslation();

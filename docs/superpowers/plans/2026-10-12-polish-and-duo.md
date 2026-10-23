@@ -26,7 +26,7 @@
 3. **Tapping a recent fills the visible search field**, not just the results. Checked manually (Task 2 Step 6).
 4. **Signing out and in as someone else shows none of the previous user's recents** — including a direct account switch, where `AuthGate` keeps the Search route mounted. `clearRecents(queryClient)` sets the query to `[]` (re-rendering Search) before `queryClient.clear()`, and queues the disk removal ahead of any re-read. Checked manually.
 5. **Tapping a previous query's result while the next one loads** records the previous query, not the one being typed. `SearchScreen` tracks the query its shown (non-placeholder) results came from.
-5. **Section header count stays aligned with the larger title.** Checked manually (Task 1).
+6. **Section header count stays aligned with the larger title.** Checked manually (Task 1).
 
 ---
 

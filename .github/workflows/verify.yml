@@ -1,0 +1,72 @@
+name: Verify
+
+# The checks every change must pass: on each pull request, and as the gate in
+# front of `images.yml`'s publish on main. One definition, so a PR that goes
+# green here cannot fail the same checks after it merges.
+on:
+  pull_request:
+  workflow_call:
+
+# A new push to a PR supersedes its running check. On main this workflow runs
+# inside `images.yml`, whose own group already keeps publishes in order.
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Read-only: checks clone and test, nothing more. On a pull request from a fork
+# GitHub caps the token at read anyway; this keeps a same-repo branch, and a
+# call from images.yml, to the same. The coverage upload needs no token scope.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # build first: check-types and the test suites resolve @repo/* through
+      # each package's built .d.ts.
+      - run: pnpm build
+      - run: pnpm format:check
+      # Mobile's Jest transform cache. Keyed on the lockfile and the Jest config,
+      # with a fallback to the last cache: a stale entry is only re-transformed.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: apps/mobile/node_modules/.cache/jest
+          key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
+          restore-keys: jest-${{ runner.os }}-
+      # One turbo run, so lint, types and tests overlap across packages instead
+      # of waiting on one another. The suites start Postgres and Valkey through
+      # Testcontainers on the runner's Docker daemon. No secrets: the only
+      # credential-dependent test is packages/igdb's contract test, which has
+      # its own config and its own scheduled workflow.
+      - run: pnpm turbo run lint check-types test
+
+      # Mobile's Jest run writes coverage; a failed threshold still leaves a
+      # report worth reading, hence `always()`.
+      - if: always()
+        name: Mobile coverage summary
+        run: |
+          summary=apps/mobile/coverage/coverage-summary.json
+          [ -f "$summary" ] || exit 0
+          {
+            echo "### Mobile coverage"
+            echo
+            echo "| | % |"
+            echo "|---|---|"
+            jq -r '.total | to_entries[] | "| \(.key) | \(.value.pct) |"' "$summary"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mobile-coverage
+          path: apps/mobile/coverage/
+          if-no-files-found: ignore

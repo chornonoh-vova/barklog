@@ -3,8 +3,8 @@ import { font } from "@expo/ui/swift-ui/modifiers";
 import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";
 
-import { gameUrl } from "@/igdb-url";
-import { Brand } from "@/theme";
+import { gameUrl } from "@/lib/igdb/url";
+import { Brand } from "@/ui/theme";
 
 /** The credit IGDB's terms require. SwiftUI's own `Link`, as on the onboarding
  * IGDB page, so it reads as a link and carries the external-link symbol. */

@@ -16,27 +16,16 @@ concurrency:
   group: images-${{ github.ref }}
   cancel-in-progress: false
 
+# Nothing by default; each job asks for exactly what it uses.
+permissions: {}
+
 jobs:
+  # The same checks a pull request runs, so main cannot publish what a PR
+  # would have failed. A called workflow gets no more than its caller grants.
   verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      # build first: check-types and the test suites resolve @repo/* through
-      # each package's built .d.ts.
-      - run: pnpm build
-      - run: pnpm lint
-      - run: pnpm check-types
-      # The suites start Postgres and Valkey through Testcontainers on the
-      # runner's Docker daemon. No secrets: the only credential-dependent test
-      # is packages/igdb's contract test, which has its own config and its own
-      # scheduled workflow.
-      - run: pnpm test
+    permissions:
+      contents: read
+    uses: ./.github/workflows/verify.yml
 
   publish:
     needs: verify
@@ -45,9 +34,11 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -71,14 +62,14 @@ jobs:
       # the opposite, old schema against new code, which they do not.
 
       - id: meta-migrate
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ghcr.io/${{ github.repository_owner }}/barklog-migrate
           tags: |
             type=ref,event=branch
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           target: migrate
@@ -93,14 +84,14 @@ jobs:
           provenance: false
 
       - id: meta-api
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ghcr.io/${{ github.repository_owner }}/barklog-api
           tags: |
             type=ref,event=branch
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           target: api
@@ -113,14 +104,14 @@ jobs:
           provenance: false
 
       - id: meta-worker
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ghcr.io/${{ github.repository_owner }}/barklog-worker
           tags: |
             type=ref,event=branch
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           target: worker
@@ -137,14 +128,14 @@ jobs:
       # commit — the harmless direction, unlike the migrate-first ordering
       # reasoned about above.
       - id: meta-landing
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ghcr.io/${{ github.repository_owner }}/barklog-landing
           tags: |
             type=ref,event=branch
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: apps/landing/Dockerfile

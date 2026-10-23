@@ -13,7 +13,7 @@ import { PlatformColor, StyleSheet } from "react-native";
 
 import { STATUS_ORDER } from "@/features/backlog/sections";
 import { statusLabel, statusSymbol } from "@/features/game/format";
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 /**
  * The `…` on a Home row. A visible button rather than a long-press menu: it is

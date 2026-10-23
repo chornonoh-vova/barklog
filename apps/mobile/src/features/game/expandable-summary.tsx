@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PlatformColor, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 const COLLAPSED_LINES = 3;
 

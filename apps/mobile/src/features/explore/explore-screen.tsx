@@ -4,13 +4,12 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
-import { useGameFeed } from "@/api/hooks";
+import { useGameFeed } from "@/lib/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState, LoadingState } from "@/components/query-states";
 import { GameShelf } from "@/features/explore/game-shelf";
 import { toShelves } from "@/features/explore/shelves";
-import { Screen } from "@/theme";
-import { useSideInsets } from "@/ui/use-side-insets";
+import { Screen } from "@/ui/theme";
 
 // The most the API serves. The default 20 runs out before the edge of a wide
 // window — iPad landscape with the sidebar hidden shows a shelf ending mid-screen.
@@ -21,7 +20,6 @@ export function ExploreScreen() {
   const upcoming = useGameFeed("upcoming", SHELF_LIMIT);
   const recent = useGameFeed("recent", SHELF_LIMIT);
   const router = useRouter();
-  const sideInsets = useSideInsets();
   const { t } = useTranslation();
 
   // Each tab owns its own detail route so a push stays in the current tab: a
@@ -59,7 +57,9 @@ export function ExploreScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, sideInsets]}
+      // No side insets here: each shelf insets its own content, so the shelves
+      // themselves can run under the side safe areas.
+      contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
           refreshing={feeds.some((feed) => feed.isRefetching)}

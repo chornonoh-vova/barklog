@@ -7,14 +7,14 @@ import type {
 } from "@repo/contracts";
 import { MutationObserver, type QueryClient } from "@tanstack/react-query";
 
-import type { Endpoints } from "@/api/endpoints";
-import { isApiError } from "@/api/errors";
-import { keys } from "@/api/keys";
+import type { Endpoints } from "@/lib/api/endpoints";
+import { isApiError } from "@/lib/api/errors";
+import { keys } from "@/lib/api/keys";
 import { activeSlotsUsed } from "@/features/backlog/slots";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 
-/** The device side of a write: injected, so the core stays plain Node. */
+/** The device side of a write: injected, so a test drives the core with fakes. */
 export interface EntryWriteEffects {
   openPaywall(): void;
   alertError(error: unknown): void;

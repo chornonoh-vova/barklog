@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 
-import { useBacklog, useIsPremium } from "@/api/hooks";
+import { useBacklog, useIsPremium } from "@/lib/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
 import { LoadingState } from "@/components/query-states";
@@ -25,8 +25,8 @@ import { toRowSections, toSections, type BacklogRowSection } from "@/features/ba
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { parseStatusParam } from "@/features/backlog/status-param";
-import { useReviewPrompt } from "@/review/use-review-prompt";
-import { Screen, SectionHeader, Type } from "@/theme";
+import { useReviewPrompt } from "@/features/review/use-review-prompt";
+import { Screen, SectionHeader, Type } from "@/ui/theme";
 import { columnCount } from "@/ui/columns";
 import { isAccessibilitySize } from "@/ui/text-size";
 import { useMeasuredWidth } from "@/ui/use-measured-width";

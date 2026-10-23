@@ -3,7 +3,7 @@ import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Cover } from "@/components/cover";
 import { metaLine, ratingLine, ratingLineSpoken } from "@/features/game/format";
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 
 const COVER_WIDTH = 132;
