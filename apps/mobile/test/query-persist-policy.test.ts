@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import {
   persistQueryClient,
   type AsyncStorage,
@@ -14,6 +14,7 @@ import {
   PERSIST_PREFIX,
   persistKey,
   retainPersistedQueries,
+  revalidateRestored,
   staleCacheKeys,
   shouldPersistQuery,
 } from "@/query-persist-policy";
@@ -204,5 +205,63 @@ describe("guardPersistence after a removal", () => {
       ["k", "a"],
       ["k", "a"],
     ]);
+  });
+});
+
+describe("revalidateRestored", () => {
+  const STARTED_AT = 1_000_000;
+
+  // Restored data is a starting point, never fresh.
+  it("invalidates data restored from an earlier session", async () => {
+    const client = new QueryClient();
+    client.setQueryData(LIST, { items: [] }, { updatedAt: STARTED_AT - 1 });
+
+    await revalidateRestored(client, STARTED_AT);
+
+    expect(client.getQueryState(LIST)?.isInvalidated).toBe(true);
+  });
+
+  // A list Home already fetched over the network while the disk read ran is
+  // newer than anything on disk; refetching it would be a second request.
+  it("leaves data fetched this session alone", async () => {
+    const client = new QueryClient();
+    client.setQueryData(LIST, { items: [] }, { updatedAt: STARTED_AT + 1 });
+
+    await revalidateRestored(client, STARTED_AT);
+
+    expect(client.getQueryState(LIST)?.isInvalidated).toBe(false);
+  });
+
+  // Home's first fetch starts before the restore lands; cancelling it and
+  // asking again throws a response away on every launch.
+  it("does not cancel and repeat a fetch already in flight", async () => {
+    const client = new QueryClient();
+    client.setQueryData(LIST, { items: [] }, { updatedAt: STARTED_AT - 1 });
+    let calls = 0;
+    let aborted = false;
+    let resolve!: (value: { items: never[] }) => void;
+    const observer = new QueryObserver(client, {
+      queryKey: LIST,
+      staleTime: 0,
+      queryFn: ({ signal }) => {
+        calls += 1;
+        signal.addEventListener("abort", () => {
+          aborted = true;
+        });
+        return new Promise((res) => {
+          resolve = res;
+        });
+      },
+    });
+    const unsubscribe = observer.subscribe(() => undefined);
+    expect(calls).toBe(1);
+
+    const revalidated = revalidateRestored(client, STARTED_AT);
+    resolve({ items: [] });
+    await revalidated;
+
+    expect(calls).toBe(1);
+    expect(aborted).toBe(false);
+    unsubscribe();
   });
 });

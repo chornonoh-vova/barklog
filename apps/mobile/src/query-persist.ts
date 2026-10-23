@@ -5,13 +5,12 @@ import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import Constants from "expo-constants";
 import * as Updates from "expo-updates";
 
-import { keys } from "@/api/keys";
-
 import {
   guardPersistence,
   PERSIST_MAX_AGE,
   persistKey,
   retainPersistedQueries,
+  revalidateRestored,
   shouldPersistQuery,
   staleCacheKeys,
 } from "./query-persist-policy";
@@ -21,6 +20,7 @@ const BUSTER = `${Constants.expoConfig?.version ?? "0"}:${Updates.updateId ?? "e
 
 /** Restores and keeps saving this user's cache; returns the stop. */
 export function startPersistence(queryClient: QueryClient, userId: string): () => void {
+  const startedAt = Date.now();
   retainPersistedQueries(queryClient);
   const { persister, stop } = guardPersistence(AsyncStorage, (storage) =>
     createAsyncStoragePersister({ storage, key: persistKey(userId) }),
@@ -34,12 +34,8 @@ export function startPersistence(queryClient: QueryClient, userId: string): () =
       shouldDehydrateQuery: (query) => shouldPersistQuery(query.queryKey, query.state.status),
     },
   });
-  // Restored data is a starting point, never fresh — it may even be an
-  // optimistic edit saved just before the app was killed. A corrupt cache is
-  // already removed by the restore; the app just fetches.
-  restored
-    .then(() => queryClient.invalidateQueries({ queryKey: keys.backlog.all }))
-    .catch(() => undefined);
+  // A corrupt cache is already removed by the restore; the app just fetches.
+  restored.then(() => revalidateRestored(queryClient, startedAt)).catch(() => undefined);
 
   return () => {
     stop();

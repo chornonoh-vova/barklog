@@ -35,6 +35,20 @@ export function retainPersistedQueries(queryClient: QueryClient): void {
 }
 
 /**
+ * Restored data is a starting point, never fresh — it may even be an optimistic
+ * edit saved just before the app was killed. Only what came from disk, though:
+ * Home's first fetch starts before the disk read ends, so a list updated after
+ * `startedAt` is already newer, and one still in flight is left to finish
+ * rather than cancelled and asked again.
+ */
+export function revalidateRestored(queryClient: QueryClient, startedAt: number): Promise<void> {
+  return queryClient.invalidateQueries(
+    { queryKey: keys.backlog.all, predicate: (query) => query.state.dataUpdatedAt < startedAt },
+    { cancelRefetch: false },
+  );
+}
+
+/**
  * Stopping `persistQueryClient` does not cancel a restore already reading from
  * disk or a throttled save already queued; either can outlive a sign-out. After
  * `stop`, the restore yields nothing and storage takes no writes. Unchanged
