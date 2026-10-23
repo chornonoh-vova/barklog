@@ -25,7 +25,6 @@ import { toRowSections, toSections, type BacklogRowSection } from "@/features/ba
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
 import { parseStatusParam } from "@/features/backlog/status-param";
-import { useSlotState } from "@/features/backlog/use-slot-state";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -69,7 +68,6 @@ export function BacklogScreen() {
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
-  const slotState = useSlotState();
   const { t } = useTranslation();
   // Only a pull the user started shows the native spinner; background
   // revalidation of cached data shows the pill instead.
@@ -94,14 +92,12 @@ export function BacklogScreen() {
             entry={entry}
             variant={grid ? "card" : "row"}
             subtitleLines={subtitleLines}
-            premium={slotState.premium}
-            activeCount={slotState.activeCount}
             onPress={openGame}
           />
         ))}
       </GameGridRow>
     ),
-    [openGame, grid, columns, subtitleLines, slotState.premium, slotState.activeCount],
+    [openGame, grid, columns, subtitleLines],
   );
 
   const sections = useMemo(

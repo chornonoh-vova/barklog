@@ -21,7 +21,6 @@ import {
   statusButtonSymbol,
   statusLabel,
 } from "@/features/game/format";
-import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 import { Brand } from "@/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
@@ -31,16 +30,13 @@ const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RA
 
 export function EntryActions({
   entry,
-  premium,
-  activeCount,
-  onBlocked,
-  onUpsert,
+  onMove,
+  onRate,
 }: {
   entry: BacklogEntryWire | null;
-  premium: boolean | undefined;
-  activeCount: number | undefined;
-  onBlocked: () => void;
-  onUpsert: (input: { status: BacklogStatus; rating: number | null }) => void;
+  onMove: (status: BacklogStatus) => void;
+  /** Only offered once the game has a status. */
+  onRate: (rating: number | null) => void;
 }) {
   const status = entry?.status ?? null;
   const rating = entry?.rating ?? null;
@@ -70,10 +66,7 @@ export function EntryActions({
             <Picker
               selection={rating ?? NO_RATING}
               onSelectionChange={(selection) =>
-                onUpsert({
-                  status,
-                  rating: selection === NO_RATING ? null : Number(selection),
-                })
+                onRate(selection === NO_RATING ? null : Number(selection))
               }
               modifiers={[pickerStyle("inline")]}
             >
@@ -98,16 +91,7 @@ export function EntryActions({
         >
           <Picker
             selection={status ?? ""}
-            onSelectionChange={(selection) => {
-              const next = selection as BacklogStatus;
-
-              if (wouldExceedSlots({ premium, activeCount, from: status, to: next })) {
-                onBlocked();
-                return;
-              }
-
-              onUpsert({ status: next, rating });
-            }}
+            onSelectionChange={(selection) => onMove(selection as BacklogStatus)}
             modifiers={[pickerStyle("inline")]}
           >
             {STATUS_ORDER.map((value) => (

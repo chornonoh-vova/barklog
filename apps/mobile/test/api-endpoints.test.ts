@@ -91,6 +91,13 @@ describe("createEndpoints", () => {
     });
   });
 
+  it("leaves rating out of a move", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).upsertBacklogEntry(1942, { status: "playing" });
+
+    expect(calls[0]?.options).toStrictEqual({ method: "PUT", body: { status: "playing" } });
+  });
+
   it("deletes an entry", async () => {
     const { request, calls } = spy();
     await createEndpoints(request).deleteBacklogEntry(1942);

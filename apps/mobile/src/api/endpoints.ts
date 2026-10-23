@@ -46,11 +46,18 @@ export function createEndpoints(request: Request) {
     // The server's default order, which `patchBacklogList` mirrors.
     listBacklog: () => request<BacklogListResponse>("/api/backlog"),
 
-
-    upsertBacklogEntry: (gameId: number, input: { status: BacklogStatus; rating: number | null }) =>
+    // A missing `rating` keeps the stored one and `null` clears it, so a move
+    // leaves the key out rather than sending `undefined`.
+    upsertBacklogEntry: (
+      gameId: number,
+      input: { status: BacklogStatus; rating?: number | null },
+    ) =>
       request<BacklogEntryWire>(`/api/backlog/${gameId}`, {
         method: "PUT",
-        body: { status: input.status, rating: input.rating },
+        body:
+          input.rating === undefined
+            ? { status: input.status }
+            : { status: input.status, rating: input.rating },
       }),
 
     deleteBacklogEntry: (gameId: number) =>
