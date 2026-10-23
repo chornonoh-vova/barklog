@@ -8,7 +8,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Publishing four images is not atomic; a run cancelled mid-sequence leaves
+# Publishing four images is not atomic; a run cancelled partway through leaves
 # the four :main tags at different commits. Allow superseded runs to finish
 # rather than kill them. GitHub keeps at most one pending run per group, so the
 # queue cannot grow: a third push replaces the second while the first finishes.
@@ -23,127 +23,70 @@ jobs:
   # The same checks a pull request runs, so main cannot publish what a PR
   # would have failed. A called workflow gets no more than its caller grants.
   verify:
+    name: Verify
     permissions:
       contents: read
     uses: ./.github/workflows/verify.yml
 
-  publish:
+  # migrate, api and worker all come out of the root Dockerfile, so they are
+  # split by publish order rather than built side by side from scratch.
+  # migrate goes first and alone: it runs the expensive pruner, deps, builder
+  # and prod-deps stages and writes them to the `barklog` cache scope. A
+  # failure partway through — a registry hiccup, a runner OOM, a change that
+  # only breaks one target — leaves the three :main tags at different commits.
+  # Publishing migrate first means that failure mode is a new schema running
+  # old code, which additive Drizzle migrations tolerate; publishing it last
+  # would risk the opposite, old schema against new code, which they do not.
+  publish-migrate:
+    name: Publish migrate
     needs: verify
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/publish-image.yml
+    with:
+      image: barklog-migrate
+      target: migrate
+      cache-scope: barklog
 
-      # The first three builds are sequential and share one cache scope on
-      # purpose: migrate, api and worker all come out of the root Dockerfile.
-      # The second and third hit cache for the pruner, deps and builder stages,
-      # so the expensive work happens exactly once. A matrix would run those
-      # stages three times in parallel and contend over the cache. landing
-      # writes into the same cache scope but is built from its own Dockerfile,
-      # so its pruner, deps and builder stages are its own entries and it
-      # reuses nothing from the three above.
+  # api and worker in parallel, once migrate is out. Every stage they share
+  # with migrate is a cache hit from the scope it just wrote, so each runner
+  # adds only its target's final COPY. They read the cache but do not write
+  # it: two jobs exporting the same scope at once would race, and the only
+  # layer they would add is the one that changes on every commit anyway.
+  # fail-fast is off so one target failing still lets the other publish;
+  # either way both sit on top of the new schema.
+  publish-app:
+    name: Publish ${{ matrix.target }}
+    needs: publish-migrate
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [api, worker]
+    uses: ./.github/workflows/publish-image.yml
+    with:
+      image: barklog-${{ matrix.target }}
+      target: ${{ matrix.target }}
+      cache-scope: barklog
+      cache-write: false
 
-      # migrate publishes first, then api, then worker, then landing. Each
-      # push is independent, so a failure partway through this sequence — a registry
-      # hiccup, a runner OOM, a change that only breaks one target — leaves
-      # the four :main tags at different commits. Publishing migrate first
-      # means that failure mode is a new schema running old code, which
-      # additive Drizzle migrations tolerate; publishing it last would risk
-      # the opposite, old schema against new code, which they do not.
-
-      - id: meta-migrate
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/barklog-migrate
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          target: migrate
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-migrate.outputs.tags }}
-          labels: ${{ steps.meta-migrate.outputs.labels }}
-          cache-from: type=gha,scope=barklog
-          cache-to: type=gha,scope=barklog,mode=max
-          # Single-platform build: an attestation would add the unknown/unknown
-          # manifest entry that clutters GHCR's package UI.
-          provenance: false
-
-      - id: meta-api
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/barklog-api
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          target: api
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-api.outputs.tags }}
-          labels: ${{ steps.meta-api.outputs.labels }}
-          cache-from: type=gha,scope=barklog
-          cache-to: type=gha,scope=barklog,mode=max
-          provenance: false
-
-      - id: meta-worker
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/barklog-worker
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          target: worker
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-worker.outputs.tags }}
-          labels: ${{ steps.meta-worker.outputs.labels }}
-          cache-from: type=gha,scope=barklog
-          cache-to: type=gha,scope=barklog,mode=max
-          provenance: false
-
-      # Last in the sequence, and deliberately so: nothing depends on the
-      # landing image, so a failure here leaves the site at the previous
-      # commit — the harmless direction, unlike the migrate-first ordering
-      # reasoned about above.
-      - id: meta-landing
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/barklog-landing
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: apps/landing/Dockerfile
-          target: landing
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-landing.outputs.tags }}
-          labels: ${{ steps.meta-landing.outputs.labels }}
-          cache-from: type=gha,scope=barklog
-          cache-to: type=gha,scope=barklog,mode=max
-          provenance: false
+  # landing runs beside the three above rather than after them: it is built
+  # from its own Dockerfile, shares no stages with them, and nothing depends on
+  # the image, so a failure here only leaves the site at the previous commit.
+  # Its own cache scope keeps it from contending with publish-migrate over
+  # `barklog`.
+  publish-landing:
+    name: Publish landing
+    needs: verify
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/publish-image.yml
+    with:
+      image: barklog-landing
+      target: landing
+      file: apps/landing/Dockerfile
+      cache-scope: landing

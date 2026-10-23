@@ -168,9 +168,11 @@ the same root `Dockerfile` — `docker build --target api|worker|migrate .` —
 built from a single `turbo prune`d workspace: one `turbo prune` emits a subset
 lockfile and manifests, which two separate installs then consume (a full
 install for the build, a `--prod` install for the runtime image), so
-`apps/mobile`'s Expo dependencies never enter either one. `landing` is built
-separately, from `apps/landing/Dockerfile`, published last so a failure there
-leaves the site at the previous commit rather than blocking the other three.
+`apps/mobile`'s Expo dependencies never enter either one. `migrate` publishes
+first; `api` and `worker` then build in parallel from its cached stages.
+`landing` is built separately, from `apps/landing/Dockerfile`, alongside the
+other three, so a failure there leaves the site at the previous commit without
+blocking them.
 
 Nothing deploys automatically. `compose.yaml` describes the VPS stack and
 Dokploy pulls when you press Deploy. That stack is the API, the worker, the
