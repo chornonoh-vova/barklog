@@ -9,3 +9,6 @@ apps/mobile/ios
 # Drizzle's generated snapshots — reformatting them is a ~157-line diff of noise.
 packages/db/drizzle
 apps/mobile/android
+# oembed.com's provider registry, vendored byte for byte so the weekly refresh
+# is a plain diff against upstream.
+apps/api/src/share/providers.json

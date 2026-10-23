@@ -1,6 +1,33 @@
-import { PROVIDERS, type ProviderEntry } from "./providers.generated.js";
+import * as v from "valibot";
 
-export type { ProviderEntry };
+import { httpsUrlOrNull } from "./coerce.js";
+import registry from "./providers.json" with { type: "json" };
+
+/**
+ * providers.json is oembed.com's registry, vendored verbatim and refreshed by
+ * .github/workflows/oembed-providers.yml. Every field in it is optional in
+ * practice, so it is validated once at load: a malformed refresh fails the
+ * process at startup, and the tests, rather than at the first share.
+ */
+const registrySchema = v.array(
+  v.object({
+    provider_name: v.optional(v.string()),
+    endpoints: v.optional(
+      v.array(
+        v.object({
+          url: v.optional(v.string()),
+          schemes: v.optional(v.array(v.string())),
+        }),
+      ),
+    ),
+  }),
+);
+
+export interface ProviderEntry {
+  name: string;
+  endpoint: string;
+  schemes: string[];
+}
 
 /** An oEmbed scheme split into the parts a parsed url is compared against. */
 interface Scheme {
@@ -83,14 +110,32 @@ export function matchesScheme(scheme: string, url: string): boolean {
 }
 
 /**
+ * Only https endpoints, and only their https schemes; an endpoint left with
+ * none is dropped. `{format}` is the registry's placeholder for the response
+ * format, and the fetcher only reads json.
+ *
  * Schemes overlap for two providers only when they share a scheme verbatim
- * (verified against the current snapshot: afreecaTV and SOOP both claim
- * `https://v.afree.ca/ST/`). `PROVIDERS` preserves source order, so the
- * first provider to declare a scheme wins deterministically.
+ * (verified against the vendored registry: afreecaTV and SOOP both claim
+ * `https://v.afree.ca/ST/`). Source order is preserved, so the first provider
+ * to declare a scheme wins deterministically.
  */
-const COMPILED: readonly { provider: ProviderEntry; schemes: Scheme[] }[] = PROVIDERS.map(
-  (provider) => ({ provider, schemes: provider.schemes.map(parseScheme) }),
-);
+const COMPILED: readonly { provider: ProviderEntry; schemes: Scheme[] }[] = v
+  .parse(registrySchema, registry)
+  .flatMap((provider) =>
+    (provider.endpoints ?? []).flatMap((endpoint) => {
+      const url = httpsUrlOrNull(endpoint.url?.replace("{format}", "json"));
+      const schemes = (endpoint.schemes ?? []).filter((scheme) => scheme.startsWith("https://"));
+
+      if (url === null || schemes.length === 0) return [];
+
+      const entry = {
+        name: provider.provider_name ?? new URL(url).hostname,
+        endpoint: url,
+        schemes,
+      };
+      return [{ provider: entry, schemes: schemes.map(parseScheme) }];
+    }),
+  );
 
 export function matchProvider(input: string): ProviderEntry | null {
   const url = parseUrl(input);

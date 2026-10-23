@@ -87,7 +87,7 @@ test("reads og:title for a page no provider claims", async () => {
 
 /**
  * `vm.tiktok.com` is verified absent from the vendored provider snapshot
- * (`grep -c "vm.tiktok" src/share/providers.generated.ts` is 0), so
+ * (`grep -c "vm.tiktok" src/share/providers.json` is 0), so
  * `matchProvider` genuinely misses it and this exercises the real fallthrough
  * path rather than a scenario the matcher would never hit in production:
  * no scheme match -> HTML rung -> safeFetch itself follows the 302 (this is
