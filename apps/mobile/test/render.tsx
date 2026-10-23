@@ -7,12 +7,15 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, renderHook, type RenderOptions } from "@testing-library/react-native";
 import { renderRouter } from "expo-router/testing-library";
 import type { ReactElement, ReactNode } from "react";
+import { Dimensions } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ApiContext } from "@/lib/api/provider";
 import type { Endpoints } from "@/lib/api/endpoints";
 import { createQueryClient } from "@/lib/query/query-client";
 
 import { backlogList, me } from "./fixtures";
+import { PHONE_INSETS } from "./window";
 
 export type FakeEndpoints = { [K in keyof Endpoints]: jest.MockedFunction<Endpoints[K]> };
 
@@ -52,7 +55,9 @@ export function testQueryClient(): QueryClient {
   const client = createQueryClient();
   client.setDefaultOptions({
     queries: { ...client.getDefaultOptions().queries, retry: false, gcTime: Infinity },
-    mutations: { retry: false },
+    // `gcTime: Infinity` on both: a settled query or mutation otherwise leaves a
+    // 5-minute garbage-collection timer that keeps Jest from exiting.
+    mutations: { retry: false, gcTime: Infinity },
   });
   return client;
 }
@@ -61,10 +66,16 @@ type ProviderOptions = { api?: FakeEndpoints; queryClient?: QueryClient };
 
 function providers({ api = fakeEndpoints(), queryClient = testQueryClient() }: ProviderOptions) {
   function Providers({ children }: { children: ReactNode }) {
+    const { width, height } = Dimensions.get("window");
+    // The root layout's `Stack` supplies a safe area on device; a component
+    // rendered alone needs one for `useSafeAreaInsets`.
+    const metrics = { frame: { x: 0, y: 0, width, height }, insets: PHONE_INSETS };
     return (
-      <QueryClientProvider client={queryClient}>
-        <ApiContext.Provider value={api}>{children}</ApiContext.Provider>
-      </QueryClientProvider>
+      <SafeAreaProvider initialMetrics={metrics}>
+        <QueryClientProvider client={queryClient}>
+          <ApiContext.Provider value={api}>{children}</ApiContext.Provider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
     );
   }
   return { api, queryClient, Providers };

@@ -1,7 +1,6 @@
 import type { ShareIdentifyResponse } from "@repo/contracts";
 import { screen, userEvent } from "@testing-library/react-native";
 import { openURL } from "expo-linking";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ApiError } from "@/lib/api/errors";
 import { ShareScreen } from "@/features/share/share-screen";
@@ -13,11 +12,6 @@ jest.mock("expo-linking", () => ({ openURL: jest.fn(async () => true) }));
 
 const LINK = "https://www.youtube.com/watch?v=abc";
 
-const METRICS = {
-  frame: { x: 0, y: 0, width: 393, height: 852 },
-  insets: { top: 59, left: 0, right: 0, bottom: 34 },
-};
-
 const callbacks = { onSelect: jest.fn(), onGoHome: jest.fn(), onSearch: jest.fn() };
 
 function renderShare(
@@ -26,14 +20,12 @@ function renderShare(
 ) {
   const api = fakeEndpoints({ identifyShare });
   return renderWithProviders(
-    <SafeAreaProvider initialMetrics={METRICS}>
-      <ShareScreen
-        url={props.url === undefined ? LINK : props.url}
-        isPending={props.isPending ?? false}
-        error={props.error ?? null}
-        {...callbacks}
-      />
-    </SafeAreaProvider>,
+    <ShareScreen
+      url={props.url === undefined ? LINK : props.url}
+      isPending={props.isPending ?? false}
+      error={props.error ?? null}
+      {...callbacks}
+    />,
     { api },
   );
 }

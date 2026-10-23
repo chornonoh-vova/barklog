@@ -12,7 +12,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/errors";
 import { keys } from "@/lib/api/keys";
 import { createEntryWrites, type EntryWrites } from "@/features/backlog/entry-writes";
-import { createQueryClient } from "@/lib/query/query-client";
+import { testQueryClient } from "@test/render";
 
 const STAMP = "2026-01-01T00:00:00.000Z";
 
@@ -83,7 +83,7 @@ let effects: {
 let writes: EntryWrites;
 
 beforeEach(() => {
-  queryClient = createQueryClient();
+  queryClient = testQueryClient();
   api = {
     upsertBacklogEntry: jest.fn<Promise<unknown>, [number, unknown]>(async () => ({})),
     deleteBacklogEntry: jest.fn<Promise<unknown>, [number]>(async () => undefined),

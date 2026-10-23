@@ -24,3 +24,23 @@ Import shared helpers through `@test/*`.
   routes around it, and asserts with `expect(screen).toHavePathname(...)`.
 - Stub only the endpoints a test reads; any other call rejects with a message naming it.
 - No snapshots: they pin the mocks' output, not behaviour.
+
+## Gotchas
+
+- `renderRouter` turns on Jest's fake timers. A query refetch or a debounce
+  shows up only through `findBy*`/`waitFor` or `jest.advanceTimersByTimeAsync`;
+  a real `setTimeout` in such a test never fires.
+- Anything using `Stack.Title`, `Stack.Toolbar` or `Stack.SearchBar` needs a
+  stack around it: add `_layout: () => <Stack />` to the route map. These render
+  as props on the native header (`RNSScreenStackHeaderConfig`), not as
+  elements. `test/routes/app.tsx` has `pressHeaderButton` for toolbar items.
+- AsyncStorage's mock is one shared `jest.fn` per method. Override a read with
+  `mockImplementationOnce`, never `mockImplementation`, or the override leaks
+  into later tests in the file.
+- A module that keeps state at module scope (recents, the widget queue) loads
+  fresh per test through `jest.isolateModules`. A fresh registry has its own
+  i18n instance: call `initI18n("en")` on it.
+- Use `testQueryClient()` rather than the app's `createQueryClient()`: the app's
+  5-minute garbage-collection timers keep Jest from exiting.
+- `test/routes/` renders the real `src/app` tree (tests may not live inside
+  `app/`). `test/routes/app.tsx` fakes the server at `fetch`.

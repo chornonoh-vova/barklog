@@ -1,4 +1,4 @@
-import { QueryClient, QueryObserver } from "@tanstack/react-query";
+import { QueryObserver } from "@tanstack/react-query";
 import {
   persistQueryClient,
   type AsyncStorage,
@@ -17,6 +17,7 @@ import {
   staleCacheKeys,
   shouldPersistQuery,
 } from "@/lib/query/query-persist-policy";
+import { testQueryClient } from "@test/render";
 
 const LIST = keys.backlog.list();
 
@@ -49,7 +50,7 @@ describe("retainPersistedQueries", () => {
   // Restored queries sit unobserved until Home mounts them; the default five
   // minutes would collect them, and drop them from disk on the next save.
   it("keeps persisted queries as long as they are persisted, and nothing else", () => {
-    const client = new QueryClient();
+    const client = testQueryClient();
     retainPersistedQueries(client);
 
     expect(client.getQueryDefaults(LIST).gcTime).toBe(PERSIST_MAX_AGE);
@@ -58,7 +59,7 @@ describe("retainPersistedQueries", () => {
 });
 
 function savedCache(): PersistedClient {
-  const source = new QueryClient();
+  const source = testQueryClient();
   source.setQueryData(LIST, { items: ["user A's game"] });
 
   return {
@@ -109,7 +110,7 @@ describe("guardPersistence", () => {
   it("restores nothing once stopped, even if the read finishes later", async () => {
     const slow = slowPersister();
     const { persister, stop } = guardPersistence(memoryStorage().storage, () => slow.persister);
-    const queryClient = new QueryClient();
+    const queryClient = testQueryClient();
     const [unsubscribe, restored] = persistQueryClient({ queryClient, persister });
 
     stop();
@@ -124,7 +125,7 @@ describe("guardPersistence", () => {
   it("restores normally while running", async () => {
     const slow = slowPersister();
     const { persister } = guardPersistence(memoryStorage().storage, () => slow.persister);
-    const queryClient = new QueryClient();
+    const queryClient = testQueryClient();
     const [unsubscribe, restored] = persistQueryClient({ queryClient, persister });
 
     slow.resolveRestore(savedCache());
@@ -212,7 +213,7 @@ describe("revalidateRestored", () => {
 
   // Restored data is a starting point, never fresh.
   it("invalidates data restored from an earlier session", async () => {
-    const client = new QueryClient();
+    const client = testQueryClient();
     client.setQueryData(LIST, { items: [] }, { updatedAt: STARTED_AT - 1 });
 
     await revalidateRestored(client, STARTED_AT);
@@ -223,7 +224,7 @@ describe("revalidateRestored", () => {
   // A list Home already fetched over the network while the disk read ran is
   // newer than anything on disk; refetching it would be a second request.
   it("leaves data fetched this session alone", async () => {
-    const client = new QueryClient();
+    const client = testQueryClient();
     client.setQueryData(LIST, { items: [] }, { updatedAt: STARTED_AT + 1 });
 
     await revalidateRestored(client, STARTED_AT);
@@ -234,7 +235,7 @@ describe("revalidateRestored", () => {
   // Home's first fetch starts before the restore lands; cancelling it and
   // asking again throws a response away on every launch.
   it("does not cancel and repeat a fetch already in flight", async () => {
-    const client = new QueryClient();
+    const client = testQueryClient();
     client.setQueryData(LIST, { items: [] }, { updatedAt: STARTED_AT - 1 });
     let calls = 0;
     let aborted = false;
