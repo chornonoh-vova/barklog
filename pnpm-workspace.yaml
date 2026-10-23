@@ -50,6 +50,14 @@ catalogs:
 overrides:
   "@typescript-eslint/eslint-plugin": 8.71.1
   "@typescript-eslint/parser": 8.71.1
+  # jest-expo depends on jest-environment-jsdom, which brings @types/jsdom; the
+  # hoisted layout puts it at the root, where Vitest's own types import it and
+  # its `/// <reference lib="dom" />` swaps Node's `Response` for the DOM's in
+  # every Vitest workspace. apps/api's check-types then fails:
+  #   undici's Response is not assignable to parameter of type 'Response'
+  # apps/mobile runs jest-expo/ios (React Native's environment), never jsdom,
+  # so nothing needs these types. Drop this if jest-expo stops pulling jsdom.
+  "@types/jsdom": "-"
 
 allowBuilds:
   esbuild: true
