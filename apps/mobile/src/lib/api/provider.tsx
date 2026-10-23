@@ -6,7 +6,8 @@ import { API_URL } from "@/lib/env";
 import { createRequest } from "./client";
 import { createEndpoints, type Endpoints } from "./endpoints";
 
-const ApiContext = createContext<Endpoints | null>(null);
+/** Exported for tests, which provide fake endpoints; the app goes through `ApiProvider`. */
+export const ApiContext = createContext<Endpoints | null>(null);
 
 export function ApiProvider({ children }: { children: ReactNode }) {
   const { getToken } = useAuth();

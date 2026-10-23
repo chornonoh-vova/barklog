@@ -10,16 +10,21 @@ module.exports = {
   // iOS, not the universal preset: the app ships only there, so `Platform.OS`
   // and `.ios.tsx` resolution match the device.
   preset: "jest-expo/ios",
+  // Call history resets per test; implementations a test set stay its own.
+  clearMocks: true,
+  setupFiles: ["<rootDir>/test/env.ts"],
   setupFilesAfterEnv: ["<rootDir>/test/setup.ts"],
   moduleNameMapper: {
     // Mirrors the `@/*` paths in tsconfig.json so tests and source agree.
     "^@/assets/(.*)$": "<rootDir>/assets/$1",
+    "^@test/(.*)$": "<rootDir>/test/$1",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   transformIgnorePatterns: [
     expoPreset.transformIgnorePatterns[0].replace("(?!(", `(?!(${ESM_PACKAGES.join("|")}|`),
     ...expoPreset.transformIgnorePatterns.slice(1),
   ],
+  roots: ["<rootDir>/src", "<rootDir>/test"],
   testPathIgnorePatterns: [
     "/node_modules/",
     "<rootDir>/ios/",
