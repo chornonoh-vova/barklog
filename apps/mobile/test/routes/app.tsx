@@ -10,7 +10,6 @@ import { backlogList, me } from "@test/fixtures";
 // in a file also pays for transforming it. 5 s is not enough on a cold CI run.
 jest.setTimeout(30_000);
 
-
 type Handler = unknown | ((request: { url: URL; init: RequestInit | undefined }) => unknown);
 
 /** Keyed by `"<METHOD> <path>"` or just `"<path>"` for a GET. */
