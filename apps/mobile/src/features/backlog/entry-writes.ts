@@ -142,9 +142,11 @@ export function createEntryWrites(
       },
     });
 
+    // Reset once settled: an attached observer keeps the mutation, and its
+    // `{ previous, list }` snapshot, out of the cache's gc for the session.
     return observer.mutate().then(
-      () => undefined,
-      () => undefined,
+      () => observer.reset(),
+      () => observer.reset(),
     );
   };
 

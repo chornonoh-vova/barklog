@@ -7,7 +7,7 @@ import {
   type MeResponse,
 } from "@repo/contracts";
 import type { QueryClient } from "@tanstack/react-query";
-import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { ApiError } from "@/api/errors";
 import { keys } from "@/api/keys";
@@ -94,6 +94,10 @@ beforeEach(() => {
     playStatusHaptic: vi.fn<() => void>(),
   };
   writes = createEntryWrites(queryClient, api as never, effects);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 const getDetail = (id: number) =>
@@ -249,5 +253,40 @@ describe("createEntryWrites", () => {
 
     pending.resolve();
     await done;
+  });
+
+  it("a move from Home with only the list cached keeps the list item's rating", async () => {
+    queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "completed", 8)] });
+    const pending = deferred();
+    api.upsertBacklogEntry.mockReturnValue(pending.promise);
+
+    const done = writes.move(1, "abandoned");
+
+    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
+    expect(api.upsertBacklogEntry).toHaveBeenCalledWith(1, { status: "abandoned" });
+    expect(getList()?.items.find((i) => i.gameId === 1)).toMatchObject({
+      status: "abandoned",
+      rating: 8,
+    });
+
+    pending.resolve();
+    await done;
+  });
+
+  it("a settled write leaves no mutation in the cache once it is collectable", async () => {
+    vi.useFakeTimers();
+    // Node reads as a server to query-core, whose default gcTime is Infinity;
+    // the device's is five minutes.
+    queryClient.setDefaultOptions({ mutations: { retry: false, gcTime: 5 * 60_000 } });
+    queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "waiting")] });
+
+    await writes.move(1, "playing");
+    api.upsertBacklogEntry.mockRejectedValue(
+      new ApiError({ status: 500, type: "about:blank", title: "Server Error" }),
+    );
+    await writes.rate(1, "playing", 5);
+    await vi.advanceTimersByTimeAsync(10 * 60_000);
+
+    expect(queryClient.getMutationCache().getAll()).toEqual([]);
   });
 });

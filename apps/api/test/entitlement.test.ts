@@ -1,11 +1,15 @@
 import { ensureUser, upsertSubscription } from "@repo/db";
 import type { SubscriptionRow } from "@repo/db";
-import { beforeEach, expect, test } from "vitest";
+import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { isPremium, readEntitlement } from "../src/entitlement.js";
 import { createTestApp, TEST_USER } from "./helpers.js";
 
 const harness = createTestApp();
+
+afterAll(async () => {
+  await harness.close();
+});
 
 beforeEach(async () => {
   await harness.reset();
