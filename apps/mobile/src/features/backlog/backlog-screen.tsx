@@ -1,6 +1,6 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlatformColor,
@@ -110,12 +110,20 @@ export function BacklogScreen() {
     [backlog.data, filter, columns],
   );
 
+  // The empty state hides the filter, so a status left in the URL by a widget
+  // link would resurface after the first add — as an empty filter, if the game
+  // went to another status, which reads as the add having failed.
+  const empty = backlog.data?.items.length === 0;
+  useEffect(() => {
+    if (empty && filter !== undefined) setFilter(undefined);
+  }, [empty, filter, setFilter]);
+
   // One list behind every filter, so only the first load ever waits.
   if (backlog.isPending) return <LoadingState />;
 
   // An empty backlog has nothing to filter: a widget link to a status still
   // lands on the state that offers a way to add a game.
-  if (backlog.data?.items.length === 0) {
+  if (empty) {
     return (
       <EmptyState
         {...emptyBacklog()}
