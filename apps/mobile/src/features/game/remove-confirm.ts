@@ -1,4 +1,4 @@
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 /** Removal discards the status and the rating, and there is no undo. */
 export function removeConfirmCopy(name: string) {

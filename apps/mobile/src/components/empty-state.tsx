@@ -6,7 +6,7 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import { SYMBOL_SIZE, type IllustrationName } from "@/components/illustrations";
 import { Mascot } from "@/components/mascot";
-import { Brand, Type } from "@/theme";
+import { Brand, Type } from "@/ui/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 
 export interface EmptyStateContent {

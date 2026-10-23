@@ -1,6 +1,6 @@
 import type { GameSummaryWire, ShareBasis } from "@repo/contracts";
 
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 /**
  * Kept free of react-native for the same reason as `empty-states.ts`: the copy

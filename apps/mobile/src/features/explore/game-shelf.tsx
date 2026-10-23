@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { GameTile } from "@/components/game-tile";
 import { summarySubtitle } from "@/features/game/format";
 import type { Shelf } from "@/features/explore/shelves";
-import { ShelfTitle } from "@/theme";
+import { ShelfTitle } from "@/ui/theme";
 
 const keyExtractor = (column: GameSummaryWire[]) => String(column[0]?.id);
 

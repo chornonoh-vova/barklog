@@ -8,7 +8,7 @@ import { PlatformColor, StyleSheet, Text, View } from "react-native";
 import { displayHost } from "@/features/share/host";
 import { RemoteImage } from "@/components/remote-image";
 import { sourceThumbSize } from "@/features/share/source-thumb";
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 export function ShareHeader({ source, basis }: { source: ShareSourceWire; basis: ShareBasis }) {
   const { t } = useTranslation();

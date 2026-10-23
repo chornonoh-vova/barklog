@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { SectionList, StyleSheet, Text, View } from "react-native";
 
-import { useIdentifyShare } from "@/api/hooks";
+import { useIdentifyShare } from "@/lib/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
@@ -14,7 +14,7 @@ import { displayHost } from "@/features/share/host";
 import { toShareSections, type ShareSection } from "@/features/share/sections";
 import { SearchingState } from "@/features/share/searching-state";
 import { ShareHeader } from "@/features/share/share-header";
-import { Screen, SectionHeader } from "@/theme";
+import { Screen, SectionHeader } from "@/ui/theme";
 import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 import { useSideInsets } from "@/ui/use-side-insets";
 

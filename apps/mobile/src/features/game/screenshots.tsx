@@ -5,8 +5,8 @@ import { FlatList, PlatformColor, Pressable, StyleSheet, Text, View } from "reac
 import { RemoteImage } from "@/components/remote-image";
 import { screenshotLabel } from "@/features/game/screenshot-label";
 import { ScreenshotViewer } from "@/features/game/screenshot-viewer";
-import { screenshotUrl } from "@/igdb-image";
-import { SHOT_ASPECT, ShelfTitle } from "@/theme";
+import { screenshotUrl } from "@/lib/igdb/image";
+import { SHOT_ASPECT, ShelfTitle } from "@/ui/theme";
 
 const SHOT_WIDTH = 280;
 

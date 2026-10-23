@@ -1,4 +1,4 @@
-import { widgetRoute } from "@/widgets/links";
+import { widgetRoute } from "@/features/widgets/links";
 
 /**
  * `redirectSystemPath` returns a path to navigate to — there is no return

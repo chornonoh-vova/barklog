@@ -11,8 +11,8 @@ import { Modal, StyleSheet, useWindowDimensions } from "react-native";
 
 import { RemoteImage } from "@/components/remote-image";
 import { screenshotLabel } from "@/features/game/screenshot-label";
-import { screenshotUrl } from "@/igdb-image";
-import { SHOT_ASPECT } from "@/theme";
+import { screenshotUrl } from "@/lib/igdb/image";
+import { SHOT_ASPECT } from "@/ui/theme";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 import { GLASS_STYLE } from "@/ui/platform-glass";
 

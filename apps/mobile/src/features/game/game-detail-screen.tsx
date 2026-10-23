@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PlatformColor, ScrollView, StyleSheet, View } from "react-native";
 
-import { useBacklogEntry, useGame } from "@/api/hooks";
+import { useBacklogEntry, useGame } from "@/lib/api/hooks";
 import { QueryBoundary } from "@/components/query-boundary";
 import { DetailRows } from "@/features/game/detail-rows";
 import { EntryActions } from "@/features/game/entry-actions";

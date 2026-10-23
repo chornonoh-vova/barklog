@@ -2,7 +2,7 @@ import { memo } from "react";
 import { PlatformColor, Pressable, StyleSheet, Text, useWindowDimensions } from "react-native";
 
 import { Cover } from "@/components/cover";
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 const TILE_WIDTH = 100;
 

@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import RevenueCatUI from "react-native-purchases-ui";
 
-import { useIsPremium } from "@/api/hooks";
+import { useIsPremium } from "@/lib/api/hooks";
 import { prefersSheet } from "@/ui/columns";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 

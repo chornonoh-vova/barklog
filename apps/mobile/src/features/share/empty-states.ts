@@ -1,7 +1,7 @@
 import type { ShareBasis } from "@repo/contracts";
 
 import type { EmptyStateContent } from "@/components/empty-state";
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 /**
  * The copy lives here, imported as a type only, so this module keeps

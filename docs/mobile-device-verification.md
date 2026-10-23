@@ -49,7 +49,7 @@ pnpm --filter mobile ios
       biometric-enrollment prompt is not cut off mid-flow. If the native module
       ever reported `isAuthFlowComplete: false` persistently, sign-in would
       appear to hang forever on the auth screen. If that happens, the revert is
-      two lines in `src/auth/auth-gate.tsx`: render on `isSignedIn` from the
+      two lines in `src/lib/auth/auth-gate.tsx`: render on `isSignedIn` from the
       `useAuth` call already in that file.
 - [ ] **2. Sign in with Apple appears as an option** and completes. If Apple is
       absent from the options, prerequisites 2-3 are incomplete.
@@ -120,7 +120,7 @@ first: it is the one that can regress behaviour that already worked.
 
 - [ ] **19. A returning signed-in user still goes straight to the tabs.** This is
       check 3 again, re-run because the splash lifecycle moved out of
-      `src/auth/auth-gate.tsx` into `src/splash.ts`, which both gates now drive
+      `src/lib/auth/auth-gate.tsx` into `src/lib/splash.ts`, which both gates now drive
       through `useReleaseSplash`. No onboarding, no flash of the sign-in screen,
       and above all no splash that never goes away. A stuck splash means no gate
       ever reported itself ready; a splash that lifts too early means one

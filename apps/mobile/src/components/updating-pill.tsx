@@ -3,7 +3,7 @@ import { ActivityIndicator, PlatformColor, StyleSheet, Text } from "react-native
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 // Clears the tab bar, which floats above the bottom safe area.
 const ABOVE_TAB_BAR = 64;

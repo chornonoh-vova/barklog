@@ -7,9 +7,9 @@ import type {
 } from "@repo/contracts";
 import { MutationObserver, type QueryClient } from "@tanstack/react-query";
 
-import type { Endpoints } from "@/api/endpoints";
-import { isApiError } from "@/api/errors";
-import { keys } from "@/api/keys";
+import type { Endpoints } from "@/lib/api/endpoints";
+import { isApiError } from "@/lib/api/errors";
+import { keys } from "@/lib/api/keys";
 import { activeSlotsUsed } from "@/features/backlog/slots";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";

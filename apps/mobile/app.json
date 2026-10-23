@@ -58,7 +58,7 @@
               "ios": {
                 "supportedFamilies": ["systemSmall", "systemMedium"],
                 "contentMarginsDisabled": true,
-                "initialLayout": "./src/widgets/backlog-widget.tsx",
+                "initialLayout": "./src/features/widgets/backlog-widget.tsx",
                 "configuration": {
                   "title": "Section",
                   "description": "Which part of your backlog to show.",

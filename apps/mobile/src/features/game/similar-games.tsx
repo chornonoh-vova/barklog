@@ -3,10 +3,10 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
-import { useSimilarGames } from "@/api/hooks";
+import { useSimilarGames } from "@/lib/api/hooks";
 import { GameTile } from "@/components/game-tile";
 import { summarySubtitle } from "@/features/game/format";
-import { ShelfTitle } from "@/theme";
+import { ShelfTitle } from "@/ui/theme";
 
 const keyExtractor = (game: GameSummaryWire) => String(game.id);
 

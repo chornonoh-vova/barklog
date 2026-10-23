@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { namesLine, platformNames, releaseDateLine } from "@/features/game/format";
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 export function DetailRows({ game }: { game: GameDetailResponse }) {
   const { t } = useTranslation();

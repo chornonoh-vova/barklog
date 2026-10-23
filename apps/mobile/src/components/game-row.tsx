@@ -3,7 +3,7 @@ import { memo, type ReactNode } from "react";
 import { Pressable, PlatformColor, StyleSheet, Text, View } from "react-native";
 
 import { Cover } from "@/components/cover";
-import { Type } from "@/theme";
+import { Type } from "@/ui/theme";
 
 const COVER_WIDTH = 44;
 const MENU_SIZE = 44;

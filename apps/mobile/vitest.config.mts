@@ -8,7 +8,7 @@ export default defineConfig({
     // @expo/ui components are native views that render to nothing meaningful
     // off-device, so anything under test must stay free of react-native and
     // @expo/ui imports.
-    include: ["test/**/*.test.ts"],
+    include: ["src/**/*.test.ts"],
     environment: "node",
     setupFiles: ["test/setup.ts"],
   },

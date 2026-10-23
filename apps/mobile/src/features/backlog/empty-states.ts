@@ -2,7 +2,7 @@ import type { BacklogStatus } from "@repo/contracts";
 
 import type { EmptyStateContent } from "@/components/empty-state";
 import { statusSymbol } from "@/features/game/format";
-import { i18n } from "@/i18n/instance";
+import { i18n } from "@/lib/i18n/instance";
 
 /** Functions, not constants: the copy is read at render, after i18n is set up. */
 export function emptyBacklog(): EmptyStateContent {

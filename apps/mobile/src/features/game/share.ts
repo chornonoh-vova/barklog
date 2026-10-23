@@ -1,4 +1,4 @@
-import { gameUrl } from "@/igdb-url";
+import { gameUrl } from "@/lib/igdb/url";
 
 /** The name is passed twice because the platforms read it from different
  * places: iOS drops `content.title` and takes Mail's subject from

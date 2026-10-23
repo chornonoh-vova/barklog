@@ -31,8 +31,8 @@ import { StyleSheet } from "react-native";
 
 import { SYMBOL_SIZE } from "@/components/illustrations";
 import { Mascot } from "@/components/mascot";
-import { siteUrl } from "@/igdb-url";
-import { Brand } from "@/theme";
+import { siteUrl } from "@/lib/igdb/url";
+import { Brand } from "@/ui/theme";
 import { GLASS_PROMINENT_STYLE } from "@/ui/platform-glass";
 
 import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES } from "./pages";

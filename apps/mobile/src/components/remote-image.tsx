@@ -1,6 +1,6 @@
 import { Image, type ImageProps } from "expo-image";
 
-import { useImageTransition } from "@/hooks/use-reduced-motion";
+import { useImageTransition } from "@/ui/use-reduced-motion";
 
 /**
  * Every remote image goes through here so the Reduce Motion gate is structural

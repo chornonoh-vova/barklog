@@ -83,7 +83,7 @@ One-time setup:
 3. Create `apps/mobile/.env` from `.env.example`. `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
    must be the same Clerk instance as the API's `CLERK_SECRET_KEY`, or every
    request is a 401. `EXPO_PUBLIC_REVENUECAT_TEST_KEY` is RevenueCat's Test
-   Store key — `src/env.ts` only reads it under `__DEV__`, so it never reaches
+   Store key — `src/lib/env.ts` only reads it under `__DEV__`, so it never reaches
    a release build. `EXPO_PUBLIC_REVENUECAT_IOS_KEY` is the App Store key that
    every release build ships.
 
@@ -318,14 +318,16 @@ src/
     shared/                full-screen modal listing the candidates for a shared video
       _layout.tsx  index.tsx  game/[id].tsx
     +native-intent.ts      redirects an expo-sharing intent to /shared
-  api/         errors, client, endpoints, keys, provider, hooks
-  auth/        auth-gate, should-clear-cache
-  components/  profile-toolbar, cover, game-row, query-boundary, query-states, empty-state
-  features/    backlog/ explore/ search/ game/ onboarding/ share/
-  hooks/       use-debounced
-  onboarding/  onboarding-gate, should-show-onboarding, storage
-  ui/          glass, platform-glass, measured-host
-  env.ts  igdb-image.ts  query-client.ts  splash.ts  theme.ts
+  features/    one folder per feature: its screen, components, logic and tests
+    backlog/ explore/ game/ onboarding/ paywall/ review/ search/ share/ widgets/
+  components/  UI shared by more than one feature: cover, game-row, game-tile, empty-state,
+               query-boundary, query-states, profile-toolbar, updating-pill
+  lib/         app infrastructure
+    api/         errors, client, endpoints, keys, provider, hooks
+    auth/        auth-gate, should-clear-cache
+    i18n/  igdb/  purchases/  query/  storage/
+    env.ts  observe.ts  splash.ts  use-debounced.ts
+  ui/          theme, columns, glass, text size and layout hooks
 ```
 
 **Tabs.** Expo Router's native tabs (`expo-router/unstable-native-tabs`) render

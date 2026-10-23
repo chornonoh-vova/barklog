@@ -4,12 +4,12 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
-import { useGameFeed } from "@/api/hooks";
+import { useGameFeed } from "@/lib/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState, LoadingState } from "@/components/query-states";
 import { GameShelf } from "@/features/explore/game-shelf";
 import { toShelves } from "@/features/explore/shelves";
-import { Screen } from "@/theme";
+import { Screen } from "@/ui/theme";
 import { useSideInsets } from "@/ui/use-side-insets";
 
 // The most the API serves. The default 20 runs out before the edge of a wide

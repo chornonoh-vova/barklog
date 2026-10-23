@@ -1,7 +1,7 @@
 import { Host, ProgressView } from "@expo/ui/swift-ui";
 import { useTranslation } from "react-i18next";
 
-import { errorCopy } from "@/api/error-copy";
+import { errorCopy } from "@/lib/api/error-copy";
 import { EmptyState } from "@/components/empty-state";
 
 export function LoadingState() {
