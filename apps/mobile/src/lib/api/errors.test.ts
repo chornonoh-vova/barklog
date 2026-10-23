@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { ApiError, isApiError, toApiError } from "@/lib/api/errors";
 
 const response = (status: number, statusText = ""): Response =>

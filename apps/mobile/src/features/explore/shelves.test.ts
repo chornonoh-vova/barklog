@@ -1,5 +1,4 @@
 import type { GameSummaryWire } from "@repo/contracts";
-import { describe, expect, it } from "vitest";
 
 import { toColumns, toShelves } from "@/features/explore/shelves";
 

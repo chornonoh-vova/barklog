@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { screenshotLabel } from "@/features/game/screenshot-label";
 
 describe("screenshotLabel", () => {

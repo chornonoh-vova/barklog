@@ -1,5 +1,4 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
-import { describe, expect, it } from "vitest";
 
 import { compare } from "@/features/backlog/order";
 

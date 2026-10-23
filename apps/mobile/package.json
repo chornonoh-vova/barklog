@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "APP_VARIANT=development expo start",
     "start": "expo start",
-    "test": "vitest run",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
     "ios": "APP_VARIANT=development expo run:ios",
     "ios:device": "APP_VARIANT=development expo run:ios --device",
     "prebuild": "APP_VARIANT=development expo prebuild --platform ios",
@@ -63,10 +64,13 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "30.0.0",
     "@types/react": "~19.3.0",
     "eslint": "catalog:eslint9",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.12",
     "sf-symbols-typescript": "2.2.0",
-    "typescript": "catalog:",
-    "vitest": "catalog:vitest4"
+    "typescript": "catalog:"
   }
 }

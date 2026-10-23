@@ -2,9 +2,8 @@ import type { ImageRequireSource } from "react-native";
 
 /**
  * The mascot art, keyed by name so `empty-states.ts` and `pages.ts` can name an
- * illustration without pulling react-native — or a webp — into their graph:
- * they import this as a type, which erases at compile, and stay testable in
- * plain Node.
+ * illustration without pulling a webp into their graph: they import this as a
+ * type, which erases at compile.
  */
 export type IllustrationName = "default" | "backlog" | "explore" | "share";
 

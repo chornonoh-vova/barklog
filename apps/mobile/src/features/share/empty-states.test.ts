@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { noLink, noMatch, unreadable } from "@/features/share/empty-states";
 
 describe("noLink", () => {
@@ -77,7 +75,9 @@ describe("share illustrations", () => {
 
   it("gives no-match the share mascot on every basis", () => {
     for (const basis of ["title", "unavailable", "none"] as const) {
-      expect(noMatch(basis, ["Hollow Knight"]).illustration, basis).toBe("share");
+      expect({ [basis]: noMatch(basis, ["Hollow Knight"]).illustration }).toEqual({
+        [basis]: "share",
+      });
     }
   });
 });

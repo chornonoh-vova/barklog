@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import { identifyAction } from "@/lib/purchases/should-identify";
 
 test("nothing happens before Clerk has resolved", () => {

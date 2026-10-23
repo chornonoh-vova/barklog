@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { sharedUrlFrom } from "@/features/share/extract-url";
 
 describe("sharedUrlFrom", () => {

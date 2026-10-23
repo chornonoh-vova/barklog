@@ -293,7 +293,7 @@ pnpm --filter worker sync | jq -r '[.level, .message] | @tsv'
 | `pnpm build`                         | Compile the API to `apps/api/dist`   |
 | `pnpm lint`                          | ESLint across all workspaces         |
 | `pnpm check-types`                   | `tsc --noEmit` across all workspaces |
-| `pnpm test`                          | Vitest across all workspaces         |
+| `pnpm test`                          | Vitest, and Jest in apps/mobile      |
 | `pnpm --filter @repo/db db:generate` | Generate a migration from the schema |
 | `pnpm --filter @repo/db db:migrate`  | Apply migrations (+ `pg_trgm`)       |
 | `pnpm --filter worker sync --full`   | Seed the games mirror from IGDB      |

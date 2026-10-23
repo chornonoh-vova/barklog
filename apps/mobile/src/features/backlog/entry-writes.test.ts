@@ -1,3 +1,4 @@
+import { waitFor } from "@testing-library/react-native";
 import {
   FREE_ACTIVE_SLOTS,
   type BacklogListItemWire,
@@ -7,7 +8,6 @@ import {
   type MeResponse,
 } from "@repo/contracts";
 import type { QueryClient } from "@tanstack/react-query";
-import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { ApiError } from "@/lib/api/errors";
 import { keys } from "@/lib/api/keys";
@@ -72,32 +72,32 @@ function deferred() {
 
 let queryClient: QueryClient;
 let api: {
-  upsertBacklogEntry: Mock<(gameId: number, input: unknown) => Promise<unknown>>;
-  deleteBacklogEntry: Mock<(gameId: number) => Promise<unknown>>;
+  upsertBacklogEntry: jest.MockedFunction<(gameId: number, input: unknown) => Promise<unknown>>;
+  deleteBacklogEntry: jest.MockedFunction<(gameId: number) => Promise<unknown>>;
 };
 let effects: {
-  openPaywall: Mock<() => void>;
-  alertError: Mock<(error: unknown) => void>;
-  playStatusHaptic: Mock<() => void>;
+  openPaywall: jest.MockedFunction<() => void>;
+  alertError: jest.MockedFunction<(error: unknown) => void>;
+  playStatusHaptic: jest.MockedFunction<() => void>;
 };
 let writes: EntryWrites;
 
 beforeEach(() => {
   queryClient = createQueryClient();
   api = {
-    upsertBacklogEntry: vi.fn(async () => ({})),
-    deleteBacklogEntry: vi.fn(async () => undefined),
+    upsertBacklogEntry: jest.fn<Promise<unknown>, [number, unknown]>(async () => ({})),
+    deleteBacklogEntry: jest.fn<Promise<unknown>, [number]>(async () => undefined),
   };
   effects = {
-    openPaywall: vi.fn<() => void>(),
-    alertError: vi.fn<(error: unknown) => void>(),
-    playStatusHaptic: vi.fn<() => void>(),
+    openPaywall: jest.fn<void, []>(),
+    alertError: jest.fn<void, [unknown]>(),
+    playStatusHaptic: jest.fn<void, []>(),
   };
   writes = createEntryWrites(queryClient, api as never, effects);
 });
 
 afterEach(() => {
-  vi.useRealTimers();
+  jest.useRealTimers();
 });
 
 const getDetail = (id: number) =>
@@ -124,7 +124,7 @@ describe("createEntryWrites", () => {
 
     const done = writes.move(1, "completed");
 
-    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
+    await waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
     expect(getList()).toBe(list);
     expect(getDetail(1)).toBe(game);
     expect(queryClient.getQueryState(keys.backlog.list())?.isInvalidated).toBe(false);
@@ -173,7 +173,7 @@ describe("createEntryWrites", () => {
 
     const moved = writes.move(1, "playing");
 
-    await vi.waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
+    await waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
     expect(effects.playStatusHaptic).not.toHaveBeenCalled();
     pending.resolve();
     await moved;
@@ -250,7 +250,7 @@ describe("createEntryWrites", () => {
   });
 
   it("a settled write leaves no mutation in the cache once it is collectable", async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     // Node reads as a server to query-core, whose default gcTime is Infinity;
     // the device's is five minutes.
     queryClient.setDefaultOptions({ mutations: { retry: false, gcTime: 5 * 60_000 } });
@@ -261,7 +261,7 @@ describe("createEntryWrites", () => {
       new ApiError({ status: 500, type: "about:blank", title: "Server Error" }),
     );
     await writes.rate(1, "playing", 5);
-    await vi.advanceTimersByTimeAsync(10 * 60_000);
+    await jest.advanceTimersByTimeAsync(10 * 60_000);
 
     expect(queryClient.getMutationCache().getAll()).toEqual([]);
   });

@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { onboardingDecision } from "@/features/onboarding/should-show-onboarding";
 
 describe("onboardingDecision", () => {

@@ -1,5 +1,4 @@
 import { BACKLOG_STATUSES } from "@repo/contracts";
-import { describe, expect, it } from "vitest";
 
 import { IGDB_PAGE_ID, nextPageId, ONBOARDING_PAGES, pageIndex } from "@/features/onboarding/pages";
 import { i18n } from "@/lib/i18n/instance";

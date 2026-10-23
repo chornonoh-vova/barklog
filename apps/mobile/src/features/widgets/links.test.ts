@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import {
   WIDGET_APP_URL,
   widgetGameUrl,

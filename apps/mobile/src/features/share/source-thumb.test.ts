@@ -1,5 +1,4 @@
 import type { ShareSourceWire } from "@repo/contracts";
-import { expect, test } from "vitest";
 
 import { sourceThumbSize } from "@/features/share/source-thumb";
 

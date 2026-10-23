@@ -1,5 +1,3 @@
-import { afterEach, describe, expect, it } from "vitest";
-
 import { errorCopy } from "@/lib/api/error-copy";
 import { ApiError } from "@/lib/api/errors";
 import { ratingLine, releaseDateLine } from "@/features/game/format";
@@ -65,7 +63,7 @@ describe.each(LANGUAGES)("%s copy", (lng) => {
     const categories = new Set(new Intl.PluralRules(lng).resolvedOptions().pluralCategories);
 
     for (const [key, suffixes] of plurals(translated.keys())) {
-      expect(suffixes, key).toEqual(categories);
+      expect({ [key]: suffixes }).toEqual({ [key]: categories });
     }
   });
 
@@ -73,7 +71,7 @@ describe.each(LANGUAGES)("%s copy", (lng) => {
     for (const [key, text] of translated) {
       const englishText = english.get(key) ?? english.get(`${base(key)}_other`);
 
-      expect(tokens(text), key).toEqual(tokens(englishText ?? ""));
+      expect({ [key]: tokens(text) }).toEqual({ [key]: tokens(englishText ?? "") });
     }
   });
 

@@ -298,7 +298,7 @@ Boxes stay unticked here; the owner ticks them as each is verified.
 ## Share game link checks
 
 Added by the game detail share button. The payload itself is unit-tested in
-`apps/mobile/test/game-share.test.ts`; everything below is the native share
+`apps/mobile/src/features/game/share-game.test.ts`; everything below is the native share
 sheet, which no test off-device can reach. Boxes stay unticked until run.
 
 - [ ] **50. The share button sits left of the dots and survives backlog state

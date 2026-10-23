@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { showUpdatingPill } from "@/features/backlog/loading-state";
 
 describe("showUpdatingPill", () => {

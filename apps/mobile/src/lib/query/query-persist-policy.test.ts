@@ -5,7 +5,6 @@ import {
   type PersistedClient,
   type Persister,
 } from "@tanstack/react-query-persist-client";
-import { describe, expect, it } from "vitest";
 
 import { keys } from "@/lib/api/keys";
 import {

@@ -1,5 +1,4 @@
 import { BACKLOG_STATUSES } from "@repo/contracts";
-import { describe, expect, it } from "vitest";
 
 import { emptyBacklog, emptyFilter } from "@/features/backlog/empty-states";
 
@@ -16,7 +15,7 @@ describe("emptyFilter", () => {
     for (const status of BACKLOG_STATUSES) {
       const state = emptyFilter(status);
 
-      expect(state, `missing empty state for "${status}"`).toBeDefined();
+      expect(state).toBeDefined();
       expect(state.title).not.toBe("");
       expect(state.systemImage).not.toBe("");
       expect(state.description).not.toBe("");
@@ -44,7 +43,7 @@ describe("backlog illustrations", () => {
 
   it("gives every status filter the backlog mascot", () => {
     for (const status of BACKLOG_STATUSES) {
-      expect(emptyFilter(status).illustration, status).toBe("backlog");
+      expect({ [status]: emptyFilter(status).illustration }).toEqual({ [status]: "backlog" });
     }
   });
 

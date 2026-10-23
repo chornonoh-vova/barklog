@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import { entitlementChanged, PREMIUM_ENTITLEMENT } from "@/lib/purchases/should-refresh";
 
 test("the entitlement identifier is the one created in RevenueCat", () => {

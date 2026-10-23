@@ -1,29 +1,28 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type AsyncStorageModule from "@react-native-async-storage/async-storage";
+import { waitFor } from "@testing-library/react-native";
 
-// Factory form, as in storage-flag.test.ts: the real module pulls in
-// react-native, which the Vitest config runs with no transform for.
-vi.mock("@react-native-async-storage/async-storage", () => ({
-  default: { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() },
-}));
+import type * as RecentsStorage from "@/features/search/recents-storage";
 
 // Fresh module state per test: the store keeps its list at module level.
-async function load() {
-  vi.resetModules();
-  const { default: AsyncStorage } = await import("@react-native-async-storage/async-storage");
-  vi.mocked(AsyncStorage.setItem).mockResolvedValue();
-  vi.mocked(AsyncStorage.removeItem).mockResolvedValue();
-  const store = await import("@/features/search/recents-storage");
+function load() {
+  jest.resetModules();
+  const { default: AsyncStorage } = jest.requireMock<{ default: typeof AsyncStorageModule }>(
+    "@react-native-async-storage/async-storage",
+  );
+  jest.mocked(AsyncStorage.setItem).mockResolvedValue();
+  jest.mocked(AsyncStorage.removeItem).mockResolvedValue();
+  const store = jest.requireActual<typeof RecentsStorage>("@/features/search/recents-storage");
   return { AsyncStorage, ...store };
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
 });
 
 describe("recents store", () => {
   it("a search made before the stored list loads adds to it", async () => {
-    const { AsyncStorage, recordRecent, recentsStore } = await load();
-    vi.mocked(AsyncStorage.getItem).mockResolvedValue('["zelda"]');
+    const { AsyncStorage, recordRecent, recentsStore } = load();
+    jest.mocked(AsyncStorage.getItem).mockResolvedValue('["zelda"]');
 
     await recordRecent("mario");
 
@@ -32,9 +31,9 @@ describe("recents store", () => {
   });
 
   it("clearing notifies subscribers synchronously", async () => {
-    const { AsyncStorage, clearRecents, recentsStore } = await load();
-    vi.mocked(AsyncStorage.getItem).mockResolvedValue('["zelda"]');
-    const listener = vi.fn();
+    const { AsyncStorage, clearRecents, recentsStore } = load();
+    jest.mocked(AsyncStorage.getItem).mockResolvedValue('["zelda"]');
+    const listener = jest.fn();
     recentsStore.subscribe(listener);
 
     clearRecents();
@@ -44,13 +43,13 @@ describe("recents store", () => {
   });
 
   it("a load in flight when cleared does not bring the list back", async () => {
-    const { AsyncStorage, clearRecents, recentsStore } = await load();
+    const { AsyncStorage, clearRecents, recentsStore } = load();
     let resolveRead!: (raw: string) => void;
-    vi.mocked(AsyncStorage.getItem).mockReturnValue(
-      new Promise<string>((resolve) => (resolveRead = resolve)),
-    );
+    jest
+      .mocked(AsyncStorage.getItem)
+      .mockReturnValue(new Promise<string>((resolve) => (resolveRead = resolve)));
     const loading = recentsStore.load();
-    await vi.waitFor(() => expect(AsyncStorage.getItem).toHaveBeenCalled());
+    await waitFor(() => expect(AsyncStorage.getItem).toHaveBeenCalled());
 
     clearRecents();
     resolveRead('["zelda"]');
@@ -60,8 +59,8 @@ describe("recents store", () => {
   });
 
   it("a failed read starts empty", async () => {
-    const { AsyncStorage, recentsStore } = await load();
-    vi.mocked(AsyncStorage.getItem).mockRejectedValue(new Error("boom"));
+    const { AsyncStorage, recentsStore } = load();
+    jest.mocked(AsyncStorage.getItem).mockRejectedValue(new Error("boom"));
 
     await recentsStore.load();
 

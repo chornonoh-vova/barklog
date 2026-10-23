@@ -5,7 +5,6 @@ import {
   type BacklogListItemWire,
   type BacklogStatus,
 } from "@repo/contracts";
-import { expect, test } from "vitest";
 
 import { activeSlotsUsed, countStatus, slotsLabel } from "@/features/backlog/slots";
 
@@ -72,7 +71,7 @@ const onlyOne = (status: BacklogStatus) => [entry(1, status)];
 // (or dropping one) fails here unless `activeSlotsUsed` derives from it.
 test("every slot-consuming status counts toward the cap", () => {
   for (const status of SLOT_CONSUMING_STATUSES) {
-    expect(activeSlotsUsed(onlyOne(status)), status).toBe(1);
+    expect({ [status]: activeSlotsUsed(onlyOne(status)) }).toEqual({ [status]: 1 });
   }
 });
 
@@ -80,7 +79,7 @@ test("no other status counts toward the cap", () => {
   const consuming = new Set<string>(SLOT_CONSUMING_STATUSES);
 
   for (const status of BACKLOG_STATUSES.filter((s) => !consuming.has(s))) {
-    expect(activeSlotsUsed(onlyOne(status)), status).toBe(0);
+    expect({ [status]: activeSlotsUsed(onlyOne(status)) }).toEqual({ [status]: 0 });
   }
 });
 

@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import { displayHost } from "@/features/share/host";
 
 test("strips a leading www", () => {

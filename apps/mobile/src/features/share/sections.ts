@@ -3,9 +3,8 @@ import type { GameSummaryWire, ShareBasis } from "@repo/contracts";
 import { i18n } from "@/lib/i18n/instance";
 
 /**
- * Kept free of react-native for the same reason as `empty-states.ts`: the copy
- * and the grouping are the parts worth testing, and they stay runnable in
- * plain Node.
+ * Pure, like `empty-states.ts`: the copy and the grouping are the parts worth
+ * testing, and they test without rendering anything.
  */
 export interface ShareSection {
   /** `null` renders no header — see `toShareSections` on why `unavailable` gets none. */

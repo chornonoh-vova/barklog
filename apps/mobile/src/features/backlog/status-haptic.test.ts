@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 
 describe("shouldPlayStatusHaptic", () => {

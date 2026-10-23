@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { shouldClearCache, shouldClearDeviceData } from "@/lib/auth/should-clear-cache";
 
 const A = "user_2abc";

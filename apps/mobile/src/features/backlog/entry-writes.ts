@@ -14,7 +14,7 @@ import { activeSlotsUsed } from "@/features/backlog/slots";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 
-/** The device side of a write: injected, so the core stays plain Node. */
+/** The device side of a write: injected, so a test drives the core with fakes. */
 export interface EntryWriteEffects {
   openPaywall(): void;
   alertError(error: unknown): void;

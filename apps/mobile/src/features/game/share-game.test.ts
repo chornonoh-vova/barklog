@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { Share } from "react-native";
 
-import { gameShareContent } from "@/features/game/share";
+import { gameShareContent, shareGame } from "@/features/game/share-game";
 import { gameUrl } from "@/lib/igdb/url";
 
 describe("gameShareContent", () => {
@@ -36,5 +36,28 @@ describe("gameShareContent", () => {
 
     expect(content.title).toBe("NieR:Automata — Game of the YoRHa Edition");
     expect(options.subject).toBe("NieR:Automata — Game of the YoRHa Edition");
+  });
+});
+
+describe("shareGame", () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it("opens the share sheet with the game's content", () => {
+    const share = jest
+      .spyOn(Share, "share")
+      .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
+    const game = { slug: "hades-ii", name: "Hades II" };
+
+    shareGame(game);
+
+    const { content, options } = gameShareContent(game);
+    expect(share).toHaveBeenCalledWith(content, options);
+  });
+
+  it("swallows a dismissed or failed share", async () => {
+    jest.spyOn(Share, "share").mockRejectedValue(new Error("dismissed"));
+
+    expect(() => shareGame({ slug: "hades-ii", name: "Hades II" })).not.toThrow();
+    await Promise.resolve();
   });
 });

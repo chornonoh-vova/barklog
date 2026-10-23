@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { parseRecents, pushRecent, RECENT_LIMIT } from "@/features/search/recents";
 
 describe("pushRecent", () => {

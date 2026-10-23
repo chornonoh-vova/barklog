@@ -8,8 +8,6 @@ import "@formatjs/intl-pluralrules/locale-data/ru.js";
 import "@formatjs/intl-pluralrules/locale-data/de.js";
 import "@formatjs/intl-pluralrules/locale-data/es.js";
 
-import { beforeAll, describe, expect, it } from "vitest";
-
 import { ratingLine } from "@/features/game/format";
 import { i18n, initI18n } from "@/lib/i18n/instance";
 

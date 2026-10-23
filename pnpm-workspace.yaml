@@ -39,11 +39,6 @@ catalog:
 catalogs:
   eslint9:
     eslint: ^9.39.5
-  # apps/mobile is updated on its own schedule, alongside its Expo SDK, so it
-  # keeps Vitest 4 while everything else moves to 5. Collapse this into the
-  # default catalog when mobile takes the bump.
-  vitest4:
-    vitest: ^4.1.11
 
 # eslint-config-expo depends on @typescript-eslint/eslint-plugin ^8.59.0 of its
 # own. Without these, bumping the top-level typescript-eslint resolves a second
@@ -82,6 +77,10 @@ allowBuilds:
   # `pnpm install --frozen-lockfile` exit 1, which fails CI.
   '@tailwindcss/oxide': true
   sharp: true
+  # Jest 30's file watcher, reached through apps/mobile's jest-expo. Its
+  # postinstall only compiles from source when no prebuilt binary matches the
+  # platform; the prebuilt optional packages cover macOS and the Linux runners.
+  '@parcel/watcher': false
 
 minimumReleaseAgeExclude:
   - expo-secure-store@57.0.2

@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { keys } from "@/lib/api/keys";
 
 describe("query keys", () => {

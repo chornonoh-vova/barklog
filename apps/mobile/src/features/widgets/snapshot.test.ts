@@ -1,5 +1,4 @@
 import { BACKLOG_STATUSES, type BacklogListItemWire, type BacklogStatus } from "@repo/contracts";
-import { describe, expect, it } from "vitest";
 
 import { statusSymbol } from "@/features/game/format";
 import {

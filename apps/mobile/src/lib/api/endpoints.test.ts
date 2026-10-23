@@ -1,11 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
-
 import { createEndpoints } from "@/lib/api/endpoints";
 import type { Request } from "@/lib/api/client";
 
 function spy() {
   const calls: { path: string; options: unknown }[] = [];
-  const request = vi.fn(async (path: string, options?: unknown) => {
+  const request = jest.fn(async (path: string, options?: unknown) => {
     calls.push({ path, options: options ?? {} });
     return {} as never;
   }) as unknown as Request;

@@ -1,5 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { keys } from "@/lib/api/keys";
 import { createQueryClient } from "@/lib/query/query-client";
 import { refreshEntitlement } from "@/lib/purchases/refresh";
@@ -15,19 +13,23 @@ const isInvalidated = (queryClient: ReturnType<typeof seeded>, key: readonly unk
   queryClient.getQueryState(key)?.isInvalidated === true;
 
 describe("refreshEntitlement", () => {
+  // React Native types `__DEV__` as a constant, so a release build is
+  // simulated by writing it through the global object.
+  const dev = __DEV__;
+
   beforeEach(() => {
-    vi.stubGlobal("__DEV__", false);
+    Reflect.set(globalThis, "__DEV__", false);
   });
 
   afterEach(() => {
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
+    jest.useRealTimers();
+    Reflect.set(globalThis, "__DEV__", dev);
   });
 
   it("invalidates me only after the server has re-read", async () => {
     const queryClient = seeded();
     let release!: () => void;
-    const refreshSubscription = vi.fn(() => new Promise<void>((resolve) => (release = resolve)));
+    const refreshSubscription = jest.fn(() => new Promise<void>((resolve) => (release = resolve)));
 
     const done = refreshEntitlement({ refreshSubscription } as never, queryClient);
     await Promise.resolve();
@@ -39,12 +41,12 @@ describe("refreshEntitlement", () => {
   });
 
   it("invalidates me even when both refresh attempts fail", async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     const queryClient = seeded();
-    const refreshSubscription = vi.fn().mockRejectedValue(new Error("down"));
+    const refreshSubscription = jest.fn().mockRejectedValue(new Error("down"));
 
     const done = refreshEntitlement({ refreshSubscription } as never, queryClient);
-    await vi.advanceTimersByTimeAsync(2_000);
+    await jest.advanceTimersByTimeAsync(2_000);
     await done;
 
     expect(refreshSubscription).toHaveBeenCalledTimes(2);
@@ -53,7 +55,7 @@ describe("refreshEntitlement", () => {
 
   it("leaves the backlog alone", async () => {
     const queryClient = seeded();
-    const refreshSubscription = vi.fn().mockResolvedValue(undefined);
+    const refreshSubscription = jest.fn().mockResolvedValue(undefined);
 
     await refreshEntitlement({ refreshSubscription } as never, queryClient);
 

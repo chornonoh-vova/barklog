@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { isAccessibilitySize } from "@/ui/text-size";
 
 describe("isAccessibilitySize", () => {

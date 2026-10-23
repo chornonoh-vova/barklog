@@ -1,5 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import { createRequest } from "@/lib/api/client";
 import { isApiError } from "@/lib/api/errors";
 
@@ -17,13 +15,11 @@ const problem = (status: number, body: unknown, headers: Record<string, string> 
   });
 
 let calls: { url: string; init: RequestInit }[];
-let getToken: ReturnType<
-  typeof vi.fn<(options?: { skipCache?: boolean }) => Promise<string | null>>
->;
+let getToken: jest.MockedFunction<(options?: { skipCache?: boolean }) => Promise<string | null>>;
 
 function client(responses: Response[]) {
   const queue = [...responses];
-  const fetchImpl = vi.fn(async (url: string | URL | globalThis.Request, init?: RequestInit) => {
+  const fetchImpl = jest.fn(async (url: string | URL | globalThis.Request, init?: RequestInit) => {
     calls.push({ url: String(url), init: init ?? {} });
     const next = queue.shift();
     if (!next) throw new Error("unexpected extra fetch call");
@@ -35,7 +31,7 @@ function client(responses: Response[]) {
 
 beforeEach(() => {
   calls = [];
-  getToken = vi.fn(async () => "tok_abc");
+  getToken = jest.fn(async () => "tok_abc");
 });
 
 describe("createRequest — request shape", () => {
@@ -89,7 +85,7 @@ describe("createRequest — request shape", () => {
   });
 
   it("throws without calling fetch when there is no token", async () => {
-    getToken = vi.fn(async () => null);
+    getToken = jest.fn(async () => null);
 
     await expect(client([])("/api/backlog")).rejects.toThrow(/not signed in/i);
     expect(calls).toHaveLength(0);

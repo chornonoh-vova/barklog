@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import {
   COMPLETIONS_BEFORE_REVIEW,
   shouldRequestReview,

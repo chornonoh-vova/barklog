@@ -1,5 +1,4 @@
 import { FREE_ACTIVE_SLOTS } from "@repo/contracts";
-import { expect, test } from "vitest";
 
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 

@@ -1,7 +1,6 @@
 /**
- * Pure, and with no react-native in its graph, so the one piece of this feature
- * that is pure decision-making is testable in plain Node — the same shape as
- * `auth/should-clear-cache.ts`.
+ * Pure, so the one piece of this feature that is decision-making is testable
+ * without rendering — the same shape as `lib/auth/should-clear-cache.ts`.
  */
 export function shouldWaitForPayload(state: {
   isResolving: boolean;

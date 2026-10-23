@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { coverUrl, screenshotUrl } from "@/lib/igdb/image";
 
 describe("coverUrl", () => {

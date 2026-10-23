@@ -7,9 +7,9 @@ import ru from "./locales/ru.json";
 import uk from "./locales/uk.json";
 
 /**
- * Kept free of react-native and expo-localization, so the copy and the
- * formatting stay testable in plain Node: tests call `initI18n` themselves,
- * and `./index.ts` does the same on device with the language iOS picked.
+ * Kept free of expo-localization, so a test picks the language: tests call
+ * `initI18n` themselves, and `./index.ts` does the same on device with the
+ * language iOS picked.
  *
  * One row per language. `formatLocale` is region-qualified so a date does not
  * drift to `en-US`.
