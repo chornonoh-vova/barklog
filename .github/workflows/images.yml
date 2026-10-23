@@ -17,26 +17,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The same checks a pull request runs, so main cannot publish what a PR
+  # would have failed.
   verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      # build first: check-types and the test suites resolve @repo/* through
-      # each package's built .d.ts.
-      - run: pnpm build
-      - run: pnpm lint
-      - run: pnpm check-types
-      # The suites start Postgres and Valkey through Testcontainers on the
-      # runner's Docker daemon. No secrets: the only credential-dependent test
-      # is packages/igdb's contract test, which has its own config and its own
-      # scheduled workflow.
-      - run: pnpm test
+    uses: ./.github/workflows/verify.yml
 
   publish:
     needs: verify

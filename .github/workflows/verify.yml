@@ -1,0 +1,58 @@
+name: Verify
+
+# The checks every change must pass: on each pull request, and as the gate in
+# front of `images.yml`'s publish on main. One definition, so a PR that goes
+# green here cannot fail the same checks after it merges.
+on:
+  pull_request:
+  workflow_call:
+
+# A new push to a PR supersedes its running check. On main this workflow runs
+# inside `images.yml`, whose own group already keeps publishes in order.
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # build first: check-types and the test suites resolve @repo/* through
+      # each package's built .d.ts.
+      - run: pnpm build
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm check-types
+      # The suites start Postgres and Valkey through Testcontainers on the
+      # runner's Docker daemon. No secrets: the only credential-dependent test
+      # is packages/igdb's contract test, which has its own config and its own
+      # scheduled workflow.
+      - run: pnpm test
+
+      # Mobile's Jest run writes coverage; a failed threshold still leaves a
+      # report worth reading, hence `always()`.
+      - if: always()
+        name: Mobile coverage summary
+        run: |
+          summary=apps/mobile/coverage/coverage-summary.json
+          [ -f "$summary" ] || exit 0
+          {
+            echo "### Mobile coverage"
+            echo
+            echo "| | % |"
+            echo "|---|---|"
+            jq -r '.total | to_entries[] | "| \(.key) | \(.value.pct) |"' "$summary"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage
+          path: apps/mobile/coverage/
+          if-no-files-found: ignore
