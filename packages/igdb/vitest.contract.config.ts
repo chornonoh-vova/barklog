@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 // list rather than replacing it, so the default exclusion would still apply.
 export default defineConfig({
   test: {
+    name: "@repo/igdb contract",
     testTimeout: 30_000,
     include: ["test/contract.test.ts"],
   },
