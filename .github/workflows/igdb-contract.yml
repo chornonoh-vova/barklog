@@ -14,23 +14,30 @@ permissions:
 
 jobs:
   contract:
+    name: IGDB contract test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       # turbo, not `pnpm --filter ... build`: the contract test imports
       # @repo/cache, which resolves through that package's built dist.
       # `pnpm --filter` builds igdb alone; turbo's `^build` pulls the
       # workspace dependency in with it.
-      - run: pnpm turbo run build --filter=@repo/igdb
-      - run: pnpm --filter @repo/igdb test:contract
+      - name: Build @repo/igdb and its dependencies
+        run: pnpm turbo run build --filter=@repo/igdb
+      - name: Run contract test against IGDB
+        run: pnpm --filter @repo/igdb test:contract
         env:
           IGDB_CLIENT_ID: ${{ secrets.IGDB_CLIENT_ID }}
           IGDB_CLIENT_SECRET: ${{ secrets.IGDB_CLIENT_SECRET }}

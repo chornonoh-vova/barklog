@@ -1,7 +1,7 @@
 name: Verify
 
 # The checks every change must pass: on each pull request, and as the gate in
-# front of `images.yml`'s publish on main. One definition, so a PR that goes
+# front of `images.yml`'s publish jobs on main. One definition, so a PR that goes
 # green here cannot fail the same checks after it merges.
 on:
   pull_request:
@@ -21,39 +21,54 @@ permissions:
 
 jobs:
   verify:
+    name: Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       # build first: check-types and the test suites resolve @repo/* through
       # each package's built .d.ts.
-      - run: pnpm build
-      - run: pnpm format:check
+      - name: Build
+        run: pnpm build
+      - name: Check formatting
+        run: pnpm format:check
       # Mobile's Jest transform cache. Keyed on the lockfile and the Jest config,
       # with a fallback to the last cache: a stale entry is only re-transformed.
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore Jest transform cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: apps/mobile/node_modules/.cache/jest
           key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
           restore-keys: jest-${{ runner.os }}-
-      # One turbo run, so lint, types and tests overlap across packages instead
-      # of waiting on one another. The suites start Postgres and Valkey through
-      # Testcontainers on the runner's Docker daemon. No secrets: the only
-      # credential-dependent test is packages/igdb's contract test, which has
-      # its own config and its own scheduled workflow.
-      - run: pnpm turbo run lint check-types test
+      # Three steps, so the UI says which check failed. Steps run one after
+      # another, which costs the overlap a single turbo run had, roughly the
+      # lint and type-check time.
+      - name: Lint
+        run: pnpm lint
+      - name: Type-check
+        run: pnpm check-types
+      # The suites start Postgres and Valkey through Testcontainers on the
+      # runner's Docker daemon. No secrets: the only credential-dependent test
+      # is packages/igdb's contract test, which has its own config and its own
+      # scheduled workflow.
+      - name: Test
+        run: pnpm test
 
       # Mobile's Jest run writes coverage; a failed threshold still leaves a
       # report worth reading, hence `always()`.
-      - if: always()
-        name: Mobile coverage summary
+      - name: Mobile coverage summary
+        if: always()
         run: |
           summary=apps/mobile/coverage/coverage-summary.json
           [ -f "$summary" ] || exit 0
@@ -64,7 +79,8 @@ jobs:
             echo "|---|---|"
             jq -r '.total | to_entries[] | "| \(.key) | \(.value.pct) |"' "$summary"
           } >> "$GITHUB_STEP_SUMMARY"
-      - if: always()
+      - name: Upload mobile coverage
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: mobile-coverage
