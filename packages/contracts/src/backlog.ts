@@ -17,6 +17,7 @@ export const backlogListQuerySchema = v.object({
 });
 export type BacklogListQuery = v.InferOutput<typeof backlogListQuerySchema>;
 
+/** `rating` left out keeps the stored rating; `null` clears it. */
 export const backlogUpsertSchema = v.strictObject({
   status: backlogStatusSchema,
   rating: v.optional(

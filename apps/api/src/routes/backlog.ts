@@ -1,27 +1,15 @@
 import { sValidator } from "@hono/standard-validator";
 import {
   FREE_ACTIVE_SLOTS,
-  SLOT_CONSUMING_STATUSES,
   backlogListQuerySchema,
   backlogUpsertSchema,
   gameIdPathSchema,
-  slotDelta,
 } from "@repo/contracts";
-import {
-  countBacklogEntriesByStatus,
-  deleteBacklogEntry,
-  gameExists,
-  getBacklogEntry,
-  getBacklogStats,
-  getSubscription,
-  listBacklog,
-  lockUser,
-  upsertBacklogEntry,
-} from "@repo/db";
+import { deleteBacklogEntry, getBacklogStats, listBacklog } from "@repo/db";
 import { Hono } from "hono";
 
+import { writeBacklogEntry } from "../backlog/entry-write.js";
 import { sha1 } from "../cache-keys.js";
-import { isPremium } from "../entitlement.js";
 import { onInvalid, problems } from "../problems.js";
 import { toBacklogEntry, toBacklogListItem } from "../serialize.js";
 import type { AppDeps, AppEnv } from "../types.js";
@@ -65,62 +53,27 @@ export function backlogRoutes(deps: AppDeps) {
         const { gameId } = c.req.valid("param");
         const { status, rating } = c.req.valid("json");
 
-        if (!(await gameExists(deps.db, gameId))) {
+        const outcome = await writeBacklogEntry(
+          deps.db,
+          { userId: c.get("userId"), gameId, status, rating },
+          new Date(),
+        );
+
+        if (outcome.kind === "unknown-game") {
           throw problems.create("GAME_NOT_FOUND", {
             detail: `Game ${gameId} is not in the mirror.`,
           });
         }
 
-        const outcome = await deps.db.transaction(async (tx) => {
-          // The cap's whole mechanism, and it rests on READ COMMITTED: the row
-          // lock serialises the racers, and the per-statement snapshot means the
-          // loser's count below sees the winner's committed insert. Under
-          // REPEATABLE READ the count would reuse the pre-lock snapshot, both
-          // racers would read 9, and the cap would silently stop holding.
-          await lockUser(tx, c.get("userId"));
-
-          const existing = await getBacklogEntry(tx, c.get("userId"), gameId);
-          const delta = slotDelta(existing?.status ?? null, status);
-
-          // Only a slot-consuming transition can be blocked, so finishing or
-          // re-rating a game costs no extra queries.
-          if (delta > 0) {
-            const subscription = await getSubscription(tx, c.get("userId"));
-
-            if (!isPremium(subscription, new Date())) {
-              const activeCount = await countBacklogEntriesByStatus(
-                tx,
-                c.get("userId"),
-                SLOT_CONSUMING_STATUSES,
-              );
-
-              if (activeCount + delta > FREE_ACTIVE_SLOTS) {
-                return { blocked: true as const, activeCount };
-              }
-            }
-          }
-
-          const { entry, created } = await upsertBacklogEntry(tx, {
-            userId: c.get("userId"),
-            gameId,
-            status,
-            rating: rating ?? null,
-          });
-
-          return { blocked: false as const, entry, created };
-        });
-
-        if (outcome.blocked) {
-          // A lapsed subscriber can sit above the cap, where finishing a single
-          // game frees nothing usable. Say how many it actually takes.
-          const toFree = outcome.activeCount - FREE_ACTIVE_SLOTS + 1;
+        if (outcome.kind === "capped") {
+          const { activeCount, toFree } = outcome;
 
           throw problems.create("BACKLOG_CAP_REACHED", {
             detail:
               toFree > 1
-                ? `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games and you have ${outcome.activeCount}. Finish ${toFree} to free a spot, or subscribe for unlimited.`
+                ? `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games and you have ${activeCount}. Finish ${toFree} to free a spot, or subscribe for unlimited.`
                 : `A free backlog holds ${FREE_ACTIVE_SLOTS} unfinished games. Finish one to free a spot, or subscribe for unlimited.`,
-            extensions: { activeCount: outcome.activeCount, limit: FREE_ACTIVE_SLOTS, toFree },
+            extensions: { activeCount, limit: FREE_ACTIVE_SLOTS, toFree },
           });
         }
 
