@@ -3,7 +3,9 @@ import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
 import { SimilarGames } from "@/features/game/similar-games";
 import { gameSummary } from "@test/fixtures";
+import { scrollViewAround, sidePadding } from "@test/queries";
 import { fakeEndpoints, renderWithProviders } from "@test/render";
+import { PHONE_INSETS } from "@test/window";
 
 const list = (...ids: number[]): GameListResponse =>
   ({ items: ids.map((id) => gameSummary({ id })) }) as GameListResponse;
@@ -46,5 +48,22 @@ describe("SimilarGames", () => {
 
     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
     expect(screen.queryByText("Similar Games")).not.toBeOnTheScreen();
+  });
+
+  it("runs under the side safe areas, so covers scroll beneath a tab sidebar", async () => {
+    const api = fakeEndpoints({ similarGames: async () => list(2, 3) });
+    await renderWithProviders(<SimilarGames gameId={7} onPressGame={jest.fn()} />, {
+      api,
+      insets: { ...PHONE_INSETS, right: 60 },
+    });
+
+    const row = scrollViewAround(await screen.findByRole("button", { name: "Game 2, 2020" }), {
+      horizontal: true,
+    });
+    expect(sidePadding(row)).toEqual({
+      frame: { left: undefined, right: undefined },
+      content: { left: 16, right: 76 },
+    });
+    expect(screen.getByText("Similar Games")).toHaveStyle({ paddingLeft: 16, paddingRight: 76 });
   });
 });

@@ -15,7 +15,20 @@ import {
   me,
 } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders, testQueryClient } from "@test/render";
+import { scrollViewAround, sidePadding } from "@test/queries";
 import { setWindow, TABLET } from "@test/window";
+
+// `renderRouter` brings its own safe-area provider, which would override the
+// insets `renderWithProviders` takes, so a routed screen steers them here.
+const mockInsets = { top: 0, left: 0, right: 0, bottom: 0 };
+jest.mock("react-native-safe-area-context", () => ({
+  ...jest.requireActual<object>("react-native-safe-area-context"),
+  useSafeAreaInsets: () => mockInsets,
+}));
+
+beforeEach(() => {
+  Object.assign(mockInsets, { left: 0, right: 0 });
+});
 
 const onOpenGame = jest.fn();
 
@@ -292,5 +305,28 @@ describe("GameDetailScreen", () => {
     const texts = textsInOrder();
     expect(texts.indexOf("Release")).toBeLessThan(texts.indexOf("Screenshots"));
     expect(texts.filter((text) => text === "Release")).toHaveLength(1);
+  });
+
+  it("insets the details but lets the shelves run under a tab sidebar", async () => {
+    // iPhone Duo with the tab sidebar on the right.
+    mockInsets.right = 60;
+    await renderDetail([gameDetail({ id: 7, screenshots: ["shot"] })]);
+
+    const shot = await screen.findByRole("button", { name: "Screenshot 1 of 1" });
+    // Nothing pads the page as a whole, or every shelf would end at the sidebar.
+    expect(sidePadding(scrollViewAround(shot, { horizontal: false })).content).toEqual({
+      left: undefined,
+      right: undefined,
+    });
+    expect(sidePadding(scrollViewAround(shot, { horizontal: true })).content).toEqual({
+      left: 16,
+      right: 76,
+    });
+    // The details still keep clear of it.
+    let details: ReturnType<typeof screen.getByText> | null = screen.getByText("Release");
+    while (details !== null && details.props.style?.paddingRight === undefined) {
+      details = details.parent;
+    }
+    expect(details).toHaveStyle({ paddingLeft: 0, paddingRight: 60 });
   });
 });

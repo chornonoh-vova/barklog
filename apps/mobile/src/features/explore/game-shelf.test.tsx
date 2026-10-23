@@ -1,32 +1,11 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
-import { StyleSheet } from "react-native";
+import { screen, userEvent } from "@testing-library/react-native";
 
 import { GameShelf } from "@/features/explore/game-shelf";
 import { toColumns } from "@/features/explore/shelves";
 import { gameSummary } from "@test/fixtures";
-
-const mockInsets = { top: 0, left: 0, right: 0, bottom: 0 };
-
-jest.mock("react-native-safe-area-context", () => ({
-  ...jest.requireActual<object>("react-native-safe-area-context"),
-  useSafeAreaInsets: () => mockInsets,
-}));
-
-beforeEach(() => {
-  Object.assign(mockInsets, { left: 0, right: 0 });
-});
-
-type Host = ReturnType<typeof screen.getByText>;
-
-/** The horizontal list a game sits in. */
-function shelfList(game: Host): Host {
-  let node: Host | null = game;
-  while (node !== null && !(node.type === "RCTScrollView" && node.props.horizontal)) {
-    node = node.parent;
-  }
-  if (node === null) throw new Error("no horizontal list around the game");
-  return node;
-}
+import { scrollViewAround, sidePadding } from "@test/queries";
+import { renderWithProviders } from "@test/render";
+import { PHONE_INSETS } from "@test/window";
 
 const shelf = {
   feed: "popular" as const,
@@ -40,7 +19,7 @@ const shelf = {
 
 describe("GameShelf", () => {
   it("titles the shelf and shows every game with its release year", async () => {
-    await render(<GameShelf shelf={shelf} onPressGame={jest.fn()} />);
+    await renderWithProviders(<GameShelf shelf={shelf} onPressGame={jest.fn()} />);
 
     expect(screen.getByText("Most Popular")).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Hades, 2020" })).toBeOnTheScreen();
@@ -48,14 +27,14 @@ describe("GameShelf", () => {
   });
 
   it("names an undated game by its title alone", async () => {
-    await render(<GameShelf shelf={shelf} onPressGame={jest.fn()} />);
+    await renderWithProviders(<GameShelf shelf={shelf} onPressGame={jest.fn()} />);
 
     expect(screen.getByRole("button", { name: "Unreleased" })).toBeOnTheScreen();
   });
 
   it("reports the game pressed", async () => {
     const onPressGame = jest.fn();
-    await render(<GameShelf shelf={shelf} onPressGame={onPressGame} />);
+    await renderWithProviders(<GameShelf shelf={shelf} onPressGame={onPressGame} />);
 
     await userEvent.setup().press(screen.getByRole("button", { name: "Celeste, 2018" }));
 
@@ -64,16 +43,18 @@ describe("GameShelf", () => {
 
   it("runs the list under the side safe areas, so covers scroll beneath a tab sidebar", async () => {
     // iPhone Duo with the tab sidebar on the right.
-    Object.assign(mockInsets, { left: 0, right: 60 });
-    await render(<GameShelf shelf={shelf} onPressGame={jest.fn()} />);
+    await renderWithProviders(<GameShelf shelf={shelf} onPressGame={jest.fn()} />, {
+      insets: { ...PHONE_INSETS, right: 60 },
+    });
 
-    const list = shelfList(screen.getByRole("button", { name: "Hades, 2020" }));
-    // The list itself spans the whole width; only its content is inset, so the
-    // first and last covers rest clear of the sidebar.
-    expect(StyleSheet.flatten(list.props.style)?.paddingRight).toBeUndefined();
-    expect(StyleSheet.flatten(list.props.contentContainerStyle)).toMatchObject({
-      paddingLeft: 16,
-      paddingRight: 76,
+    const list = scrollViewAround(screen.getByRole("button", { name: "Hades, 2020" }), {
+      horizontal: true,
+    });
+    // The list spans the whole width; only its content is inset, so the first
+    // and last covers rest clear of the sidebar.
+    expect(sidePadding(list)).toEqual({
+      frame: { left: undefined, right: undefined },
+      content: { left: 16, right: 76 },
     });
     expect(screen.getByText("Most Popular")).toHaveStyle({ paddingLeft: 16, paddingRight: 76 });
   });

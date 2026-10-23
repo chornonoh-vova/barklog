@@ -6,10 +6,7 @@ import { GameTile } from "@/components/game-tile";
 import { summarySubtitle } from "@/features/game/format";
 import type { Shelf } from "@/features/explore/shelves";
 import { ShelfTitle } from "@/ui/theme";
-import { useSideInsets } from "@/ui/use-side-insets";
-
-/** The gutter between the screen edge, or a safe area, and a shelf's content. */
-const GUTTER = 16;
+import { useShelfInset } from "@/ui/use-shelf-inset";
 
 const keyExtractor = (column: GameSummaryWire[]) => String(column[0]?.id);
 
@@ -20,11 +17,7 @@ export function GameShelf({
   shelf: Shelf;
   onPressGame: (id: number) => void;
 }) {
-  // The list spans the full width and only its content is inset, so covers
-  // scroll under the Dynamic Island in landscape and the tab sidebar on
-  // iPhone Duo, where the glass then has something to show through it.
-  const { paddingLeft, paddingRight } = useSideInsets();
-  const inset = { paddingLeft: GUTTER + paddingLeft, paddingRight: GUTTER + paddingRight };
+  const inset = useShelfInset();
 
   const renderColumn = useCallback(
     ({ item }: { item: GameSummaryWire[] }) => (

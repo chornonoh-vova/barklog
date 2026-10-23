@@ -62,14 +62,25 @@ export function testQueryClient(): QueryClient {
   return client;
 }
 
-type ProviderOptions = { api?: FakeEndpoints; queryClient?: QueryClient };
+type Insets = typeof PHONE_INSETS;
 
-function providers({ api = fakeEndpoints(), queryClient = testQueryClient() }: ProviderOptions) {
+type ProviderOptions = {
+  api?: FakeEndpoints;
+  queryClient?: QueryClient;
+  /** The safe area, e.g. `{ ...PHONE_INSETS, right: 60 }` for iPhone Duo's tab sidebar. */
+  insets?: Insets;
+};
+
+function providers({
+  api = fakeEndpoints(),
+  queryClient = testQueryClient(),
+  insets = PHONE_INSETS,
+}: ProviderOptions) {
   function Providers({ children }: { children: ReactNode }) {
     const { width, height } = Dimensions.get("window");
     // The root layout's `Stack` supplies a safe area on device; a component
     // rendered alone needs one for `useSafeAreaInsets`.
-    const metrics = { frame: { x: 0, y: 0, width, height }, insets: PHONE_INSETS };
+    const metrics = { frame: { x: 0, y: 0, width, height }, insets };
     return (
       <SafeAreaProvider initialMetrics={metrics}>
         <QueryClientProvider client={queryClient}>
@@ -85,7 +96,7 @@ export async function renderWithProviders(
   ui: ReactElement,
   options: ProviderOptions & Omit<RenderOptions, "wrapper"> = {},
 ) {
-  const { api: _api, queryClient: _queryClient, ...renderOptions } = options;
+  const { api: _api, queryClient: _queryClient, insets: _insets, ...renderOptions } = options;
   const { api, queryClient, Providers } = providers(options);
   const result = await render(ui, { ...renderOptions, wrapper: Providers });
   return { ...result, api, queryClient };

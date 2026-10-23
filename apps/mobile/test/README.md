@@ -34,6 +34,10 @@ Import shared helpers through `@test/*`.
   stack around it: add `_layout: () => <Stack />` to the route map. These render
   as props on the native header (`RNSScreenStackHeaderConfig`), not as
   elements. `test/routes/app.tsx` has `pressHeaderButton` for toolbar items.
+- `renderWithProviders({ insets })` sets the safe area, e.g. iPhone Duo's tab
+  sidebar. `renderRouter` brings its own safe-area provider, which overrides
+  it, so a routed test steers `useSafeAreaInsets` with a local `jest.mock`.
+  `@test/queries` finds a shelf's scroll view and reads its side padding.
 - AsyncStorage's mock is one shared `jest.fn` per method. Override a read with
   `mockImplementationOnce`, never `mockImplementation`, or the override leaks
   into later tests in the file.

@@ -7,6 +7,7 @@ import { useSimilarGames } from "@/lib/api/hooks";
 import { GameTile } from "@/components/game-tile";
 import { summarySubtitle } from "@/features/game/format";
 import { ShelfTitle } from "@/ui/theme";
+import { useShelfInset } from "@/ui/use-shelf-inset";
 
 const keyExtractor = (game: GameSummaryWire) => String(game.id);
 
@@ -19,6 +20,7 @@ export function SimilarGames({
 }) {
   const similar = useSimilarGames(gameId);
   const items = similar.data?.items ?? [];
+  const inset = useShelfInset();
   const { t } = useTranslation();
 
   const renderItem = useCallback(
@@ -38,13 +40,13 @@ export function SimilarGames({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>{t("game.similarGames")}</Text>
+      <Text style={[styles.title, inset]}>{t("game.similarGames")}</Text>
 
       <FlatList
         horizontal
         data={items}
         keyExtractor={keyExtractor}
-        contentContainerStyle={styles.row}
+        contentContainerStyle={[styles.row, inset]}
         showsHorizontalScrollIndicator={false}
         renderItem={renderItem}
       />
@@ -55,5 +57,5 @@ export function SimilarGames({
 const styles = StyleSheet.create({
   section: { gap: 8, paddingBottom: 32 },
   title: ShelfTitle,
-  row: { gap: 12, paddingHorizontal: 16 },
+  row: { gap: 12 },
 });
