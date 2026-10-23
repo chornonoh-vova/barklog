@@ -4,8 +4,6 @@ import {
   SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
   type BacklogListResponse,
-  type BacklogSort,
-  type BacklogStatsWire,
   type BacklogStatus,
   type GameDetailResponse,
   type GameFeed,
@@ -45,17 +43,21 @@ export function createEndpoints(request: Request) {
         body: { url: input.url, limit: input.limit ?? IDENTIFY_LIMIT_DEFAULT },
       }),
 
-    listBacklog: (input: { status?: BacklogStatus; sort?: BacklogSort } = {}) =>
-      request<BacklogListResponse>("/api/backlog", {
-        query: { status: input.status, sort: input.sort ?? "updated_at" },
-      }),
+    // The server's default order; `compare` in `features/backlog/order.ts` mirrors it.
+    listBacklog: () => request<BacklogListResponse>("/api/backlog"),
 
-    getBacklogStats: () => request<BacklogStatsWire>("/api/backlog/stats"),
-
-    upsertBacklogEntry: (gameId: number, input: { status: BacklogStatus; rating: number | null }) =>
+    // A missing `rating` keeps the stored one and `null` clears it, so a move
+    // leaves the key out rather than sending `undefined`.
+    upsertBacklogEntry: (
+      gameId: number,
+      input: { status: BacklogStatus; rating?: number | null },
+    ) =>
       request<BacklogEntryWire>(`/api/backlog/${gameId}`, {
         method: "PUT",
-        body: { status: input.status, rating: input.rating },
+        body:
+          input.rating === undefined
+            ? { status: input.status }
+            : { status: input.status, rating: input.rating },
       }),
 
     deleteBacklogEntry: (gameId: number) =>

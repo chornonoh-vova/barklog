@@ -54,7 +54,8 @@
     "more": "Ещё",
     "moreFor": "Ещё, {{name}}",
     "statusMenu": "Статус",
-    "removeFromBacklog": "Удалить из бэклога…"
+    "removeFromBacklog": "Удалить из бэклога…",
+    "updating": "Обновление…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} оценка",
@@ -195,5 +196,8 @@
       "title": "Не удалось прочитать ссылку",
       "description": "Сейчас не получается прочитать эту ссылку. Попробуй чуть позже."
     }
+  },
+  "widget": {
+    "signedOut": "Откройте Barklog, чтобы увидеть свой бэклог."
   }
 }

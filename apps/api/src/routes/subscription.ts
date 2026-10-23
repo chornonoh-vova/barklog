@@ -1,10 +1,9 @@
-import { getSubscription, upsertSubscription } from "@repo/db";
+import { upsertSubscription } from "@repo/db";
 import { getLogger } from "@logtape/logtape";
 import { Hono } from "hono";
 
-import { isPremium } from "../entitlement.js";
+import { readEntitlement } from "../entitlement.js";
 import { problems } from "../problems.js";
-import { toEntitlement } from "../serialize.js";
 import type { AppDeps, AppEnv } from "../types.js";
 
 export function subscriptionRoutes(deps: AppDeps) {
@@ -30,13 +29,8 @@ export function subscriptionRoutes(deps: AppDeps) {
       await upsertSubscription(deps.db, { ...fetched, userId });
     }
 
-    const row = await getSubscription(deps.db, userId);
-
     c.header("Cache-Control", "private, no-store");
 
-    return c.json({
-      premium: isPremium(row, new Date()),
-      entitlement: row === null ? null : toEntitlement(row),
-    });
+    return c.json(await readEntitlement(deps.db, userId, new Date()));
   });
 }

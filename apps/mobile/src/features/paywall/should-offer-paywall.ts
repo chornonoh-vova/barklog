@@ -2,7 +2,7 @@ import { FREE_ACTIVE_SLOTS, slotDelta, type BacklogStatus } from "@repo/contract
 
 /**
  * An unknown `activeCount` or `premium` returns false on purpose: guessing
- * would refuse a legitimate add while `/me` and the stats load — and an unknown
+ * would refuse a legitimate add while `/me` and the list load — and an unknown
  * entitlement guessed as "free" would refuse a paying user outright. The
  * server's 402 is the backstop for both.
  */

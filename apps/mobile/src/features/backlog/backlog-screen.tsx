@@ -1,6 +1,6 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
-import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlatformColor,
@@ -12,17 +12,19 @@ import {
   View,
 } from "react-native";
 
-import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
+import { useBacklog, useIsPremium } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
 import { LoadingState } from "@/components/query-states";
+import { UpdatingPill } from "@/components/updating-pill";
 import { QueryBoundary } from "@/components/query-boundary";
 import { BacklogGameRow } from "@/features/backlog/backlog-game-row";
 import { emptyBacklog, emptyFilter } from "@/features/backlog/empty-states";
+import { showUpdatingPill } from "@/features/backlog/loading-state";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
-import { useSlotState } from "@/features/backlog/use-slot-state";
+import { parseStatusParam } from "@/features/backlog/status-param";
 import { useReviewPrompt } from "@/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/theme";
 import { columnCount } from "@/ui/columns";
@@ -51,18 +53,30 @@ const renderGroupedSectionHeader = ({ section }: { section: BacklogRowSection })
   sectionHeader(section, true);
 
 export function BacklogScreen() {
-  const [filter, setFilter] = useState<BacklogStatus | undefined>(undefined);
-  const backlog = useBacklog(filter);
-  const stats = useBacklogStats();
   const router = useRouter();
+  // The filter lives in `?status=`, so a widget tap and the user's own pick set
+  // the same thing.
+  const filter = parseStatusParam(useLocalSearchParams<{ status?: string }>().status);
+  const setFilter = useCallback(
+    (status: BacklogStatus | undefined) => router.setParams({ status }),
+    [router],
+  );
+  const backlog = useBacklog();
   const premium = useIsPremium();
-  const slots = slotsLabel(stats.data, premium);
+  const slots = slotsLabel(backlog.data?.items, premium);
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
   const subtitleLines = isAccessibilitySize(fontScale) ? 2 : 1;
-  const slotState = useSlotState();
   const { t } = useTranslation();
+  // Only a pull the user started shows the native spinner; background
+  // revalidation of cached data shows the pill instead.
+  const [userRefreshing, setUserRefreshing] = useState(false);
+  const updating = showUpdatingPill({
+    hasData: backlog.data !== undefined,
+    isFetching: backlog.isFetching,
+    userRefreshing,
+  });
 
   // Home: the only screen a user reaches without having just tapped something.
   useReviewPrompt();
@@ -78,14 +92,12 @@ export function BacklogScreen() {
             entry={entry}
             variant={grid ? "card" : "row"}
             subtitleLines={subtitleLines}
-            premium={slotState.premium}
-            activeCount={slotState.activeCount}
             onPress={openGame}
           />
         ))}
       </GameGridRow>
     ),
-    [openGame, grid, columns, subtitleLines, slotState.premium, slotState.activeCount],
+    [openGame, grid, columns, subtitleLines],
   );
 
   const sections = useMemo(
@@ -93,11 +105,20 @@ export function BacklogScreen() {
     [backlog.data, filter, columns],
   );
 
-  // Only the first load replaces the screen. A filter's first load keeps the
-  // list, and the filter in its header, mounted and spins inside it instead.
-  if (backlog.isPending && filter === undefined) return <LoadingState />;
+  // The empty state hides the filter, so a status left in the URL by a widget
+  // link would resurface after the first add — as an empty filter, if the game
+  // went to another status, which reads as the add having failed.
+  const empty = backlog.data?.items.length === 0;
+  useEffect(() => {
+    if (empty && filter !== undefined) setFilter(undefined);
+  }, [empty, filter, setFilter]);
 
-  if (filter === undefined && backlog.data?.items.length === 0) {
+  // One list behind every filter, so only the first load ever waits.
+  if (backlog.isPending) return <LoadingState />;
+
+  // An empty backlog has nothing to filter: a widget link to a status still
+  // lands on the state that offers a way to add a game.
+  if (empty) {
     return (
       <EmptyState
         {...emptyBacklog()}
@@ -140,18 +161,14 @@ export function BacklogScreen() {
       renderSectionHeader={grid ? renderGroupedSectionHeader : renderSectionHeader}
       ListHeaderComponent={listHeader}
       ListEmptyComponent={
-        backlog.isPending ? (
-          <LoadingState />
-        ) : filter === undefined ? undefined : (
-          <EmptyState {...emptyFilter(filter)} />
-        )
+        filter === undefined ? undefined : <EmptyState {...emptyFilter(filter)} />
       }
       refreshControl={
         <RefreshControl
-          refreshing={backlog.isRefetching}
+          refreshing={userRefreshing}
           onRefresh={() => {
-            void backlog.refetch();
-            void stats.refetch();
+            setUserRefreshing(true);
+            void Promise.allSettled([backlog.refetch()]).then(() => setUserRefreshing(false));
           }}
         />
       }
@@ -161,9 +178,10 @@ export function BacklogScreen() {
   );
 
   return (
-    <QueryBoundary query={backlog} loading={list}>
-      {() => list}
-    </QueryBoundary>
+    <>
+      <QueryBoundary query={backlog}>{() => list}</QueryBoundary>
+      <UpdatingPill visible={updating} />
+    </>
   );
 }
 

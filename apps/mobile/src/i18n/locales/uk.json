@@ -54,7 +54,8 @@
     "more": "Більше",
     "moreFor": "Більше, {{name}}",
     "statusMenu": "Статус",
-    "removeFromBacklog": "Видалити з беклогу…"
+    "removeFromBacklog": "Видалити з беклогу…",
+    "updating": "Оновлення…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} оцінка",
@@ -195,5 +196,8 @@
       "title": "Не вдалося прочитати посилання",
       "description": "Зараз не вдається прочитати це посилання. Спробуй трохи згодом."
     }
+  },
+  "widget": {
+    "signedOut": "Відкрийте Barklog, щоб побачити свій беклог."
   }
 }

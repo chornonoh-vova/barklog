@@ -54,7 +54,8 @@
     "more": "Mehr",
     "moreFor": "Mehr, {{name}}",
     "statusMenu": "Status",
-    "removeFromBacklog": "Aus dem Backlog entfernen …"
+    "removeFromBacklog": "Aus dem Backlog entfernen …",
+    "updating": "Aktualisiere…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} Bewertung",
@@ -70,7 +71,7 @@
     "shareGame": "Spiel teilen",
     "backlogActions": "Backlog-Aktionen",
     "thisGame": "dieses Spiel",
-    "released": "Erschienen",
+    "released": "Erscheinungsdatum",
     "type": "Typ",
     "genres": "Genres",
     "platforms": "Plattformen",
@@ -191,5 +192,8 @@
       "title": "Link nicht lesbar",
       "description": "Der Link lässt sich gerade nicht lesen. Versuch es gleich noch mal."
     }
+  },
+  "widget": {
+    "signedOut": "Öffne Barklog, um deinen Backlog zu sehen."
   }
 }

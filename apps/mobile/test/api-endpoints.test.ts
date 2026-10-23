@@ -64,31 +64,11 @@ describe("createEndpoints", () => {
     expect(calls[0]?.options).toEqual({ query: { limit: 6 } });
   });
 
-  it("lists the backlog with the default sort and no status filter", async () => {
+  it("lists the whole backlog, leaving the sort to the server's default", async () => {
     const { request, calls } = spy();
     await createEndpoints(request).listBacklog();
 
-    expect(calls[0]).toEqual({
-      path: "/api/backlog",
-      options: { query: { status: undefined, sort: "updated_at" } },
-    });
-  });
-
-  it("lists the backlog filtered by status", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).listBacklog({ status: "playing" });
-
-    expect(calls[0]).toEqual({
-      path: "/api/backlog",
-      options: { query: { status: "playing", sort: "updated_at" } },
-    });
-  });
-
-  it("fetches stats", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).getBacklogStats();
-
-    expect(calls[0]).toEqual({ path: "/api/backlog/stats", options: {} });
+    expect(calls[0]).toEqual({ path: "/api/backlog", options: {} });
   });
 
   it("upserts an entry with PUT", async () => {
@@ -109,6 +89,13 @@ describe("createEndpoints", () => {
       path: "/api/backlog/1942",
       options: { method: "PUT", body: { status: "waiting", rating: null } },
     });
+  });
+
+  it("leaves rating out of a move", async () => {
+    const { request, calls } = spy();
+    await createEndpoints(request).upsertBacklogEntry(1942, { status: "playing" });
+
+    expect(calls[0]?.options).toStrictEqual({ method: "PUT", body: { status: "playing" } });
   });
 
   it("deletes an entry", async () => {

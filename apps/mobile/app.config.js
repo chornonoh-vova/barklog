@@ -47,17 +47,35 @@ export default ({ config }) => {
         [APP_GROUPS_ENTITLEMENT]: [appGroupIdentifier],
       },
     },
-    plugins: config.plugins?.map((plugin) =>
-      Array.isArray(plugin) && plugin[0] === "expo-sharing"
-        ? [
-            plugin[0],
-            {
-              ...plugin[1],
-              ios: { ...plugin[1]?.ios, appGroupId: appGroupIdentifier },
-            },
-          ]
-        : plugin,
-    ),
+    plugins: config.plugins?.map((plugin) => {
+      if (!Array.isArray(plugin)) return plugin;
+
+      if (plugin[0] === "expo-sharing") {
+        return [
+          plugin[0],
+          {
+            ...plugin[1],
+            ios: { ...plugin[1]?.ios, appGroupId: appGroupIdentifier },
+          },
+        ];
+      }
+
+      // Explicit rather than the plugin's fallbacks, which match today but warn on
+      // every prebuild. The widget reads its snapshot and covers from the same app
+      // group the app writes them to, so the two must follow the variant together.
+      if (plugin[0] === "expo-widgets") {
+        return [
+          plugin[0],
+          {
+            ...plugin[1],
+            bundleIdentifier: `${bundleIdentifier}.ExpoWidgetsTarget`,
+            groupIdentifier: appGroupIdentifier,
+          },
+        ];
+      }
+
+      return plugin;
+    }),
     android: {
       ...config.android,
       package: bundleIdentifier,

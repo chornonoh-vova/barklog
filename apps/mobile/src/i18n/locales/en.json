@@ -54,7 +54,8 @@
     "more": "More",
     "moreFor": "More, {{name}}",
     "statusMenu": "Status",
-    "removeFromBacklog": "Remove from Backlog…"
+    "removeFromBacklog": "Remove from Backlog…",
+    "updating": "Updating…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} rating",
@@ -70,7 +71,7 @@
     "shareGame": "Share game",
     "backlogActions": "Backlog actions",
     "thisGame": "this game",
-    "released": "Released",
+    "released": "Release",
     "type": "Type",
     "genres": "Genres",
     "platforms": "Platforms",
@@ -191,5 +192,8 @@
       "title": "Couldn't read that link",
       "description": "That link could not be read right now. Try again shortly."
     }
+  },
+  "widget": {
+    "signedOut": "Open Barklog to see your backlog."
   }
 }

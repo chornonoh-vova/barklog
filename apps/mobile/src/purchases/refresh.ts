@@ -1,4 +1,7 @@
+import type { QueryClient } from "@tanstack/react-query";
+
 import type { Endpoints } from "@/api/endpoints";
+import { keys } from "@/api/keys";
 
 /**
  * Two attempts, not more: this runs on user-initiated events only, so it must
@@ -34,4 +37,18 @@ export async function refreshSubscription(
       }
     }
   }
+}
+
+/**
+ * Refresh first, invalidate after: `/api/me` must be refetched once the server
+ * has re-read RevenueCat, not before. Never rejects, so callers can fire and
+ * forget. Nothing else is invalidated: the backlog list is the same for free
+ * and premium users.
+ */
+export async function refreshEntitlement(
+  api: Pick<Endpoints, "refreshSubscription">,
+  queryClient: QueryClient,
+): Promise<void> {
+  await refreshSubscription(api);
+  await queryClient.invalidateQueries({ queryKey: keys.me() });
 }

@@ -54,7 +54,8 @@
     "more": "Más",
     "moreFor": "Más, {{name}}",
     "statusMenu": "Estado",
-    "removeFromBacklog": "Quitar del backlog…"
+    "removeFromBacklog": "Quitar del backlog…",
+    "updating": "Actualizando…"
   },
   "game": {
     "ratingsCount_one": "{{count, number}} valoración",
@@ -193,5 +194,8 @@
       "title": "No se pudo leer el enlace",
       "description": "Ahora mismo no se puede leer ese enlace. Inténtalo de nuevo en breve."
     }
+  },
+  "widget": {
+    "signedOut": "Abre Barklog para ver tu backlog."
   }
 }

@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,16 +9,9 @@ import { SearchScreen } from "@/features/search/search-screen";
 
 export default function SearchRoute() {
   const [query, setQuery] = useState("");
-  const queryClient = useQueryClient();
   const recents = useRecents();
   const searchBar = useRef<SearchBarCommands>(null);
   const { t } = useTranslation();
-
-  const record = useCallback(
-    (searched: string) => recordRecent(queryClient, searched),
-    [queryClient],
-  );
-  const clear = useCallback(() => clearRecents(queryClient), [queryClient]);
 
   // Through the bar's own command, so the field shows the query too — setting
   // state alone would search for text the field does not show.
@@ -42,8 +34,8 @@ export default function SearchRoute() {
         query={query}
         recents={recents}
         onPickRecent={pickRecent}
-        onClearRecents={clear}
-        onOpenResult={record}
+        onClearRecents={clearRecents}
+        onOpenResult={recordRecent}
       />
     </>
   );

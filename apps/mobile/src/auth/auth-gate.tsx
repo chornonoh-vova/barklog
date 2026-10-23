@@ -4,9 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { clearRecents } from "@/features/search/recents-storage";
+import { clearPersistedCaches, startPersistence } from "@/query-persist";
 import { useReleaseSplash } from "@/splash";
+import { clearWidget } from "@/widgets/sync";
 
-import { shouldClearCache, shouldClearRecents } from "./should-clear-cache";
+import { shouldClearCache, shouldClearDeviceData } from "./should-clear-cache";
 
 /**
  * Two hooks, deliberately: `isSignedIn` flips true before a native
@@ -14,6 +16,14 @@ import { shouldClearCache, shouldClearRecents } from "./should-clear-cache";
  * `AuthView` mid-prompt. `treatPendingAsSignedOut: false` stops a session
  * mid-establishment from reading as signed-out and clearing the cache.
  */
+/** Recents, the saved query cache and the widget live on disk but are
+ * personal: the next account must not see them. Independent of each other. */
+function clearDeviceData(userId: string | null): void {
+  clearRecents();
+  void clearPersistedCaches(userId);
+  clearWidget();
+}
+
 export function AuthGate({ children }: { children: ReactNode }) {
   const { isLoaded, isAuthFlowComplete } = useAuthViewState();
   const { userId } = useAuth({ treatPendingAsSignedOut: false });
@@ -23,11 +33,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
 
-    // Recents are device-local but personal: the next account must not see
-    // them. First, so the mounted Search route hears it before `clear()`.
-    if (shouldClearRecents(previous.current, userId)) clearRecents(queryClient);
+    if (shouldClearDeviceData(previous.current, userId)) clearDeviceData(userId ?? null);
     if (shouldClearCache(previous.current, userId)) queryClient.clear();
     if (userId !== undefined) previous.current = userId;
+  }, [isLoaded, userId, queryClient]);
+
+  useEffect(() => {
+    if (!isLoaded || typeof userId !== "string") return;
+
+    return startPersistence(queryClient, userId);
   }, [isLoaded, userId, queryClient]);
 
   useReleaseSplash(isLoaded);

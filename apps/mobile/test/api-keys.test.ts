@@ -23,24 +23,8 @@ describe("query keys", () => {
     expect(keys.games.detail(1942)).toEqual(["games", "detail", 1942]);
   });
 
-  it("keys the backlog list by its filter, so All and a status differ", () => {
-    expect(keys.backlog.list(undefined, "updated_at")).toEqual([
-      "backlog",
-      "list",
-      "all",
-      "updated_at",
-    ]);
-    expect(keys.backlog.list("playing", "updated_at")).toEqual([
-      "backlog",
-      "list",
-      "playing",
-      "updated_at",
-    ]);
-  });
-
-  it("keys stats under the backlog namespace so one invalidation covers both", () => {
-    expect(keys.backlog.stats()).toEqual(["backlog", "stats"]);
-    expect(keys.backlog.stats()[0]).toBe(keys.backlog.all[0]);
+  it("keys Home's single backlog list", () => {
+    expect(keys.backlog.list()).toEqual(["backlog", "list"]);
   });
 
   it("keys similar games by id and limit", () => {

@@ -1,11 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useQuery, type QueryClient } from "@tanstack/react-query";
+import { useEffect, useSyncExternalStore } from "react";
 
-import { keys } from "@/api/keys";
 import { parseRecents, pushRecent } from "@/features/search/recents";
 
 const KEY = "search.recents";
-const EMPTY: readonly string[] = [];
 
 /** Disk writes in call order, and reads behind them, so a read that follows a
  * clear can never bring the cleared list back. */
@@ -18,39 +16,65 @@ function persist(op: () => Promise<void>): void {
 }
 
 /**
- * A query with no backend: the cache is the one in-memory owner, shared by the
- * Search route and `AuthGate`. AsyncStorage like `storage/flag.ts`: an
- * uninstall clears it. Failures are swallowed — losing a recent search is not
- * worth an error.
+ * Module state, not the query cache: the Search route and `AuthGate` share
+ * one in-memory owner, and an account switch is just `clearRecents()` with no
+ * ordering against `queryClient.clear()`. AsyncStorage like `storage/flag.ts`:
+ * an uninstall clears it. Failures are swallowed — losing a recent search is
+ * not worth an error.
  */
-const recentsQuery = {
-  queryKey: keys.recents(),
-  queryFn: () => writes.then(() => AsyncStorage.getItem(KEY)).then(parseRecents, () => []),
-  staleTime: Infinity,
+let list: readonly string[] = [];
+/** Set once the list changed by hand, so a read still in flight cannot
+ * overwrite it. */
+let changed = false;
+let loading: Promise<void> | undefined;
+const listeners = new Set<() => void>();
+
+function set(next: readonly string[]): void {
+  list = next;
+  changed = true;
+  listeners.forEach((listener) => listener());
+}
+
+function load(): Promise<void> {
+  loading ??= writes
+    .then(() => AsyncStorage.getItem(KEY))
+    .then(parseRecents, () => [])
+    .then((stored) => {
+      if (changed) return;
+      list = stored;
+      listeners.forEach((listener) => listener());
+    });
+  return loading;
+}
+
+export const recentsStore = {
+  subscribe(listener: () => void): () => void {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  },
+  getSnapshot: (): readonly string[] => list,
+  load,
 };
 
 export function useRecents(): readonly string[] {
-  return useQuery(recentsQuery).data ?? EMPTY;
+  useEffect(() => {
+    void load();
+  }, []);
+  return useSyncExternalStore(recentsStore.subscribe, recentsStore.getSnapshot);
 }
 
 /** Waits for the stored list, so a search made before it loads adds to it
  * rather than overwriting it. */
-export function recordRecent(queryClient: QueryClient, query: string): void {
-  void queryClient.ensureQueryData(recentsQuery).then((stored) => {
-    const next = pushRecent(queryClient.getQueryData(recentsQuery.queryKey) ?? stored, query);
-    queryClient.setQueryData(recentsQuery.queryKey, next);
-    persist(() => AsyncStorage.setItem(KEY, JSON.stringify(next)));
-  });
+export async function recordRecent(query: string): Promise<void> {
+  await load();
+  const next = pushRecent(list, query);
+  set(next);
+  persist(() => AsyncStorage.setItem(KEY, JSON.stringify(next)));
 }
 
-/**
- * Through `setQueryData`, not only the disk: an account switch keeps the
- * Search route mounted, and `queryClient.clear()` drops the query without
- * telling its observer — the last user's searches would stay on screen. Call
- * before `clear()`: the update re-renders Search, which re-reads storage behind
- * the removal queued here.
- */
-export function clearRecents(queryClient: QueryClient): void {
-  queryClient.setQueryData(recentsQuery.queryKey, []);
+/** Synchronous for subscribers: an account switch keeps the Search route
+ * mounted, so the last user's searches must leave the screen at once. */
+export function clearRecents(): void {
+  set([]);
   persist(() => AsyncStorage.removeItem(KEY));
 }

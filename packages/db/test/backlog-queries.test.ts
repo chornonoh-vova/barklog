@@ -126,6 +126,25 @@ test("a rating can be cleared by writing null", async () => {
   expect(cleared.entry.rating).toBeNull();
 });
 
+test("a write without rating keeps the stored rating", async () => {
+  await upsertBacklogEntry(db, { userId: USER, gameId: 1, status: "completed", rating: 8 });
+  const { entry } = await upsertBacklogEntry(db, { userId: USER, gameId: 1, status: "playing" });
+
+  expect(entry.rating).toBe(8);
+  expect(entry.status).toBe("playing");
+});
+
+test("a new entry without rating has none", async () => {
+  const { entry, created } = await upsertBacklogEntry(db, {
+    userId: USER,
+    gameId: 1,
+    status: "waiting",
+  });
+
+  expect(entry.rating).toBeNull();
+  expect(created).toBe(true);
+});
+
 test("two users hold independent entries for the same game", async () => {
   await upsertBacklogEntry(db, { userId: USER, gameId: 1, status: "playing", rating: null });
   await upsertBacklogEntry(db, { userId: OTHER, gameId: 1, status: "abandoned", rating: 2 });

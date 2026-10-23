@@ -1,7 +1,8 @@
 import * as StoreReview from "expo-store-review";
 import { useEffect, useRef } from "react";
 
-import { useBacklogStats } from "@/api/hooks";
+import { useBacklog } from "@/api/hooks";
+import { countStatus } from "@/features/backlog/slots";
 
 import { hasSeenPaywallThisSession } from "./session";
 import { shouldRequestReview } from "./should-request-review";
@@ -16,8 +17,8 @@ import { markAskedForReview, readHasAskedForReview } from "./storage";
  * between the two would otherwise re-ask on the next launch.
  */
 export function useReviewPrompt(): void {
-  const stats = useBacklogStats();
-  const completed = stats.data?.counts.completed;
+  const { data } = useBacklog();
+  const completed = data === undefined ? undefined : countStatus(data.items, "completed");
   const done = useRef(false);
 
   useEffect(() => {
@@ -28,8 +29,8 @@ export function useReviewPrompt(): void {
     void (async () => {
       const asked = await readHasAskedForReview();
 
-      // Latch on `asked` as well as on prompting: every backlog mutation
-      // invalidates the stats, and re-reading a flag that cannot change back
+      // Latch on `asked` as well as on prompting: every backlog write
+      // invalidates the list, and re-reading a flag that cannot change back
       // would go on for the life of the install.
       if (asked) done.current = true;
 
