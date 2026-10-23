@@ -41,4 +41,9 @@ module.exports = {
     "!src/features/widgets/backlog-widget.tsx",
   ],
   coverageReporters: ["text-summary", "json-summary", "lcov"],
+  // Set just under what the suite reaches (100% lines, ~98% branches), so a
+  // real slip fails CI but one new defensive branch does not.
+  coverageThreshold: {
+    global: { statements: 95, lines: 95, functions: 95, branches: 90 },
+  },
 };
