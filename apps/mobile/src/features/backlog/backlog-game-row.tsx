@@ -26,7 +26,7 @@ export function BacklogGameRow({
   variant: GameRowVariant;
   subtitleLines: number;
   /** From the screen, read once: a subscription per row would re-render every
-   * row whenever stats refetch. */
+   * row whenever the list refetches. */
   premium: boolean | undefined;
   activeCount: number | undefined;
   onPress: (id: number) => void;

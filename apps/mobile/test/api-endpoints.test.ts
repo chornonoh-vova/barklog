@@ -71,13 +71,6 @@ describe("createEndpoints", () => {
     expect(calls[0]).toEqual({ path: "/api/backlog", options: {} });
   });
 
-  it("fetches stats", async () => {
-    const { request, calls } = spy();
-    await createEndpoints(request).getBacklogStats();
-
-    expect(calls[0]).toEqual({ path: "/api/backlog/stats", options: {} });
-  });
-
   it("upserts an entry with PUT", async () => {
     const { request, calls } = spy();
     await createEndpoints(request).upsertBacklogEntry(1942, { status: "completed", rating: 9 });

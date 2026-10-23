@@ -2,7 +2,6 @@ import type {
   BacklogListItemWire,
   BacklogListResponse,
   BacklogSort,
-  BacklogStatsWire,
   BacklogStatus,
 } from "@repo/contracts";
 
@@ -51,25 +50,4 @@ export function patchBacklogList(
     ...list,
     items: at === -1 ? [...rest, changed] : [...rest.slice(0, at), changed, ...rest.slice(at)],
   };
-}
-
-/**
- * Counts as they will be once a change lands, so slot gating on Home agrees
- * with the lists it shows. `from` is `null` for an add, `to` for a removal.
- * `averageRating` is left for the refetch: it cannot be recomputed from here.
- */
-export function patchBacklogStats(
-  stats: BacklogStatsWire,
-  from: BacklogStatus | null,
-  to: BacklogStatus | null,
-): BacklogStatsWire {
-  if (from === to) return stats;
-
-  const counts = { ...stats.counts };
-  if (from !== null) counts[from] = Math.max(0, counts[from] - 1);
-  if (to !== null) counts[to] += 1;
-
-  const total = stats.total + (to === null ? -1 : 0) + (from === null ? 1 : 0);
-
-  return { ...stats, counts, total: Math.max(0, total) };
 }

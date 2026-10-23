@@ -4,7 +4,6 @@ import {
   SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
   type BacklogListResponse,
-  type BacklogStatsWire,
   type BacklogStatus,
   type GameDetailResponse,
   type GameFeed,
@@ -47,7 +46,6 @@ export function createEndpoints(request: Request) {
     // The server's default order, which `patchBacklogList` mirrors.
     listBacklog: () => request<BacklogListResponse>("/api/backlog"),
 
-    getBacklogStats: () => request<BacklogStatsWire>("/api/backlog/stats"),
 
     upsertBacklogEntry: (gameId: number, input: { status: BacklogStatus; rating: number | null }) =>
       request<BacklogEntryWire>(`/api/backlog/${gameId}`, {

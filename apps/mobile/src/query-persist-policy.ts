@@ -8,7 +8,7 @@ export const PERSIST_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 export const PERSIST_PREFIX = "barklog-query-cache:";
 
 /** What Home needs to render instantly; everything else is cheap to refetch. */
-const PERSISTED_KEYS = [keys.backlog.list(), keys.backlog.stats()];
+const PERSISTED_KEYS = [keys.backlog.list()];
 const PERSISTED_HASHES = new Set(PERSISTED_KEYS.map((key) => hashKey(key)));
 
 /** Per user, so one account's cache can never rehydrate into another's. */

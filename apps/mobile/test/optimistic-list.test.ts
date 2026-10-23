@@ -1,7 +1,7 @@
 import type { BacklogListItemWire, BacklogStatus } from "@repo/contracts";
 import { describe, expect, it } from "vitest";
 
-import { compare, patchBacklogList, patchBacklogStats } from "@/features/backlog/optimistic-list";
+import { compare, patchBacklogList } from "@/features/backlog/optimistic-list";
 
 const entry = (gameId: number, status: BacklogStatus, rating: number | null = null) =>
   ({
@@ -64,35 +64,5 @@ describe("compare", () => {
     const items = [entry(3, "playing"), entry(1, "playing", 5), entry(2, "playing", 9)];
 
     expect(items.sort((a, b) => compare("rating", a, b)).map((i) => i.gameId)).toEqual([2, 1, 3]);
-  });
-});
-
-describe("patchBacklogStats", () => {
-  const stats = {
-    total: 3,
-    counts: { waiting: 1, playing: 2, completed: 0, abandoned: 0 },
-    averageRating: 8,
-  };
-
-  it("moves a count between statuses", () => {
-    expect(patchBacklogStats(stats, "playing", "completed")).toEqual({
-      ...stats,
-      counts: { waiting: 1, playing: 1, completed: 1, abandoned: 0 },
-    });
-  });
-
-  it("counts an add and a removal in the total", () => {
-    expect(patchBacklogStats(stats, null, "waiting")).toMatchObject({
-      total: 4,
-      counts: { waiting: 2 },
-    });
-    expect(patchBacklogStats(stats, "playing", null)).toMatchObject({
-      total: 2,
-      counts: { playing: 1 },
-    });
-  });
-
-  it("returns the stats as is when the status does not change", () => {
-    expect(patchBacklogStats(stats, "playing", "playing")).toBe(stats);
   });
 });

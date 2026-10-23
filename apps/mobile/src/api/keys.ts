@@ -1,8 +1,7 @@
 import type { GameFeed } from "@repo/contracts";
 
-/** `stats` sits under `backlog` so one invalidation sweeps list and counts. */
 export const keys = {
-  /** Entitlement only — slot counts come from `backlog.stats`. */
+  /** Entitlement only — slot counts are derived from `backlog.list`. */
   me: () => ["me"] as const,
   /** Device-local, never fetched: see `features/search/recents-storage.ts`. */
   recents: () => ["recents"] as const,
@@ -19,9 +18,9 @@ export const keys = {
     identify: (url: string) => ["games", "identify", url] as const,
   },
   backlog: {
+    /** One invalidation sweeps everything under `backlog`. */
     all: ["backlog"] as const,
     /** The whole backlog; Home's filters are derived from it (see `useBacklog`). */
     list: () => ["backlog", "list"] as const,
-    stats: () => ["backlog", "stats"] as const,
   },
 } as const;

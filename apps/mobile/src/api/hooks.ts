@@ -11,7 +11,6 @@ import {
   SIMILAR_LIMIT_DEFAULT,
   type BacklogEntryWire,
   type BacklogListResponse,
-  type BacklogStatsWire,
   type BacklogStatus,
   type GameDetailResponse,
   type GameFeed,
@@ -23,7 +22,7 @@ import { notificationAsync, NotificationFeedbackType } from "expo-haptics";
 import { router } from "expo-router";
 import { Alert } from "react-native";
 
-import { patchBacklogList, patchBacklogStats } from "@/features/backlog/optimistic-list";
+import { patchBacklogList } from "@/features/backlog/optimistic-list";
 import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 
 import { errorCopy } from "./error-copy";
@@ -42,12 +41,6 @@ export function useBacklog(): UseQueryResult<BacklogListResponse> {
   const api = useApi();
 
   return useQuery({ queryKey: keys.backlog.list(), queryFn: () => api.listBacklog() });
-}
-
-export function useBacklogStats(): UseQueryResult<BacklogStatsWire> {
-  const api = useApi();
-
-  return useQuery({ queryKey: keys.backlog.stats(), queryFn: () => api.getBacklogStats() });
 }
 
 export function useGameFeed(
@@ -131,7 +124,6 @@ function useBacklogEntryMutation<TInput>(
       await Promise.all([
         queryClient.cancelQueries({ queryKey: key }),
         queryClient.cancelQueries({ queryKey: keys.backlog.list() }),
-        queryClient.cancelQueries({ queryKey: keys.backlog.stats() }),
       ]);
       const previous = queryClient.getQueryData<GameDetailResponse>(key);
       const change = options.change(input);
@@ -162,27 +154,9 @@ function useBacklogEntryMutation<TInput>(
         queryClient.setQueryData(keys.backlog.list(), patchBacklogList(list, gameId, change, now));
       }
 
-      // Stats too: Home gates slot moves on these counts, so a stale count
-      // sends the next move to the paywall, or lets one past it, until the
-      // refetch. The old status comes from the detail when it is cached, and
-      // from the list when it is not — Home's row menu acts
-      // without opening the detail. Unknown either way: leave the counts be.
-      const stats = queryClient.getQueryData<BacklogStatsWire>(keys.backlog.stats());
-      const from =
-        previous !== undefined
-          ? (previous.backlogEntry?.status ?? null)
-          : list?.items.find((item) => item.gameId === gameId)?.status;
-
-      if (stats !== undefined && from !== undefined) {
-        queryClient.setQueryData(
-          keys.backlog.stats(),
-          patchBacklogStats(stats, from, change?.status ?? null),
-        );
-      }
-
       options.onApply?.(previous?.backlogEntry, input);
 
-      return { previous, list, stats };
+      return { previous, list };
     },
 
     onError: (error, _input, context) => {
@@ -191,8 +165,6 @@ function useBacklogEntryMutation<TInput>(
       }
 
       if (context?.list) queryClient.setQueryData(keys.backlog.list(), context.list);
-
-      if (context?.stats) queryClient.setQueryData(keys.backlog.stats(), context.stats);
 
       // No Alert: a sheet plus an alert is two dismissals for one event.
       if (isApiError(error) && error.status === 402) {

@@ -27,11 +27,6 @@ describe("query keys", () => {
     expect(keys.backlog.list()).toEqual(["backlog", "list"]);
   });
 
-  it("keys stats under the backlog namespace so one invalidation covers both", () => {
-    expect(keys.backlog.stats()).toEqual(["backlog", "stats"]);
-    expect(keys.backlog.stats()[0]).toBe(keys.backlog.all[0]);
-  });
-
   it("keys similar games by id and limit", () => {
     expect(keys.games.similar(1942, 12)).toEqual(["games", "similar", 1942, 12]);
   });

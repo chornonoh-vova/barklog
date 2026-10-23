@@ -29,9 +29,9 @@ describe("persistKey", () => {
 });
 
 describe("shouldPersistQuery", () => {
-  it("persists Home's unfiltered list and the stats", () => {
+  it("persists Home's list only", () => {
     expect(shouldPersistQuery(LIST, "success")).toBe(true);
-    expect(shouldPersistQuery(["backlog", "stats"], "success")).toBe(true);
+    expect(shouldPersistQuery(["backlog", "stats"], "success")).toBe(false);
   });
 
   it("does not persist search, recents, or other queries", () => {
@@ -40,8 +40,8 @@ describe("shouldPersistQuery", () => {
   });
 
   it("does not persist a failed or pending query", () => {
-    expect(shouldPersistQuery(["backlog", "stats"], "error")).toBe(false);
-    expect(shouldPersistQuery(["backlog", "stats"], "pending")).toBe(false);
+    expect(shouldPersistQuery(LIST, "error")).toBe(false);
+    expect(shouldPersistQuery(LIST, "pending")).toBe(false);
   });
 });
 
@@ -53,7 +53,6 @@ describe("retainPersistedQueries", () => {
     retainPersistedQueries(client);
 
     expect(client.getQueryDefaults(LIST).gcTime).toBe(PERSIST_MAX_AGE);
-    expect(client.getQueryDefaults(["backlog", "stats"]).gcTime).toBe(PERSIST_MAX_AGE);
     expect(client.getQueryDefaults(["games", "detail", 1]).gcTime).toBe(undefined);
   });
 });

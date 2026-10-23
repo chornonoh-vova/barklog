@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 
-import { useBacklog, useBacklogStats, useIsPremium } from "@/api/hooks";
+import { useBacklog, useIsPremium } from "@/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
 import { LoadingState } from "@/components/query-states";
@@ -63,9 +63,8 @@ export function BacklogScreen() {
     [router],
   );
   const backlog = useBacklog();
-  const stats = useBacklogStats();
   const premium = useIsPremium();
-  const slots = slotsLabel(stats.data, premium);
+  const slots = slotsLabel(backlog.data?.items, premium);
   const { width, fontScale, onLayout, sideInsets } = useMeasuredWidth();
   const columns = columnCount(width, fontScale);
   const grid = columns > 1;
@@ -77,7 +76,7 @@ export function BacklogScreen() {
   const [userRefreshing, setUserRefreshing] = useState(false);
   const updating = showUpdatingPill({
     hasData: backlog.data !== undefined,
-    isFetching: backlog.isFetching || stats.isFetching,
+    isFetching: backlog.isFetching,
     userRefreshing,
   });
 
@@ -173,9 +172,7 @@ export function BacklogScreen() {
           refreshing={userRefreshing}
           onRefresh={() => {
             setUserRefreshing(true);
-            void Promise.allSettled([backlog.refetch(), stats.refetch()]).then(() =>
-              setUserRefreshing(false),
-            );
+            void Promise.allSettled([backlog.refetch()]).then(() => setUserRefreshing(false));
           }}
         />
       }
