@@ -6,7 +6,8 @@
 # Build one target at a time:
 #   docker build --target api -t barklog-api .
 
-FROM node:24-alpine AS base
+# Pinned by digest; Dependabot bumps tag and digest together (dependabot.yml).
+FROM node:24.22.1-alpine3.24@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     TURBO_TELEMETRY_DISABLED=1 \
     DO_NOT_TRACK=1

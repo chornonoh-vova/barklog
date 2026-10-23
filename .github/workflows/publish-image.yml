@@ -1,0 +1,77 @@
+name: Publish image
+
+# Builds one image and pushes it to GHCR, tagged `main`, `sha-<short>` and
+# `latest`. Called by images.yml once per image, which owns the order they
+# publish in; this file owns how any one of them is built.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Image name under ghcr.io/<owner>/, e.g. barklog-api.
+        type: string
+        required: true
+      target:
+        description: Dockerfile stage to build.
+        type: string
+        required: true
+      file:
+        description: Dockerfile path, relative to the repository root.
+        type: string
+        default: Dockerfile
+      cache-scope:
+        description: GitHub Actions cache scope to read layers from.
+        type: string
+        required: true
+      cache-write:
+        description: Whether to export this build's layers back to the scope.
+        type: boolean
+        default: true
+
+# A called workflow gets no more than its caller grants; images.yml grants
+# exactly this.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Build and push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Build and push ${{ inputs.image }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ inputs.file }}
+          target: ${{ inputs.target }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ inputs.cache-scope }}
+          cache-to: ${{ inputs.cache-write && format('type=gha,scope={0},mode=max', inputs.cache-scope) || '' }}
+          # Single-platform build: an attestation would add the unknown/unknown
+          # manifest entry that clutters GHCR's package UI.
+          provenance: false
