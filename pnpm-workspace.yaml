@@ -55,8 +55,9 @@ overrides:
   # its `/// <reference lib="dom" />` swaps Node's `Response` for the DOM's in
   # every Vitest workspace. apps/api's check-types then fails:
   #   undici's Response is not assignable to parameter of type 'Response'
-  # apps/mobile runs jest-expo/ios (React Native's environment), never jsdom,
-  # so nothing needs these types. Drop this if jest-expo stops pulling jsdom.
+  # No workspace imports jsdom's types: apps/mobile runs jest-expo/ios (React
+  # Native's environment), and apps/landing runs jsdom only as a Vitest
+  # environment. Drop this if jest-expo stops pulling jsdom.
   "@types/jsdom": "-"
 
 allowBuilds:
@@ -68,7 +69,7 @@ allowBuilds:
   ssh2: false
   protobufjs: false
   # Postinstall only writes a local telemetry notice; declined — nothing here needs it.
-  '@clerk/shared': false
+  "@clerk/shared": false
   # Postinstall only prints a sponsorship/donation banner; declined — no functional impact.
   browser-tabs-lock: false
   core-js: false
@@ -83,29 +84,29 @@ allowBuilds:
   # Tailwind 4's native engine and Astro's image pipeline. Both have native
   # postinstall steps; leaving either undecided makes a fresh
   # `pnpm install --frozen-lockfile` exit 1, which fails CI.
-  '@tailwindcss/oxide': true
+  "@tailwindcss/oxide": true
   sharp: true
   # Jest 30's file watcher, reached through apps/mobile's jest-expo. Its
   # postinstall only compiles from source when no prebuilt binary matches the
   # platform; the prebuilt optional packages cover macOS and the Linux runners.
-  '@parcel/watcher': false
+  "@parcel/watcher": false
 
 minimumReleaseAgeExclude:
   - expo-secure-store@57.0.2
   - framer-motion@13.2.0
   - motion-dom@13.2.0
   - motion@13.2.0
-  - '@expo/cli@57.0.22 || 57.0.29 || 58.1.13 || 58.1.14'
+  - "@expo/cli@57.0.22 || 57.0.29 || 58.1.13 || 58.1.14"
   - expo-modules-core@57.0.16 || 57.0.22 || 58.0.23
   - expo-modules-jsi@57.0.8 || 57.1.2 || 58.0.16
   - expo@57.0.20 || 57.0.28 || 58.0.16 || 58.0.17
-  - '@expo/ui@57.0.16 || 57.0.23 || 58.0.21 || 58.0.22'
+  - "@expo/ui@57.0.16 || 57.0.23 || 58.0.21 || 58.0.22"
   - expo-router@57.0.19 || 57.0.26 || 58.0.24 || 58.0.25
   - expo-sharing@57.0.18 || 57.0.23
-  - '@expo/fingerprint@0.20.14'
-  - '@expo/inline-modules@0.1.8'
-  - '@expo/local-build-cache-provider@57.0.9'
-  - '@expo/prebuild-config@57.0.18'
+  - "@expo/fingerprint@0.20.14"
+  - "@expo/inline-modules@0.1.8"
+  - "@expo/local-build-cache-provider@57.0.9"
+  - "@expo/prebuild-config@57.0.18"
   - babel-preset-expo@57.0.15 || 58.0.18 || 58.0.19
   - expo-modules-autolinking@57.0.15
   - expo-dev-client@57.0.20
@@ -113,14 +114,14 @@ minimumReleaseAgeExclude:
   - expo-dev-menu@57.0.20
   - expo-splash-screen@57.0.10
   - expo-updates@57.0.26
-  - '@expo/metro-config@58.0.15'
-  - '@expo/router-server@58.0.15'
+  - "@expo/metro-config@58.0.15"
+  - "@expo/router-server@58.0.15"
   - expo-asset@58.0.17 || 58.0.18
   - expo-file-system@58.0.10
   - expo-font@58.0.9
   - expo-modules-cli@0.3.1
   - expo-image@58.0.16
   - expo-localization@58.0.5
-  - '@expo/env@2.5.3'
+  - "@expo/env@2.5.3"
   - expo-constants@58.0.13
   - expo-widgets@58.0.22

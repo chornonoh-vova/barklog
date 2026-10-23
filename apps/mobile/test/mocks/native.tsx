@@ -110,14 +110,13 @@ export const observe = {
 export const storeReview = {
   hasAction: jest.fn(async () => true),
   requestReview: jest.fn(async () => undefined),
-  isAvailableAsync: jest.fn(async () => true),
 };
 
 // --- expo-widgets -----------------------------------------------------------
 
 export const expoWidgets = {
   // No App Group off-device: covers.ts treats that as "nothing to write".
-  widgetsDirectory: null as string | null,
+  widgetsDirectory: null,
   createWidget: <Snapshot,>(name: string, View: unknown, initial: Snapshot) => ({
     name,
     View,

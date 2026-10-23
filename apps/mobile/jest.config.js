@@ -5,6 +5,14 @@ const expoPreset = require("jest-expo/ios/jest-preset");
 // runtime cannot load as published.
 const ESM_PACKAGES = ["@formatjs", "@clerk"];
 
+// Jest skips a file if any pattern matches, so another pattern cannot
+// un-ignore these: they join the preset's own negative lookahead instead.
+const [presetIgnore, ...otherIgnores] = expoPreset.transformIgnorePatterns;
+const transformIgnore = presetIgnore.replace("(?!(", `(?!(${ESM_PACKAGES.join("|")}|`);
+if (transformIgnore === presetIgnore) {
+  throw new Error("jest-expo's transformIgnorePatterns changed shape; update ESM_PACKAGES' splice");
+}
+
 /** @type {import("jest").Config} */
 module.exports = {
   // iOS, not the universal preset: the app ships only there, so `Platform.OS`
@@ -22,10 +30,7 @@ module.exports = {
     "^@test/(.*)$": "<rootDir>/test/$1",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
-  transformIgnorePatterns: [
-    expoPreset.transformIgnorePatterns[0].replace("(?!(", `(?!(${ESM_PACKAGES.join("|")}|`),
-    ...expoPreset.transformIgnorePatterns.slice(1),
-  ],
+  transformIgnorePatterns: [transformIgnore, ...otherIgnores],
   roots: ["<rootDir>/src", "<rootDir>/test"],
   testPathIgnorePatterns: [
     "/node_modules/",

@@ -42,8 +42,8 @@ export function useReviewPrompt(): void {
       if (!active || !(await StoreReview.hasAction())) return;
 
       // Checked again after the await: the screen may have gone meanwhile, or
-      // a newer run for a changed count may already have asked.
-      if (!active || done.current) return;
+      // the count changed and a newer run took over.
+      if (!active) return;
 
       done.current = true;
       await markAskedForReview();

@@ -21,11 +21,11 @@ export const COVER_ASPECT = 3 / 4;
 export const SHOT_ASPECT = 16 / 9;
 
 /** The heading above a horizontal shelf: Similar Games, Explore's rows, and
- * the screenshot strip. */
+ * the screenshot strip. Its side padding comes from `useShelfInset`, which
+ * keeps it in line with the shelf's first item. */
 export const ShelfTitle = {
   ...Type.headline,
   color: PlatformColor("label"),
-  paddingHorizontal: 16,
 } as const;
 
 /** `listContent` must grow, or a `ListEmptyComponent` — cloned straight into
