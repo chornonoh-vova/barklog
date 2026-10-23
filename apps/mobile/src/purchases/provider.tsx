@@ -1,13 +1,12 @@
 import { useAuth } from "@clerk/expo";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Purchases, { type CustomerInfo } from "react-native-purchases";
 
 import { useApi } from "@/api/provider";
-import { keys } from "@/api/keys";
 import { REVENUECAT_API_KEY } from "@/env";
 
-import { refreshSubscription } from "./refresh";
+import { refreshEntitlement } from "./refresh";
 import { identifyAction } from "./should-identify";
 import { entitlementChanged, PREMIUM_ENTITLEMENT } from "./should-refresh";
 
@@ -42,8 +41,6 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
     void Purchases.logIn(userId as string);
   }, [userId]);
 
-  const refresh = useCallback(() => refreshSubscription(api), [api]);
-
   useEffect(() => {
     const listener = (customerInfo: CustomerInfo) => {
       const active = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] !== undefined;
@@ -55,7 +52,7 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
       // The SDK knows about a purchase before our webhook does. Ask the server
       // to re-read RevenueCat, then invalidate — so the unlock is immediate and
       // the API stays the authority.
-      void refresh().finally(() => void queryClient.invalidateQueries({ queryKey: keys.me() }));
+      void refreshEntitlement(api, queryClient);
     };
 
     Purchases.addCustomerInfoUpdateListener(listener);
@@ -63,7 +60,7 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
     return () => {
       Purchases.removeCustomerInfoUpdateListener(listener);
     };
-  }, [queryClient, refresh]);
+  }, [api, queryClient]);
 
   return children;
 }
