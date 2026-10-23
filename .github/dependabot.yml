@@ -1,0 +1,13 @@
+# Workflow actions are pinned to commit SHAs, so a moved or hijacked tag cannot
+# change what runs. Dependabot keeps those pins current, one grouped PR a week,
+# with the release in the trailing comment. Only actions: npm dependencies are
+# updated deliberately, alongside the Expo SDK for apps/mobile.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
