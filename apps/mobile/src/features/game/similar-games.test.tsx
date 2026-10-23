@@ -2,13 +2,10 @@ import { SIMILAR_LIMIT_DEFAULT, type GameListResponse } from "@repo/contracts";
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 
 import { SimilarGames } from "@/features/game/similar-games";
-import { gameSummary } from "@test/fixtures";
+import { gameList } from "@test/fixtures";
 import { shelfInsets } from "@test/queries";
 import { fakeEndpoints, renderWithProviders } from "@test/render";
 import { DUO_INSETS } from "@test/window";
-
-const list = (...ids: number[]): GameListResponse =>
-  ({ items: ids.map((id) => gameSummary({ id })) }) as GameListResponse;
 
 function renderSimilar(similarGames: () => Promise<GameListResponse>, onPressGame = jest.fn()) {
   const api = fakeEndpoints({ similarGames });
@@ -17,7 +14,7 @@ function renderSimilar(similarGames: () => Promise<GameListResponse>, onPressGam
 
 describe("SimilarGames", () => {
   it("asks for the game's similar games and shows them", async () => {
-    const { api } = await renderSimilar(async () => list(2, 3));
+    const { api } = await renderSimilar(async () => gameList(2, 3));
 
     expect(await screen.findByText("Similar Games")).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Game 2, 2020" })).toBeOnTheScreen();
@@ -27,7 +24,7 @@ describe("SimilarGames", () => {
 
   it("reports the game pressed", async () => {
     const onPressGame = jest.fn();
-    await renderSimilar(async () => list(3), onPressGame);
+    await renderSimilar(async () => gameList(3), onPressGame);
 
     await userEvent.setup().press(await screen.findByRole("button", { name: "Game 3, 2020" }));
 
@@ -41,7 +38,7 @@ describe("SimilarGames", () => {
   });
 
   it.each([
-    ["has no similar games", async () => list()],
+    ["has no similar games", async () => gameList()],
     ["fails", () => Promise.reject(new Error("offline"))],
   ])("renders nothing when the game %s", async (_, similarGames) => {
     const { queryClient } = await renderSimilar(similarGames);
@@ -51,7 +48,7 @@ describe("SimilarGames", () => {
   });
 
   it("runs under the side safe areas, so covers scroll beneath a tab sidebar", async () => {
-    const api = fakeEndpoints({ similarGames: async () => list(2, 3) });
+    const api = fakeEndpoints({ similarGames: async () => gameList(2, 3) });
     await renderWithProviders(<SimilarGames gameId={7} onPressGame={jest.fn()} />, {
       api,
       insets: DUO_INSETS,

@@ -4,9 +4,8 @@ import { Observe } from "expo-observe";
 import { Text } from "react-native";
 
 import { OnboardingGate } from "@/features/onboarding/onboarding-gate";
+import { markOnboardingSeen, readHasSeenOnboarding } from "@/features/onboarding/storage";
 import { clerk } from "@test/mocks/native";
-
-const KEY = "barklog.onboarding.seen";
 
 const renderGate = () =>
   render(
@@ -32,12 +31,12 @@ describe("OnboardingGate", () => {
     await userEvent.setup().press(await screen.findByRole("button", { name: "Skip" }));
 
     expect(screen.getByText("The app")).toBeOnTheScreen();
-    await waitFor(() => expect(AsyncStorage.setItem).toHaveBeenCalledWith(KEY, "1"));
+    await waitFor(async () => expect(await readHasSeenOnboarding()).toBe(true));
   });
 
   it("never shows onboarding again after it was seen", async () => {
     clerk.userId = null;
-    await AsyncStorage.setItem(KEY, "1");
+    await markOnboardingSeen();
     await renderGate();
 
     expect(await screen.findByText("The app")).toBeOnTheScreen();
@@ -50,7 +49,7 @@ describe("OnboardingGate", () => {
     await renderGate();
 
     // The flag read resolves, but with no session yet the gate keeps waiting.
-    await waitFor(() => expect(AsyncStorage.getItem).toHaveBeenCalledWith(KEY));
+    await waitFor(() => expect(AsyncStorage.getItem).toHaveBeenCalled());
     expect(screen.queryByText("The app")).not.toBeOnTheScreen();
     expect(screen.queryByText("Welcome to Barklog")).not.toBeOnTheScreen();
   });
@@ -59,12 +58,12 @@ describe("OnboardingGate", () => {
     await renderGate();
 
     expect(await screen.findByText("The app")).toBeOnTheScreen();
-    await waitFor(() => expect(AsyncStorage.setItem).toHaveBeenCalledWith(KEY, "1"));
+    await waitFor(async () => expect(await readHasSeenOnboarding()).toBe(true));
   });
 
   it("does not bury sign-in under onboarding after a restored session signs out", async () => {
     const { rerender } = await renderGate();
-    await waitFor(() => expect(AsyncStorage.setItem).toHaveBeenCalledWith(KEY, "1"));
+    await waitFor(async () => expect(await readHasSeenOnboarding()).toBe(true));
 
     clerk.userId = null;
     await rerender(

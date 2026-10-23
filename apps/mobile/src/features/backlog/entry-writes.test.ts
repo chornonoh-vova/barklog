@@ -1,58 +1,23 @@
 import { waitFor } from "@testing-library/react-native";
 import {
   FREE_ACTIVE_SLOTS,
-  type BacklogListItemWire,
   type BacklogListResponse,
   type BacklogStatus,
   type GameDetailResponse,
-  type MeResponse,
 } from "@repo/contracts";
 import type { QueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/errors";
 import { keys } from "@/lib/api/keys";
 import { createEntryWrites, type EntryWrites } from "@/features/backlog/entry-writes";
+import { backlogEntry, backlogItem, gameDetail, me } from "@test/fixtures";
 import { testQueryClient } from "@test/render";
 
-const STAMP = "2026-01-01T00:00:00.000Z";
-
-const summary = (id: number) => ({
-  id,
-  name: `Game ${id}`,
-  slug: `game-${id}`,
-  coverImageId: null,
-  firstReleaseDate: null,
-  totalRating: null,
-  totalRatingCount: 0,
-});
-
 const item = (gameId: number, status: BacklogStatus, rating: number | null = null) =>
-  ({
-    gameId,
-    status,
-    rating,
-    addedAt: STAMP,
-    updatedAt: STAMP,
-    game: summary(gameId),
-  }) satisfies BacklogListItemWire;
+  backlogItem(gameId, status, { rating });
 
-const detail = (
-  id: number,
-  entry: { status: BacklogStatus; rating: number | null } | null,
-): GameDetailResponse => ({
-  ...summary(id),
-  summary: null,
-  gameType: null,
-  parentGame: null,
-  screenshots: [],
-  genres: [],
-  platforms: [],
-  developers: [],
-  publishers: [],
-  backlogEntry: entry === null ? null : { gameId: id, ...entry, addedAt: STAMP, updatedAt: STAMP },
-});
-
-const me = (premium: boolean): MeResponse => ({ premium, entitlement: null });
+const detail = (id: number, entry: { status: BacklogStatus; rating: number | null } | null) =>
+  gameDetail({ id, backlogEntry: entry === null ? null : backlogEntry({ gameId: id, ...entry }) });
 
 /** `FREE_ACTIVE_SLOTS` waiting entries, ids from 1. */
 const fullList = (): BacklogListResponse => ({
@@ -138,7 +103,7 @@ describe("createEntryWrites", () => {
 
   it("a 402 opens the paywall without an alert", async () => {
     const list = { items: [item(1, "completed", 8)] };
-    queryClient.setQueryData(keys.me(), me(false));
+    queryClient.setQueryData(keys.me(), me({ premium: false }));
     queryClient.setQueryData(keys.backlog.list(), list);
     api.upsertBacklogEntry.mockRejectedValue(
       new ApiError({ status: 402, type: "about:blank", title: "Payment Required" }),
@@ -207,7 +172,7 @@ describe("createEntryWrites", () => {
   it("a slot-consuming move at the cap opens the paywall and writes nothing", async () => {
     const list = fullList();
     const game = detail(99, null);
-    queryClient.setQueryData(keys.me(), me(false));
+    queryClient.setQueryData(keys.me(), me({ premium: false }));
     queryClient.setQueryData(keys.backlog.list(), list);
     queryClient.setQueryData(keys.games.detail(99), game);
 
@@ -230,7 +195,7 @@ describe("createEntryWrites", () => {
   });
 
   it("a cold list never blocks", async () => {
-    queryClient.setQueryData(keys.me(), me(false));
+    queryClient.setQueryData(keys.me(), me({ premium: false }));
     queryClient.setQueryData(keys.games.detail(99), detail(99, null));
 
     await writes.move(99, "playing");
@@ -240,7 +205,7 @@ describe("createEntryWrites", () => {
   });
 
   it("re-rating at the cap is never blocked", async () => {
-    queryClient.setQueryData(keys.me(), me(false));
+    queryClient.setQueryData(keys.me(), me({ premium: false }));
     queryClient.setQueryData(keys.backlog.list(), fullList());
 
     await writes.rate(1, "waiting", 7);

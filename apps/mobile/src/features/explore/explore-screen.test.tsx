@@ -3,7 +3,7 @@ import { act, screen, userEvent } from "@testing-library/react-native";
 
 import { ExploreScreen } from "@/features/explore/explore-screen";
 import { ApiError } from "@/lib/api/errors";
-import { gameSummary } from "@test/fixtures";
+import { gameList } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders } from "@test/render";
 import { scrollViewAround } from "@test/queries";
 
@@ -16,15 +16,12 @@ const routes = {
 
 type Feeds = Partial<Record<GameFeed, () => Promise<GameListResponse>>>;
 
-const list = (...ids: number[]): GameListResponse =>
-  ({ items: ids.map((id) => gameSummary({ id })) }) as GameListResponse;
-
 const serverError = () =>
   Promise.reject(new ApiError({ status: 500, type: "about:blank", title: "Server error" }));
 
 function renderExplore(feeds: Feeds) {
   const api = fakeEndpoints({
-    gameFeed: (feed) => (feeds[feed] ?? (async () => list()))(),
+    gameFeed: (feed) => (feeds[feed] ?? (async () => gameList()))(),
   });
   return renderRouterWithProviders(routes, { api, initialUrl: "/explore" });
 }
@@ -44,7 +41,7 @@ describe("ExploreScreen", () => {
   });
 
   it("asks each feed for as many games as the API serves", async () => {
-    const { api } = await renderExplore({ popular: async () => list(1) });
+    const { api } = await renderExplore({ popular: async () => gameList(1) });
     await screen.findByText("Most Popular");
 
     for (const feed of ["popular", "upcoming", "recent"]) {
@@ -53,7 +50,7 @@ describe("ExploreScreen", () => {
   });
 
   it("shows a shelf per feed with games, in order, skipping empty ones", async () => {
-    await renderExplore({ popular: async () => list(1, 2), recent: async () => list(3) });
+    await renderExplore({ popular: async () => gameList(1, 2), recent: async () => gameList(3) });
 
     expect(await screen.findByText("Most Popular")).toBeOnTheScreen();
     expect(screen.getByText("Recently Released")).toBeOnTheScreen();
@@ -64,14 +61,14 @@ describe("ExploreScreen", () => {
   });
 
   it("keeps the shelves that loaded when another feed fails", async () => {
-    await renderExplore({ popular: async () => list(1), upcoming: serverError });
+    await renderExplore({ popular: async () => gameList(1), upcoming: serverError });
 
     expect(await screen.findByText("Most Popular")).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Try Again" })).not.toBeOnTheScreen();
   });
 
   it("opens a game inside the Explore tab", async () => {
-    await renderExplore({ upcoming: async () => list(9) });
+    await renderExplore({ upcoming: async () => gameList(9) });
 
     await userEvent.setup().press(await screen.findByRole("button", { name: "Game 9, 2020" }));
 
@@ -96,7 +93,7 @@ describe("ExploreScreen", () => {
 
     const retry = await screen.findByRole("button", { name: "Try Again" });
     expect(api.gameFeed).toHaveBeenCalledTimes(3);
-    api.gameFeed.mockImplementation(async () => list(1));
+    api.gameFeed.mockImplementation(async () => gameList(1));
 
     await userEvent.setup().press(retry);
 
@@ -105,7 +102,7 @@ describe("ExploreScreen", () => {
   });
 
   it("refetches every feed on pull-to-refresh", async () => {
-    const { api } = await renderExplore({ popular: async () => list(1) });
+    const { api } = await renderExplore({ popular: async () => gameList(1) });
     const scrollView = scrollViewOf(await screen.findByText("Most Popular"));
     const refreshControl = scrollView.props.refreshControl as {
       props: { refreshing: boolean; onRefresh: () => void };

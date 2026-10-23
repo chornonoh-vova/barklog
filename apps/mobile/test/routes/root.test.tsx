@@ -1,6 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { screen, userEvent } from "@testing-library/react-native";
 
+import { readHasSeenOnboarding } from "@/features/onboarding/storage";
 import { clerk } from "@test/mocks/native";
 import { setWindow, TABLET } from "@test/window";
 
@@ -38,7 +38,7 @@ describe("root layout", () => {
     await userEvent.setup().press(await screen.findByRole("button", { name: "Skip" }));
 
     expect(await screen.findByTestId("clerk-auth-view")).toBeOnTheScreen();
-    expect(await AsyncStorage.getItem("barklog.onboarding.seen")).not.toBeNull();
+    expect(await readHasSeenOnboarding()).toBe(true);
   });
 
   it("skips onboarding once it has been seen", async () => {

@@ -1,4 +1,4 @@
-import type { GameDetailResponse, GameListResponse } from "@repo/contracts";
+import type { GameDetailResponse } from "@repo/contracts";
 import { act, screen, userEvent, waitFor, within } from "@testing-library/react-native";
 import { Stack } from "expo-router";
 import { Alert, Share, Text } from "react-native";
@@ -11,6 +11,7 @@ import {
   backlogItem,
   backlogList,
   gameDetail,
+  gameList,
   gameSummary,
   me,
 } from "@test/fixtures";
@@ -33,7 +34,7 @@ const routes = {
   paywall: () => <Text>Paywall</Text>,
 };
 
-const noSimilar = async () => ({ items: [] }) as unknown as GameListResponse;
+const noSimilar = async () => gameList();
 
 /** Each `getGame` call answers with the next detail; the last one repeats. */
 function renderDetail(
@@ -241,8 +242,7 @@ describe("GameDetailScreen", () => {
   it("opens a similar game through the caller", async () => {
     const api = fakeEndpoints({
       getGame: async () => gameDetail({ id: 7 }),
-      similarGames: async () =>
-        ({ items: [gameSummary({ id: 3, name: "Celeste" })] }) as unknown as GameListResponse,
+      similarGames: async () => gameList(gameSummary({ id: 3, name: "Celeste" })),
     });
     await renderRouterWithProviders(routes, { initialUrl: "/game/7", api });
 

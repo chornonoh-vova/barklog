@@ -1,17 +1,15 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
-import { backlogItem, backlogList, gameDetail, gameSummary } from "@test/fixtures";
+import { backlogItem, backlogList, gameDetail, gameList } from "@test/fixtures";
 
 import { fakeServer, markOnboardingSeen, renderApp, requests } from "./app";
-
-const games = (...ids: number[]) => ({ items: ids.map((id) => gameSummary({ id })) });
 
 /** Game 7, with game 8 as its only similar game. */
 const gameSeven = {
   "/api/games/7": gameDetail({ id: 7 }),
-  "/api/games/7/similar": games(8),
+  "/api/games/7/similar": gameList(8),
   "/api/games/8": gameDetail({ id: 8 }),
-  "/api/games/8/similar": games(),
+  "/api/games/8/similar": gameList(),
 };
 
 beforeEach(() => markOnboardingSeen());
@@ -51,9 +49,9 @@ describe("Home tab", () => {
 describe("Explore tab", () => {
   it("shows the feeds", async () => {
     const fetchMock = fakeServer({
-      "/api/games/popular": games(1),
-      "/api/games/upcoming": games(2),
-      "/api/games/recent": games(3),
+      "/api/games/popular": gameList(1),
+      "/api/games/upcoming": gameList(2),
+      "/api/games/recent": gameList(3),
     });
     await renderApp("/explore");
 

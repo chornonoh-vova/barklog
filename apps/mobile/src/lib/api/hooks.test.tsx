@@ -1,4 +1,9 @@
-import { FREE_ACTIVE_SLOTS, SEARCH_LIMIT_DEFAULT, SIMILAR_LIMIT_DEFAULT } from "@repo/contracts";
+import {
+  FREE_ACTIVE_SLOTS,
+  SEARCH_LIMIT_DEFAULT,
+  SIMILAR_LIMIT_DEFAULT,
+  type GameListResponse,
+} from "@repo/contracts";
 import { waitFor } from "@testing-library/react-native";
 import { notificationAsync, NotificationFeedbackType } from "expo-haptics";
 import { router } from "expo-router";
@@ -23,7 +28,7 @@ import {
   backlogItem,
   backlogList,
   gameDetail,
-  gameSummary,
+  gameList,
   identifyResponse,
   me,
 } from "@test/fixtures";
@@ -33,8 +38,6 @@ jest.mock("expo-haptics", () => ({
   notificationAsync: jest.fn(async () => undefined),
   NotificationFeedbackType: { Success: "success" },
 }));
-
-const games = (...ids: number[]) => ({ items: ids.map((id) => gameSummary({ id })) });
 
 let push: jest.SpyInstance;
 let alert: jest.SpyInstance;
@@ -57,7 +60,7 @@ describe("useBacklog", () => {
 
 describe("useGameFeed", () => {
   it("asks for the feed with the default limit", async () => {
-    const api = fakeEndpoints({ gameFeed: async () => games(1) });
+    const api = fakeEndpoints({ gameFeed: async () => gameList(1) });
     const { result, queryClient } = await renderHookWithProviders(() => useGameFeed("popular"), {
       api,
     });
@@ -65,12 +68,12 @@ describe("useGameFeed", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(api.gameFeed).toHaveBeenCalledWith("popular", { limit: SEARCH_LIMIT_DEFAULT });
     expect(queryClient.getQueryData(keys.games.feed("popular", SEARCH_LIMIT_DEFAULT))).toEqual(
-      games(1),
+      gameList(1),
     );
   });
 
   it("passes a caller's limit through", async () => {
-    const api = fakeEndpoints({ gameFeed: async () => games(1) });
+    const api = fakeEndpoints({ gameFeed: async () => gameList(1) });
     const { result } = await renderHookWithProviders(() => useGameFeed("upcoming", 5), { api });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -80,7 +83,7 @@ describe("useGameFeed", () => {
 
 describe("useSearchGames", () => {
   it("does not search below the minimum query length", async () => {
-    const api = fakeEndpoints({ searchGames: async () => games(1) });
+    const api = fakeEndpoints({ searchGames: async () => gameList(1) });
     const { result } = await renderHookWithProviders(() => useSearchGames("h"), { api });
 
     expect(result.current.fetchStatus).toBe("idle");
@@ -88,38 +91,38 @@ describe("useSearchGames", () => {
   });
 
   it("searches once the query is long enough", async () => {
-    const api = fakeEndpoints({ searchGames: async () => games(1) });
+    const api = fakeEndpoints({ searchGames: async () => gameList(1) });
     const { result, queryClient } = await renderHookWithProviders(() => useSearchGames("ha"), {
       api,
     });
 
-    await waitFor(() => expect(result.current.data).toEqual(games(1)));
+    await waitFor(() => expect(result.current.data).toEqual(gameList(1)));
     expect(api.searchGames).toHaveBeenCalledWith({ q: "ha", limit: SEARCH_LIMIT_DEFAULT });
     expect(queryClient.getQueryData(keys.games.search("ha", SEARCH_LIMIT_DEFAULT, 0))).toEqual(
-      games(1),
+      gameList(1),
     );
   });
 
   it("keeps the previous results on screen while the next query loads", async () => {
-    let resolveNext!: (value: ReturnType<typeof games>) => void;
+    let resolveNext!: (value: GameListResponse) => void;
     const api = fakeEndpoints({
       searchGames: async ({ q }: { q: string }) =>
-        q === "ha" ? games(1) : new Promise((resolve) => (resolveNext = resolve)),
+        q === "ha" ? gameList(1) : new Promise((resolve) => (resolveNext = resolve)),
     } as never);
     const { result, rerender } = await renderHookWithProviders(
       ({ q }: { q: string }) => useSearchGames(q, 5),
       { api, initialProps: { q: "ha" } },
     );
-    await waitFor(() => expect(result.current.data).toEqual(games(1)));
+    await waitFor(() => expect(result.current.data).toEqual(gameList(1)));
 
     await rerender({ q: "had" });
 
-    expect(result.current.data).toEqual(games(1));
+    expect(result.current.data).toEqual(gameList(1));
     expect(result.current.isPlaceholderData).toBe(true);
     expect(api.searchGames).toHaveBeenLastCalledWith({ q: "had", limit: 5 });
 
-    resolveNext(games(2));
-    await waitFor(() => expect(result.current.data).toEqual(games(2)));
+    resolveNext(gameList(2));
+    await waitFor(() => expect(result.current.data).toEqual(gameList(2)));
   });
 });
 
@@ -136,7 +139,7 @@ describe("useGame", () => {
 
 describe("useSimilarGames", () => {
   it("loads similar games with the default limit", async () => {
-    const api = fakeEndpoints({ similarGames: async () => games(2, 3) });
+    const api = fakeEndpoints({ similarGames: async () => gameList(2, 3) });
     const { result, queryClient } = await renderHookWithProviders(() => useSimilarGames(7), {
       api,
     });
@@ -144,12 +147,12 @@ describe("useSimilarGames", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(api.similarGames).toHaveBeenCalledWith(7, { limit: SIMILAR_LIMIT_DEFAULT });
     expect(queryClient.getQueryData(keys.games.similar(7, SIMILAR_LIMIT_DEFAULT))).toEqual(
-      games(2, 3),
+      gameList(2, 3),
     );
   });
 
   it("passes a caller's limit through", async () => {
-    const api = fakeEndpoints({ similarGames: async () => games(2) });
+    const api = fakeEndpoints({ similarGames: async () => gameList(2) });
     const { result } = await renderHookWithProviders(() => useSimilarGames(7, 3), { api });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));

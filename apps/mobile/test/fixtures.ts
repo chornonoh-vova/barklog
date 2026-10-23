@@ -5,6 +5,7 @@ import type {
   BacklogListResponse,
   BacklogStatus,
   GameDetailResponse,
+  GameListResponse,
   GameSummaryWire,
   MeResponse,
   ShareIdentifyResponse,
@@ -23,6 +24,13 @@ export function gameSummary(overrides: Partial<GameSummaryWire> = {}): GameSumma
     totalRating: 85,
     totalRatingCount: 120,
     ...overrides,
+  };
+}
+
+/** A game list, from ids or from summaries a test has already built. */
+export function gameList(...games: (number | GameSummaryWire)[]): GameListResponse {
+  return {
+    items: games.map((game) => (typeof game === "number" ? gameSummary({ id: game }) : game)),
   };
 }
 

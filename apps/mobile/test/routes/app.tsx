@@ -2,7 +2,6 @@
  * The whole app under `renderRouter`, with the network faked at `fetch`: the
  * root layout brings its own providers, so only the server is stand-in.
  */
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { renderRouter } from "expo-router/testing-library";
 
 import { backlogList, me } from "@test/fixtures";
@@ -12,8 +11,6 @@ import { backlogList, me } from "@test/fixtures";
 jest.setTimeout(30_000);
 
 export const API = "https://api.barklog.test";
-
-const ONBOARDING_SEEN = "barklog.onboarding.seen";
 
 type Handler = unknown | ((request: { url: URL; init: RequestInit | undefined }) => unknown);
 
@@ -57,7 +54,7 @@ export function requests(fetchMock: jest.SpyInstance): string[] {
   });
 }
 
-export const markOnboardingSeen = () => AsyncStorage.setItem(ONBOARDING_SEEN, "1");
+export { markOnboardingSeen } from "@/features/onboarding/storage";
 
 export function renderApp(initialUrl = "/") {
   return renderRouter("./src/app", { initialUrl });
