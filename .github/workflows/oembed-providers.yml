@@ -1,0 +1,74 @@
+name: oEmbed providers
+
+# The share matcher imports a vendored copy of oembed.com's provider registry,
+# which changes as providers come and go. This re-downloads it weekly and, when
+# it moved, pushes the new copy to one branch and opens a PR if none is open
+# yet.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# One refresh at a time: two runs would force-push the same branch.
+concurrency:
+  group: oembed-providers
+  cancel-in-progress: false
+
+# Nothing by default; the job asks for exactly what it uses.
+permissions: {}
+
+jobs:
+  refresh:
+    name: Refresh registry
+    runs-on: ubuntu-latest
+    # contents to push the branch, pull-requests to open the PR. Opening the PR
+    # also needs the repo setting "Allow GitHub Actions to create and approve
+    # pull requests".
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      BRANCH: chore/oembed-providers
+      REGISTRY: apps/api/src/share/providers.json
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Vendored byte for byte (the file is in .prettierignore), so a plain git
+      # diff is the whole change check and nothing needs installing.
+      - name: Download providers.json
+        run: curl -fsSL --retry 3 https://oembed.com/providers.json -o "$REGISTRY"
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- "$REGISTRY"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Registry is current." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Force-push: the branch only ever holds one commit on top of main, so an
+      # open PR is refreshed in place rather than stacking weekly commits.
+      - name: Push branch
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git commit -m "chore(share): refresh oembed providers" -- "$REGISTRY"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
+      - name: Open PR if none is open
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(share): refresh oembed providers" \
+              --body "Weekly refresh of \`$REGISTRY\` from https://oembed.com/providers.json, by \`.github/workflows/oembed-providers.yml\`."
+          fi
+          echo "Registry changed; PR is open on \`$BRANCH\`." >> "$GITHUB_STEP_SUMMARY"
