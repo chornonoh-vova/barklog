@@ -2,32 +2,84 @@ import { PROVIDERS, type ProviderEntry } from "./providers.generated.js";
 
 export type { ProviderEntry };
 
-const REGEXP_SPECIAL = /[.*+?^${}()|[\]\\]/g;
+/** An oEmbed scheme split into the parts a parsed url is compared against. */
+interface Scheme {
+  protocol: string;
+  host: string;
+  path: string;
+}
+
+function parseScheme(scheme: string): Scheme {
+  const separator = scheme.indexOf("://");
+  const rest = scheme.slice(separator + 3);
+  const slash = rest.indexOf("/");
+
+  return {
+    protocol: scheme.slice(0, separator + 1).toLowerCase(),
+    host: (slash === -1 ? rest : rest.slice(0, slash)).toLowerCase(),
+    // A parsed url with no path reports "/", so a scheme with none means the same.
+    path: (slash === -1 ? "/" : rest.slice(slash)).toLowerCase(),
+  };
+}
 
 /**
- * `*` matches any run of characters that contains neither `/` nor `\`, so it
- * cannot cross the boundary between the host and the path (or between two
- * path segments). Without that restriction, `*.youtube.com/watch*` would
- * match `https://evil.com/x.youtube.com/watch?v=1`: a plain `.*` lets the
- * host wildcard swallow `evil.com/x` and pick up `.youtube.com/watch` on the
- * far side of the `/`. `\` is excluded for the same reason: WHATWG URL
- * treats `\` as a path separator for special schemes like `https:`, so
- * `https://evil.com\x.youtube.com/watch` parses to host `evil.com`, and a
- * class that only excluded `/` would let the wildcard cross that separator
- * too. A `*` that is the last character of the scheme is the one exception:
- * it also swallows the query string, matching how oEmbed schemes such as
- * `vimeo.com/*` are written to cover every video id and its query params.
+ * Glob match where `*` matches any run of characters, except that it may not
+ * cross a `stop` character. A `*` that ends the pattern matches the rest of the
+ * text regardless, as oEmbed writes `vimeo.com/*` to cover every video id and
+ * its query.
  */
-export function schemeToRegExp(scheme: string): RegExp {
-  const trailingWildcard = scheme.endsWith("*");
-  const anchored = trailingWildcard ? scheme.slice(0, -1) : scheme;
+function globMatches(pattern: string, text: string, stop: string | null): boolean {
+  const star = pattern.indexOf("*");
+  if (star === -1) return pattern === text;
+  if (!text.startsWith(pattern.slice(0, star))) return false;
 
-  const body = anchored
-    .split("*")
-    .map((literal) => literal.replace(REGEXP_SPECIAL, "\\$&"))
-    .join("[^/\\\\]*");
+  const rest = pattern.slice(star + 1);
+  if (rest === "") return true;
 
-  return new RegExp(`^${body}${trailingWildcard ? ".*" : ""}$`, "i");
+  const tail = text.slice(star);
+  for (let taken = 0; taken <= tail.length; taken++) {
+    if (globMatches(rest, tail.slice(taken), stop)) return true;
+    if (tail[taken] === stop) return false;
+  }
+  return false;
+}
+
+/**
+ * The url is parsed first, and the host and the path are matched separately.
+ * A parsed hostname cannot hold `/`, `\`, `?`, `#` or `@`, so no part of the
+ * path, query, fragment or credentials can pass for a provider's host:
+ * `https://evil.test?.youtube.com/watch` has host `evil.test` and is refused,
+ * as is `https://www.youtube.com@evil.test/watch`.
+ *
+ * - A host wildcard covers one or more labels: `*.flickr.com` claims
+ *   `www.flickr.com` but not `flickr.com`.
+ * - A path wildcard stays within one segment, except at the end of the scheme,
+ *   where it also covers the query.
+ * - Credentials or a non-default port mean the url is not a plain link to the
+ *   provider's page, so it matches nothing.
+ */
+function schemeMatches(scheme: Scheme, url: URL): boolean {
+  if (url.protocol !== scheme.protocol) return false;
+  if (!globMatches(scheme.host, url.hostname, null)) return false;
+
+  // Everything after the origin, from the serialised url: `search` reports an
+  // empty query as "", which would drop the `?` a scheme like `dashboard?*` has.
+  return globMatches(scheme.path, url.href.slice(url.origin.length).toLowerCase(), "/");
+}
+
+function parseUrl(input: string): URL | null {
+  if (!URL.canParse(input)) return null;
+
+  const url = new URL(input);
+  if (url.username !== "" || url.password !== "" || url.port !== "") return null;
+
+  return url;
+}
+
+/** One scheme against one url; for tests of the matching rules. */
+export function matchesScheme(scheme: string, url: string): boolean {
+  const parsed = parseUrl(url);
+  return parsed !== null && schemeMatches(parseScheme(scheme), parsed);
 }
 
 /**
@@ -36,16 +88,16 @@ export function schemeToRegExp(scheme: string): RegExp {
  * `https://v.afree.ca/ST/`). `PROVIDERS` preserves source order, so the
  * first provider to declare a scheme wins deterministically.
  */
-const COMPILED: readonly { provider: ProviderEntry; patterns: RegExp[] }[] = PROVIDERS.map(
-  (provider) => ({
-    provider,
-    patterns: provider.schemes.map(schemeToRegExp),
-  }),
+const COMPILED: readonly { provider: ProviderEntry; schemes: Scheme[] }[] = PROVIDERS.map(
+  (provider) => ({ provider, schemes: provider.schemes.map(parseScheme) }),
 );
 
-export function matchProvider(url: string): ProviderEntry | null {
-  for (const { provider, patterns } of COMPILED) {
-    if (patterns.some((pattern) => pattern.test(url))) return provider;
+export function matchProvider(input: string): ProviderEntry | null {
+  const url = parseUrl(input);
+  if (url === null) return null;
+
+  for (const { provider, schemes } of COMPILED) {
+    if (schemes.some((scheme) => schemeMatches(scheme, url))) return provider;
   }
 
   return null;
