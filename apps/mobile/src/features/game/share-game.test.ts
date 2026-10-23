@@ -40,8 +40,6 @@ describe("gameShareContent", () => {
 });
 
 describe("shareGame", () => {
-  afterEach(() => jest.restoreAllMocks());
-
   it("opens the share sheet with the game's content", () => {
     const share = jest
       .spyOn(Share, "share")

@@ -16,11 +16,6 @@ jest.mock("react-native/Libraries/Utilities/useColorScheme", () => ({
 
 beforeEach(async () => {
   mockColorScheme = "light";
-  await AsyncStorage.clear();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
 });
 
 describe("root layout", () => {

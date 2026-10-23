@@ -50,8 +50,6 @@ async function renderRows(
 const menuFor = (name: string) => screen.getByRole("menu", { name: `More, ${name}` });
 
 describe("BacklogGameRow", () => {
-  afterEach(() => jest.restoreAllMocks());
-
   it("shows the game's status and rating, spoken without the star glyph", async () => {
     await renderRows(backlogList(backlogItem(1, "playing", { rating: 8 })));
 

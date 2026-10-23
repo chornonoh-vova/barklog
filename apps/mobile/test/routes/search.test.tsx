@@ -25,14 +25,7 @@ function typeInSearchBar(text: string) {
   return fireEvent(bar, "changeText", { nativeEvent: { text } });
 }
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  await markOnboardingSeen();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
+beforeEach(() => markOnboardingSeen());
 
 describe("/search", () => {
   it("searches for what is typed into the bar, and opens a result in Search", async () => {

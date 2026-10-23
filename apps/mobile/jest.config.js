@@ -10,8 +10,10 @@ module.exports = {
   // iOS, not the universal preset: the app ships only there, so `Platform.OS`
   // and `.ios.tsx` resolution match the device.
   preset: "jest-expo/ios",
-  // Call history resets per test; implementations a test set stay its own.
+  // Call history resets per test, and `jest.spyOn` spies are restored, so a
+  // spy (say, on `fetch` or `Alert.alert`) never outlives its test.
   clearMocks: true,
+  restoreMocks: true,
   setupFiles: ["<rootDir>/test/env.ts"],
   setupFilesAfterEnv: ["<rootDir>/test/setup.ts"],
   moduleNameMapper: {

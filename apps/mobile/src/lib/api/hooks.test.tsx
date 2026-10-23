@@ -44,10 +44,6 @@ beforeEach(() => {
   alert = jest.spyOn(Alert, "alert").mockImplementation(() => undefined);
 });
 
-afterEach(() => {
-  jest.restoreAllMocks();
-});
-
 describe("useBacklog", () => {
   it("loads the whole backlog under the list key", async () => {
     const list = backlogList(backlogItem(1));

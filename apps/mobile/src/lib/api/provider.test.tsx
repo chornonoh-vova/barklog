@@ -7,10 +7,6 @@ import { clerk } from "@test/mocks/native";
 const json = (body: unknown) =>
   new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
 
-afterEach(() => {
-  jest.restoreAllMocks();
-});
-
 describe("useApi", () => {
   it("throws outside an ApiProvider", async () => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);

@@ -19,7 +19,6 @@ describe("startPersistence", () => {
 
   beforeEach(async () => {
     jest.useFakeTimers();
-    await AsyncStorage.clear();
   });
 
   afterEach(() => {
@@ -126,7 +125,6 @@ describe("startPersistence", () => {
 
 describe("clearPersistedCaches", () => {
   beforeEach(async () => {
-    await AsyncStorage.clear();
     await AsyncStorage.multiSet([
       [persistKey("user_1"), "{}"],
       [persistKey("user_2"), "{}"],

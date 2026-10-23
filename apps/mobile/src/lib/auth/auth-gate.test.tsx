@@ -52,7 +52,7 @@ describe("AuthGate", () => {
     clerk.isLoaded = false;
     await renderWithProviders(gate());
 
-    expect(screen.root).toBeEmptyElement();
+    expect(screen.toJSON()).toBeNull();
     expect(SplashScreen.hideAsync).not.toHaveBeenCalled();
     expect(startPersistence).not.toHaveBeenCalled();
     expect(deviceDataCleared()).toBe(false);

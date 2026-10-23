@@ -1,11 +1,13 @@
 import type * as ReactNative from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { initReactI18next } from "react-i18next";
 
 import { i18n, initI18n } from "@/lib/i18n/instance";
 
 import type * as Native from "./mocks/native";
 import { resetNative } from "./mocks/native";
-import { setWindow } from "./window";
+import type * as Window from "./window";
+import { PHONE_INSETS, safeArea, setWindow } from "./window";
 
 // The package's own in-memory mock: every method is a `jest.fn`, so a suite
 // can script a read with `jest.mocked(AsyncStorage.getItem)`.
@@ -25,6 +27,13 @@ jest.mock("react-native-reanimated", () => {
   const { View } = jest.requireActual<typeof ReactNative>("react-native");
   return { __esModule: true, default: { View }, FadeIn: {}, FadeOut: {} };
 });
+
+// The safe area a test asks for, through `renderWithProviders({ insets })` and
+// its siblings; see `safeArea` in ./window.
+jest.mock("react-native-safe-area-context", () => ({
+  ...jest.requireActual<object>("react-native-safe-area-context"),
+  useSafeAreaInsets: () => jest.requireActual<typeof Window>("./window").safeArea.insets,
+}));
 
 // SwiftUI views as React Native elements a query can find; see the mock.
 jest.mock("@expo/ui/swift-ui", () => ({
@@ -71,8 +80,12 @@ jest.mock("expo-sharing", () => ({
   ...jest.requireActual<typeof Native>("./mocks/native").expoSharing,
 }));
 
+// Every test starts on a fresh device: native fakes, an empty AsyncStorage, a
+// phone-sized window and its safe area. Spies are restored by `restoreMocks`.
 beforeEach(async () => {
   resetNative();
+  await AsyncStorage.clear();
+  safeArea.insets = PHONE_INSETS;
   await setWindow();
 });
 

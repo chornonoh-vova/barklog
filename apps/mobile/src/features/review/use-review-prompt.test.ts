@@ -24,13 +24,6 @@ const settle = () =>
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  jest.mocked(StoreReview.requestReview).mockClear();
-  jest.mocked(StoreReview.hasAction).mockClear();
-  jest.restoreAllMocks();
-});
-
 describe("useReviewPrompt", () => {
   it("asks for a review once enough games are completed, flag first", async () => {
     await renderPrompt();

@@ -19,8 +19,6 @@ describe("removeConfirmCopy", () => {
 });
 
 describe("confirmRemove", () => {
-  afterEach(() => jest.restoreAllMocks());
-
   it("asks before removing, and removes only on the destructive button", () => {
     const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
     const onConfirm = jest.fn();

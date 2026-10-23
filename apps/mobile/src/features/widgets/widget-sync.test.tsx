@@ -12,7 +12,7 @@ describe("WidgetSync", () => {
     const api = fakeEndpoints({ listBacklog: () => new Promise(() => {}) });
     await renderWithProviders(<WidgetSync />, { api });
 
-    expect(screen.root).toBeEmptyElement();
+    expect(screen.toJSON()).toBeNull();
     expect(pushBacklog).not.toHaveBeenCalled();
   });
 

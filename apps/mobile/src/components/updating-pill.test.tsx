@@ -1,19 +1,14 @@
 import { render, screen } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { UpdatingPill } from "@/components/updating-pill";
+import { renderWithProviders } from "@test/render";
+import { PHONE_INSETS } from "@test/window";
 
-jest.mock("react-native-safe-area-context", () => ({
-  ...jest.requireActual<object>("react-native-safe-area-context"),
-  useSafeAreaInsets: jest.fn(),
-}));
-
-const announce = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
+let announce: jest.SpiedFunction<typeof AccessibilityInfo.announceForAccessibility>;
 
 beforeEach(() => {
-  jest.mocked(useSafeAreaInsets).mockReturnValue({ top: 0, right: 0, bottom: 0, left: 0 });
-  announce.mockImplementation(() => {});
+  announce = jest.spyOn(AccessibilityInfo, "announceForAccessibility").mockImplementation(() => {});
 });
 
 // The pill is the label's container.
@@ -39,8 +34,7 @@ describe("UpdatingPill", () => {
   });
 
   it("floats above the tab bar and the home indicator", async () => {
-    jest.mocked(useSafeAreaInsets).mockReturnValue({ top: 59, right: 0, bottom: 34, left: 0 });
-    await render(<UpdatingPill visible />);
+    await renderWithProviders(<UpdatingPill visible />, { insets: PHONE_INSETS });
 
     expect(pill()).toHaveStyle({ position: "absolute", bottom: 98 });
   });

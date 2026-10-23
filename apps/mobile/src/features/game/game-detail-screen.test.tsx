@@ -16,19 +16,7 @@ import {
 } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders, testQueryClient } from "@test/render";
 import { scrollViewAround, sidePadding } from "@test/queries";
-import { setWindow, TABLET } from "@test/window";
-
-// `renderRouter` brings its own safe-area provider, which would override the
-// insets `renderWithProviders` takes, so a routed screen steers them here.
-const mockInsets = { top: 0, left: 0, right: 0, bottom: 0 };
-jest.mock("react-native-safe-area-context", () => ({
-  ...jest.requireActual<object>("react-native-safe-area-context"),
-  useSafeAreaInsets: () => mockInsets,
-}));
-
-beforeEach(() => {
-  Object.assign(mockInsets, { left: 0, right: 0 });
-});
+import { PHONE_INSETS, setWindow, TABLET, type Insets } from "@test/window";
 
 const onOpenGame = jest.fn();
 
@@ -44,7 +32,7 @@ const noSimilar = async () => ({ items: [] }) as unknown as GameListResponse;
 /** Each `getGame` call answers with the next detail; the last one repeats. */
 function renderDetail(
   details: GameDetailResponse[] = [gameDetail({ id: 7 })],
-  options: { queryClient?: ReturnType<typeof testQueryClient> } = {},
+  options: { queryClient?: ReturnType<typeof testQueryClient>; insets?: Insets } = {},
 ) {
   let call = 0;
   const api = fakeEndpoints({
@@ -99,8 +87,6 @@ function textsInOrder(): string[] {
 }
 
 describe("GameDetailScreen", () => {
-  afterEach(() => jest.restoreAllMocks());
-
   it("loads the game in the URL and shows its page under its name", async () => {
     const { api } = await renderDetail([
       gameDetail({ id: 7, name: "Hades", screenshots: ["shot"] }),
@@ -309,8 +295,9 @@ describe("GameDetailScreen", () => {
 
   it("insets the details but lets the shelves run under a tab sidebar", async () => {
     // iPhone Duo with the tab sidebar on the right.
-    mockInsets.right = 60;
-    await renderDetail([gameDetail({ id: 7, screenshots: ["shot"] })]);
+    await renderDetail([gameDetail({ id: 7, screenshots: ["shot"] })], {
+      insets: { ...PHONE_INSETS, right: 60 },
+    });
 
     const shot = await screen.findByRole("button", { name: "Screenshot 1 of 1" });
     // Nothing pads the page as a whole, or every shelf would end at the sidebar.

@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { screen, userEvent, waitFor } from "@testing-library/react-native";
 import { testRouter } from "expo-router/testing-library";
 
@@ -6,14 +5,7 @@ import { me } from "@test/fixtures";
 
 import { fakeServer, markOnboardingSeen, renderApp, requests } from "./app";
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  await markOnboardingSeen();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
+beforeEach(() => markOnboardingSeen());
 
 /** Home first, then the sheet over it, the way every route into it goes. */
 async function openPaywall() {

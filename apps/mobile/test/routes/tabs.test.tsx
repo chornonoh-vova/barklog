@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { screen, userEvent } from "@testing-library/react-native";
 
 import { backlogItem, backlogList, gameDetail, gameSummary } from "@test/fixtures";
@@ -15,14 +14,7 @@ const gameSeven = {
   "/api/games/8/similar": games(),
 };
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  await markOnboardingSeen();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
+beforeEach(() => markOnboardingSeen());
 
 describe("Home tab", () => {
   it("lands on Home, showing the empty state for an empty backlog", async () => {

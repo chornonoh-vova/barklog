@@ -7,17 +7,15 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, renderHook, type RenderOptions } from "@testing-library/react-native";
 import { renderRouter } from "expo-router/testing-library";
 import type { ReactElement, ReactNode } from "react";
-import { Dimensions } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ApiContext } from "@/lib/api/provider";
 import type { Endpoints } from "@/lib/api/endpoints";
 import { createQueryClient } from "@/lib/query/query-client";
 
 import { backlogList, me } from "./fixtures";
-import { PHONE_INSETS } from "./window";
+import { safeArea, type Insets } from "./window";
 
-export type FakeEndpoints = { [K in keyof Endpoints]: jest.MockedFunction<Endpoints[K]> };
+type FakeEndpoints = { [K in keyof Endpoints]: jest.MockedFunction<Endpoints[K]> };
 
 /**
  * Every endpoint is a `jest.fn`. `/me` and the backlog answer with a free user
@@ -62,8 +60,6 @@ export function testQueryClient(): QueryClient {
   return client;
 }
 
-type Insets = typeof PHONE_INSETS;
-
 type ProviderOptions = {
   api?: FakeEndpoints;
   queryClient?: QueryClient;
@@ -74,19 +70,15 @@ type ProviderOptions = {
 function providers({
   api = fakeEndpoints(),
   queryClient = testQueryClient(),
-  insets = PHONE_INSETS,
+  insets,
 }: ProviderOptions) {
+  if (insets !== undefined) safeArea.insets = insets;
+
   function Providers({ children }: { children: ReactNode }) {
-    const { width, height } = Dimensions.get("window");
-    // The root layout's `Stack` supplies a safe area on device; a component
-    // rendered alone needs one for `useSafeAreaInsets`.
-    const metrics = { frame: { x: 0, y: 0, width, height }, insets };
     return (
-      <SafeAreaProvider initialMetrics={metrics}>
-        <QueryClientProvider client={queryClient}>
-          <ApiContext.Provider value={api}>{children}</ApiContext.Provider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <ApiContext.Provider value={api}>{children}</ApiContext.Provider>
+      </QueryClientProvider>
     );
   }
   return { api, queryClient, Providers };

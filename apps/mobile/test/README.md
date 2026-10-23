@@ -34,13 +34,15 @@ Import shared helpers through `@test/*`.
   stack around it: add `_layout: () => <Stack />` to the route map. These render
   as props on the native header (`RNSScreenStackHeaderConfig`), not as
   elements. `test/routes/app.tsx` has `pressHeaderButton` for toolbar items.
-- `renderWithProviders({ insets })` sets the safe area, e.g. iPhone Duo's tab
-  sidebar. `renderRouter` brings its own safe-area provider, which overrides
-  it, so a routed test steers `useSafeAreaInsets` with a local `jest.mock`.
-  `@test/queries` finds a shelf's scroll view and reads its side padding.
-- AsyncStorage's mock is one shared `jest.fn` per method. Override a read with
-  `mockImplementationOnce`, never `mockImplementation`, or the override leaks
-  into later tests in the file.
+- `insets` (on all three render helpers) sets the safe area, e.g.
+  `{ ...PHONE_INSETS, right: 60 }` for iPhone Duo's tab sidebar. It steers a
+  `useSafeAreaInsets` mock rather than a provider, because `renderRouter`
+  mounts its own `SafeAreaProvider`. `@test/queries` finds a shelf's scroll
+  view and reads its side padding.
+- AsyncStorage is emptied and `jest.spyOn` spies are restored before every
+  test, so a suite needs no cleanup of its own. Its methods are shared
+  `jest.fn`s, though: override one with `mockImplementationOnce`, never
+  `mockImplementation`, or the override leaks into later tests in the file.
 - A module that keeps state at module scope (recents, the widget queue) loads
   fresh per test through `jest.isolateModules`. A fresh registry has its own
   i18n instance: call `initI18n("en")` on it.

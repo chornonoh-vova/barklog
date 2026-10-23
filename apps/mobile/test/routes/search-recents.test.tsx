@@ -16,14 +16,7 @@ const server = () =>
 
 // Its own file: the recents store is module state, which a search recorded by
 // another test in the same file would already have filled.
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  await markOnboardingSeen();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
+beforeEach(() => markOnboardingSeen());
 
 describe("/search recents", () => {
   it("searches again for a recent search when it is picked", async () => {

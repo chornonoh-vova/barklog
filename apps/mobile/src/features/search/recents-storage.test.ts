@@ -15,10 +15,6 @@ function load() {
   return { AsyncStorage, ...store };
 }
 
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
 describe("recents store", () => {
   it("a search made before the stored list loads adds to it", async () => {
     const { AsyncStorage, recordRecent, recentsStore } = load();

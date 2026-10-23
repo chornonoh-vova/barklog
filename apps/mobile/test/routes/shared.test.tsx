@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { screen, userEvent } from "@testing-library/react-native";
 import { testRouter } from "expo-router/testing-library";
 
@@ -16,14 +15,7 @@ import {
 
 const VIDEO = "https://www.youtube.com/watch?v=abc";
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-  await markOnboardingSeen();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
+beforeEach(() => markOnboardingSeen());
 
 /** What expo-sharing reports once iOS has handed over a shared video link. */
 function shareVideo() {

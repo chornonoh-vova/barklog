@@ -15,10 +15,6 @@ const renderGate = () =>
     </OnboardingGate>,
   );
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-});
-
 describe("OnboardingGate", () => {
   it("shows onboarding to a signed-out first launch, and releases the splash", async () => {
     clerk.userId = null;

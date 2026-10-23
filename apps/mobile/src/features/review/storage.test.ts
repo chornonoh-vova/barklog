@@ -2,10 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { markAskedForReview, readHasAskedForReview } from "@/features/review/storage";
 
-beforeEach(async () => {
-  await AsyncStorage.clear();
-});
-
 test("has not asked on a fresh install", async () => {
   await expect(readHasAskedForReview()).resolves.toBe(false);
 });
