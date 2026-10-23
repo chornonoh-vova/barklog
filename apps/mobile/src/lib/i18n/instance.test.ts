@@ -1,7 +1,14 @@
 import { errorCopy } from "@/lib/api/error-copy";
 import { ApiError } from "@/lib/api/errors";
 import { ratingLine, releaseDateLine } from "@/features/game/format";
-import { i18n, initI18n, LANGUAGES, resources, type Language } from "@/lib/i18n/instance";
+import {
+  formatLocale,
+  i18n,
+  initI18n,
+  LANGUAGES,
+  resources,
+  type Language,
+} from "@/lib/i18n/instance";
 
 import appJson from "../../../app.json";
 
@@ -178,5 +185,25 @@ describe("API error codes", () => {
         }),
       ),
     ).toEqual({ title: "Not Found", description: "No such game." });
+  });
+});
+
+describe("formatLocale", () => {
+  it("is the language's region-qualified locale", () => {
+    initI18n("uk");
+
+    expect(formatLocale()).toBe("uk-UA");
+  });
+
+  it("falls back to English's before i18next has a language", () => {
+    let fresh!: { i18n: typeof i18n; formatLocale: typeof formatLocale };
+    jest.isolateModules(() => {
+      fresh = jest.requireActual<{ i18n: typeof i18n; formatLocale: typeof formatLocale }>(
+        "@/lib/i18n/instance",
+      );
+    });
+
+    expect(fresh.i18n.language).toBeUndefined();
+    expect(fresh.formatLocale()).toBe("en-GB");
   });
 });

@@ -1,9 +1,12 @@
 import { keys } from "@/lib/api/keys";
-import { createQueryClient } from "@/lib/query/query-client";
-import { refreshEntitlement } from "@/lib/purchases/refresh";
+import {
+  refreshEntitlement,
+  refreshSubscription as refreshWithRetry,
+} from "@/lib/purchases/refresh";
+import { testQueryClient } from "@test/render";
 
 function seeded() {
-  const queryClient = createQueryClient();
+  const queryClient = testQueryClient();
   queryClient.setQueryData(keys.me(), { id: "u1" });
   queryClient.setQueryData(keys.backlog.list(), []);
   return queryClient;
@@ -60,5 +63,30 @@ describe("refreshEntitlement", () => {
     await refreshEntitlement({ refreshSubscription } as never, queryClient);
 
     expect(isInvalidated(queryClient, keys.backlog.list())).toBe(false);
+  });
+});
+
+describe("refreshSubscription in a development build", () => {
+  const dev = __DEV__;
+
+  afterEach(() => {
+    jest.useRealTimers();
+    Reflect.set(globalThis, "__DEV__", dev);
+  });
+
+  it("warns about each failed attempt", async () => {
+    Reflect.set(globalThis, "__DEV__", true);
+    jest.useFakeTimers();
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    const failure = new Error("down");
+    const refreshSubscription = jest.fn().mockRejectedValue(failure);
+
+    const done = refreshWithRetry({ refreshSubscription });
+    await jest.advanceTimersByTimeAsync(2_000);
+    await done;
+
+    expect(warn).toHaveBeenCalledWith("refreshSubscription attempt 1 failed", failure);
+    expect(warn).toHaveBeenCalledWith("refreshSubscription attempt 2 failed", failure);
+    warn.mockRestore();
   });
 });

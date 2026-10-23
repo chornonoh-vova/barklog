@@ -10,6 +10,7 @@ import "@formatjs/intl-pluralrules/locale-data/es.js";
 
 import { ratingLine } from "@/features/game/format";
 import { i18n, initI18n } from "@/lib/i18n/instance";
+import type * as Instance from "@/lib/i18n/instance";
 
 beforeAll(() => {
   // The setup file initialised i18next before the polyfill replaced the rules.
@@ -36,5 +37,31 @@ describe("plurals on the polyfilled rules", () => {
     initI18n(lng);
 
     expect(ratingLine({ totalRating: 80, totalRatingCount: count })).toBe(`★ 80 · ${expected}`);
+  });
+});
+
+describe("the device's language", () => {
+  function launchWith(languageCodes: (string | null)[]) {
+    let instance!: typeof Instance;
+    jest.isolateModules(() => {
+      jest.doMock("expo-localization", () => ({
+        getLocales: () => languageCodes.map((languageCode) => ({ languageCode })),
+      }));
+      jest.requireActual("@/lib/i18n");
+      instance = jest.requireActual<typeof Instance>("@/lib/i18n/instance");
+    });
+    return instance.i18n;
+  }
+
+  afterEach(() => {
+    jest.dontMock("expo-localization");
+  });
+
+  it("is the first preferred language the app has copy for", () => {
+    expect(launchWith(["fr", null, "uk", "de"]).language).toBe("uk");
+  });
+
+  it("falls back to English when none of them is supported", () => {
+    expect(launchWith(["fr", "ja"]).language).toBe("en");
   });
 });
