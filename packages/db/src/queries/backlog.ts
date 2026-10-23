@@ -124,7 +124,8 @@ export async function upsertBacklogEntry(
     userId: string;
     gameId: number;
     status: BacklogStatusValue;
-    rating: number | null;
+    /** `undefined` keeps the stored rating; `null` clears it. */
+    rating?: number | null;
   },
 ): Promise<{ entry: BacklogEntry; created: boolean }> {
   const rows = await db
@@ -133,11 +134,15 @@ export async function upsertBacklogEntry(
       userId: input.userId,
       gameId: input.gameId,
       status: input.status,
-      rating: input.rating,
+      rating: input.rating ?? null,
     })
     .onConflictDoUpdate({
       target: [backlogEntries.userId, backlogEntries.gameId],
-      set: { status: input.status, rating: input.rating, updatedAt: new Date() },
+      set: {
+        status: input.status,
+        ...(input.rating !== undefined && { rating: input.rating }),
+        updatedAt: new Date(),
+      },
     })
     .returning({ ...ENTRY_COLUMNS, created: sql<boolean>`(xmax = 0)` });
 
