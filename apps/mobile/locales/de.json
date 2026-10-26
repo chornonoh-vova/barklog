@@ -1,5 +1,15 @@
 {
   "ios": {
-    "NSFaceIDUsageDescription": "Erlaube Barklog, Face ID zu verwenden."
+    "NSFaceIDUsageDescription": "Erlaube Barklog, Face ID zu verwenden.",
+    "Localizable.strings": {
+      "Your Playing, Waiting, Completed or Abandoned games.": "Deine Spiele: Am Spielen, Wartet, Durchgespielt oder Abgebrochen.",
+      "Section Configuration": "Bereich",
+      "Which part of your backlog to show.": "Welcher Teil deines Backlogs angezeigt wird.",
+      "Section": "Bereich",
+      "Playing": "Am Spielen",
+      "Waiting": "Wartet",
+      "Completed": "Durchgespielt",
+      "Abandoned": "Abgebrochen"
+    }
   }
 }
