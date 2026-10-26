@@ -17,6 +17,14 @@ on:
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
 
+# Merging several PRs back to back would otherwise run one deploy per merge in
+# parallel; only the newest commit matters, so cancel the older runs.
+concurrency:
+  cancel_in_progress: true
+  # EAS doesn't support custom groups yet; this is the placeholder value its
+  # docs ask for.
+  group: ${{ workflow.filename }}-${{ github.ref }}
+
 jobs:
   fingerprint:
     name: Fingerprint
