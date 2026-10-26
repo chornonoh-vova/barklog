@@ -13,11 +13,11 @@
     "check-types": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
-    "@clerk/backend": "^3.23.2",
-    "@clerk/hono": "^0.1.88",
+    "@clerk/backend": "^3.26.1",
+    "@clerk/hono": "^0.1.92",
     "@hono/node-server": "^2.1.4",
     "@hono/standard-validator": "^0.4.0",
-    "@logtape/hono": "^2.4.1",
+    "@logtape/hono": "^2.4.2",
     "@logtape/logtape": "catalog:",
     "@repo/cache": "workspace:*",
     "@repo/contracts": "workspace:*",
@@ -28,8 +28,8 @@
     "hono": "^4.13.13",
     "hono-problem-details": "^0.12.0",
     "htmlparser2": "^12.0.0",
-    "openai": "^7.32.0",
-    "undici": "^8.11.2",
+    "openai": "^7.43.0",
+    "undici": "^8.12.3",
     "valibot": "catalog:"
   },
   "devDependencies": {
