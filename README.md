@@ -44,8 +44,8 @@ how the app guards access.
 
 ## Requirements
 
-- Node `>=24` (see `.nvmrc`)
-- pnpm 11 (`corepack enable`)
+- Node `>=26` (see `.nvmrc`)
+- pnpm 12 (`corepack enable`)
 - Xcode
 
 `pnpm-workspace.yaml` sets `nodeLinker: hoisted` because React Native does not
