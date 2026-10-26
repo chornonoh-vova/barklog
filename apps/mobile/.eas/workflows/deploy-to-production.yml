@@ -1,0 +1,53 @@
+# On every push to main that touches the app: if a production build already
+# exists for the current native fingerprint, ship the JS as an OTA update;
+# otherwise build a new binary and submit it to App Store Connect.
+# Based on https://docs.expo.dev/eas/workflows/examples/deploy-to-production/,
+# iOS only since that is the only platform in app.json.
+name: Deploy to production
+
+on:
+  push:
+    branches: ["main"]
+    # API/worker/landing changes don't change the app, so they shouldn't
+    # publish an update. contracts is bundled into the app; the lockfile
+    # covers dependency bumps.
+    paths:
+      - "apps/mobile/**"
+      - "packages/contracts/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    environment: production
+  get_ios_build:
+    name: Check for existing iOS build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      profile: production
+  build_ios:
+    name: Build iOS
+    needs: [get_ios_build]
+    if: ${{ !needs.get_ios_build.outputs.build_id }}
+    type: build
+    params:
+      platform: ios
+      profile: production
+  submit_ios_build:
+    name: Submit iOS build
+    needs: [build_ios]
+    type: submit
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+  publish_ios_update:
+    name: Publish iOS update
+    needs: [get_ios_build]
+    if: ${{ needs.get_ios_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: ios
