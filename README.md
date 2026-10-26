@@ -44,7 +44,7 @@ how the app guards access.
 
 ## Requirements
 
-- Node `>=26` (see `.nvmrc`)
+- Node `>=24` (see `.nvmrc`)
 - pnpm 12 (`corepack enable`)
 - Xcode
 

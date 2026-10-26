@@ -35,6 +35,11 @@ updates:
     groups:
       docker:
         patterns: ["*"]
+    ignore:
+      # Node 26's Request breaks @clerk/backend under @hono/node-server
+      # ("Illegal invocation" on `duplex`); stay on 24 until that is fixed.
+      - dependency-name: node
+        versions: [">=25"]
 
   - package-ecosystem: docker-compose
     directory: /
