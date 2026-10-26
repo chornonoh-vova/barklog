@@ -1,13 +1,21 @@
 # Workflow actions are pinned to commit SHAs, so a moved or hijacked tag cannot
 # change what runs. Dependabot keeps those pins current, one grouped PR a week,
-# with the release in the trailing comment. npm dependencies are updated
-# deliberately, alongside the Expo SDK for apps/mobile, so they are not here.
+# with the release in the trailing comment.
 #
 # Container images are pinned the same way, tag plus digest, in both
 # Dockerfiles and both compose files. Dependabot bumps the tag and the digest
 # together, again one grouped PR a week per ecosystem. The GHCR images in
 # compose.yaml use ${IMAGE_TAG:-main}, which Dependabot cannot resolve, so it
 # leaves them alone.
+#
+# npm runs once at the workspace root: Dependabot reads pnpm-workspace.yaml and
+# updates every workspace's package.json, the catalogs and the one lockfile, so
+# a group is one PR for the whole repo rather than one per directory.
+#
+# Packages the Expo SDK pins are ignored: they move together with
+# `npx expo install --fix`, or with an SDK upgrade, never one at a time. The
+# rest of apps/mobile gets its own group so a mobile regression is easy to
+# pin on one PR. verify.yml runs mobile's checks on every one of these PRs.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -34,4 +42,63 @@ updates:
       interval: weekly
     groups:
       docker-compose:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # A release gets a few days to be yanked before it reaches a PR.
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
+    ignore:
+      # Pinned by the Expo SDK (expo/bundledNativeModules.json).
+      - dependency-name: expo
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: jest-expo
+      - dependency-name: eslint-config-expo
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-native-gesture-handler
+      - dependency-name: react-native-reanimated
+      - dependency-name: react-native-safe-area-context
+      - dependency-name: react-native-screens
+      - dependency-name: react-native-worklets
+      - dependency-name: "@react-native-async-storage/async-storage"
+      # Majors follow the SDK too: jest-expo peers on Jest's major, and
+      # @types/react on React's.
+      - dependency-name: jest
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/jest"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/react"
+        update-types: [version-update:semver-major]
+      # apps/mobile is held on the eslint9 catalog, see pnpm-workspace.yaml.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      # Pinned through `overrides` in pnpm-workspace.yaml to dedupe with
+      # eslint-config-expo; bump all three by hand together.
+      - dependency-name: typescript-eslint
+      - dependency-name: "@typescript-eslint/*"
+    # First match wins. Majors match neither group and arrive one PR each.
+    groups:
+      mobile:
+        update-types: [minor, patch]
+        patterns:
+          - "@clerk/expo*"
+          - "@tanstack/*"
+          - "@formatjs/*"
+          - i18next
+          - react-i18next
+          - "react-native-purchases*"
+          - "@testing-library/react-native"
+          - sf-symbols-typescript
+          - jest
+          - "@types/jest"
+          - "@types/react"
+      minor-and-patch:
+        update-types: [minor, patch]
         patterns: ["*"]

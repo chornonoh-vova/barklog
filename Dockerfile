@@ -8,10 +8,12 @@
 
 # Pinned by digest; Dependabot bumps tag and digest together (dependabot.yml).
 FROM node:26.12.0-alpine3.24@sha256:6f08a523443ddedf52941874c203475b0ad503e859ad70cb26ab8be9a517dbd5 AS base
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
-    TURBO_TELEMETRY_DISABLED=1 \
+ENV TURBO_TELEMETRY_DISABLED=1 \
     DO_NOT_TRACK=1
-RUN corepack enable pnpm
+# Node 25 stopped bundling Corepack, so pnpm comes straight from npm. Pinned
+# here as well as in "packageManager" in the root package.json. Keep the two
+# in step.
+RUN npm install --global pnpm@12.3.4
 WORKDIR /app
 
 # ---------------------------------------------------------------------------
