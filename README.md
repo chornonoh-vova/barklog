@@ -98,10 +98,7 @@ pnpm --filter mobile ios
 
 On a physical device set `EXPO_PUBLIC_API_URL` to the host machine's LAN IP —
 `localhost` resolves to the phone. Building onto a connected iPhone instead of
-the simulator: `pnpm --filter mobile ios:device`. Prefer a cloud build?
-`pnpm --filter mobile build:dev` runs `eas build --profile development
---platform ios`; run `npx eas-cli login` and `npx eas-cli init` once first to
-attach an EAS project id.
+the simulator: `pnpm --filter mobile ios:device`.
 
 ## Local infrastructure
 
