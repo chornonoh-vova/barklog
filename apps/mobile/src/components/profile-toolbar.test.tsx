@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import RevenueCatUI from "react-native-purchases-ui";
 
 import { ProfileToolbar } from "@/components/profile-toolbar";
+import type { Endpoints } from "@/lib/api/endpoints";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 import { me } from "@test/fixtures";
 import { fakeEndpoints, renderRouterWithProviders } from "@test/render";
@@ -15,8 +16,11 @@ import {
   type BarItem,
 } from "@test/queries";
 
-async function renderToolbar({ premium = false } = {}) {
-  const api = fakeEndpoints({ getMe: async () => me({ premium }) });
+async function renderToolbar({
+  premium = false,
+  getMe = async () => me({ premium }),
+}: { premium?: boolean; getMe?: Endpoints["getMe"] } = {}) {
+  const api = fakeEndpoints({ getMe });
   const result = await renderRouterWithProviders(
     { _layout: () => <Stack />, index: () => <ProfileToolbar />, paywall: () => null },
     { api },
@@ -45,8 +49,7 @@ describe("ProfileToolbar", () => {
     await renderToolbar();
 
     const label = "Get Barklog Premium";
-    await waitFor(() => expect(navigationBarItem(label)).toBeDefined());
-    expect(navigationBarItem(label)?.sfSymbolName).toBe("star");
+    await waitFor(() => expect(navigationBarItem(label)?.sfSymbolName).toBe("star"));
 
     await act(async () => pressHeaderButton(label));
 
@@ -55,11 +58,7 @@ describe("ProfileToolbar", () => {
   });
 
   it("shows no star until the entitlement is known", async () => {
-    const api = fakeEndpoints({ getMe: () => new Promise(() => {}) });
-    await renderRouterWithProviders(
-      { _layout: () => <Stack />, index: () => <ProfileToolbar /> },
-      { api },
-    );
+    await renderToolbar({ getMe: () => new Promise(() => {}) });
 
     expect(barButtons().map((item) => item.sfSymbolName)).toEqual(["person.crop.circle"]);
   });
@@ -68,8 +67,7 @@ describe("ProfileToolbar", () => {
     await renderToolbar({ premium: true });
 
     const label = "Barklog Premium, manage subscription";
-    await waitFor(() => expect(navigationBarItem(label)).toBeDefined());
-    expect(navigationBarItem(label)?.sfSymbolName).toBe("star.fill");
+    await waitFor(() => expect(navigationBarItem(label)?.sfSymbolName).toBe("star.fill"));
 
     await act(async () => pressHeaderButton(label));
 

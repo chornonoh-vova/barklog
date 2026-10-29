@@ -29,24 +29,33 @@ export function ProfileToolbar() {
   const { width } = useWindowDimensions();
   const { t } = useTranslation();
 
+  // Subscribers get Customer Center, not the paywall: Apple requires restore
+  // to be reachable, and a subscriber has no reason to open the paywall.
+  const star =
+    premium === undefined
+      ? null
+      : premium
+        ? ({
+            icon: "star.fill",
+            label: "profile.manageSubscription",
+            onPress: () => void RevenueCatUI.presentCustomerCenter(),
+          } as const)
+        : ({
+            icon: "star",
+            label: "profile.getPremium",
+            onPress: () => router.push("/paywall"),
+          } as const);
+
   return (
     <>
       <Stack.Toolbar placement="right">
-        {/* Premium's one home on every tab: an outline star offers it, a
-            filled one manages it. Customer Center, not the paywall, for
-            subscribers — Apple requires restore to be reachable, and the
-            paywall is a screen a subscriber has no reason to open. Presented,
-            not routed, like the profile below: RevenueCat dismisses its own
-            sheet. Hidden while the entitlement is unknown, so a subscriber
-            never sees the outline flip to filled. */}
-        {premium === undefined ? null : (
+        {/* Hidden while the entitlement is unknown, so a subscriber never sees
+            the outline flip to filled. */}
+        {star === null ? null : (
           <Stack.Toolbar.Button
-            icon={premium ? "star.fill" : "star"}
-            accessibilityLabel={t(premium ? "profile.manageSubscription" : "profile.getPremium")}
-            onPress={() => {
-              if (premium) void RevenueCatUI.presentCustomerCenter();
-              else router.push("/paywall");
-            }}
+            icon={star.icon}
+            accessibilityLabel={t(star.label)}
+            onPress={star.onPress}
           />
         )}
         <Stack.Toolbar.Button
