@@ -1,11 +1,11 @@
 import { UserProfileView } from "@clerk/expo/native-components";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, useWindowDimensions } from "react-native";
 import RevenueCatUI from "react-native-purchases-ui";
 
-import { useIsPremium } from "@/lib/api/hooks";
+import { usePremium } from "@/lib/api/hooks";
 import { prefersSheet } from "@/ui/columns";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 
@@ -24,26 +24,31 @@ import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
  */
 export function ProfileToolbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const premium = useIsPremium();
+  const premium = usePremium();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const { t } = useTranslation();
 
   return (
     <>
       <Stack.Toolbar placement="right">
-        {/* Restore purchases otherwise lives only on the paywall, which a
-            subscriber has no reason to open — Apple requires the path exist
-            somewhere. Customer Center gives it a home for premium users,
-            alongside manage, cancel and refund. Presented, not routed, for
-            the same reason as the profile view below: RevenueCat dismisses
-            its own native sheet, so there is nothing here to register or pop. */}
-        {premium ? (
+        {/* Premium's one home on every tab: an outline star offers it, a
+            filled one manages it. Customer Center, not the paywall, for
+            subscribers — Apple requires restore to be reachable, and the
+            paywall is a screen a subscriber has no reason to open. Presented,
+            not routed, like the profile below: RevenueCat dismisses its own
+            sheet. Hidden while the entitlement is unknown, so a subscriber
+            never sees the outline flip to filled. */}
+        {premium === undefined ? null : (
           <Stack.Toolbar.Button
-            icon="star.fill"
-            accessibilityLabel={t("profile.manageSubscription")}
-            onPress={() => void RevenueCatUI.presentCustomerCenter()}
+            icon={premium ? "star.fill" : "star"}
+            accessibilityLabel={t(premium ? "profile.manageSubscription" : "profile.getPremium")}
+            onPress={() => {
+              if (premium) void RevenueCatUI.presentCustomerCenter();
+              else router.push("/paywall");
+            }}
           />
-        ) : null}
+        )}
         <Stack.Toolbar.Button
           icon="person.crop.circle"
           accessibilityLabel={t("profile.openAccount")}
@@ -52,7 +57,7 @@ export function ProfileToolbar() {
       </Stack.Toolbar>
 
       {/* `Modal` renders nothing while hidden, so the native profile view is
-          mounted only for the tab whose avatar was tapped. */}
+          mounted only for the tab whose account button was pressed. */}
       <Modal
         visible={isOpen}
         animationType="slide"

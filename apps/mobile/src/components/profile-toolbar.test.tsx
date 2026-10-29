@@ -18,7 +18,7 @@ import {
 async function renderToolbar({ premium = false } = {}) {
   const api = fakeEndpoints({ getMe: async () => me({ premium }) });
   const result = await renderRouterWithProviders(
-    { _layout: () => <Stack />, index: () => <ProfileToolbar /> },
+    { _layout: () => <Stack />, index: () => <ProfileToolbar />, paywall: () => null },
     { api },
   );
   await waitFor(() => expect(api.getMe).toHaveBeenCalled());
@@ -38,16 +38,28 @@ describe("ProfileToolbar", () => {
   it("opens the account from a bar button, which iPhone Duo can put in its rail", async () => {
     await renderToolbar();
 
-    expect(barButtons()).toEqual([
-      expect.objectContaining({
-        sfSymbolName: "person.crop.circle",
-        accessibilityLabel: "Open account",
-      }),
-    ]);
+    expect(navigationBarItem("Open account")?.sfSymbolName).toBe("person.crop.circle");
   });
 
-  it("offers no subscription button to a free user", async () => {
+  it("offers Premium to a free user with an outline star that opens the paywall", async () => {
     await renderToolbar();
+
+    const label = "Get Barklog Premium";
+    await waitFor(() => expect(navigationBarItem(label)).toBeDefined());
+    expect(navigationBarItem(label)?.sfSymbolName).toBe("star");
+
+    await act(async () => pressHeaderButton(label));
+
+    expect(screen).toHavePathname("/paywall");
+    expect(RevenueCatUI.presentCustomerCenter).not.toHaveBeenCalled();
+  });
+
+  it("shows no star until the entitlement is known", async () => {
+    const api = fakeEndpoints({ getMe: () => new Promise(() => {}) });
+    await renderRouterWithProviders(
+      { _layout: () => <Stack />, index: () => <ProfileToolbar /> },
+      { api },
+    );
 
     expect(barButtons().map((item) => item.sfSymbolName)).toEqual(["person.crop.circle"]);
   });

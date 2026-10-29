@@ -12,6 +12,7 @@
     "search": "Buscar"
   },
   "profile": {
+    "getPremium": "Obtener Barklog Premium",
     "manageSubscription": "Barklog Premium, gestionar suscripción",
     "openAccount": "Abrir cuenta"
   },
