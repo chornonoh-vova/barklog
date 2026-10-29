@@ -12,7 +12,7 @@ export default function Paywall() {
   const queryClient = useQueryClient();
   const api = useApi();
 
-  // Marked here rather than at each `router.push("/paywall")`, so every route
+  // Marked here rather than in `openPaywall`, so every route
   // into the sheet counts — including ones added later.
   useEffect(() => markPaywallSeen(), []);
 

@@ -1,11 +1,10 @@
 import { UserProfileView } from "@clerk/expo/native-components";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, useWindowDimensions } from "react-native";
-import RevenueCatUI from "react-native-purchases-ui";
 
-import { usePremium } from "@/lib/api/hooks";
+import { usePremiumStar } from "@/features/paywall/use-premium-star";
 import { prefersSheet } from "@/ui/columns";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 
@@ -24,40 +23,14 @@ import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
  */
 export function ProfileToolbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const premium = usePremium();
-  const router = useRouter();
+  const star = usePremiumStar();
   const { width } = useWindowDimensions();
   const { t } = useTranslation();
-
-  // Subscribers get Customer Center, not the paywall: Apple requires restore
-  // to be reachable, and a subscriber has no reason to open the paywall.
-  const star =
-    premium === undefined
-      ? null
-      : premium
-        ? ({
-            icon: "star.fill",
-            label: "profile.manageSubscription",
-            onPress: () => void RevenueCatUI.presentCustomerCenter(),
-          } as const)
-        : ({
-            icon: "star",
-            label: "profile.getPremium",
-            onPress: () => router.push("/paywall"),
-          } as const);
 
   return (
     <>
       <Stack.Toolbar placement="right">
-        {/* Hidden while the entitlement is unknown, so a subscriber never sees
-            the outline flip to filled. */}
-        {star === null ? null : (
-          <Stack.Toolbar.Button
-            icon={star.icon}
-            accessibilityLabel={t(star.label)}
-            onPress={star.onPress}
-          />
-        )}
+        {star === null ? null : <Stack.Toolbar.Button {...star} />}
         <Stack.Toolbar.Button
           icon="person.crop.circle"
           accessibilityLabel={t("profile.openAccount")}
