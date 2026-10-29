@@ -33,10 +33,10 @@ describe("UpdatingPill", () => {
     expect(pill()).toHaveProp("pointerEvents", "none");
   });
 
-  it("floats above the tab bar and the home indicator", async () => {
+  it("floats just above the bottom inset, which holds the tab bar when there is one", async () => {
     await renderWithProviders(<UpdatingPill visible />, { insets: PHONE_INSETS });
 
-    expect(pill()).toHaveStyle({ position: "absolute", bottom: 98 });
+    expect(pill()).toHaveStyle({ position: "absolute", bottom: 50 });
   });
 
   it("is one VoiceOver element: a progress indicator named Updating", async () => {

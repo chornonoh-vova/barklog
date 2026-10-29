@@ -1,10 +1,8 @@
-import { useUser } from "@clerk/expo";
 import { UserProfileView } from "@clerk/expo/native-components";
-import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, Pressable, StyleSheet, useWindowDimensions } from "react-native";
+import { Modal, StyleSheet, useWindowDimensions } from "react-native";
 import RevenueCatUI from "react-native-purchases-ui";
 
 import { useIsPremium } from "@/lib/api/hooks";
@@ -19,9 +17,12 @@ import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
  *
  * Presented, not routed: Clerk dismisses its own native view, so a routed
  * profile calling `router.back()` has nothing left to pop.
+ *
+ * A symbol, not the user's avatar: iPhone Duo leaves custom views out of its
+ * toolbar rail, and this is the way to account deletion, which App Review
+ * must be able to find. A bar button cannot size or round a remote image.
  */
 export function ProfileToolbar() {
-  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const premium = useIsPremium();
   const { width } = useWindowDimensions();
@@ -43,17 +44,11 @@ export function ProfileToolbar() {
             onPress={() => void RevenueCatUI.presentCustomerCenter()}
           />
         ) : null}
-        <Stack.Toolbar.View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("profile.openAccount")}
-            onPress={() => setIsOpen(true)}
-            style={styles.button}
-          >
-            {/* Clerk always resolves an imageUrl, generating one from initials. */}
-            <Image source={{ uri: user?.imageUrl }} style={styles.avatar} contentFit="cover" />
-          </Pressable>
-        </Stack.Toolbar.View>
+        <Stack.Toolbar.Button
+          icon="person.crop.circle"
+          accessibilityLabel={t("profile.openAccount")}
+          onPress={() => setIsOpen(true)}
+        />
       </Stack.Toolbar>
 
       {/* `Modal` renders nothing while hidden, so the native profile view is
@@ -71,10 +66,6 @@ export function ProfileToolbar() {
   );
 }
 
-const SIZE = 32;
-
 const styles = StyleSheet.create({
-  button: { width: SIZE, height: SIZE },
-  avatar: { width: SIZE, height: SIZE, borderRadius: SIZE / 2 },
   profile: { flex: 1 },
 });

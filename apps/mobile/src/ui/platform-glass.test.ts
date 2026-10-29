@@ -16,14 +16,12 @@ function onIOS(version: string): typeof PlatformGlass {
 describe("platform glass styles", () => {
   it("uses Liquid Glass on iOS 26", () => {
     expect(onIOS("26.1")).toEqual({
-      GLASS_STYLE: "glass",
       GLASS_PROMINENT_STYLE: "glassProminent",
     });
   });
 
   it("falls back to bordered buttons on iOS 18", () => {
     expect(onIOS("18.6")).toEqual({
-      GLASS_STYLE: "bordered",
       GLASS_PROMINENT_STYLE: "borderedProminent",
     });
   });

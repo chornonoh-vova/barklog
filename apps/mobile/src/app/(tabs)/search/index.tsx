@@ -27,6 +27,10 @@ export default function SearchRoute() {
       <Stack.SearchBar
         ref={searchBar}
         placement="stacked"
+        // The screen swaps its root between the empty state, recents and
+        // results — recents arriving a frame late is one swap — and UIKit
+        // tucks the bar away under each new scroll view until a pull down.
+        hideWhenScrolling={false}
         placeholder={t("search.placeholder")}
         onChangeText={(event) => setQuery(event.nativeEvent.text)}
       />
