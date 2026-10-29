@@ -19,7 +19,12 @@ export default function TabsLayout() {
         <Icon sf={{ default: "safari", selected: "safari.fill" }} md="explore" />
       </Trigger>
 
-      <Trigger name="search" role="search">
+      {/* No automatic activation: it morphs the tab bar into a search field,
+          but the bar is `stacked` in the header with toolbar integration off,
+          so on iPhone that field could appear without a search bar behind it
+          — glass that takes no taps. On the layout trigger so it covers the
+          first selection too. */}
+      <Trigger name="search" role="search" disableAutomaticSearchActivation>
         <Label>{t("tabs.search")}</Label>
         <Icon sf="magnifyingglass" md="search" />
       </Trigger>

@@ -15,7 +15,6 @@ export const clerk = {
   isLoaded: true,
   isAuthFlowComplete: true,
   userId: "user_1" as string | null | undefined,
-  imageUrl: "https://img.clerk.com/user_1.png",
   getToken: jest.fn(async () => "tok_test" as string | null),
 };
 
@@ -26,10 +25,6 @@ export const clerkExpo = {
     isSignedIn: typeof clerk.userId === "string",
     userId: clerk.userId,
     getToken: clerk.getToken,
-  }),
-  useUser: () => ({
-    isLoaded: clerk.isLoaded,
-    user: typeof clerk.userId === "string" ? { id: clerk.userId, imageUrl: clerk.imageUrl } : null,
   }),
 };
 
@@ -146,7 +141,6 @@ export function resetNative(): void {
     isLoaded: true,
     isAuthFlowComplete: true,
     userId: "user_1",
-    imageUrl: "https://img.clerk.com/user_1.png",
   });
   clerk.getToken.mockImplementation(async () => "tok_test");
   customerInfoListeners.clear();

@@ -3,17 +3,26 @@ import { Stack } from "expo-router";
 import RevenueCatUI from "react-native-purchases-ui";
 
 import { ProfileToolbar } from "@/components/profile-toolbar";
+import type { Endpoints } from "@/lib/api/endpoints";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 import { me } from "@test/fixtures";
-import { clerk } from "@test/mocks/native";
 import { fakeEndpoints, renderRouterWithProviders } from "@test/render";
 import { setWindow, TABLET } from "@test/window";
-import { nativeView, navigationBars, type BarItem } from "@test/queries";
+import {
+  nativeView,
+  navigationBarItem,
+  navigationBars,
+  pressHeaderButton,
+  type BarItem,
+} from "@test/queries";
 
-async function renderToolbar({ premium = false } = {}) {
-  const api = fakeEndpoints({ getMe: async () => me({ premium }) });
+async function renderToolbar({
+  premium = false,
+  getMe = async () => me({ premium }),
+}: { premium?: boolean; getMe?: Endpoints["getMe"] } = {}) {
+  const api = fakeEndpoints({ getMe });
   const result = await renderRouterWithProviders(
-    { _layout: () => <Stack />, index: () => <ProfileToolbar /> },
+    { _layout: () => <Stack />, index: () => <ProfileToolbar />, paywall: () => null },
     { api },
   );
   await waitFor(() => expect(api.getMe).toHaveBeenCalled());
@@ -27,46 +36,50 @@ function profileModal() {
   return nativeView("Modal");
 }
 
-const openAccount = () => screen.getByRole("button", { name: "Open account" });
+const openAccount = () => act(async () => pressHeaderButton("Open account"));
 
 describe("ProfileToolbar", () => {
-  it("shows the signed-in user's avatar", async () => {
+  it("opens the account from a bar button, which iPhone Duo can put in its rail", async () => {
     await renderToolbar();
 
-    const avatar = nativeView("ViewManagerAdapter_ExpoImage");
-    expect(openAccount()).toContainElement(avatar);
-    expect(avatar.props.source).toEqual([expect.objectContaining({ uri: clerk.imageUrl })]);
+    expect(navigationBarItem("Open account")?.sfSymbolName).toBe("person.crop.circle");
   });
 
-  it("offers no subscription button to a free user", async () => {
+  it("offers Premium to a free user with an outline star that opens the paywall", async () => {
     await renderToolbar();
 
-    expect(barButtons()).toEqual([]);
+    const label = "Get Barklog Premium";
+    await waitFor(() => expect(navigationBarItem(label)?.sfSymbolName).toBe("star"));
+
+    await act(async () => pressHeaderButton(label));
+
+    expect(screen).toHavePathname("/paywall");
+    expect(RevenueCatUI.presentCustomerCenter).not.toHaveBeenCalled();
+  });
+
+  it("shows no star until the entitlement is known", async () => {
+    await renderToolbar({ getMe: () => new Promise(() => {}) });
+
+    expect(barButtons().map((item) => item.sfSymbolName)).toEqual(["person.crop.circle"]);
   });
 
   it("opens the Customer Center from the star for a premium user", async () => {
     await renderToolbar({ premium: true });
 
-    await waitFor(() => expect(barButtons()).toHaveLength(1));
-    const [star] = barButtons() as [BarItem];
-    expect(star).toEqual(
-      expect.objectContaining({
-        sfSymbolName: "star.fill",
-        accessibilityLabel: "Barklog Premium, manage subscription",
-      }),
-    );
+    const label = "Barklog Premium, manage subscription";
+    await waitFor(() => expect(navigationBarItem(label)?.sfSymbolName).toBe("star.fill"));
 
-    await act(async () => star.onPress?.());
+    await act(async () => pressHeaderButton(label));
 
     expect(RevenueCatUI.presentCustomerCenter).toHaveBeenCalledTimes(1);
   });
 
-  it("mounts the profile only once the avatar is tapped", async () => {
+  it("mounts the profile only once the account button is pressed", async () => {
     await renderToolbar();
 
     expect(screen.queryByTestId("clerk-user-profile")).not.toBeOnTheScreen();
 
-    await userEvent.setup().press(openAccount());
+    await openAccount();
 
     expect(screen.getByTestId("clerk-user-profile")).toBeOnTheScreen();
   });
@@ -74,7 +87,7 @@ describe("ProfileToolbar", () => {
   it("closes the profile when Clerk dismisses it", async () => {
     const user = userEvent.setup();
     await renderToolbar();
-    await user.press(openAccount());
+    await openAccount();
 
     await user.press(screen.getByTestId("clerk-user-profile"));
 
@@ -83,7 +96,7 @@ describe("ProfileToolbar", () => {
 
   it("closes the profile on the system's close request", async () => {
     await renderToolbar();
-    await userEvent.setup().press(openAccount());
+    await openAccount();
 
     await act(async () => profileModal().props.onRequestClose());
 
@@ -92,7 +105,7 @@ describe("ProfileToolbar", () => {
 
   it("covers a phone's window and rotates with it", async () => {
     await renderToolbar();
-    await userEvent.setup().press(openAccount());
+    await openAccount();
 
     expect(profileModal().props).toEqual(
       expect.objectContaining({
@@ -105,7 +118,7 @@ describe("ProfileToolbar", () => {
   it("is a page sheet on a wide window", async () => {
     await setWindow(TABLET);
     await renderToolbar();
-    await userEvent.setup().press(openAccount());
+    await openAccount();
 
     expect(profileModal().props.presentationStyle).toBe("pageSheet");
   });

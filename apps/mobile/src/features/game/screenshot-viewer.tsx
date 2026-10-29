@@ -1,9 +1,8 @@
-import { Button, Host, Image, Overlay, RNHostView, TabView } from "@expo/ui/swift-ui";
+import { Button, Host, NavigationStack, RNHostView, TabView, Toolbar } from "@expo/ui/swift-ui";
 import {
   accessibilityLabel,
-  buttonStyle,
+  ignoreSafeArea,
   indexViewStyle,
-  padding,
   tabViewStyle,
 } from "@expo/ui/swift-ui/modifiers";
 import { useTranslation } from "react-i18next";
@@ -13,8 +12,8 @@ import { RemoteImage } from "@/components/remote-image";
 import { screenshotLabel } from "@/features/game/screenshot-label";
 import { screenshotUrl } from "@/lib/igdb/image";
 import { SHOT_ASPECT } from "@/ui/theme";
+import { IOS_MAJOR } from "@/ui/ios-version";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
-import { GLASS_STYLE } from "@/ui/platform-glass";
 
 /** A page-style SwiftUI `TabView`, so paging and rotation are UIKit's. */
 export function ScreenshotViewer({
@@ -30,6 +29,7 @@ export function ScreenshotViewer({
   const width = Math.min(window.width, window.height * SHOT_ASPECT);
   const size = { width, height: width / SHOT_ASPECT };
   const { t } = useTranslation();
+  const closeLabel = t("game.closeScreenshots");
 
   return (
     <Modal
@@ -40,43 +40,51 @@ export function ScreenshotViewer({
       onRequestClose={onClose}
     >
       <Host style={styles.host} colorScheme="dark">
-        <Overlay alignment="topTrailing">
-          <TabView
-            defaultSelection={openId}
-            modifiers={[
-              tabViewStyle({ type: "page", indexDisplayMode: "always" }),
-              indexViewStyle({ backgroundDisplayMode: "always" }),
-            ]}
-          >
-            {screenshots.map((imageId, index) => (
-              <TabView.Tab key={imageId} value={imageId}>
-                <RNHostView matchContents>
-                  <RemoteImage
-                    source={{ uri: screenshotUrl(imageId, "huge") }}
-                    style={size}
-                    contentFit="contain"
-                    pointerEvents="none"
-                    accessible
-                    accessibilityLabel={screenshotLabel(index, screenshots.length)}
-                  />
-                </RNHostView>
-              </TabView.Tab>
-            ))}
-          </TabView>
-
-          <Overlay.Content>
-            <Button
-              onPress={onClose}
+        {/* A navigation bar, not a floating button, so iOS places Close: top
+            trailing on a regular iPhone, first in the rail on iPhone Duo. */}
+        <NavigationStack>
+          <Toolbar>
+            <TabView
+              defaultSelection={openId}
               modifiers={[
-                buttonStyle(GLASS_STYLE),
-                padding({ top: 8, trailing: 16 }),
-                accessibilityLabel(t("game.closeScreenshots")),
+                tabViewStyle({ type: "page", indexDisplayMode: "always" }),
+                indexViewStyle({ backgroundDisplayMode: "always" }),
+                // Pages span the whole window, as `size` assumes; the bar
+                // floats over them instead of pushing them down.
+                ignoreSafeArea(),
               ]}
             >
-              <Image systemName="xmark" />
-            </Button>
-          </Overlay.Content>
-        </Overlay>
+              {screenshots.map((imageId, index) => (
+                <TabView.Tab key={imageId} value={imageId}>
+                  <RNHostView matchContents>
+                    <RemoteImage
+                      source={{ uri: screenshotUrl(imageId, "huge") }}
+                      style={size}
+                      contentFit="contain"
+                      pointerEvents="none"
+                      accessible
+                      accessibilityLabel={screenshotLabel(index, screenshots.length)}
+                    />
+                  </RNHostView>
+                </TabView.Tab>
+              ))}
+            </TabView>
+
+            <Toolbar.Content>
+              {/* iOS 26 draws the system close (X) for a bare `role="close"`;
+                  earlier versions need the label and symbol spelled out. */}
+              {IOS_MAJOR >= 26 ? (
+                <Button
+                  role="close"
+                  onPress={onClose}
+                  modifiers={[accessibilityLabel(closeLabel)]}
+                />
+              ) : (
+                <Button role="close" label={closeLabel} systemImage="xmark" onPress={onClose} />
+              )}
+            </Toolbar.Content>
+          </Toolbar>
+        </NavigationStack>
       </Host>
     </Modal>
   );

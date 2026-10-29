@@ -24,6 +24,7 @@ import { showUpdatingPill } from "@/features/backlog/loading-state";
 import { toRowSections, toSections, type BacklogRowSection } from "@/features/backlog/sections";
 import { slotsLabel } from "@/features/backlog/slots";
 import { StatusFilter } from "@/features/backlog/status-filter";
+import { openPaywall } from "@/features/paywall/open-paywall";
 import { parseStatusParam } from "@/features/backlog/status-param";
 import { useReviewPrompt } from "@/features/review/use-review-prompt";
 import { Screen, SectionHeader, Type } from "@/ui/theme";
@@ -142,7 +143,7 @@ export function BacklogScreen() {
           style={styles.slotsTarget}
           accessibilityRole="button"
           accessibilityLabel={t("backlog.slotsHint", { slots })}
-          onPress={() => router.push("/paywall")}
+          onPress={openPaywall}
         >
           <Text style={styles.slots}>{slots}</Text>
         </Pressable>

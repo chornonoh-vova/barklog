@@ -1,13 +1,10 @@
-import { useUser } from "@clerk/expo";
 import { UserProfileView } from "@clerk/expo/native-components";
-import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, Pressable, StyleSheet, useWindowDimensions } from "react-native";
-import RevenueCatUI from "react-native-purchases-ui";
+import { Modal, StyleSheet, useWindowDimensions } from "react-native";
 
-import { useIsPremium } from "@/lib/api/hooks";
+import { usePremiumStar } from "@/features/paywall/use-premium-star";
 import { prefersSheet } from "@/ui/columns";
 import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
 
@@ -19,45 +16,30 @@ import { MODAL_ORIENTATIONS } from "@/ui/modal-orientations";
  *
  * Presented, not routed: Clerk dismisses its own native view, so a routed
  * profile calling `router.back()` has nothing left to pop.
+ *
+ * A symbol, not the user's avatar: iPhone Duo leaves custom views out of its
+ * toolbar rail, and this is the way to account deletion, which App Review
+ * must be able to find. A bar button cannot size or round a remote image.
  */
 export function ProfileToolbar() {
-  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const premium = useIsPremium();
+  const star = usePremiumStar();
   const { width } = useWindowDimensions();
   const { t } = useTranslation();
 
   return (
     <>
       <Stack.Toolbar placement="right">
-        {/* Restore purchases otherwise lives only on the paywall, which a
-            subscriber has no reason to open — Apple requires the path exist
-            somewhere. Customer Center gives it a home for premium users,
-            alongside manage, cancel and refund. Presented, not routed, for
-            the same reason as the profile view below: RevenueCat dismisses
-            its own native sheet, so there is nothing here to register or pop. */}
-        {premium ? (
-          <Stack.Toolbar.Button
-            icon="star.fill"
-            accessibilityLabel={t("profile.manageSubscription")}
-            onPress={() => void RevenueCatUI.presentCustomerCenter()}
-          />
-        ) : null}
-        <Stack.Toolbar.View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("profile.openAccount")}
-            onPress={() => setIsOpen(true)}
-            style={styles.button}
-          >
-            {/* Clerk always resolves an imageUrl, generating one from initials. */}
-            <Image source={{ uri: user?.imageUrl }} style={styles.avatar} contentFit="cover" />
-          </Pressable>
-        </Stack.Toolbar.View>
+        {star === null ? null : <Stack.Toolbar.Button {...star} />}
+        <Stack.Toolbar.Button
+          icon="person.crop.circle"
+          accessibilityLabel={t("profile.openAccount")}
+          onPress={() => setIsOpen(true)}
+        />
       </Stack.Toolbar>
 
       {/* `Modal` renders nothing while hidden, so the native profile view is
-          mounted only for the tab whose avatar was tapped. */}
+          mounted only for the tab whose account button was pressed. */}
       <Modal
         visible={isOpen}
         animationType="slide"
@@ -71,10 +53,6 @@ export function ProfileToolbar() {
   );
 }
 
-const SIZE = 32;
-
 const styles = StyleSheet.create({
-  button: { width: SIZE, height: SIZE },
-  avatar: { width: SIZE, height: SIZE, borderRadius: SIZE / 2 },
   profile: { flex: 1 },
 });

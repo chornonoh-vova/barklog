@@ -12,8 +12,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Type } from "@/ui/theme";
 
-// Clears the tab bar, which floats above the bottom safe area.
-const ABOVE_TAB_BAR = 64;
+// A native tabs screen's bottom inset already holds the tab bar while the bar
+// runs along the bottom, and only the home indicator once iPhone Duo or iPad
+// moves it into the rail or sidebar; a fixed bar height on top would float
+// the pill too high in both.
+const GAP = 16;
 
 /** At the bottom: the large title collapses on scroll, so the top has no
  * stable edge to sit against. */
@@ -40,7 +43,7 @@ export function UpdatingPill({ visible }: { visible: boolean }) {
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel={label}
-      style={[styles.pill, { bottom: bottom + ABOVE_TAB_BAR }]}
+      style={[styles.pill, { bottom: bottom + GAP }]}
     >
       <ActivityIndicator size="small" />
       <Text style={styles.label}>{label}</Text>

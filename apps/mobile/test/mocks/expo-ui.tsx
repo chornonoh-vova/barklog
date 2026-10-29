@@ -186,13 +186,14 @@ TabView.Tab = function Tab({ value, children }: { value: string | number; childr
   return <View testID={`swiftui-tab-${value}`}>{children}</View>;
 };
 
-const Overlay = Object.assign(container("Overlay"), { Content: container("OverlayContent") });
+const Toolbar = Object.assign(container("Toolbar"), { Content: container("ToolbarContent") });
 
 export const Host = container("Host");
+export const NavigationStack = container("NavigationStack");
 export const VStack = container("VStack");
 export const HStack = container("HStack");
 export const ZStack = container("ZStack");
 export const Spacer = container("Spacer");
 export const RoundedRectangle = container("RoundedRectangle");
 export const RNHostView = container("RNHostView");
-export { Button, Divider, Image, Label, Link, Menu, Overlay, Picker, ProgressView, TabView, Text };
+export { Button, Divider, Image, Label, Link, Menu, Picker, ProgressView, TabView, Text, Toolbar };
