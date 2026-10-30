@@ -7,6 +7,7 @@ import {
 } from "@expo/ui/swift-ui/modifiers";
 import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RemoteImage } from "@/components/remote-image";
 import { screenshotLabel } from "@/features/game/screenshot-label";
@@ -26,7 +27,9 @@ export function ScreenshotViewer({
   onClose: () => void;
 }) {
   const window = useWindowDimensions();
-  const width = Math.min(window.width, window.height * SHOT_ASPECT);
+  // Pages stop above the home indicator, so that strip is not theirs to fill.
+  const { bottom } = useSafeAreaInsets();
+  const width = Math.min(window.width, (window.height - bottom) * SHOT_ASPECT);
   const size = { width, height: width / SHOT_ASPECT };
   const { t } = useTranslation();
   const closeLabel = t("game.closeScreenshots");
@@ -49,9 +52,12 @@ export function ScreenshotViewer({
               modifiers={[
                 tabViewStyle({ type: "page", indexDisplayMode: "always" }),
                 indexViewStyle({ backgroundDisplayMode: "always" }),
-                // Pages span the whole window, as `size` assumes; the bar
-                // floats over them instead of pushing them down.
-                ignoreSafeArea(),
+                // Pages span the window under the bar, which floats over them
+                // instead of pushing them down, and past the notch in
+                // landscape. The bottom edge stays safe so the page dots sit
+                // above the home indicator rather than on it.
+                ignoreSafeArea({ edges: "top" }),
+                ignoreSafeArea({ edges: "horizontal" }),
               ]}
             >
               {screenshots.map((imageId, index) => (
