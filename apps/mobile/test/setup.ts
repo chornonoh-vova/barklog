@@ -84,6 +84,17 @@ jest.mock("expo-sharing", () => ({
 // phone-sized window and its safe area. Spies are restored by `restoreMocks`.
 beforeEach(async () => {
   resetNative();
+  // `setText` on the search bar's ref dispatches to a native view, which Jest
+  // renders as a plain component and React rejects with a console error. Jest
+  // loads the package's CommonJS build, hence the path.
+  jest
+    .spyOn(
+      jest.requireActual<{ Commands: { setText: () => void } }>(
+        "react-native-screens/lib/commonjs/fabric/SearchBarNativeComponent",
+      ).Commands,
+      "setText",
+    )
+    .mockImplementation(() => undefined);
   await AsyncStorage.clear();
   safeArea.insets = PHONE_INSETS;
   await setWindow();
