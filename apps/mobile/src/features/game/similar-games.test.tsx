@@ -1,5 +1,5 @@
 import { SIMILAR_LIMIT_DEFAULT, type GameListResponse } from "@repo/contracts";
-import { screen, userEvent, waitFor } from "@testing-library/react-native";
+import { act, screen, userEvent, waitFor } from "@testing-library/react-native";
 
 import { SimilarGames } from "@/features/game/similar-games";
 import { gameList } from "@test/fixtures";
@@ -44,6 +44,9 @@ describe("SimilarGames", () => {
     const { queryClient } = await renderSimilar(similarGames);
 
     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    // The query tells its component on a zero-delay timer, queued by the time
+    // fetching settles; one more such tick, inside act, lets that render land.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
     expect(screen.queryByText("Similar Games")).not.toBeOnTheScreen();
   });
 

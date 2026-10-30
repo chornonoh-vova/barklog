@@ -111,7 +111,9 @@ describe("startPersistence", () => {
   });
 
   it("drops a corrupt cache and carries on", async () => {
+    // The persister logs the parse error and a warning that it discards the cache.
     jest.spyOn(console, "error").mockImplementation(() => undefined);
+    jest.spyOn(console, "warn").mockImplementation(() => undefined);
     await AsyncStorage.setItem(persistKey("user_1"), "{not json");
 
     const queryClient = start();
@@ -120,6 +122,7 @@ describe("startPersistence", () => {
     expect(queryClient.getQueryData(keys.backlog.list())).toBeUndefined();
     expect(await AsyncStorage.getItem(persistKey("user_1"))).toBeNull();
     jest.mocked(console.error).mockRestore();
+    jest.mocked(console.warn).mockRestore();
   });
 });
 
