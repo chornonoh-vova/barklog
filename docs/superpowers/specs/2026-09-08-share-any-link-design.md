@@ -1,694 +1,76 @@
-# Share Any Link — Design
+# Share Any Link
 
-**Date:** 2026-09-08
-**Status:** Draft, awaiting review
+**Status:** Implemented reference, reconciled with code on 2026-10-29. Supersedes the video-only and source-preview designs.
 
-## 1. Purpose
+[ADR-0007](../../adr/0007-staged-share-identification.md) records the durable decision. Domain terms are defined in [CONTEXT.md](../../../CONTEXT.md). This document describes the implemented behavior; it is not a pending implementation plan.
 
-`POST /games/identify` accepts YouTube and TikTok links and nothing else. The
-two-provider limit is not a product decision that was made; it is the shape the
-first implementation happened to take, and three parts of it now hold the
-feature back.
+## Purpose and boundaries
 
-The extraction model sees only a title and an author. When a video is called
-"THIS CHANGES EVERYTHING" on a channel nobody has heard of, there is nothing
-in the input to work with, and the answer is `none` — even though the link
-itself, handed to a search engine, would settle it in one query.
+An iOS share opens a list of possible games. The user chooses a candidate and uses the ordinary game detail controls to add it to their backlog. Identification itself never writes a backlog entry. HTTPS articles and videos use the same flow; successful identification still depends on readable metadata and mirror coverage.
 
-Anything that is not a YouTube or TikTok video page is refused outright. A
-review on IGN, a Twitch clip, a Vimeo upload and a Bluesky post are all
-`UNPROCESSABLE_SHARE`, and the mobile share sheet has no way to know that
-before the round trip.
+The API accepts one URL, without credentials or a non-default HTTPS port, up to 2,048 characters. `POST /api/games/identify` returns source metadata, basis, guesses and candidates, with a default limit of 15 and maximum of 20. It uses authenticated API middleware and the separate identify rate-limit scope. Responses carry `Cache-Control: private, no-store`.
 
-And `oembed.com/providers.json` lists several hundred sites that will hand us a
-title and an author for free. We consume two of them.
+There is no JavaScript rendering or page-provided oEmbed discovery, and no image/video-file identification or batch-link request. These are scope limits, not promised follow-up work.
 
-This document describes opening the endpoint to any https link, gathering as
-much metadata as the link will give up before spending a token, and escalating
-to a web search only when the cheap path has genuinely failed.
+## Identification pipeline
 
-The examples that drove the design:
+1. [Normalize the link](../../../apps/api/src/share/normalise.ts): remove fragments and known tracking parameters, sort remaining parameters, and canonicalize recognized YouTube, TikTok and IGDB game URLs. Generic parameters such as `t`, `ref` and `si` remain because other sites can use them to select content. `shareId` is the SHA-1 of this URL; `sourceId` is a native video id when recognized, used only on the server.
+2. For an IGDB game slug already in the mirror, [the route](../../../apps/api/src/routes/games.ts) returns matching games directly with title basis, skipping metadata fetching and extraction. An unmirrored slug falls through to the ordinary pipeline.
+3. [Fetch source metadata](../../../apps/api/src/share/meta.ts). Try a matching vendored oEmbed provider; otherwise fetch HTML. Re-normalize the final redirect destination and try oEmbed again if it changed, then parse `og:title` or fall back to `<title>`. Open Graph supplies the site name as author and optional thumbnail details.
+4. [Extract up to three guesses](../../../apps/api/src/share/extract.ts) with the configured OpenAI model. Pass one receives title, author and site, with no URL or tools, and returns `title`, `author` or `none`. Only `none` triggers a web-search pass using the resolved URL, which returns `web` or `none`. Canonical English game titles, including ambiguous original/remake titles, are requested; empty or inconsistent results collapse to `none`.
+5. Search the mirror for each guess, up to eight matches each. [Merge candidates](../../../apps/api/src/share/identify.ts) in guess order, deduplicate game ids, and stop at the response limit. Existing search ranking orders matches within each guess. There is no live IGDB request or additional model reranking.
 
-```
-https://www.youtube.com/watch?v=1vs0lLIRt7w      oEmbed, unchanged
-https://vimeo.com/123456789                       oEmbed, newly supported
-https://www.ign.com/articles/...-review           og:title, newly supported
-https://www.youtube.com/watch?v=<obscure>          oEmbed title says nothing
-                                                   -> web search on the url
-```
+Keeping the URL out of pass one preserves the meaning of title/author basis. Web search is conditional because it adds latency and cost. A successful `none` is different from an extraction failure: failures use the raw source title as a search guess and return `unavailable`, rather than claiming the model found nothing. Model configuration lives in [env.ts](../../../apps/api/src/env.ts); prompt/version and SDK timeout/retry settings live with the extractor. The search pass disables SDK retries to avoid repeating a billed search.
 
-### Goals
+## Retrieval boundary and failures
 
-- Any https link is accepted. Metadata comes from oEmbed where the link matches
-  a known provider scheme, and from Open Graph tags otherwise.
-- The extraction model can escalate to a web search over the original link when
-  the metadata alone is not enough to name a game.
-- YouTube and TikTok keep exactly the latency and cost profile they have today.
-  No share pays for a capability it does not use.
-- The outbound request surface stays defensible after the host allowlist is
-  gone, and the new boundary is exhaustively unit-testable.
-- Naming stops claiming everything is a video.
+Provider schemes and endpoints are [vendored](../../../apps/api/src/share/providers.json), with a reviewable [refresh workflow](../../../.github/workflows/oembed-providers.yml), rather than fetched during requests. [Provider matching](../../../apps/api/src/share/provider-match.ts) compares the parsed host separately from path/query patterns; a matching provider is not an exemption from network checks.
 
-### Non-goals
+All oEmbed and page requests use [safeFetch](../../../apps/api/src/share/safe-fetch.ts) and the [IP policy](../../../apps/api/src/share/ip-policy.ts): validate every URL and redirect, reject disallowed addresses across all DNS answers, and pin the checked address into the connection. The implementation pairs undici's fetch and dispatcher, and refuses an injected global fetch. This avoids the check-then-resolve gap; mocked fetch tests alone cannot demonstrate real socket behavior.
 
-- oEmbed **discovery** — following a page's own
-  `<link rel="alternate" type="application/json+oembed">`. The Open Graph rung
-  already produces a title for those pages, at one fewer request.
-- Rendering JavaScript. A page whose title only exists after hydration is a
-  page we cannot read, and it lands on the 422 floor.
-- Extracting anything beyond a game title. Platform, release year and edition
-  stay out of scope; the mirror search already ranks those.
-- Non-https links, and https on a non-default port. See §5.
+The metadata ladder has an eight-second budget, five-second per-hop timeout and at most three redirects per fetch. MIME types are checked exactly. oEmbed JSON is capped at 64 KiB; HTML is truncated at 512 KiB and parsed for head metadata with `htmlparser2`. Truncation permits a useful head even when a page has a large application body, but metadata beyond the retained prefix remains unreadable.
 
-## 2. Decisions
+| Condition                                                               | Implemented result                                                          |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Invalid URL shape or request body                                       | 422 validation problem                                                      |
+| oEmbed 401/403/404                                                      | Terminal source-gone response, 404; do not scrape an unavailable-video page |
+| Other oEmbed failure                                                    | Continue to HTML within the remaining budget                                |
+| HTML 401/403                                                            | Source blocked, 422                                                         |
+| HTML 404/410                                                            | Source gone, 404                                                            |
+| Successful HTML without a usable title                                  | Source unreadable, 422                                                      |
+| Network/address/redirect/MIME failure or other unsuccessful HTML status | Fetch failed, 502                                                           |
+| Either extraction pass throws                                           | Successful response with raw-title guesses and `unavailable` basis          |
+| Both extraction passes find nothing                                     | Successful response with `none` basis and no candidates                     |
 
-Recorded with their reasoning, because several of them close off alternatives
-that look cheaper from the outside.
+See [oEmbed parsing](../../../apps/api/src/share/oembed.ts), [HTML parsing](../../../apps/api/src/share/opengraph.ts) and [problem definitions](../../../apps/api/src/problems.ts). Invalid thumbnail data becomes null without discarding otherwise usable metadata. Five-hundred-level responses do not expose upstream exception messages.
 
-1. **The host allowlist is replaced by a network-layer guard, not widened.**
-   Curating a list of sites forever was the alternative, and it cannot serve
-   "share the IGN review you are reading". See §5 for what replaces it.
+## Cache identities and compatibility
 
-2. **`providers.json` is vendored, not fetched at runtime.** A third-party JSON
-   file on the request path is both a cold-start dependency and a place to be
-   compromised from. The snapshot is generated by a script and committed, and
-   its endpoint list is effectively the outbound allowlist for the oEmbed rung.
+[Cache keys](../../../apps/api/src/cache-keys.ts) separate two identities: metadata is cached for seven days by the requested normalized link, while extraction is cached for 30 days by the resolved link, model and prompt version. Short and canonical links can therefore share extraction work. Failures escape both loaders and are not cached. The final candidate list is assembled anew from the ordinary versioned search cache, so mirror updates can change candidates without repeating extraction.
 
-3. **Web search is an escalation, never the default.** A search bills at
-   $10/1000 calls plus roughly 8k input tokens, which on `gpt-5.4-mini` is
-   about $0.016 against $0.0002 for the current call — roughly eighty times the
-   price. Pass 1 stays exactly as cheap as it is today and pass 2 runs only
-   when pass 1 returns `none`.
+**Known freshness limit:** extraction keys do not include the source title or author. If metadata changes for the same resolved URL, a prior extraction can remain until its TTL expires or the model/prompt version changes. The cache-key comment claiming metadata is encoded in the key is broader than the implementation.
 
-4. **The URL is withheld from pass 1.** A slug is free signal, but when a page
-   has a usable slug it has a title carrying the same words, and when it has
-   neither we have already refused at the floor. Giving pass 1 the URL would
-   blur the `title` tier into "title or URL", which is exactly what the section
-   header in `sections.ts` promises the user.
+[The wire contract](../../../packages/contracts/src/share.ts) retains two legacy fields:
 
-5. **`shareId` is uniformly `sha1(canonical url)`; `sourceId` is the
-   provider-native id where one exists.** One cache identity for every source,
-   and a readable id in the logs for the hosts we canonicalise by hand. The
-   oEmbed response carries no id field, so `sourceId` is `null` for every
-   provider we do not parse ourselves — including ones that resolve perfectly.
+- `source.provider` is only a thumbnail-sizing token, `youtube` or `tiktok`; it is not a publisher name. Older app builds can crash on unknown values, so the original proposal to widen it was rejected. The real provider remains in server metadata.
+- `identified` remains for older clients; the route sets it false only for `unavailable`. New clients use `basis`, which describes evidence, not certainty that a candidate is correct.
 
-6. **`channel` becomes `author`.** The tier now covers channels, creators and
-   publications. `EXTRACT_PROMPT_VERSION` is bumped in the same change, so no
-   cached entry holding the old value is reachable.
+## iOS experience
 
-7. **Thumbnail boxes take the reported aspect ratio everywhere.** The current
-   YouTube special case (§11) is dropped in favour of one rule.
+[Native intent routing](../../../apps/mobile/src/app/+native-intent.ts) opens `/shared`; [payload handling](../../../apps/mobile/src/features/share/use-shared-url.ts) selects the first HTTPS link from resolved website or text content. The pending state is checked before errors and missing-link states, avoiding an initial terminal-state flash or a disabled query that spins forever.
 
-8. **A pass-2 failure throws rather than degrading to pass 1's `none`.** A
-   throw propagates uncached, which is the property `games.ts` already relies
-   on; returning the `none` we computed would pin a dead end for 30 days.
+The [share screen](../../../apps/mobile/src/features/share/share-screen.tsx) sits in an adaptive modal (full-screen on compact windows, page sheet on wide windows) with a searching illustration, a source header and basis-dependent candidate section. Selecting a candidate pushes detail within the share stack. A root Stack allows the modal to sit over the tab controller; the original transparent bottom-sheet design was abandoned after device checks exposed problems with the nested presentation.
 
-## 3. Data flow
+The [source header](../../../apps/mobile/src/features/share/share-header.tsx) scrolls with results, including the extraction-unavailable warning. It shows a title, optional author, decorative thumbnail and clickable destination hostname. Deriving the label from `pageUrl` avoids trusting a publisher-supplied name that could misrepresent the link destination. Empty results keep source context and offer Search Instead; `none` also offers opening the original page.
 
-```
-  input url
-     |
-     v
-  normalise (pure)  ->  { url, shareId, sourceId }
-     |
-     +-- scheme match? --yes--> oEmbed via safeFetch --ok--> SourceMeta
-     |                              |
-     |                              +-- 401/403/404 -> SourceGone      -> 404
-     |                              +-- 5xx/timeout/bad payload --+
-     |                                                            |
-     +-- no ------------------------------------------------------+
-                                                                  |
-                                                                  v
-                                       HTML via safeFetch, reporting finalUrl
-                                                                  |
-                              re-normalise finalUrl, retry scheme match
-                                                                  |
-                              +-- matches now --> oEmbed (short links land here)
-                              |
-                              +-- og:title ---------------------> SourceMeta
-                              +-- <title> ----------------------> SourceMeta
-                              +-- read it, no title -> SourceUnreadable  -> 422
-                              +-- could not read ----> SourceUnavailable -> 502
-     |
-     v
-  extract pass 1  (no tools, effort none)
-     |
-     +-- basis title|author --> done
-     +-- basis none ----------> extract pass 2 (web_search, effort low)
-                                   +-- basis web|none --> done
-                                   +-- throws ---------> uncached, fail soft
-     |
-     v
-  search the mirror per guess, merge, respond
-```
+[Thumbnail sizing](../../../apps/mobile/src/features/share/source-thumb.ts) uses a fixed 64-point height and reported aspect ratio clamped to 0.5–1.8, defaulting to 16:9. The same box is reserved for a missing or failed image, so signed CDN URL expiry does not move the layout. The original provider-specific 56-point dimensions and YouTube letterbox crop no longer apply.
 
-Short links need no dedicated step. `safeFetch` reports its `finalUrl`, so a
-`vm.tiktok.com` link resolves through the HTML fetch it was going to make
-anyway, and the retried scheme match then routes it to TikTok's oEmbed
-endpoint. `resolveShortLink` is deleted.
+[The route](../../../apps/mobile/src/app/shared/index.tsx) has a right-hand Close button and large title. Exits clear the incoming payload before dismissing, preventing replay on a later launch; Search Instead dismisses to search. **The tab revealed by `dismissTo("/")` remains explicitly unsettled in the route comment** and requires device verification; do not promise it always returns to Home. Native extension behavior must be checked on the actual build.
 
-### Which `shareId` keys which cache
+## Evidence and remaining limits
 
-`normalise` is pure and runs before any fetch, so the id it produces describes
-the URL the user sent. A short link only reveals its destination once the
-ladder has followed it. The two caches therefore key on different ids, and this
-is deliberate:
+Backend coverage includes [normalization](../../../apps/api/test/share-normalise.test.ts), [provider matching](../../../apps/api/test/share-provider-match.test.ts), [address policy](../../../apps/api/test/share-ip-policy.test.ts), [safe fetching](../../../apps/api/test/share-safe-fetch.test.ts), [metadata ladder](../../../apps/api/test/share-meta.test.ts), [oEmbed](../../../apps/api/test/share-oembed.test.ts), [Open Graph](../../../apps/api/test/share-opengraph.test.ts), [extraction sequencing](../../../apps/api/test/share-extract.test.ts), [candidate merging](../../../apps/api/test/share-identify.test.ts) and [route/cache behavior](../../../apps/api/test/identify-routes.test.ts).
 
-- **The metadata cache keys on the request's `shareId`**, because that is the
-  only id available before the fetch it is trying to avoid. A short link and a
-  direct link to the same video occupy two entries. They are cheap, they expire
-  in seven days, and the alternative is a cache that cannot be read before the
-  work it caches has already happened.
-- **The extraction cache keys on the _final_ `shareId`**, recomputed by
-  re-normalising `finalUrl`. That is the expensive entry, and collapsing the
-  short and direct forms of one link onto it is worth the extra step.
+Mobile Jest coverage is colocated: [screen](../../../apps/mobile/src/features/share/share-screen.test.tsx), [header](../../../apps/mobile/src/features/share/share-header.test.tsx), [payload handling](../../../apps/mobile/src/features/share/use-shared-url.test.ts), [thumbnail sizing](../../../apps/mobile/src/features/share/source-thumb.test.ts) and [route](../../../apps/mobile/test/routes/shared.test.tsx). Native presentation and cold/warm share intake still need [device verification](../../mobile-device-verification.md).
 
-`SourceMeta` therefore carries the final `pageUrl` and the final `shareId`
-alongside the metadata, and those are what reach the wire.
-
-## 4. Step 1 — normalising the URL
-
-`share/normalise.ts`, pure, replacing `share/canonicalise.ts`.
-
-```ts
-export interface NormalisedShare {
-  url: string;
-  /**
-   * Cache identity: sha1 of the canonical url. Always present. Provisional
-   * until the ladder resolves redirects — see §3 on which cache uses which.
-   */
-  shareId: string;
-  /**
-   * The provider-native id, for the hosts we canonicalise by hand — today
-   * YouTube and TikTok. `null` everywhere else, including oEmbed providers:
-   * the oEmbed response carries no id, so a Vimeo url has no id to report.
-   */
-  sourceId: string | null;
-}
-```
-
-Rejected outright, before any network call: a URL that will not parse, a scheme
-other than `https:`, credentials in the authority (`user:pass@host`), an
-explicit port other than 443, and anything past `SHARE_URL_MAX`.
-
-Otherwise the host is lowercased, the fragment dropped, and tracking parameters
-stripped — `utm_*`, `si`, `t`, `fbclid`, `igsh`, `ref`. The YouTube and TikTok
-rebuilds carry over from `canonicalise.ts` unchanged: they are what makes two
-shares of the same video hit one cache key, and those two hosts remain the bulk
-of traffic.
-
-`shareId` reuses `sha1` from `cache-keys.ts`. It is a cache identity, not a
-security primitive.
-
-## 5. Step 2 — the fetch guard
-
-`share/safe-fetch.ts`, new, and the single outbound path for every request the
-share pipeline makes — oEmbed endpoints included, even though those hosts come
-from the vendored snapshot.
-
-Losing the host allowlist means losing the sentence "we only ever talk to four
-hostnames". What replaces it: **we only ever talk to public unicast addresses,
-over https, on port 443, following at most three redirects, reading at most
-512 KB, within a total budget of 8 seconds.**
-
-### DNS pinning, not check-then-fetch
-
-The address check runs inside an undici `Agent`'s `connect.lookup`, so the
-socket connects to the exact address that was verified. Resolving the hostname
-first and then calling `fetch(hostname)` re-resolves at connect time and is
-DNS-rebinding-vulnerable: an attacker's resolver answers with a public address
-for the check and a private one for the connection. This is the single most
-important detail in the file.
-
-### Address policy
-
-Rejected, on every hop:
-
-| Family | Rejected                                                                                                                                           |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| IPv4   | `0.0.0.0/8`, `10/8`, `100.64/10`, `127/8`, `169.254/16`, `172.16/12`, `192.0.0/24`, `192.168/16`, `198.18/15`, multicast `224/4`, reserved `240/4` |
-| IPv6   | `::/128`, `::1/128`, `fc00::/7`, `fe80::/10`, `ff00::/8`                                                                                           |
-| Mapped | `::ffff:0:0/96` and `64:ff9b::/96` are **unwrapped and re-checked** against the IPv4 table                                                         |
-
-The mapped row is the one that gets forgotten, and it is a complete bypass when
-it is: `::ffff:127.0.0.1` is loopback wearing an IPv6 hat.
-
-### The rest
-
-- `redirect: "manual"`, at most `MAX_REDIRECTS` (3) hops, each hop re-entering
-  the whole check including the scheme, port and userinfo rules from §4.
-- The byte cap is enforced while streaming, not by reading and then measuring —
-  64 KB for oEmbed JSON, 512 KB for HTML.
-- Content-type must match what the caller asked for.
-- `AbortSignal.timeout` per hop at 5s, under an overall 8s deadline for the
-  whole ladder, so a chain of slow-but-alive hops cannot add up.
-- Returns `{ response, finalUrl }`. `finalUrl` is what makes §3's short-link
-  handling free.
-
-### Known limitation
-
-Refusing non-443 ports also refuses legitimate `https://host:8443/...` links.
-This is deliberate — allowing arbitrary ports turns the endpoint into an
-internal port scanner — and it is rare enough to accept.
-
-## 6. Step 3 — the provider snapshot
-
-`scripts/refresh-oembed-providers.ts` fetches `providers.json`, keeps only
-https endpoints and https schemes, and emits a committed
-`share/providers.generated.ts`. Regenerating it is a deliberate act with a
-reviewable diff.
-
-Schemes are glob-ish: `https://*.youtube.com/watch*`. Each compiles to an
-**anchored** regex with `*` becoming `[^/]*`, except a trailing `*`, which may
-match the remainder including the query string. The trap being designed out is
-`*` becoming `.*` in the host position, which would let
-`https://a.youtube.com.evil.test/` match YouTube's scheme. Anchoring plus
-`[^/]*` prevents it, and there is a test for exactly that string.
-
-A mis-match here is not an SSRF hole — endpoint hosts come from the snapshot,
-and every request still goes through §5 — it only mis-routes a link to the
-Open Graph rung.
-
-## 7. Step 4 — the metadata ladder
-
-`share/meta.ts` sequences the rungs; `share/oembed.ts` and
-`share/opengraph.ts` implement them.
-
-### oEmbed, generalised
-
-Any matched endpoint, fetched through `safeFetch`. The existing schema keeps
-its `minLength(1)`-after-`trim` rule — that exists because TikTok answers 200
-with a blank title for a removed video, and it is still load-bearing. Newly
-read: `provider_name`, `thumbnail_width`, `thumbnail_height`.
-
-Failure handling changes shape. Today any oEmbed failure is terminal; in a
-ladder it mostly should not be:
-
-- `401`, `403`, `404` stay **terminal** (`SourceGone`, a 404 for the caller).
-  Falling through would scrape YouTube's "Video unavailable" page and report it
-  as the title.
-- 5xx, timeout and schema mismatch **fall through** to the next rung.
-
-### Open Graph
-
-A guarded HTML GET, content-type restricted to `text/html` or
-`application/xhtml+xml`, 512 KB streaming cap, parsing abandoned at `</head>`.
-
-Read: `og:title`, `og:site_name` as the author, `og:image` and its dimensions
-through the existing `httpsUrlOrNull` check. `<title>` is a final rung above
-the floor — strictly more coverage for no extra request.
-
-Parsing uses **`htmlparser2`** (v12, MIT, ~64.7M weekly downloads, last release
-2026-03-20), driven as a streaming SAX parser with no DOM built. A regex over
-`<meta>` tags gets attribute order, quoting style and comments wrong in ways
-that matter here. It is a new dependency in a deliberately lean `apps/api`; it
-is the smallest realistic option at 235 KB unpacked and is the parser
-underneath `cheerio`.
-
-### The two floors
-
-The 422 and the 502 are different failures and must stay distinguishable —
-the same distinction `canonicalise.ts` draws today between `unsupported` and
-`unreachable`:
-
-- **`SourceUnreadable` → 422.** We read the page and it had no title. Terminal;
-  retrying will not help.
-- **`SourceUnavailable` → 502.** We could not read the page at all. Retriable.
-
-### Renames
-
-`VideoMeta` → `SourceMeta`, `VideoRef` → `ShareRef`, `VideoGone` →
-`SourceGone`, `VideoMetaUnavailable` → `SourceUnavailable`. Same semantics,
-honest nouns. `SourceMeta` gains `provider`, `thumbnailWidth`,
-`thumbnailHeight`, and the final `pageUrl`/`shareId` described in §3.
-
-## 8. Step 5 — two-pass extraction
-
-### Pass 1 — unchanged, plus one input line
-
-No tools, `reasoning: { effort: "none" }`, `max_output_tokens: 256`, strict
-`json_schema`. Its input gains a `Site:` line carrying oEmbed's `provider_name`
-or the hostname, which is what lets the author tier generalise past YouTube.
-
-Its enum is `["title", "author", "none"]`. It cannot return `web`; it has no
-search tool.
-
-### Pass 2 — only when pass 1 returns `none`
-
-Same metadata plus the canonical URL. `tools: [{ type: "web_search" }]` with
-`search_context_size: "low"`, `reasoning: { effort: "low" }`, and
-`max_output_tokens: 1024`.
-
-The reasoning floor is not a preference: OpenAI's web search guide states that
-web search does not support `gpt-5` with `minimal` reasoning, and that `gpt-5.4`
-with effort `none` may produce lower-quality results. 256 output tokens does
-not survive reasoning plus tool-call items in the output array, hence 1024.
-
-Its enum is `["web", "none"]`. It runs only after pass 1 gave up, so its only
-jobs are "the search found it" and "still nothing". The prompt keeps the
-canonical-English-title rule, and adds: never report the page's own title as if
-it were a game, and return `none` rather than guess.
-
-`IDENTIFY_MODELS` in `env.ts` needs no change — the model pages for
-`gpt-5.4-mini` and `gpt-5.4-nano` both list `web_search`, structured outputs,
-and `none | low | medium | high | xhigh` reasoning.
-
-### Bases
-
-```ts
-EXTRACTED_BASES = ["title", "author", "web", "none"]; // the wire union
-PASS_1_BASES = ["title", "author", "none"];
-PASS_2_BASES = ["web", "none"];
-```
-
-`parseExtraction` takes the allowed bases as an argument and keeps every rule
-it has, including the collapse to `none` when the two fields disagree.
-
-### Caching and failure
-
-One entry holding the ladder's final answer:
-`extract:v3:{model}:{shareId}`. `EXTRACT_PROMPT_VERSION` stays a single number
-covering both prompts — editing either invalidates both, which costs nothing,
-because pass 1 is $0.0002 to recompute.
-
-A pass-2 failure throws. The route's existing catch logs it, falls back to the
-raw title with `basis: "unavailable"`, and nothing is cached, so the next
-request retries.
-
-### The unverified assumption
-
-Whether `web_search` and a strict `json_schema` `text.format` can be combined
-in one request is **not documented** — neither OpenAI's web search guide nor
-its structured outputs guide addresses it. Task 1 is a live probe that settles
-it before anything is built on top.
-
-If the combination misbehaves, pass 2 splits in two: a prose search call, then
-pass 1's cheap structured call over that prose. The design accommodates this
-because `parseExtraction` is already separate from the API call. Either way
-`parseExtraction` throws on non-conforming output and the route's fail-soft
-contains it.
-
-**Probe result (2026-09-08):** combination works. Pass 2 uses the single-call
-shape. `output_text` parsed as JSON conforming to the schema, and the output
-array contained three `web_search_call` items. `search_context_size: "low"`
-placed inside the `web_search` tool object was accepted without error.
-
-### Compliance note
-
-OpenAI requires visible, clickable inline citations _when displaying web
-results to end users_. We display catalogue rows derived from a search, never
-the search text itself. This is a reason not to surface model prose in the UI.
-
-### Testability
-
-`createTitleExtractor` currently constructs `OpenAI` internally, and
-`share-extract.test.ts` only exercises `parseExtraction`. The escalation
-sequencing is the new behaviour, so the factory takes an optional client — the
-same injection idiom `ShareProvider` already uses.
-
-## 9. Contracts and cache keys
-
-`SHARE_PROVIDERS`, `ShareProviderName` and `shareHostProvider` are deleted.
-`shareIdentifySchema` keeps a shape check — parseable, `https:`, no userinfo,
-default port — with the message reduced to "Only https links are supported".
-
-> **`provider` superseded during execution.** Widening it to the real provider
-> name crashes every app build already in the App Store: that build sizes the
-> thumbnail by looking `provider` up in a two-entry `{youtube, tiktok}` table,
-> reads `undefined` for anything else, then dereferences it. The shipped
-> contract keeps the field as a deprecated _sizing token_ constrained to
-> `LEGACY_SHARE_PROVIDERS`, derived from `pageUrl` by `legacyShareProvider`.
-> The real name stays server-side on `SourceMeta`, which is what the extraction
-> prompt and the logs read. Read `packages/contracts/src/share.ts`, not the
-> `provider` line below.
-
-```ts
-export interface ShareSourceWire {
-  provider: string; // superseded — see the note above
-  shareId: string; // was videoId
-  title: string;
-  author: string | null;
-  pageUrl: string; // canonical, post-redirect
-  thumbnailUrl: string | null;
-  thumbnailWidth: number | null;
-  thumbnailHeight: number | null;
-}
-```
-
-`sourceId` stays server-side, in log lines. Nothing on any client reads
-`videoId` today, and cache keys stop being human-readable once they are
-digests, which is precisely why the native id is worth logging.
-
-Cache keys: `oembedKey(provider, videoId)` → `sourceKey(shareId)` at `v3`,
-keyed on the request's id; `extractKey(version, model, provider, videoId)` →
-`extractKey(version, model, shareId)`, keyed on the final id (§3); `OEMBED_TTL_SECONDS` →
-`SOURCE_TTL_SECONDS`. Both TTLs are unchanged — an article's `og:title` is as
-stable as a video's.
-
-## 10. The route
-
-`games.ts` loses its `Canonical` switch and its `resolveShortLink` branch. The
-`ShareProvider` interface becomes:
-
-```ts
-export interface ShareProvider {
-  model: string;
-  fetchMeta(share: NormalisedShare): Promise<SourceMeta>;
-  extractTitles(meta: SourceMeta, url: string): Promise<Extraction>;
-}
-```
-
-Both `withCache` boundaries keep their current placement and their current
-comments: the metadata catch sits outside the cache so a transient failure is
-not pinned, and the extraction catch is the fail-soft that never reaches
-`apiErrorHandler`.
-
-## 11. Mobile
-
-### Thumbnail sizing
-
-`sourceThumbSize` becomes total and returns a fixed height with a derived
-aspect ratio rather than two pixel values:
-
-```ts
-export function sourceThumbSize(source: ShareSourceWire): { height: number; aspectRatio: number };
-```
-
-`{ height: 56, aspectRatio: 16 / 9 }` by default, or the reported ratio when
-oEmbed gave both dimensions, clamped to 0.5–1.8 so a freak value cannot distort
-the row.
-
-Yoga's `aspectRatio` is the mechanism, not a bare height. Yoga lays the view out
-before any image bytes exist and `expo-image` fills the box it is given rather
-than reporting an intrinsic size back into layout, so a height with no width
-inside the flex row produces a zero-width view. `aspectRatio` makes the width
-deterministic at layout time, so the row does not reflow when the image lands,
-and the placeholder branch — which has no image at all — gets the identical box.
-
-The current YouTube special case is deleted. `hqdefault.jpg` is 480x360 with
-letterbox bars in the pixels and will now render 4:3, bars included. One rule
-beats a rule plus an exception.
-
-`share-header.tsx`'s placeholder glyph sizing becomes
-`Math.min(56 * aspectRatio, 56) * 0.5`.
-
-### The source link
-
-A third line in the `sourceText` column of `share-header.tsx`, under title and
-author, `numberOfLines={1}`, built exactly like `igdb-attribution.tsx`: an
-inner `Text` inside a sentence so only the label is tappable, with
-`accessibilityRole="link"`, `PlatformColor("link")` and `Type.footnote`.
-
-**The label is the hostname of `pageUrl` with a leading `www.` stripped, never
-`source.provider`.** `provider` now carries a string supplied by whatever site
-we just fetched: any host can return `"YouTube"` in its oEmbed payload and get
-a link reading _YouTube_ that navigates to its own domain. Deriving the label
-from the URL the tap actually opens makes label and destination unable to
-disagree. A new pure `features/share/host.ts` does the derivation, testable in
-plain Node like its neighbours.
-
-### Copy
-
-- `sections.ts`: `channel` → `author`, and
-  `(author ?? "This channel") + "'s usual games"` becomes
-  `Games ${author} usually covers` / `Games this source usually covers`.
-- `empty-states.ts`: `NO_LINK` no longer says "Barklog needs a YouTube or
-  TikTok link"; `noMatch`'s `none` branch no longer says "video".
-- `share-screen.tsx`: the secondary action "Open the Original Video" becomes
-  host-labelled.
-
-### The wait got longer, so show something
-
-Pass 2 adds seconds to the shares that need it, and the ladder can spend two
-requests before the model is even called. `QueryBoundary` currently renders a
-bare `ProgressView` (`query-states.tsx:6-12`), which is a poor thing to stare at
-for four seconds.
-
-`QueryBoundary` gains one optional `loading?: ReactNode` prop. The share screen
-passes a small `SearchingState` that stacks the mascot, a `ProgressView` and a
-line of copy. No new asset: it uses the `share` illustration, which keeps the
-screen on one character from the empty states it can land on.
-
-Deliberately not built: a staged progress indicator that names the current rung.
-It leaks server internals into the UI and needs a streaming response to be
-honest.
-
-### Old builds
-
-Builds in the field already send arbitrary https URLs — `extract-url.ts` does
-no host filtering — and will start receiving unknown `provider` values and
-`basis: "author"`. `sections.ts` falls through to a null header, so they render
-the list without a section title; `sourceThumbSize` returns `undefined` and the
-preview box is mis-sized. Degraded, not broken, and only on links that are a
-422 today. The API and the app ship together.
-
-## 12. Failure behaviour
-
-| Condition                                                   | Result                                              |
-| ----------------------------------------------------------- | --------------------------------------------------- |
-| Not parseable / not https / userinfo / non-443 port         | 422, at the schema                                  |
-| Redirect chain exceeds 3 hops, or leaves the address policy | 502                                                 |
-| oEmbed answers 401/403/404                                  | 404                                                 |
-| oEmbed 5xx or bad payload                                   | falls through to Open Graph                         |
-| Page read, no `og:title` and no `<title>`                   | 422                                                 |
-| Page could not be read at all                               | 502                                                 |
-| Pass 1 throws                                               | `basis: "unavailable"`, raw title, logged, uncached |
-| Pass 2 throws                                               | same                                                |
-| Model returns `none` from both passes                       | `basis: "none"`, empty state                        |
-
-## 13. Files
-
-### New
-
-```
-apps/api/src/share/safe-fetch.ts
-apps/api/src/share/ip-policy.ts
-apps/api/src/share/provider-match.ts
-apps/api/src/share/normalise.ts            (replaces canonicalise.ts)
-apps/api/src/share/opengraph.ts
-apps/api/src/share/meta.ts
-apps/api/src/share/providers.generated.ts
-apps/api/scripts/refresh-oembed-providers.ts
-apps/api/test/share-safe-fetch.test.ts
-apps/api/test/share-normalise.test.ts
-apps/api/test/share-ip-policy.test.ts
-apps/api/test/share-provider-match.test.ts
-apps/api/test/share-opengraph.test.ts
-apps/api/test/share-meta.test.ts
-apps/mobile/src/features/share/host.ts
-apps/mobile/src/features/share/searching-state.tsx
-apps/mobile/test/share-host.test.ts
-```
-
-### Changed
-
-```
-packages/contracts/src/share.ts            provider union out, wire fields in
-apps/api/src/share/oembed.ts               generalised, dimensions captured
-apps/api/src/share/extract.ts              two passes
-apps/api/src/share/provider.ts             wiring
-apps/api/src/cache-keys.ts                 sourceKey, extractKey
-apps/api/src/types.ts                      ShareProvider
-apps/api/src/routes/games.ts               ladder, no Canonical switch
-apps/api/package.json                      htmlparser2
-apps/mobile/src/features/share/source-thumb.ts
-apps/mobile/src/features/share/share-header.tsx
-apps/mobile/src/features/share/sections.ts
-apps/mobile/src/features/share/empty-states.ts
-apps/mobile/src/features/share/share-screen.tsx
-apps/mobile/src/components/query-boundary.tsx  optional `loading` prop
-```
-
-### Removed
-
-```
-apps/api/src/share/canonicalise.ts
-```
-
-## 14. Testing
-
-The security boundary carries the weight. `share-safe-fetch.test.ts` covers the
-address table exhaustively — every row in §5, both families, and the mapped
-forms unwrapped — plus redirect capping, a redirect that lands on a private
-address, the streaming byte cap, content-type refusal, and DNS pinning via an
-injected lookup that answers public then private.
-
-`share-providers.test.ts` asserts `https://a.youtube.com.evil.test/watch?v=x`
-does not match YouTube's scheme, alongside ordinary matches and trailing-`*`
-query handling.
-
-`share-meta.test.ts` walks all four rungs and both floors, including the case
-that motivates the terminal 404: an oEmbed `404` must not fall through to
-scraping the provider's error page.
-
-`share-extract.test.ts` gains the sequencing tests — pass 1 answers so pass 2
-is never called; pass 1 returns `none` so pass 2 runs; pass 2 throws and the
-throw propagates — against a stub client.
-
-`identify-routes.test.ts` is reworked for the new shapes and keeps its existing
-coverage of the fail-soft path and the cache boundaries.
-
-Mobile: `sourceThumbSize` defaults, reported ratios, clamping; `host.ts`
-derivation; the `author` basis section copy.
-
-## 15. Task order
-
-One PR, ten steps, each verifiable on its own. Root commands are `pnpm test`,
-`pnpm check-types`, `pnpm lint`; per package, `pnpm --filter @repo/api test`.
-
-1. **Probe** `web_search` + strict `json_schema` on `gpt-5.4-mini`. A throwaway
-   script; it prints conforming JSON or it does not. Settles §8's open question
-   before anything depends on the answer.
-2. **`safe-fetch.ts`** and its suite. Green on its own.
-3. **`normalise.ts`**, reworking `share-canonicalise.test.ts`. Pure and fast.
-4. **Provider snapshot**: refresh script, generated file, matcher tests.
-5. **The ladder**: `oembed.ts` generalised, `opengraph.ts`, `meta.ts`, and
-   `share-oembed.test.ts` adapted.
-6. **Contracts and cache keys.** Deliberately red then green — `pnpm
-check-types` enumerates every call site. Then
-   `pnpm turbo run build --filter=@repo/contracts` before mobile typechecks.
-7. **`extract.ts`** two passes, with the sequencing tests.
-8. **Route rewiring** in `games.ts`; `identify-routes.test.ts` green; full API
-   suite green.
-9. **Mobile**: thumb sizing, source link, copy. Suite green, plus a real run of
-   the share screen.
-   9b. **Mobile**: the searching state, so the longer wait has something to look at.
-10. **Full sweep**: `pnpm lint && pnpm check-types && pnpm test`.
-
-Steps 2-5 and 7-9 each leave the repo green. Step 6 is the one intentional
-red-to-green sweep, and it is mechanical.
-
-## 16. Risks
-
-**The structured-output question (§8) could force a redesign of pass 2.**
-Mitigated by making it task 1 and by having a fallback that reuses existing
-pieces. Low impact, resolved before it can cost anything.
-
-**The SSRF posture is genuinely weaker than an allowlist.** A guard with a bug
-is a server-side request forgery primitive. Mitigated by DNS pinning rather
-than check-then-fetch, by exhaustive unit tests over the address table, and by
-routing every outbound request — oEmbed included — through the one function.
-This is the part of the change that most deserves careful review.
-
-**Web search cost is unbounded per unique URL.** One escalation per distinct
-URL per model per prompt version, capped by the existing rate limits and a
-30-day cache. A thousand new hard shares a month is roughly $16. If the logs
-show escalation rates above expectation, the lever is a stricter gate on when
-pass 1's `none` escalates.
-
-**The vendored snapshot goes stale.** A provider that changes its schemes stops
-matching and silently falls to the Open Graph rung, which still produces a
-title. Degradation, not breakage. Refreshing is a script and a reviewable diff.
-
-**Open Graph titles are attacker-controlled text.** They already were, via
-oEmbed. They reach the model as input and the user as display text; they are
-never interpolated into anything executable, and the extraction output is
-constrained by a strict schema.
-
-## 17. Deferred
-
-- oEmbed discovery via `<link rel="alternate">`.
-- Negative caching of the 422 floor. The rate limits bound junk today; add it
-  if the logs disagree.
-- Exposing `sourceId` on the wire. No client has a use for it.
-- Per-provider display treatment in the app now that `provider` is a real name.
+A valid HTTPS link is not a guarantee of access: authentication, bot challenges, missing server-rendered metadata and absent mirror games can prevent useful candidates. Provider snapshots can become stale and fall back to HTML. Negative metadata failures are not cached, and rate limiting bounds repeated attempts rather than guaranteeing a global extraction-spend ceiling. These limits are not resolved by the original implementation plan.

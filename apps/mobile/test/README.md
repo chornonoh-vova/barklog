@@ -1,11 +1,13 @@
 # Mobile tests
 
-Jest via `jest-expo/ios`, with React Native Testing Library v14. A test sits
+Jest via `jest-expo/ios`, with React Native Testing Library.
+See [package.json](../package.json) and [Jest config](../jest.config.js) for
+current commands, dependencies and coverage requirements. A test sits
 next to its subject as `<name>.test.ts(x)`; this folder holds what tests share.
 
 | File                | What it gives a test                                                                                            |
 | ------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `setup.ts`          | Global mocks, English copy, a phone-sized window — reset before every test.                                     |
+| `setup.ts`          | Global mocks, English copy initialization, plus native mocks and a phone-sized window reset before every test.  |
 | `env.ts`            | Fixed `EXPO_PUBLIC_*` values, so `src/lib/env.ts` never reads a developer's `.env`.                             |
 | `render.tsx`        | `renderWithProviders`, `renderHookWithProviders`, `renderRouterWithProviders`, and `fakeEndpoints()`.           |
 | `fixtures.ts`       | Wire-shaped builders: `gameSummary`, `gameDetail`, `backlogItem`, `backlogList`, `me`, `identifyResponse`.      |
@@ -22,7 +24,8 @@ Import shared helpers through `@test/*`.
 - Press through `userEvent.setup()`.
 - A screen that reads params or navigates renders through `renderRouterWithProviders` with stub
   routes around it, and asserts with `expect(screen).toHavePathname(...)`.
-- Stub only the endpoints a test reads; any other call rejects with a message naming it.
+- `fakeEndpoints()` supplies a free account and empty backlog by default. Stub
+  other endpoints a test reads; unstubbed calls reject with a message naming them.
 - No snapshots: they pin the mocks' output, not behaviour.
 
 ## Gotchas
@@ -35,7 +38,7 @@ Import shared helpers through `@test/*`.
   as props on the native header (`RNSScreenStackHeaderConfig`), not as
   elements. `test/routes/app.tsx` has `pressHeaderButton` for toolbar items.
 - `insets` (on all three render helpers) sets the safe area, e.g.
-  `{ ...PHONE_INSETS, right: 60 }` for iPhone Duo's tab sidebar. It steers a
+  `{ ...PHONE_INSETS, right: 60 }` for an asymmetric sidebar inset. It steers a
   `useSafeAreaInsets` mock rather than a provider, because `renderRouter`
   mounts its own `SafeAreaProvider`. `@test/queries` finds a shelf's scroll
   view and reads its side padding.
@@ -50,3 +53,16 @@ Import shared helpers through `@test/*`.
   5-minute garbage-collection timers keep Jest from exiting.
 - `test/routes/` renders the real `src/app` tree (tests may not live inside
   `app/`). `test/routes/app.tsx` fakes the server at `fetch`.
+
+## Scope and native checks
+
+Run the workspace `test` script for Jest with coverage, or `test:watch` while
+iterating. Tests belong beside feature and infrastructure subjects; route tests
+remain here because Expo Router treats files inside `src/app` as routes.
+
+The native fakes test app behavior, not the SDKs' real rendering, gestures,
+provisioning or purchase dialogs. The isolated widget view is excluded from
+coverage; its snapshot and routing logic are tested separately. Use the
+[device checklist](../../../docs/mobile-device-verification.md) for native checks.
+The [account-switch ADR](../../../docs/adr/0004-account-switch-isolation.md)
+records a widget queue overlap not established by the existing clearing tests.
