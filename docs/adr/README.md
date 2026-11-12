@@ -16,7 +16,6 @@ These records were backfilled on 2026-10-28 from the current implementation and 
 ## Unresolved guarantees
 
 - **Account switch:** ADR-0004 records the intended isolation rule and the current widget queue gap. It does not select a new coordination design or claim stale work is already suppressed everywhere.
-- **Remote cache in image builds:** ADR-0008 does not yet confirm that turbo inside the pruned Docker workspace hits the cache entries `verify` writes.
 - **Sync cleanup:** ADR-0001 records uncovered startup and unlock failure paths. It does not select a new owner for the run lifetime or claim every acquired connection is already released on failure.
 
 These are code-path findings from inspection, not reproduced runtime failures. A future change should establish failing regression tests before changing the implementation.

@@ -14,9 +14,12 @@ Image builds receive the token and team as BuildKit secrets mounted on the `turb
 
 Pull requests read the remote cache but do not write it (`TURBO_CACHE=local:rw,remote:r`). Image builds replay cached `dist/` output, and an unmerged branch must not be able to supply it. Only runs on `main` and manual or scheduled runs write. Fork pull requests get no OIDC token and skip the remote cache.
 
+## Hash parity with image builds
+
+Pruning does not change task hashes: on the first `images.yml` run, landing and the shared packages hit what `verify` wrote. Two things broke parity and are fixed. `.dockerignore` excluded the committed `.env.example` files, which `turbo.json`'s `.env*` build input matches, so api and worker hashed differently in Docker; the templates are now in the build context. Mobile's `postinstall` built `@repo/contracts` before the remote cache was set up, so it was never uploaded; the remote cache step now runs before the install. Any future file excluded from the Docker context that matches a task's inputs will break parity the same way.
+
 ## Unresolved guarantees
 
-- Docker builds run turbo on a pruned workspace. Whether their task hashes match the unpruned CI workspace, and therefore whether image builds actually hit what `verify` wrote, is unverified until the first `images.yml` run's build log shows cache hits.
 - `test` remains uncached (`cache: false`). Caching it would need coverage declared as an output and acceptance that Testcontainers suites are keyed on files and environment only.
 - Artifact signing (`remoteCache.signature`) is not enabled.
 
