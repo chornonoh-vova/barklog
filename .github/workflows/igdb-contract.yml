@@ -30,12 +30,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # Before the install, which runs mobile's postinstall turbo build.
       - name: Set up Turborepo remote cache
         uses: vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f # v1.1.0
         with:
           team: ${{ vars.TURBO_TEAM }}
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       # turbo, not `pnpm --filter ... build`: the contract test imports
       # @repo/cache, which resolves through that package's built dist.
       # `pnpm --filter` builds igdb alone; turbo's `^build` pulls the

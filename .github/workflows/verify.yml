@@ -38,10 +38,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      # Turborepo remote cache (ADR-0008). Fork pull requests get no OIDC
-      # token, so they skip this and run on turbo's local cache alone.
+      # Turborepo remote cache (ADR-0008), before the install: mobile's
+      # postinstall runs `turbo run build` for @repo/contracts, and a build that
+      # starts without the cache never uploads it. Fork pull requests get no
+      # OIDC token, so they skip this and run on turbo's local cache alone.
       - name: Set up Turborepo remote cache
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f # v1.1.0
@@ -53,6 +53,8 @@ jobs:
       - name: Make the remote cache read-only on pull requests
         if: github.event_name == 'pull_request'
         run: echo "TURBO_CACHE=local:rw,remote:r" >> "$GITHUB_ENV"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       # build first: check-types and the test suites resolve @repo/* through
       # each package's built .d.ts.
       - name: Build

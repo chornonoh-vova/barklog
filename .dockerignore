@@ -19,6 +19,11 @@ docs
 .env.*
 **/.env
 **/.env.*
+# Except the committed templates, which hold no secrets: turbo.json's build
+# inputs include `.env*`, so leaving them out gives api and worker a different
+# task hash in Docker than in CI and misses the remote cache (ADR-0008).
+!.env.example
+!**/.env.example
 
 .DS_Store
 **/.DS_Store
