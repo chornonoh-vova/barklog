@@ -106,6 +106,8 @@ pnpm test
 
 Use `pnpm --filter <workspace-name> test`, `lint` or `check-types` for a targeted check after building shared dependencies. Mobile uses Jest; backend and landing workspaces use Vitest. Postgres/Valkey integration tests start disposable Testcontainers and need Docker, not the local compose stack. The separate IGDB contract-test workflow requires upstream credentials; ordinary test doubles do not prove native purchases or device behavior.
 
+CI shares Turborepo task results through Vercel Remote Cache ([ADR-0008](docs/adr/0008-turborepo-remote-cache.md)). It needs a Turborepo CLI OIDC policy for this repository on the Vercel team and a `TURBO_TEAM` repository variable holding the team slug; there is no token secret. Pull requests only read the cache.
+
 - [Mobile device verification](docs/mobile-device-verification.md)
 - [Premium device verification](docs/premium-device-verification.md)
 

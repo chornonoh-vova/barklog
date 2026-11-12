@@ -28,10 +28,11 @@ on:
         default: true
 
 # A called workflow gets no more than its caller grants; images.yml grants
-# exactly this.
+# exactly this. id-token is for the Turborepo remote cache's OIDC exchange.
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   publish:
@@ -42,6 +43,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # Exports TURBO_TOKEN and TURBO_TEAM, which reach `turbo run build`
+      # inside the Dockerfile as BuildKit secrets below (ADR-0008). The token
+      # is revoked when the job ends.
+      - name: Set up Turborepo remote cache
+        uses: vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f # v1.1.0
+        with:
+          team: ${{ vars.TURBO_TEAM }}
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Log in to GHCR
@@ -72,6 +80,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ inputs.cache-scope }}
           cache-to: ${{ inputs.cache-write && format('type=gha,scope={0},mode=max', inputs.cache-scope) || '' }}
+          # Secrets, not build args: mode=max exports the builder stage, and a
+          # build arg would be recorded in its metadata and build history.
+          secrets: |
+            turbo_token=${{ env.TURBO_TOKEN }}
+            turbo_team=${{ env.TURBO_TEAM }}
           # Single-platform build: an attestation would add the unknown/unknown
           # manifest entry that clutters GHCR's package UI.
           provenance: false

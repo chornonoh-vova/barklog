@@ -16,8 +16,11 @@ concurrency:
 # Read-only: checks clone and test, nothing more. On a pull request from a fork
 # GitHub caps the token at read anyway; this keeps a same-repo branch, and a
 # call from images.yml, to the same. The coverage upload needs no token scope.
+# id-token mints the GitHub OIDC token the Turborepo remote cache step trades
+# for a short-lived Vercel token; it grants nothing on this repository.
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   verify:
@@ -37,6 +40,19 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # Turborepo remote cache (ADR-0008). Fork pull requests get no OIDC
+      # token, so they skip this and run on turbo's local cache alone.
+      - name: Set up Turborepo remote cache
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f # v1.1.0
+        with:
+          team: ${{ vars.TURBO_TEAM }}
+      # Pull requests read the cache but never write it: main's image builds
+      # replay cached dist/ output, which an unmerged branch must not supply.
+      # `local:rw` must stay listed: turbo disables any source left out.
+      - name: Make the remote cache read-only on pull requests
+        if: github.event_name == 'pull_request'
+        run: echo "TURBO_CACHE=local:rw,remote:r" >> "$GITHUB_ENV"
       # build first: check-types and the test suites resolve @repo/* through
       # each package's built .d.ts.
       - name: Build

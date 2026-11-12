@@ -28,9 +28,9 @@ Required secrets and defaults are defined in compose and each app's environment 
 
 `deps.compose.yaml` is the local infrastructure stack. Bare `docker compose up` selects production compose and can run migrations against whichever database its environment names. Use the root `deps:up` and `deps:down` scripts locally.
 
-## Known configuration drift
+## Turbo version and remote cache
 
-Both Dockerfiles currently invoke pruning with Turbo `2.10.11`, while root `package.json` declares `^2.11.10`. The old claim that those versions match has been removed. Aligning or deliberately separating them requires a tooling change and validation against the relevant installed Turbo documentation; this documentation audit does not change the build.
+Both Dockerfiles invoke pruning with Turbo `2.11.10`, matching the version root `package.json` resolves to; keep them in step when Turbo is upgraded. The `turbo run build` step mounts Turborepo remote cache credentials as BuildKit secrets; see [ADR-0008](../../adr/0008-turborepo-remote-cache.md).
 
 ## Verification surface
 
