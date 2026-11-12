@@ -22,7 +22,7 @@ WORKDIR /app
 # the root Dockerfile carries the same duplication and the same warning.
 FROM base AS pruner
 COPY . .
-RUN pnpm dlx turbo@2.10.11 prune landing --docker
+RUN pnpm dlx turbo@2.11.10 prune landing --docker
 
 FROM base AS deps
 COPY --from=pruner /app/out/json/ .
@@ -30,7 +30,12 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
 COPY --from=pruner /app/out/full/ .
-RUN pnpm exec turbo run build --filter=landing --ui=stream
+# Turborepo remote cache credentials, mounted for this step only and never
+# written to a layer. A build without them (a local `docker build`) runs on
+# turbo's local cache alone. See ADR-0008.
+RUN --mount=type=secret,id=turbo_token,env=TURBO_TOKEN \
+    --mount=type=secret,id=turbo_team,env=TURBO_TEAM \
+    pnpm exec turbo run build --filter=landing --ui=stream
 
 # ---------------------------------------------------------------------------
 # The runtime carries static files only — no node_modules reaches it, so there

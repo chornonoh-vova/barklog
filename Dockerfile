@@ -28,7 +28,7 @@ WORKDIR /app
 # ---------------------------------------------------------------------------
 FROM base AS pruner
 COPY . .
-RUN pnpm dlx turbo@2.10.11 prune api worker --docker
+RUN pnpm dlx turbo@2.11.10 prune api worker --docker
 
 # ---------------------------------------------------------------------------
 # deps — full install, dev dependencies included, for the build.
@@ -43,7 +43,12 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
 COPY --from=pruner /app/out/full/ .
-RUN pnpm exec turbo run build --filter=api --filter=worker --ui=stream
+# Turborepo remote cache credentials, mounted for this step only and never
+# written to a layer. A build without them (a local `docker build`) runs on
+# turbo's local cache alone. See ADR-0008.
+RUN --mount=type=secret,id=turbo_token,env=TURBO_TOKEN \
+    --mount=type=secret,id=turbo_team,env=TURBO_TEAM \
+    pnpm exec turbo run build --filter=api --filter=worker --ui=stream
 
 # ---------------------------------------------------------------------------
 # prod-deps — a second, independent install rather than a post-build prune of
