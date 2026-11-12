@@ -59,6 +59,16 @@ overrides:
   # Native's environment), and apps/landing runs jsdom only as a Vitest
   # environment. Drop this if jest-expo stops pulling jsdom.
   "@types/jsdom": "-"
+  # GHSA-g3hv-75wg-m249 (minimatch pattern amplification) and GHSA-3g3m-2fjr-6pw4
+  # (glob keeps walking after its AbortSignal fires) are fixed only in
+  # minimatch 11.0.1 and glob 14.0.2; neither publishes a patched 9.x/10.x or
+  # 10.x/13.x line. The vulnerable copies reach us only through dev tooling
+  # (eslint's config-array, jest's test-exclude, testcontainers' archiver,
+  # @expo/cli), so these lift them to the patched majors. The 3.x minimatch and
+  # 7.x glob copies are outside both advisories and stay as they are.
+  # Drop each once nothing in the lockfile resolves below its patched version.
+  "minimatch@>=7 <11.0.1": ^11.0.1
+  "glob@>=9 <14.0.2": ^14.0.2
 
 allowBuilds:
   esbuild: true
