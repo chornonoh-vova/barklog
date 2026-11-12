@@ -12,7 +12,7 @@ Image builds receive the token and team as BuildKit secrets mounted on the `turb
 
 ## Write policy
 
-Pull requests read the remote cache but do not write it (`TURBO_REMOTE_CACHE_READ_ONLY`). Image builds replay cached `dist/` output, and an unmerged branch must not be able to supply it. Only runs on `main` and manual or scheduled runs write. Fork pull requests get no OIDC token and skip the remote cache.
+Pull requests read the remote cache but do not write it (`TURBO_CACHE=local:rw,remote:r`). Image builds replay cached `dist/` output, and an unmerged branch must not be able to supply it. Only runs on `main` and manual or scheduled runs write. Fork pull requests get no OIDC token and skip the remote cache.
 
 ## Unresolved guarantees
 
