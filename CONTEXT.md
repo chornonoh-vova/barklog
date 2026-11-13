@@ -10,6 +10,10 @@ A gaming backlog tracker: an iOS app and the API behind it, sharing one wire con
 A game identified by its IGDB id, independently of whether any user has added it to a backlog.
 _Avoid_: backlog entry (unless referring to one user's saved game)
 
+**Date precision**:
+How much of a game's release date is known: day, month, quarter, year or none. Only a day is **precise**; anything else is **vague** and is never shown or alerted on as a day.
+_Avoid_: release date confidence
+
 **Mirror**:
 Barklog's local game catalogue in Postgres, populated from IGDB and used to answer game requests without calling IGDB.
 _Avoid_: cache (the mirror is the catalogue the app serves)
@@ -39,6 +43,10 @@ _Avoid_: status update, transition
 **Backlog entry write**:
 Any add, move, re-rating or removal of a backlog entry. The server applies it under the free-tier cap; the device shows it once the server has, by refetching.
 _Avoid_: upsert (outside the db query), mutation
+
+**Release alert**:
+A user's opt-in, on one backlog entry, to be notified when the game's precise release date is announced, changes or arrives. It is deleted with the entry, so only backlog games can notify.
+_Avoid_: subscription (that is the App Store purchase), notification (a release alert produces notifications)
 
 ### Device
 

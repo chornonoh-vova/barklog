@@ -13,19 +13,20 @@ ADRs express agreed intent; code and tests show the implementation. A mismatch m
 
 ## Current references
 
-| Area                             | Reference                                                                          |
-| -------------------------------- | ---------------------------------------------------------------------------------- |
-| HTTP and mirror                  | [API and mirror](superpowers/specs/2026-08-25-barklog-api-design.md)               |
-| Mobile structure and behavior    | [Mobile app](superpowers/specs/2026-08-27-barklog-mobile-design.md)                |
-| First-run experience             | [Onboarding](superpowers/specs/2026-08-28-mobile-onboarding-design.md)             |
-| Share identification and preview | [Any-link sharing](superpowers/specs/2026-09-08-share-any-link-design.md)          |
-| Related game discovery           | [Similar games](superpowers/specs/2026-08-31-similar-games-design.md)              |
-| Subscription and slot rules      | [Premium](superpowers/specs/2026-09-01-premium-subscription-design.md)             |
-| Identity deletion                | [Account deletion](superpowers/specs/2026-09-03-account-deletion-design.md)        |
-| Build and deployment             | [Containers](superpowers/specs/2026-09-01-container-images-and-deploy-design.md)   |
-| Marketing and legal site         | [Landing site](superpowers/specs/2026-09-03-landing-site-design.md)                |
-| Resizing and accessibility       | [Adaptive layout](superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md) |
-| Persisted backlog and widgets    | [Widgets](superpowers/specs/2026-10-21-home-screen-widgets-design.md)              |
+| Area                             | Reference                                                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| HTTP and mirror                  | [API and mirror](superpowers/specs/2026-08-25-barklog-api-design.md)                                             |
+| Mobile structure and behavior    | [Mobile app](superpowers/specs/2026-08-27-barklog-mobile-design.md)                                              |
+| First-run experience             | [Onboarding](superpowers/specs/2026-08-28-mobile-onboarding-design.md)                                           |
+| Share identification and preview | [Any-link sharing](superpowers/specs/2026-09-08-share-any-link-design.md)                                        |
+| Related game discovery           | [Similar games](superpowers/specs/2026-08-31-similar-games-design.md)                                            |
+| Subscription and slot rules      | [Premium](superpowers/specs/2026-09-01-premium-subscription-design.md)                                           |
+| Identity deletion                | [Account deletion](superpowers/specs/2026-09-03-account-deletion-design.md)                                      |
+| Build and deployment             | [Containers](superpowers/specs/2026-09-01-container-images-and-deploy-design.md)                                 |
+| Marketing and legal site         | [Landing site](superpowers/specs/2026-09-03-landing-site-design.md)                                              |
+| Resizing and accessibility       | [Adaptive layout](superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md)                               |
+| Persisted backlog and widgets    | [Widgets](superpowers/specs/2026-10-21-home-screen-widgets-design.md)                                            |
+| Release alerts and countdowns    | [Release alerts](superpowers/specs/2026-11-13-release-alerts-and-countdowns-design.md) (agreed, not implemented) |
 
 The dated filenames remain stable so links from code and ADRs continue to resolve; they do not identify the current review date. The former [video-only](superpowers/specs/2026-08-31-share-video-to-backlog-design.md) and [source-preview](superpowers/specs/2026-09-03-share-source-preview-design.md) specs redirect to the consolidated sharing reference.
 
