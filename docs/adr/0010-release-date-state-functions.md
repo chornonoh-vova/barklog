@@ -14,7 +14,7 @@ The package is held to a stricter testing standard than the rest of the codebase
 
 ## Known mismatch
 
-Existing code predates this decision. Explore's `upcomingGames` and `recentGames` queries (`packages/db/src/queries/games.ts`) compare `first_release_date` directly and ignore precision, so "Recently Released" can list a vague game whose placeholder day has passed, which this decision says is never shown as released. Moving them onto `@repo/release-dates` is a follow-up outside the release alerts design, tracked in [#89](https://github.com/chornonoh-vova/barklog/issues/89).
+Existing code predates this decision. Explore's `upcomingGames` and `recentGames` queries (`packages/db/src/queries/games.ts`) compare `first_release_date` directly and ignore precision, so "Recently Released" can list a vague game whose placeholder day has passed, which this decision says is never shown as released. The agreed fix restricts both shelves to exact (day) release dates, held to the package by an agreement test; it is a follow-up outside the release alerts design, tracked in [#89](https://github.com/chornonoh-vova/barklog/issues/89).
 
 ## Evidence
 
