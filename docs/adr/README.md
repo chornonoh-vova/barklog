@@ -1,22 +1,28 @@
 # Architecture decisions
 
-These records were backfilled on 2026-10-28 from the current implementation and existing design documents. The date records the backfill, not when each decision was originally made. Specs are maintained implementation references; retired plan records preserve key rationale and navigation, with their original contents in Git history. Where behavior differs from an agreed guarantee, the ADR says so.
+Records 0001–0008 were backfilled on 2026-10-28 from the current implementation and existing design documents; their date records the backfill, not when each decision was originally made. Records from 0009 onward are written when the decision is agreed and say whether it is implemented. Specs are maintained implementation references; retired plan records preserve key rationale and navigation, with their original contents in Git history. Where behavior differs from an agreed guarantee, the ADR says so.
 
-| Record                                              | Decision                                                 |
-| --------------------------------------------------- | -------------------------------------------------------- |
-| [0001](0001-local-game-mirror.md)                   | Serve games from a local mirror                          |
-| [0002](0002-server-authoritative-backlog-writes.md) | Keep backlog entry writes server-authoritative           |
-| [0003](0003-derived-device-backlog.md)              | Derive device views from one backlog query               |
-| [0004](0004-account-switch-isolation.md)            | Isolate personal data across account switches            |
-| [0005](0005-server-derived-entitlement.md)          | Derive entitlement on the server                         |
-| [0006](0006-clerk-account-deletion.md)              | Process account deletion through Clerk notifications     |
-| [0007](0007-staged-share-identification.md)         | Identify shared links through staged processing          |
-| [0008](0008-turborepo-remote-cache.md)              | Share Turborepo task results through Vercel Remote Cache |
+| Record                                              | Decision                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------- |
+| [0001](0001-local-game-mirror.md)                   | Serve games from a local mirror                                            |
+| [0002](0002-server-authoritative-backlog-writes.md) | Keep backlog entry writes server-authoritative                             |
+| [0003](0003-derived-device-backlog.md)              | Derive device views from one backlog query                                 |
+| [0004](0004-account-switch-isolation.md)            | Isolate personal data across account switches                              |
+| [0005](0005-server-derived-entitlement.md)          | Derive entitlement on the server                                           |
+| [0006](0006-clerk-account-deletion.md)              | Process account deletion through Clerk notifications                       |
+| [0007](0007-staged-share-identification.md)         | Identify shared links through staged processing                            |
+| [0008](0008-turborepo-remote-cache.md)              | Share Turborepo task results through Vercel Remote Cache                   |
+| [0009](0009-server-push-release-alerts.md)          | Deliver release alerts as server push (not implemented)                    |
+| [0010](0010-release-date-state-functions.md)        | Define release-date state once, as tested pure functions (not implemented) |
+| [0011](0011-shared-translations-package.md)         | Keep user-facing translations in one shared package (not implemented)      |
 
 ## Unresolved guarantees
 
 - **Account switch:** ADR-0004 records the intended isolation rule and the current widget queue gap. It does not select a new coordination design or claim stale work is already suppressed everywhere.
 - **Sync cleanup:** ADR-0001 records uncovered startup and unlock failure paths. It does not select a new owner for the run lifetime or claim every acquired connection is already released on failure.
+
+- **Release-date comparisons:** ADR-0010 makes `@repo/release-dates` the only place that compares release dates, but Explore's upcoming and recently released queries still compare them directly and ignore precision.
+- **Deleted-account recreation:** ADR-0006 keeps tombstones so a deleted account is not recreated, but `ensureUser` does not check them, so a write from a still-valid session can recreate the user row. The release alerts design requires the check before push registration ships.
 
 These are code-path findings from inspection, not reproduced runtime failures. A future change should establish failing regression tests before changing the implementation.
 
@@ -26,3 +32,4 @@ These are code-path findings from inspection, not reproduced runtime failures. A
 - [ADR-0007](0007-staged-share-identification.md): extraction cache identities do not include changed title or author metadata.
 - [Deployment reference](../superpowers/specs/2026-09-01-container-images-and-deploy-design.md): image publication is not atomic.
 - [Share reference](../superpowers/specs/2026-09-08-share-any-link-design.md): the tab revealed after dismissing a warm share requires native verification.
+- [ADR-0009](0009-server-push-release-alerts.md) (not implemented): a release-day notification missed for the whole alert window is not sent later; delivery is at least once; a failed sign-out unregistration can let the previous account's alerts arrive.
