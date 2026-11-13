@@ -1,7 +1,7 @@
 {
   "configVersion": 0,
   "apple": {
-    "version": "1.3.1",
+    "version": "1.3.2",
     "copyright": "2026 Volodymyr Chornonoh",
     "release": {
       "automaticRelease": true
@@ -10,7 +10,7 @@
       "ru": {
         "description": "С Barklog держи под рукой игры, в которые играешь сейчас, которые планируешь начать и которые уже пройдены.\n\nДобавь игру и выбери статус: «В очереди», «Играю», «Пройдено» или «Заброшено». Вот и вся система. Игры, в которые ты сейчас играешь, всегда вверху списка, так что их видно сразу.\n\nЗАБРОСИТЬ ИГРУ — ТОЖЕ ВАРИАНТ\n\nНе каждую игру нужно проходить до конца. В Barklog можно одним касанием выбрать статус «Заброшено» и больше об игре не думать. Без осуждения.\n\nНАЙДИ СЛЕДУЮЩУЮ ИГРУ\n\nВ разделе обзора собраны популярные игры, будущие релизы и новинки. Уже знаешь название? Воспользуйся поиском. Открой любую игру, чтобы увидеть обложку, платформы, жанры, разработчиков, оценки и похожие игры.\n\nПОДЕЛИСЬ ВИДЕО, ВЫБЕРИ ИГРУ\n\nСмотришь видео с игрой и не можешь понять, что это? Поделись видео из YouTube или TikTok с Barklog. Приложение предложит возможные совпадения, из которых ты сможешь выбрать нужную игру. Для этого оно читает только название видео и название канала.\n\nДЕСЯТЬ ОДНОВРЕМЕННО — БЕСПЛАТНО\n\nВ Barklog можно бесплатно хранить десять незавершённых игр: те, что в очереди, и те, в которые ты уже играешь. Пройди игру или признай, что больше не хочешь в неё играть, и место освободится. Пройденные и заброшенные игры не учитываются в лимите, так что их список может расти сколько угодно.\n\nДАННЫЕ ОБ ИГРАХ\n\nОбложки, даты выхода, платформы, жанры и описания в Barklog поступают из IGDB — базы данных об играх, которую наполняет сообщество.\n\nBARKLOG PREMIUM\n\nBarklog Premium снимает лимит в десять игр и больше ничего не меняет. Доступны две подписки с автоматическим продлением: ежемесячная Barklog Premium Monthly и годовая Barklog Premium Yearly. Обе начинаются с 7-дневного бесплатного пробного периода. Цена для твоего региона отображается в приложении перед оформлением подписки.\n\nПосле завершения бесплатного пробного периода платёж списывается с твоей учётной записи Apple. Подписка продлевается автоматически, если не отключить автоматическое продление хотя бы за 24 часа до окончания текущего периода. Плата за продление списывается в течение последних 24 часов текущего периода. Управлять подпиской или отменить её можно в настройках учётной записи Apple.\n\nУсловия использования (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nПолитика конфиденциальности: https://barklog.gg/privacy\nУсловия Barklog: https://barklog.gg/terms\nПоддержка: https://barklog.gg/support",
         "keywords": ["игры", "бэклог", "коллекция", "библиотека", "желаемое", "трекер"],
-        "releaseNotes": "Новое в версии 1.3.1:\n• Исправлено исчезновение строки поиска при загрузке результатов и поле поиска, которое не реагировало на касания после переключения вкладок.\n• Улучшены отступы и расположение кнопки закрытия при просмотре скриншотов.\n• Улучшены доступ к учётной записи и расположение индикатора обновления при разных компоновках экрана.\n• Открывай Barklog Premium через звезду на любой вкладке. Уже есть подписка? Коснись звезды, чтобы управлять ею.",
+        "releaseNotes": "Новое в версии 1.3.2:\n• После выхода из учётной записи статус Barklog Premium теперь полностью сбрасывается, так что другая учётная запись на этом устройстве начинает с чистого листа.\n• Обновлены компоненты подписки и системные компоненты для большей стабильности.",
         "promoText": "Следи за тем, во что играешь, находи следующую игру и держи свой список под рукой с виджетом на экране «Домой». Больше игры, меньше чувства вины.",
         "supportUrl": "https://barklog.gg/support",
         "title": "Barklog",
@@ -28,7 +28,7 @@
           "lista de deseos",
           "gaming"
         ],
-        "releaseNotes": "Novedades de la versión 1.3.1:\n• Corregido el buscador que desaparecía al cargar resultados y el campo de búsqueda que no respondía al cambiar de pestaña.\n• Mejorados los márgenes y la posición del botón de cierre en el visor de capturas.\n• Mejorados el acceso a tu cuenta y la posición del indicador de actualización en distintas distribuciones de pantalla.\n• Abre Barklog Premium desde la estrella de cualquier pestaña. Si ya tienes una suscripción, tócala para gestionarla.",
+        "releaseNotes": "Novedades de la versión 1.3.2:\n• Al cerrar sesión, tu estado de Barklog Premium se borra por completo, así que otra cuenta en el mismo dispositivo empieza desde cero.\n• Actualizados los componentes de suscripción y del sistema para mayor estabilidad.",
         "promoText": "Lleva la cuenta de tus juegos, descubre el siguiente y ten tu lista a mano con un widget en la pantalla de inicio. Más juego, menos culpa.",
         "supportUrl": "https://barklog.gg/support",
         "title": "Barklog",
@@ -38,7 +38,7 @@
       "uk": {
         "description": "З Barklog тримай під рукою ігри, у які граєш зараз, які плануєш почати й які вже пройдено.\n\nДодай гру й обери статус: «У черзі», «Граю», «Пройдено» або «Покинуто». Ось і вся система. Ігри, у які ти зараз граєш, завжди вгорі списку, тож їх видно одразу.\n\nПОКИНУТИ ГРУ — ТЕЖ ВАРІАНТ\n\nНе кожну гру потрібно проходити до кінця. У Barklog можна одним дотиком обрати статус «Покинуто» й більше про гру не думати. Без осуду.\n\nЗНАЙДИ НАСТУПНУ ГРУ\n\nРозділ огляду показує популярні ігри, майбутні релізи й новинки. Уже знаєш назву? Скористайся пошуком. Відкрий будь-яку гру, щоб побачити обкладинку, платформи, жанри, розробників, оцінки та схожі ігри.\n\nПОДІЛИСЯ ВІДЕО, ОБЕРИ ГРУ\n\nДивишся відео з грою й не можеш зрозуміти, що це? Поділися відео з YouTube або TikTok із Barklog. Застосунок запропонує можливі збіги, з яких ти зможеш обрати потрібну гру. Для цього він читає лише назву відео й назву каналу.\n\nДЕСЯТЬ ОДНОЧАСНО — БЕЗКОШТОВНО\n\nУ Barklog можна безкоштовно зберігати десять незавершених ігор: ті, що в черзі, і ті, у які ти вже граєш. Пройди гру або визнай, що більше не хочеш у неї грати, і місце звільниться. Пройдені й покинуті ігри не враховуються в ліміті, тож їхній список може рости скільки завгодно.\n\nДАНІ ПРО ІГРИ\n\nОбкладинки, дати виходу, платформи, жанри й описи в Barklog надходять з IGDB — бази даних про ігри, яку наповнює спільнота.\n\nBARKLOG PREMIUM\n\nBarklog Premium знімає ліміт у десять ігор і більше нічого не змінює. Доступні дві підписки з автоматичним поновленням: щомісячна Barklog Premium Monthly та річна Barklog Premium Yearly. Обидві починаються із 7-денного безкоштовного пробного періоду. Ціна для твого регіону відображається в застосунку перед оформленням підписки.\n\nПісля завершення безкоштовного пробного періоду платіж стягується з твого облікового запису Apple. Підписка поновлюється автоматично, якщо не вимкнути автоматичне поновлення щонайменше за 24 години до завершення поточного періоду. Плата за поновлення стягується протягом останніх 24 годин поточного періоду. Керувати підпискою або скасувати її можна в налаштуваннях облікового запису Apple.\n\nУмови використання (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nПолітика конфіденційності: https://barklog.gg/privacy\nУмови Barklog: https://barklog.gg/terms\nПідтримка: https://barklog.gg/support",
         "keywords": ["ігри", "беклог", "колекція", "бібліотека", "бажане", "трекер"],
-        "releaseNotes": "Нове у версії 1.3.1:\n• Виправлено зникнення рядка пошуку під час завантаження результатів і поле пошуку, що не реагувало на дотики після перемикання вкладок.\n• Покращено відступи та розташування кнопки закриття під час перегляду скриншотів.\n• Покращено доступ до облікового запису й розташування індикатора оновлення за різних компонувань екрана.\n• Відкривай Barklog Premium через зірку на будь-якій вкладці. Уже маєш підписку? Торкнись зірки, щоб керувати нею.",
+        "releaseNotes": "Нове у версії 1.3.2:\n• Після виходу з облікового запису статус Barklog Premium тепер повністю скидається, тож інший обліковий запис на цьому пристрої починає з чистого аркуша.\n• Оновлено компоненти підписки та системні компоненти для кращої стабільності.",
         "promoText": "Стеж за тим, у що граєш, знаходь наступну гру й тримай свій список під рукою з віджетом на екрані «Додому». Більше гри, менше докорів сумління.",
         "supportUrl": "https://barklog.gg/support",
         "title": "Barklog",
@@ -59,7 +59,7 @@
           "unfinished",
           "igdb"
         ],
-        "releaseNotes": "New in 1.3.1:\n• Fixed the search bar disappearing as results load and an unresponsive search field when switching tabs.\n• Improved screenshot viewer spacing and close-button placement.\n• Improved access to account controls and placement of the updating indicator across screen layouts.\n• Open Barklog Premium from the star in any tab. Already subscribed? Tap it to manage your subscription.",
+        "releaseNotes": "New in 1.3.2:\n• Signing out now fully clears your Barklog Premium status, so another account on the same device starts fresh.\n• Updated subscription and system components for better stability.",
         "marketingUrl": "https://barklog.gg",
         "promoText": "Keep track of what you play, find your next game, and keep your backlog close with a Home Screen widget. More play, less guilt.",
         "supportUrl": "https://barklog.gg/support",
@@ -107,7 +107,7 @@
           "tracker",
           "ungespielt"
         ],
-        "releaseNotes": "Neu in Version 1.3.1:\n• Die Suchleiste verschwindet nicht mehr beim Laden der Ergebnisse. Das Suchfeld reagiert nach einem Tabwechsel wieder auf Eingaben.\n• Abstände und Position der Schließen-Taste in der Screenshot-Ansicht verbessert.\n• Zugriff auf dein Konto und Position der Aktualisierungsanzeige in verschiedenen Bildschirmlayouts verbessert.\n• Öffne Barklog Premium über den Stern in jedem Tab. Du hast schon ein Abo? Tippe auf den Stern, um es zu verwalten.",
+        "releaseNotes": "Neu in Version 1.3.2:\n• Beim Abmelden wird dein Barklog-Premium-Status jetzt vollständig zurückgesetzt, sodass ein anderes Konto auf demselben Gerät neu startet.\n• Abo- und Systemkomponenten für mehr Stabilität aktualisiert.",
         "promoText": "Behalte deine Spiele im Blick, finde dein nächstes Spiel und hol dir deinen Backlog als Widget auf den Home-Bildschirm. Mehr spielen, weniger schlechtes Gewissen.",
         "supportUrl": "https://barklog.gg/support",
         "title": "Barklog",
