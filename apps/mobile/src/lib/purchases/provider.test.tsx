@@ -70,14 +70,15 @@ describe("PurchasesProvider", () => {
     clerk.userId = null;
     await rerender(tree());
 
-    expect(purchases.logOut).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(purchases.logOut).toHaveBeenCalledTimes(1));
   });
 
   it("does not log an anonymous user out, which RevenueCat refuses", async () => {
-    purchases.isAnonymous = true;
+    purchases.isAnonymous.mockResolvedValue(true);
     clerk.userId = null;
     await renderProvider();
 
+    await waitFor(() => expect(purchases.isAnonymous).toHaveBeenCalled());
     expect(purchases.logOut).not.toHaveBeenCalled();
   });
 
