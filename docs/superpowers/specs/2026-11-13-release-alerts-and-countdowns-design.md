@@ -58,7 +58,9 @@ reason to come back to the app between play sessions. Four user-facing pieces:
 - Medium/large or lock-screen countdown widgets.
 - Explore's "Upcoming" and "Recently Released" shelves. Their queries compare
   `first_release_date` directly and ignore precision; moving them onto
-  `@repo/release-dates` is a follow-up, recorded as a mismatch in ADR-0010.
+  `@repo/release-dates` is a follow-up
+  ([#89](https://github.com/chornonoh-vova/barklog/issues/89)), recorded as a
+  mismatch in ADR-0010.
 
 ### Anti-goals
 
