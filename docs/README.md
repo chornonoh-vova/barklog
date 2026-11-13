@@ -45,4 +45,4 @@ All 18 existing [implementation plans](superpowers/plans) are retired records. O
 
 ## Follow-up limits
 
-The [ADR index](adr/README.md) collects the current unresolved guarantees and documented limitations: sync cleanup, account-switch widget work, capped backlog views, extraction freshness, build-tool version drift and share dismissal verification. Keep those visible rather than rewriting documentation to imply they are solved.
+The [ADR index](adr/README.md) collects the current unresolved guarantees and documented limitations: sync cleanup, account-switch widget work, release-date comparisons outside `@repo/release-dates`, deleted-account recreation, capped backlog views, extraction freshness, build-tool version drift, share dismissal verification and release-alert delivery limits. Keep those visible rather than rewriting documentation to imply they are solved.

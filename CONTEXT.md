@@ -14,6 +14,10 @@ _Avoid_: backlog entry (unless referring to one user's saved game)
 How much of a game's release date is known: day, month, quarter, year or none. Only a day is **precise**; anything else is **vague** and is never shown or alerted on as a day.
 _Avoid_: release date confidence
 
+**Upcoming**:
+A game that has not been released yet: a precise date today or later, a vague date whose placeholder day has not passed, or no date at all. A vague date whose placeholder has passed is not upcoming, but it is not released either.
+_Avoid_: unreleased (ambiguous for lapsed vague dates), future
+
 **Mirror**:
 Barklog's local game catalogue in Postgres, populated from IGDB and used to answer game requests without calling IGDB.
 _Avoid_: cache (the mirror is the catalogue the app serves)

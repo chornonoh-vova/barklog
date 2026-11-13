@@ -7,7 +7,7 @@ delivery decision, [ADR-0010](../../adr/0010-release-date-state-functions.md)
 the single definition of release-date state, and
 [ADR-0011](../../adr/0011-shared-translations-package.md) the shared
 translations package; [CONTEXT.md](../../../CONTEXT.md) defines **release
-alert** and **date precision**.
+alert**, **date precision** and **upcoming**.
 
 Interaction details were reviewed against Apple's Human Interface Guidelines
 on 2026-11-13: [notifications](https://developer.apple.com/design/human-interface-guidelines/notifications),
@@ -56,6 +56,9 @@ reason to come back to the app between play sessions. Four user-facing pieces:
   the app publishes a snapshot; a date announced while the app stays closed
   shows in the widget after the next app open.
 - Medium/large or lock-screen countdown widgets.
+- Explore's "Upcoming" and "Recently Released" shelves. Their queries compare
+  `first_release_date` directly and ignore precision; moving them onto
+  `@repo/release-dates` is a follow-up, recorded as a mismatch in ADR-0010.
 
 ### Anti-goals
 
@@ -68,16 +71,18 @@ reason to come back to the app between play sessions. Four user-facing pieces:
 
 ## Domain terms
 
-- **Release alert**: a user's opt-in, on one backlog entry, to be notified
-  about that game's release date. Not "subscription", which already means
-  App Store purchase facts.
-- **Date precision**: how much of a game's release date is known — `day`,
-  `month`, `quarter`, `year` or `none` (TBD). Only `day` is **precise**;
-  everything else is **vague**. Stored as `null` (unknown) until the sync has
-  classified the game.
+**Release alert**, **date precision** (precise vs vague) and **upcoming** are
+defined in [CONTEXT.md](../../../CONTEXT.md). This design adds three working
+terms:
+
+- **Unclassified**: a game whose precision is stored as `null`, because the
+  sync has not classified it yet or found no matching IGDB entry. Displayed
+  like a vague date; never alerted on.
 - **Last told**: the release date and precision a release alert last reported
   to the user (or saw at opt-in). Alerts compare the mirror to this, not to
   the previous sync.
+- **Lapsed**: a vague or unclassified date whose placeholder day has passed.
+  Not upcoming, and never shown as released.
 
 ## Approaches considered
 
@@ -133,15 +138,20 @@ dates or precisions on its own. Required by ADR-0010.
     its vague label, never as released or counted down).
 
   `isUpcoming(display)` is `countdown | releaseDay | vague | unannounced` and
-  drives the bell, the Home menu item, both countdowns and the widget picker.
+  drives turning the bell on, the Home menu item, both countdowns and the
+  widget picker.
 
 - **Alert transition (worker).** `evaluateAlert(alert, mirror, today)` takes
-  `{ told: ReleaseDate | null, done }`, the mirror's `ReleaseDate` and the
-  user's local day. It returns `{ notification, next }`, where `notification`
-  is `null | announced | delayed | movedUp | delayedNoDate | releaseDay` and
+  `{ told: ReleaseDate | null, done, notifiedOn: CalendarDay | null }`, the
+  mirror's `ReleaseDate` and the user's local day. It returns
+  `{ notification, next }`, where `notification` is
+  `null | announced | delayed | movedUp | dateUnconfirmed | releaseDay` and
   `next` is the alert state to persist **if** the notification is accepted (or
-  immediately when `notification` is `null`). It encodes every row of the
-  scenario table below and nothing else.
+  immediately when `notification` is `null`). A notification's `next` sets
+  `notifiedOn` to `today`; while `notifiedOn` equals `today` the function
+  returns `null` with the state unchanged, so a game is notified at most once
+  per local day and a change seen later that day goes out the next day. It
+  encodes every row of the scenario table below and nothing else.
 - **Opt-in state (API).** `initialAlert(mirror, today)` is the state a new
   alert starts in: last-told = the mirror, and **already done** when the
   mirror is precise and its day is today or earlier. Opting in on release day
@@ -160,8 +170,14 @@ dates or precisions on its own. Required by ADR-0010.
 - property-based tests (`fast-check`, a new dev dependency) for invariants:
   - evaluating again with the returned `next`, the same mirror and the same
     day never notifies (idempotence);
-  - nothing notifies once `done`;
-  - every notification except `delayedNoDate` requires a precise mirror date;
+  - nothing notifies once `done`; a done alert changes state only by
+    re-arming (row 10), which happens exactly when the mirror is precise and
+    after `today`, and never notifies;
+  - at most one notification per alert per local day: after a notification
+    on day D, evaluating again on D with any mirror never notifies;
+  - an unclassified mirror never notifies and never changes last-told;
+  - every notification except `dateUnconfirmed` requires a precise mirror
+    date;
   - `evaluateAlert` returns `releaseDay` **only if** the alert is not done and
     the mirror is precise with its day equal to `today`; and for an alert that
     is not done, a precise mirror day equal to `today` always yields
@@ -213,7 +229,8 @@ app and the backend. Required by ADR-0011.
   `first_release_date` (IGDB's `release_dates` with its date-format field — use
   only non-deprecated fields; the nightly IGDB contract test must pass). Pick
   the entry whose timestamp equals `first_release_date`; no date at all →
-  `none`.
+  `none`; a date with no matching entry → `null` (unclassified), never a
+  guess.
 - Persist upserts the column with the rest of the game row.
 - **Backfill** with the existing `worker --full` sync after the column ships.
   This is safe for backlog data: persist only upserts `games` rows
@@ -235,27 +252,36 @@ Table `release_alerts`:
 | `told_precision`           | precision enum or null                                      |
 | `completed_at`             | when the alert reached done, with or without a notification |
 | `release_notified_at`      | only when a release-day notification was actually accepted  |
+| `notified_on`              | user's local date of the last accepted notification         |
 | `created_at`, `updated_at` |                                                             |
 
 An alert is done when `completed_at` is set. Cases 6–7 set both columns;
-case 8 and an opt-in that starts done set only `completed_at`.
+case 8 and an opt-in that starts done set only `completed_at`. Re-arming
+(row 10) clears `completed_at` and keeps the others as history.
 
 Write: `backlogUpsertSchema` gains `releaseAlert: v.optional(v.boolean())`,
-and `status` becomes optional **only for an alert-only write**: a body of just
-`{ releaseAlert }` toggles the alert on an existing entry, keeps the stored
-status, skips the slot check and does not bump `updatedAt`. If there is no
-entry it returns 404 `backlog_entry_not_found`. A body without `status` must
-not carry `rating`. This stops a stale cached status on the device from
-silently moving an entry (or 402-ing) when the user only taps the bell.
+and `status` becomes optional **only for an alert-only write**, a body of just
+`{ releaseAlert }`. A body without `status` must not carry `rating`. The
+server, not the device's cache, decides what an alert-only write does:
+
+- entry exists: toggle the alert, keep the stored status, skip the slot check
+  and do not bump `updatedAt`;
+- no entry and `true`: add the game as Waiting with the alert, through the
+  slot check like any add (402 on a full free account);
+- no entry and `false`: 404 `backlog_entry_not_found`.
+
+The app sends only alert-only writes from the bell and the Home menu, so a
+stale cached status can never move an entry back to Waiting.
 
 - Omitted: alert unchanged (same convention as `rating`).
 - `true`: create if absent, in the state `initialAlert(mirror, today)`
   returns, where `today` is the user's local day (`users.time_zone`, UTC
   when unknown). No notification on opt-in. If present, no-op (do not reset).
 - `false`: delete.
-- A write whose only effect is the alert does **not** bump the entry's
-  `updatedAt`, so Home order and the backlog widget's "most recent" are
-  unaffected. A write that also changes status/rating behaves as today.
+- A write to an existing entry whose only effect is the alert does **not**
+  bump the entry's `updatedAt`, so Home order and the backlog widget's "most
+  recent" are unaffected. A write that adds the entry or also changes
+  status/rating behaves as today.
 - Runs inside the existing entry-write transaction; a new entry still goes
   through the slot check and 402s on a full free account (the app shows the
   paywall, which is desired).
@@ -278,7 +304,11 @@ mobile build reading a not-yet-updated server during rollout.
   updated from the most recent device registration) and
   `release_alerts_run_on` (date; the user's local date already processed).
 - `PUT /me/push-devices` `{ token, locale, timeZone }` — upsert/reassign,
-  updates `users.time_zone`.
+  updates `users.time_zone`. The app calls it automatically, so it must not
+  recreate a deleted account: refuse users with an
+  [ADR-0006](../../adr/0006-clerk-account-deletion.md) tombstone. Today
+  `ensureUser` does not check the tombstone for any write; fix it there so
+  every write benefits.
 - `DELETE /me/push-devices/:token` — called by the app on sign-out **before**
   Clerk sign-out.
 - `GET /me` gains optional `releaseAlertMinutes`; `PATCH /me/settings`
@@ -302,42 +332,57 @@ cascades from `users`.
   day's window (the last-told comparison keeps them correct); a release-day
   notification missed for the whole window is lost (case 8 the next day),
   recorded as a known limit in ADR-0009.
-- For each due user and each alert not yet done, compare the mirror
-  (`first_release_date` as a UTC calendar day + precision) with last-told, using
-  the user's local date as "today":
+- For each due user and each alert (done or not), compare the mirror
+  (`first_release_date` as a UTC calendar day + precision) with last-told,
+  using the user's local date as "today":
 
-| #   | Last told → mirror now                                    | Notification                                           |
-| --- | --------------------------------------------------------- | ------------------------------------------------------ |
-| 1   | (opt-in)                                                  | none; state from `initialAlert`                        |
-| 2   | vague/none → precise, in the future                       | date announced (active)                                |
-| 3   | precise → later precise                                   | delayed (passive)                                      |
-| 4   | precise → earlier precise                                 | moved up (passive)                                     |
-| 5   | precise → vague/none                                      | delayed, no date (passive)                             |
-| 6   | precise date == user's local today                        | release day (active), with "Start Playing"; mark done  |
-| 7   | vague/none → precise **today** (shadow drop)              | release day only (not "announced"); mark done          |
-| 8   | precise date in the past, never notified                  | none; mark done (`completed_at` only)                  |
-| 9   | opted in on or after the precise release day              | none; `initialAlert` starts it done                    |
-| 10  | any change after done                                     | none                                                   |
-| 11  | several games with news the same morning                  | one notification per game, same thread id              |
-| 12  | alert turned off and on again                             | starts fresh from the mirror (row was deleted)         |
-| 13  | entry moved to another status                             | alert unaffected; removal deletes it                   |
-| —   | vague → narrower vague, or null precision (unclassified)  | none; last-told updated silently                       |
-| —   | last-told precision null (opted in before classification) | none; adopt the first classified mirror state silently |
+| #   | Last told → mirror now                                     | Notification                                                                     |
+| --- | ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1   | (opt-in)                                                   | none; state from `initialAlert`                                                  |
+| 2   | vague/none → precise, in the future                        | date announced (active)                                                          |
+| 3   | precise → later precise                                    | delayed (passive)                                                                |
+| 4   | precise → earlier precise                                  | moved up (passive)                                                               |
+| 5   | precise → vague (`month`/`quarter`/`year`) or `none`       | date no longer confirmed (passive)                                               |
+| 6   | precise date == user's local today                         | release day (active), with "Start Playing"; mark done                            |
+| 7   | vague/none/unclassified → precise **today** (shadow drop)  | release day only (not "announced"); mark done                                    |
+| 8   | precise date in the past, never notified                   | none; mark done (`completed_at` only)                                            |
+| 9   | opted in on or after the precise release day               | none; `initialAlert` starts it done                                              |
+| 10  | done, mirror now precise and **after** today               | none; re-arm silently: clear `completed_at`, last-told = mirror                  |
+| —   | done, any other mirror                                     | none                                                                             |
+| 11  | several games with news the same morning                   | one notification per game, same thread id                                        |
+| 12  | alert turned off and on again                              | starts fresh from the mirror (row was deleted)                                   |
+| 13  | entry moved to another status                              | alert unaffected; removal deletes it                                             |
+| 14  | alert already notified today (`notified_on` = local today) | none; state unchanged, so a later change goes out tomorrow                       |
+| —   | mirror unclassified (`null` precision)                     | none; last-told unchanged, so a day → `null` → day glitch loses nothing          |
+| —   | vague → narrower vague                                     | none; last-told updated silently                                                 |
+| —   | last-told unclassified (opted in before classification)    | none; adopt the first classified mirror state silently (except row 7 on the day) |
 
-Because the comparison is against last-told rather than the previous sync,
-several changes between due runs collapse into one notification about the
-final state. Cases 6–8 are checked before 2–5.
+Rows are checked in this order: 10 and done; 14; mirror unclassified; 6–8;
+last-told unclassified; then 2–5 and narrower vague. Re-arming covers a game
+delayed after its release day (or after an opt-in on that day) and a wrong
+past date corrected later: the bell is on again, the alert works again, and
+the release-day notification fires on the new day. Because the comparison is
+against last-told rather than the previous sync, several changes between due
+runs collapse into one notification about the final state. Row 14 also
+holds back a release-day notification when the same game was already
+notified earlier that day (a change, then a same-day shadow drop); the next
+day that is case 8. This is the same known limit as a missed window.
 
 - Notifications go to every device of the user, each in its device's
   language. Once Expo accepts the ticket for **any** of the user's devices,
-  update that alert's last-told (and `release_notified_at` for release day);
-  a device whose send failed misses that one notification rather than every
-  device getting a duplicate the next day.
+  persist that alert's `next` (last-told, `notified_on`, and
+  `release_notified_at` for release day); a device whose send failed misses
+  that one notification rather than every device getting a duplicate the next
+  day.
 - Set `release_alerts_run_on` = local date only when **every** notification
   of the run was accepted for at least one device. Otherwise leave it, and
   the next run (30 minutes later, while still inside the window) evaluates
-  again: alerts already sent were advanced and stay silent (idempotence), and
-  only the failed ones retry. A failed send leaves its alert unchanged.
+  again: alerts already sent carry today's `notified_on` and stay silent even
+  if the mirror changed in between (row 14), and only the failed ones retry. A
+  failed send leaves its alert unchanged.
+- Delivery is at least once: if the worker stops after Expo accepted a
+  notification but before its state is saved, the next run sends it again.
+  Recorded as a known limit in ADR-0009.
 - The worker calls `evaluateAlert` from `@repo/release-dates` per alert; it holds no
   date logic of its own. Copy is rendered per device `locale` from
   `@repo/i18n`'s `notifications` namespace, with the date from
@@ -345,13 +390,17 @@ final state. Cases 6–8 are checked before 2–5.
 - **Content** (HIG: useful title, no app name, full sentences in sentence
   case). The title is the game's name; the body is one of:
 
-  | Kind          | Body (English source)                         | Interruption |
-  | ------------- | --------------------------------------------- | ------------ |
-  | announced     | "Release date announced: 5 June 2027."        | active       |
-  | delayed       | "Delayed to 5 June 2027."                     | passive      |
-  | movedUp       | "Good news: coming earlier, on 2 March 2027." | passive      |
-  | delayedNoDate | "Delayed. There's no new date yet."           | passive      |
-  | releaseDay    | "It's release day! Enjoy 🎉"                  | active       |
+  | Kind            | Body (English source)                               | Interruption |
+  | --------------- | --------------------------------------------------- | ------------ |
+  | announced       | "Release date announced: 5 June 2027."              | active       |
+  | delayed         | "Delayed to 5 June 2027."                           | passive      |
+  | movedUp         | "Good news: coming earlier, on 2 March 2027."       | passive      |
+  | dateUnconfirmed | "The release date is no longer confirmed: Q3 2027." | passive      |
+  | releaseDay      | "It's release day! Enjoy 🎉"                        | active       |
+
+  `dateUnconfirmed` does not say "delayed": the new period can end before the
+  old day. With precision `none` its body ends "…no longer confirmed." with
+  no date.
 
   Release day and an announcement are what people opted in for; changes are
   worth knowing but not worth interrupting for. Nothing is ever Time
@@ -373,12 +422,13 @@ final state. Cases 6–8 are checked before 2–5.
   and development variants both need push entitlements (`app.config.js`
   variants).
 - Permission is requested on the first alert turn-on, never at launch.
-- After permission is granted, and on every app start while signed in, the
-  app registers its Expo push token with locale and time zone (covers
-  time-zone and language changes).
+- After permission is granted, on every app start while signed in, and
+  whenever the signed-in user changes, the app registers its Expo push token
+  with locale and time zone (covers time-zone and language changes, and an
+  account switch inside one app session).
 - Sign-out: `DELETE /me/push-devices/:token` before Clerk sign-out, best
   effort. An account switch without a signed-out interval relies on the
-  reassigning registration. Joins the [ADR-0004](../../adr/0004-account-switch-isolation.md)
+  reassigning registration, which runs as soon as the new user is signed in. Joins the [ADR-0004](../../adr/0004-account-switch-isolation.md)
   isolation rule; if the delete fails and the device stays signed out, old
   alerts can still arrive — record this as a known limit.
 - Tap routing: `barklog://notification/game/<id>` maps to the Home stack
@@ -410,30 +460,41 @@ final state. Cases 6–8 are checked before 2–5.
 
 ### "Upcoming" rule
 
-`isUpcoming(releaseDisplay(...))` from `@repo/release-dates`, used by the bell, the
-Home menu item, both countdowns and the widget picker. In summary: "Today" is the device's local date; the
-release day is the UTC calendar day of `firstReleaseDate`.
+`isUpcoming(releaseDisplay(...))` from `@repo/release-dates`, used for
+turning the bell on, the Home menu item, both countdowns and the widget
+picker. In summary: "Today" is the device's local date; the release day is the
+UTC calendar day of `firstReleaseDate`.
 
-- precision `day`: upcoming while the release day is today or later.
+- precision `day`: upcoming while the release day is today or later; after
+  that the game is **released**.
 - vague (`month|quarter|year`), `none`, or `null`/absent precision (an older
   server or an unclassified game): **never** counted down by day. Upcoming
   when there is no date, or while the placeholder date is today or later
   (IGDB places vague dates at the end of their period — confirm during the
-  precision ticket).
-- Everything else is released: no bell, no menu item, no countdown.
+  precision ticket). After that the game is **lapsed**, not released: it
+  keeps its vague label and the "Release date" caption.
+- Released and lapsed games get no countdown and cannot have an alert turned
+  on. An alert that is already on stays visible and can be turned off (see
+  below).
 
 ### Release alert UI
 
+- **Visibility** (detail bell, Home glyph and Home menu item alike): shown
+  when the game is **upcoming** (rule above), or when it is **lapsed** and
+  its alert is on, so an alert that can still fire is never stranded. A
+  lapsed game offers only turning off; once off, the control disappears.
+  Released games never show it: their alert is done or about to complete,
+  and re-arming (scheduler row 10) makes the game upcoming again.
 - **Detail screen**: a third, icon-only button to the right of the status and
-  rating controls, shown only when the game is **upcoming** (rule above). It is a button that
+  rating controls, shown per the visibility rule. It is a button that
   behaves like a toggle (HIG: outside a list, not a switch): no text label;
   off is `bell` in the bordered style, on is `bell.fill` (a checkmark-badged
   bell if SF Symbols offers one) in the prominent glass style, so state is
   shown by shape and fill, not color alone. VoiceOver: "Release alert",
   value "On"/"Off". Tapping:
   1. requests permission if undetermined;
-  2. sends `{ status: "waiting", releaseAlert: true }` if the game is not in
-     the backlog, otherwise the alert-only `{ releaseAlert: true }`;
+  2. sends the alert-only `{ releaseAlert: true }`; the server adds the game
+     as Waiting if it is not in the backlog, whatever the cache says;
   3. a 402 opens the paywall as for any slot-consuming write;
   4. on success, the success haptic (see Haptics). When the game was just added, the status
      capsule now reading "Waiting" is the visible sign of the side effect.
@@ -444,10 +505,10 @@ release day is the UTC calendar day of `firstReleaseDate`.
 
 - **Home**: alerted rows show a small secondary `bell.fill` glyph (never
   styled like a count badge) and the row's accessibility label includes
-  "release alert on". The row's "…" menu gains "Turn On Release Alert" /
-  "Turn Off Release Alert" (title case, no ellipsis: nothing confirms) for
-  upcoming games, sending the alert-only write, with the same permission and
-  haptic behavior as the detail button.
+  "release alert on"; both follow the visibility rule. The row's "…" menu
+  gains "Turn On Release Alert" (upcoming games) / "Turn Off Release Alert"
+  (title case, no ellipsis: nothing confirms), sending the alert-only write,
+  with the same permission and haptic behavior as the detail button.
 - **Permission**: requested by the bell tap itself, no explainer screen
   before it (the tap is the context). If notifications are denied, the alert
   is still saved and the bell shows on, and every turn-on shows an alert:
@@ -504,8 +565,10 @@ own haptics setting turns all of this off; there is no in-app switch.
 
 Ships with date precision, before alerts:
 
-- The detail row reads "Release date" for upcoming games and "Released" for
-  released ones (today it always says "Released", even for 2027 games).
+- The detail row reads "Released" only when `releaseDisplay` is `released`
+  and "Release date" otherwise, including lapsed vague dates. Today the
+  caption ignores the date: "Release" in English and "Release date" (or its
+  translation) in the other four languages, even for 2027 games.
 - Its value comes from `formatReleaseDate`: "5 June 2027", "Q3 2027", "2027",
   "TBA" instead of a placeholder day such as "31 December 2027".
 - The hero meta line and list rows keep showing the year, which is correct for
@@ -536,10 +599,13 @@ Vague dates show "2027" / "Q3 2027" (no day count). All of it is rendered from
 - Data comes from the same derived snapshot pipeline (ADR-0003): one backlog
   query, covers downloaded into the app group, cleared on account switch.
 - Countdown state changes without the app: publish a timeline with an entry at
-  each local midnight up to release day plus the day after, and compute the
-  day count in the view from `environment.date`. The widget runtime cannot
-  import packages, so the app precomputes each timeline entry's
-  `releaseDisplay` and label; the view only renders them.
+  each local midnight up to release day plus the day after. The widget
+  runtime cannot import packages, so the app precomputes each timeline
+  entry's `releaseDisplay` and label; the view only renders them and does no
+  date arithmetic of its own (ADR-0010).
+- "Soonest upcoming" orders upcoming games by release day, using the
+  placeholder day for vague dates; on the same day a precise date comes
+  first, and unannounced games come last.
 - Widget picker/gallery strings go through `Localizable.strings`.
 - HIG polish: a placeholder that mirrors the layout (artwork block plus text
   bars); artwork marked for accented rendering so tinted/clear appearances

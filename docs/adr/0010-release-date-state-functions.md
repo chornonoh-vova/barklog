@@ -12,6 +12,10 @@ There are two families of functions, because the app displays states while the w
 
 The package is held to a stricter testing standard than the rest of the codebase: one table-driven case per agreed scenario, property-based invariants (idempotence, nothing after done, precise-only announcements, agreement between the display and alert families, time-zone and DST edges), and full branch coverage enforced in CI.
 
+## Known mismatch
+
+Existing code predates this decision. Explore's `upcomingGames` and `recentGames` queries (`packages/db/src/queries/games.ts`) compare `first_release_date` directly and ignore precision, so "Recently Released" can list a vague game whose placeholder day has passed, which this decision says is never shown as released. Moving them onto `@repo/release-dates` is a follow-up outside the release alerts design.
+
 ## Evidence
 
 - [Release alerts design: shared foundations](../superpowers/specs/2026-11-13-release-alerts-and-countdowns-design.md)
