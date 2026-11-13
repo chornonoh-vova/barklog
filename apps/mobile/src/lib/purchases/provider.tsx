@@ -32,9 +32,7 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
     entitled.current = undefined;
 
     if (action === "logout") {
-      if (!Purchases.isAnonymous) {
-        void Purchases.logOut();
-      }
+      void logOutIdentified();
       return;
     }
 
@@ -63,4 +61,10 @@ export function PurchasesProvider({ children }: { children: ReactNode }) {
   }, [api, queryClient]);
 
   return children;
+}
+
+/** RevenueCat rejects `logOut()` for an anonymous App User ID, so check first. */
+async function logOutIdentified() {
+  if (await Purchases.isAnonymous()) return;
+  await Purchases.logOut();
 }

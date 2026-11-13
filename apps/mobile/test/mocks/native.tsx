@@ -53,7 +53,7 @@ export const purchases = {
   configure: jest.fn(),
   logIn: jest.fn(async () => ({})),
   logOut: jest.fn(async () => ({})),
-  isAnonymous: false,
+  isAnonymous: jest.fn(async () => false),
   addCustomerInfoUpdateListener: jest.fn((listener: CustomerInfoListener) => {
     customerInfoListeners.add(listener);
   }),
@@ -144,7 +144,7 @@ export function resetNative(): void {
   });
   clerk.getToken.mockImplementation(async () => "tok_test");
   customerInfoListeners.clear();
-  purchases.isAnonymous = false;
+  purchases.isAnonymous.mockResolvedValue(false);
   Object.assign(share, {
     sharedPayloads: [],
     resolvedSharedPayloads: [],
