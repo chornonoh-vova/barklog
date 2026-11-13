@@ -23,7 +23,7 @@
     "eslint": "catalog:",
     "eslint-plugin-astro": "catalog:",
     "jsdom": "^30.1.2",
-    "motion": "^14.11.1",
+    "motion": "^14.12.0",
     "tailwindcss": "^4.3.5",
     "typescript": "catalog:",
     "vitest": "catalog:"

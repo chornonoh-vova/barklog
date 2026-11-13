@@ -48,8 +48,8 @@ catalogs:
 # which fails apps/mobile's lint. Forcing one version restores the dedupe.
 # Drop these once eslint-config-expo's own range covers the version we use.
 overrides:
-  "@typescript-eslint/eslint-plugin": 8.71.1
-  "@typescript-eslint/parser": 8.71.1
+  "@typescript-eslint/eslint-plugin": 8.72.2
+  "@typescript-eslint/parser": 8.72.2
   # jest-expo depends on jest-environment-jsdom, which brings @types/jsdom; the
   # hoisted layout puts it at the root, where Vitest's own types import it and
   # its `/// <reference lib="dom" />` swaps Node's `Response` for the DOM's in
