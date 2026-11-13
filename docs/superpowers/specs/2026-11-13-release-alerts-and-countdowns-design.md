@@ -142,6 +142,16 @@ dates or precisions on its own. Required by ADR-0010.
   `next` is the alert state to persist **if** the notification is accepted (or
   immediately when `notification` is `null`). It encodes every row of the
   scenario table below and nothing else.
+- **Opt-in state (API).** `initialAlert(mirror, today)` is the state a new
+  alert starts in: last-told = the mirror, and **already done** when the
+  mirror is precise and its day is today or earlier. Opting in on release day
+  therefore never sends a release-day notification (the user is in the app at
+  that moment), and opting in after release never sends anything.
+- **Alert window.** `ALERT_WINDOW_MINUTES` (240) and
+  `alertWindow(alertMinutes)` → `{ start, end }` in minutes after local
+  midnight, where `end` is `min(start + 240, 1440)`. The worker sends only
+  inside it; Profile shows it to the user. One definition, so the two cannot
+  disagree.
 
 **Testing is the point of this package.** Both families get:
 
@@ -152,7 +162,15 @@ dates or precisions on its own. Required by ADR-0010.
     day never notifies (idempotence);
   - nothing notifies once `done`;
   - every notification except `delayedNoDate` requires a precise mirror date;
-  - `releaseDay` iff the mirror is precise and its day equals `today`;
+  - `evaluateAlert` returns `releaseDay` **only if** the alert is not done and
+    the mirror is precise with its day equal to `today`; and for an alert that
+    is not done, a precise mirror day equal to `today` always yields
+    `releaseDay` (the strict "iff" holds for `releaseDisplay` only);
+  - `initialAlert` is done exactly when the mirror is precise and its day is
+    today or earlier, and evaluating a fresh alert on the same day never
+    notifies;
+  - `alertWindow` never ends after local midnight and always starts at the
+    chosen time;
   - a vague → vague change never notifies;
   - the two families agree: `evaluateAlert` says `releaseDay` only when
     `releaseDisplay` says `releaseDay`, and `announced/delayed/movedUp` only
@@ -215,8 +233,12 @@ Table `release_alerts`:
 | `user_id`, `game_id`       | PK; composite FK to `backlog_entries` `ON DELETE CASCADE`   |
 | `told_release_date`        | date (UTC calendar day) or null                             |
 | `told_precision`           | precision enum or null                                      |
-| `release_notified_at`      | set when the release-day notification was sent; then "done" |
+| `completed_at`             | when the alert reached done, with or without a notification |
+| `release_notified_at`      | only when a release-day notification was actually accepted  |
 | `created_at`, `updated_at` |                                                             |
+
+An alert is done when `completed_at` is set. Cases 6–7 set both columns;
+case 8 and an opt-in that starts done set only `completed_at`.
 
 Write: `backlogUpsertSchema` gains `releaseAlert: v.optional(v.boolean())`,
 and `status` becomes optional **only for an alert-only write**: a body of just
@@ -227,8 +249,9 @@ not carry `rating`. This stops a stale cached status on the device from
 silently moving an entry (or 402-ing) when the user only taps the bell.
 
 - Omitted: alert unchanged (same convention as `rating`).
-- `true`: create if absent, with last-told = the mirror's current date and
-  precision (no notification on opt-in). If present, no-op (do not reset).
+- `true`: create if absent, in the state `initialAlert(mirror, today)`
+  returns, where `today` is the user's local day (`users.time_zone`, UTC
+  when unknown). No notification on opt-in. If present, no-op (do not reset).
 - `false`: delete.
 - A write whose only effect is the alert does **not** bump the entry's
   `updatedAt`, so Home order and the backlog widget's "most recent" are
@@ -270,24 +293,30 @@ cascades from `users`.
   `*/30 * * * *`), separate from the nightly sync. Guarded by a Postgres
   advisory lock so only one instance sends.
 - **Due users**: users with a `time_zone`, at least one alert and one device,
-  whose local time now is at or after `release_alert_minutes` and whose
-  `release_alerts_run_on` is before their local date. "At or after" means a
-  missed run catches up later the same day instead of skipping it.
+  whose local time now is **inside their alert window**
+  (`alertWindow(release_alert_minutes)`: the chosen time to four hours later,
+  never past local midnight) and whose `release_alerts_run_on` is before
+  their local date. A run missed early in the window is caught up later in
+  it; outside the window nothing is sent, so a recovering worker never sends
+  at night. Change notifications missed for a whole window go out in the next
+  day's window (the last-told comparison keeps them correct); a release-day
+  notification missed for the whole window is lost (case 8 the next day),
+  recorded as a known limit in ADR-0009.
 - For each due user and each alert not yet done, compare the mirror
   (`first_release_date` as a UTC calendar day + precision) with last-told, using
   the user's local date as "today":
 
 | #   | Last told → mirror now                                    | Notification                                           |
 | --- | --------------------------------------------------------- | ------------------------------------------------------ |
-| 1   | (opt-in)                                                  | none; last-told = mirror                               |
+| 1   | (opt-in)                                                  | none; state from `initialAlert`                        |
 | 2   | vague/none → precise, in the future                       | date announced (active)                                |
 | 3   | precise → later precise                                   | delayed (passive)                                      |
 | 4   | precise → earlier precise                                 | moved up (passive)                                     |
 | 5   | precise → vague/none                                      | delayed, no date (passive)                             |
 | 6   | precise date == user's local today                        | release day (active), with "Start Playing"; mark done  |
 | 7   | vague/none → precise **today** (shadow drop)              | release day only (not "announced"); mark done          |
-| 8   | precise date in the past, never notified                  | none; mark done                                        |
-| 9   | opted in on release day after the morning time            | none (handled by the run-on date already passed)       |
+| 8   | precise date in the past, never notified                  | none; mark done (`completed_at` only)                  |
+| 9   | opted in on or after the precise release day              | none; `initialAlert` starts it done                    |
 | 10  | any change after done                                     | none                                                   |
 | 11  | several games with news the same morning                  | one notification per game, same thread id              |
 | 12  | alert turned off and on again                             | starts fresh from the mirror (row was deleted)         |
@@ -303,9 +332,12 @@ final state. Cases 6–8 are checked before 2–5.
   language. Once Expo accepts the ticket for **any** of the user's devices,
   update that alert's last-told (and `release_notified_at` for release day);
   a device whose send failed misses that one notification rather than every
-  device getting a duplicate the next day. After processing,
-  set `release_alerts_run_on` = local date. A failed send leaves last-told
-  unchanged so the next due run retries it (next day at the earliest).
+  device getting a duplicate the next day.
+- Set `release_alerts_run_on` = local date only when **every** notification
+  of the run was accepted for at least one device. Otherwise leave it, and
+  the next run (30 minutes later, while still inside the window) evaluates
+  again: alerts already sent were advanced and stay silent (idempotence), and
+  only the failed ones retry. A failed send leaves its alert unchanged.
 - The worker calls `evaluateAlert` from `@repo/release-dates` per alert; it holds no
   date logic of its own. Copy is rendered per device `locale` from
   `@repo/i18n`'s `notifications` namespace, with the date from
@@ -326,6 +358,7 @@ final state. Cases 6–8 are checked before 2–5.
   Sensitive. Final wording per language lives in `@repo/i18n`.
 
 - Payload: `data.url = barklog://notification/game/<id>`, `data.gameId`,
+  `data.userId` (the Clerk id the notification was sent for),
   `threadId` `release-alerts`, and `categoryId` `release-day` on release-day
   notifications only (carries the "Start Playing" action). No badge.
 - Receipts: a follow-up step (next run is fine) fetches Expo receipts and
@@ -359,13 +392,21 @@ final state. Cases 6–8 are checked before 2–5.
   "Start Playing" (SF Symbol `play.fill`, `authenticationRequired: true`, does
   not open the app), and the hidden-preview placeholder "Release update" for
   all alert notifications.
-- **"Start Playing" action**: handled in the background. The app reads the
-  entry and moves it to Playing **only if it is still Waiting**, so a stale
-  tap never undoes a newer move; Waiting → Playing never changes the slot
-  count, so no 402 is possible. Requires the Clerk session token and keychain
-  to be readable from a background launch on an unlocked device — verify on a
-  device before relying on it. Failure is silent; the app shows the true
-  status on the next open.
+- **"Start Playing" action**: handled in the background with one request,
+  `POST /backlog/:gameId/start-playing` `{ forUser }`, where `forUser` is
+  the notification's `data.userId`. The server:
+  - returns 409 and changes nothing when `forUser` is not the signed-in user
+    (a notification left over from another account must never touch the
+    current account's backlog);
+  - otherwise performs one **conditional** update — status to Playing only
+    `WHERE status = 'waiting'` — and reports `moved` or `unchanged`. A
+    missing, removed or already-moved entry is a no-op; nothing is upserted,
+    so a removed entry is never recreated;
+  - needs no slot check: Waiting → Playing keeps the slot count.
+
+  Requires the Clerk session token and keychain to be readable from a
+  background launch on an unlocked device — verify on a device before relying
+  on it. Failure is silent; the app shows the true status on the next open.
 
 ### "Upcoming" rule
 
@@ -449,8 +490,11 @@ own haptics setting turns all of this off; there is no in-app switch.
 - Fourth `NativeTabs` trigger (`person.crop.circle`), replacing
   `ProfileToolbar`'s account button. The Premium star stays in toolbars.
 - Sections: account (opens Clerk `UserProfileView` as today), Premium status /
-  manage, Release alerts (a time picker in 30-minute steps, default 09:00; when
-  notifications are denied, a "Notifications are off" row with "Open
+  manage, Release alerts (a time picker in 30-minute steps, default 09:00,
+  with a footer stating the window from `alertWindow`, e.g. "Release alerts
+  arrive between 9:00 and 13:00." — "between 22:00 and midnight" when the
+  window is cut at midnight — formatted in the user's locale and 12/24-hour
+  setting; when notifications are denied, a "Notifications are off" row with "Open
   Settings" — no in-app master switch duplicating the system one), Stats (restored from git history `b6eea1b`; own ticket), and a
   visible "Delete account" row that opens Clerk's flow (addresses App Review
   repeatedly missing deletion).
