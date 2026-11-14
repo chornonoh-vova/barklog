@@ -26,6 +26,7 @@ When an agreed change introduces or sharpens a domain term, update `CONTEXT.md` 
 | `packages/contracts`                                   | Shared validation, domain constants and wire shapes                   |
 | `packages/db`                                          | Postgres schema, migrations and queries                               |
 | `packages/igdb`                                        | IGDB retrieval and mapping                                            |
+| `packages/i18n`                                        | User-facing copy (i18next resources) shared by the app and backend    |
 | `packages/cache`, `packages/logging`                   | Shared cache and logging implementations                              |
 | `packages/eslint-config`, `packages/typescript-config` | Shared tooling configuration                                          |
 

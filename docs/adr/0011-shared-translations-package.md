@@ -4,7 +4,7 @@ status: accepted
 
 # Keep user-facing translations in one shared package
 
-Agreed on 2026-11-13; not yet implemented.
+Agreed on 2026-11-13. The `app` namespace is implemented (#69): the app reads its copy from `@repo/i18n`. The `notifications` namespace and the shared release-date formatter are not yet implemented.
 
 User-facing copy for the app and the backend lives in `@repo/i18n` as i18next resources for every supported language. Release-alert notifications are the first copy the server renders, since Expo push cannot carry iOS localization keys. A separate server catalogue would duplicate languages, plural rules and date wording that the app already maintains, and the two would drift: a notification saying "Q3 2027" while the app says something else.
 
@@ -15,4 +15,5 @@ Strings consumed by Expo's build-time config (Info.plist and widget `Localizable
 ## Evidence
 
 - [Release alerts design: shared foundations](../superpowers/specs/2026-11-13-release-alerts-and-countdowns-design.md)
-- [Current app i18n](../../apps/mobile/src/lib/i18n/instance.ts)
+- [Shared package](../../packages/i18n/src/index.ts)
+- [App i18n instance](../../apps/mobile/src/lib/i18n/instance.ts)
