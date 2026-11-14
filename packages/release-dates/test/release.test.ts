@@ -59,6 +59,7 @@ describe("toReleaseDate", () => {
 
   it("rejects an invalid timestamp", () => {
     expect(() => toReleaseDate("soon", "day")).toThrow(RangeError);
+    expect(() => toReleaseDate("2027-06-05T23:30:00", "day")).toThrow(RangeError);
   });
 });
 

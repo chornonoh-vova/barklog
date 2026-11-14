@@ -23,9 +23,23 @@ export function toCalendarDay(value: string): CalendarDay {
   throw new RangeError(`Not a calendar day: ${JSON.stringify(value)}`);
 }
 
-/** Parses an instant, rejecting anything `Date` cannot read. */
+/**
+ * An ISO 8601 date-time with an explicit `Z` or `±HH:MM` offset. Without one,
+ * `Date` reads the string in the host's time zone, so the same input would
+ * give different days on the server and on a device.
+ */
+const INSTANT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Parses an instant. A string must be an ISO 8601 date-time with a zone (as
+ * `toISOString` produces); anything else, or an invalid `Date`, is a
+ * `RangeError`.
+ */
 export function toInstant(instant: Date | string): Date {
-  const date = typeof instant === "string" ? new Date(instant) : instant;
+  const date =
+    typeof instant === "string"
+      ? new Date(INSTANT_PATTERN.test(instant) ? instant : Number.NaN)
+      : instant;
   if (Number.isNaN(date.getTime())) {
     throw new RangeError(`Not an instant: ${JSON.stringify(instant)}`);
   }

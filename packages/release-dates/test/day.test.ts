@@ -74,6 +74,26 @@ describe("localDay", () => {
 
   it("rejects an invalid instant", () => {
     expect(() => localDay("not a date", "UTC")).toThrow(RangeError);
+    expect(() => localDay(new Date(Number.NaN), "UTC")).toThrow(RangeError);
+  });
+
+  it.each([
+    "2027-06-05T23:30:00", // no zone: would be read in the host's time zone
+    "2027-06-05T23:30:00z",
+    "2027-06-05 23:30:00Z",
+    "2027-06-05",
+    "June 5, 2027 23:30 UTC",
+  ])("rejects %j, which has no explicit zone or is not ISO 8601", (value) => {
+    expect(() => localDay(value, "UTC")).toThrow(RangeError);
+  });
+
+  it.each([
+    ["2027-06-05T23:30Z", "2027-06-05"],
+    ["2027-06-05T23:30:00.123Z", "2027-06-05"],
+    ["2027-06-05T23:30:00+05:30", "2027-06-05"],
+    ["2027-06-05T23:30:00-02:00", "2027-06-06"],
+  ])("reads %j by its own offset, not the host's", (value, expected) => {
+    expect(localDay(value, "UTC")).toBe(expected);
   });
 
   it("rejects an unknown time zone", () => {
