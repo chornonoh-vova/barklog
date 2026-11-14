@@ -52,6 +52,8 @@ pnpm --filter api dev
 
 The migration runner installs `pg_trgm` as well as applying Drizzle migrations; use it instead of calling `drizzle-kit migrate` directly. `pnpm build` prepares shared packages whose imports resolve through `dist`.
 
+Running through turbo (`pnpm dev`, or `pnpm turbo run dev --filter=<app>...`) also runs each shared package's `tsc --watch`, so edits to a package reach the running apps without a restart. `pnpm --filter <app> dev` bypasses turbo and leaves package builds as they were.
+
 Local infrastructure is explicitly `deps.compose.yaml`, managed by `pnpm deps:up` and `pnpm deps:down`. **Bare `docker compose up` uses the production `compose.yaml`.** An existing root `.env` can satisfy its required variables, so that command may pull production images and run migrations against the configured database.
 
 ### Seed or update the mirror
