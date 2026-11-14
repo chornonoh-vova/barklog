@@ -11,7 +11,7 @@
     "ios": "APP_VARIANT=development expo run:ios",
     "ios:device": "APP_VARIANT=development expo run:ios --device",
     "prebuild": "APP_VARIANT=development expo prebuild --platform ios",
-    "postinstall": "cd ../.. && pnpm turbo run build --filter=@repo/contracts",
+    "postinstall": "cd ../.. && pnpm turbo run build --filter=@repo/contracts --filter=@repo/i18n",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
@@ -22,6 +22,7 @@
     "@formatjs/intl-pluralrules": "^6.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@repo/contracts": "workspace:*",
+    "@repo/i18n": "workspace:*",
     "@tanstack/query-async-storage-persister": "^5.107.1",
     "@tanstack/react-query": "^5.107.1",
     "@tanstack/react-query-persist-client": "^5.107.1",

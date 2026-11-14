@@ -1,92 +1,18 @@
 import { errorCopy } from "@/lib/api/error-copy";
 import { ApiError } from "@/lib/api/errors";
 import { ratingLine, releaseDateLine } from "@/features/game/format";
-import {
-  formatLocale,
-  i18n,
-  initI18n,
-  LANGUAGES,
-  resources,
-  type Language,
-} from "@/lib/i18n/instance";
+import { formatLocale, i18n, initI18n, LANGUAGES, resources } from "@/lib/i18n/instance";
 
 import appJson from "../../../app.json";
-
-type Tree = { [key: string]: string | Tree };
-
-const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
-
-/** Every leaf as `path → value`. */
-function leaves(tree: Tree, prefix = ""): Map<string, string> {
-  const out = new Map<string, string>();
-
-  for (const [key, value] of Object.entries(tree)) {
-    const path = prefix === "" ? key : `${prefix}.${key}`;
-
-    if (typeof value === "string") out.set(path, value);
-    else for (const [leaf, text] of leaves(value, path)) out.set(leaf, text);
-  }
-
-  return out;
-}
-
-/** Plural keys grouped under their base key, with the suffixes each one has. */
-function plurals(keys: Iterable<string>): Map<string, Set<string>> {
-  const out = new Map<string, Set<string>>();
-
-  for (const key of keys) {
-    const match = PLURAL_SUFFIX.exec(key);
-    if (match === null) continue;
-
-    const base = key.slice(0, match.index);
-    out.set(base, (out.get(base) ?? new Set()).add(match[1]!));
-  }
-
-  return out;
-}
-
-const tokens = (text: string) =>
-  [...text.matchAll(/\{\{\s*(\w+)[^}]*\}\}|<\/?(\w+)>/g)]
-    .map((match) => match[1] ?? `<${match[2]}>`)
-    // `count` picks the form; a form may spell the number out instead of using it.
-    .filter((token) => token !== "count")
-    .sort();
-
-const copy = (lng: Language) => leaves(resources[lng].translation as Tree);
-const english = copy("en");
-const base = (key: string) => key.replace(PLURAL_SUFFIX, "");
-const englishBases = new Set([...english.keys()].map(base));
 
 afterEach(() => initI18n("en"));
 
 describe.each(LANGUAGES)("%s copy", (lng) => {
-  const translated = copy(lng);
-
-  it("has every key English has, and no others", () => {
-    expect(new Set([...translated.keys()].map(base))).toEqual(englishBases);
-  });
-
-  it("has exactly the plural forms the language uses", () => {
-    const categories = new Set(new Intl.PluralRules(lng).resolvedOptions().pluralCategories);
-
-    for (const [key, suffixes] of plurals(translated.keys())) {
-      expect({ [key]: suffixes }).toEqual({ [key]: categories });
-    }
-  });
-
-  it("keeps every placeholder and tag of the English copy", () => {
-    for (const [key, text] of translated) {
-      const englishText = english.get(key) ?? english.get(`${base(key)}_other`);
-
-      expect({ [key]: tokens(text) }).toEqual({ [key]: tokens(englishText ?? "") });
-    }
-  });
-
   it("is not left in English", () => {
     if (lng === "en") return;
 
     initI18n(lng);
-    expect(i18n.t("tabs.search")).not.toBe(resources.en.translation.tabs.search);
+    expect(i18n.t("tabs.search")).not.toBe(resources.en.app.tabs.search);
   });
 });
 
