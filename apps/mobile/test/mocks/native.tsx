@@ -16,6 +16,13 @@ export const clerk = {
   isAuthFlowComplete: true,
   userId: "user_1" as string | null | undefined,
   getToken: jest.fn(async () => "tok_test" as string | null),
+  signOut: jest.fn(async () => {}),
+  user: null as {
+    fullName: string | null;
+    primaryEmailAddress: { emailAddress: string } | null;
+    imageUrl: string;
+    delete: jest.Mock<Promise<void>, []>;
+  } | null,
 };
 
 export const clerkExpo = {
@@ -26,6 +33,8 @@ export const clerkExpo = {
     userId: clerk.userId,
     getToken: clerk.getToken,
   }),
+  useUser: () => ({ isLoaded: clerk.isLoaded, user: clerk.user }),
+  useClerk: () => ({ signOut: clerk.signOut }),
 };
 
 export const clerkNativeComponents = {
@@ -143,6 +152,14 @@ export function resetNative(): void {
     userId: "user_1",
   });
   clerk.getToken.mockImplementation(async () => "tok_test");
+  clerk.signOut.mockReset();
+  clerk.signOut.mockResolvedValue(undefined);
+  clerk.user = {
+    fullName: "Ada Lovelace",
+    primaryEmailAddress: { emailAddress: "ada@example.com" },
+    imageUrl: "https://img.example/ada.png",
+    delete: jest.fn(async () => {}),
+  };
   customerInfoListeners.clear();
   purchases.isAnonymous.mockResolvedValue(false);
   Object.assign(share, {
