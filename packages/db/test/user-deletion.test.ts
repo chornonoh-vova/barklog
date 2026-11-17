@@ -3,11 +3,13 @@ import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import { ensureUser } from "../src/queries/backlog.js";
+import { registerPushDevice } from "../src/queries/push-devices.js";
 import {
   deleteUser,
   isUserDeleted,
   recordUserDeletion,
   scrubSubscriptionEvents,
+  setReleaseAlertMinutes,
 } from "../src/queries/users.js";
 import * as schema from "../src/schema/index.js";
 import { truncateAll } from "../src/testing.js";
@@ -61,6 +63,13 @@ async function seed(): Promise<void> {
     type: "INITIAL_PURCHASE",
     payload: rawEvent,
   });
+  await registerPushDevice(db, {
+    token: "ExponentPushToken[delete-me]",
+    userId: USER,
+    locale: "en",
+    timeZone: "Europe/London",
+  });
+  await setReleaseAlertMinutes(db, USER, 600);
 }
 
 beforeEach(async () => {
@@ -72,12 +81,14 @@ afterAll(async () => {
   await close();
 });
 
-test("deleteUser cascades the backlog and the subscription", async () => {
+test("deleteUser cascades the backlog, the subscription and the push devices", async () => {
   await expect(deleteUser(db, USER)).resolves.toBe(true);
 
   expect(await db.select().from(schema.users)).toHaveLength(0);
   expect(await db.select().from(schema.backlogEntries)).toHaveLength(0);
   expect(await db.select().from(schema.subscriptions)).toHaveLength(0);
+  // The alert time and time zone live on the `users` row, gone above.
+  expect(await db.select().from(schema.pushDevices)).toHaveLength(0);
 });
 
 test("deleteUser is idempotent for an absent user", async () => {

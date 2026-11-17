@@ -30,7 +30,7 @@
 - **Locales are duplicated** as `PUSH_LOCALES` in `@repo/contracts` (contracts depends only on valibot) and held to `@repo/i18n`'s `LANGUAGES` by a parity test in `packages/i18n`, the same pattern as `packages/db/test/status-parity.test.ts`. The column is `text` without a check, so adding a language needs no migration.
 - **Responses:** `PUT` and `DELETE` push-devices answer `204`. `DELETE` is idempotent and only removes the caller's own token (another user's token: `204`, untouched). `PATCH /me/settings` answers `200 { releaseAlertMinutes }`.
 - **`GET /me`** reports `540` when the user has no `users` row yet (GETs never create one).
-- **Token validation:** a non-empty string of at most 200 characters; the format is Expo's concern. Time zone: at most 64 characters and accepted by `new Intl.DateTimeFormat("en", { timeZone })`, stored as sent.
+- **Token validation:** a non-empty string, nothing more, so an Expo format change cannot break registration (the 16 KB body limit bounds its size). Time zone: at most 64 characters and accepted by `new Intl.DateTimeFormat("en", { timeZone })`, stored as sent.
 - **Rate limits:** no new scope; the routes sit under the existing `overall` limit.
 
 ## Review Focus
@@ -121,7 +121,7 @@
 
 - [ ] **Step 1: Failing tests** (`me.test.ts`, using `v.safeParse`):
   - Settings accept `0`, `540`, `1410`; reject `-30`, `1440`, `45`, `540.5`, `"540"`, and `{}`; reject an extra key.
-  - Register accepts `{ token: "ExponentPushToken[abc-123_X]", locale: "uk", timeZone: "Europe/Kyiv" }` It rejects locale `"fr"`, time zone `"Mars/Olympus"`, an empty token, a 201-character token and an extra key.
+  - Register accepts `{ token: "ExponentPushToken[abc-123_X]", locale: "uk", timeZone: "Europe/Kyiv" }`. It rejects locale `"fr"`, time zone `"Mars/Olympus"`, an empty token and an extra key.
   - Parity (`languages-parity.test.ts`): `expect([...PUSH_LOCALES]).toEqual([...LANGUAGES])`.
 - [ ] **Step 2: Run** `pnpm --filter @repo/contracts test` and `pnpm --filter @repo/i18n test`. Expected: FAIL.
 - [ ] **Step 3: Implement**, then `pnpm install` for the new devDependency.
