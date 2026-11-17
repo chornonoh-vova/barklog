@@ -646,6 +646,9 @@ importers:
 
   packages/i18n:
     devDependencies:
+      '@repo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
