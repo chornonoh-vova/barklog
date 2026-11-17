@@ -202,8 +202,9 @@ dates or precisions on its own. Required by ADR-0010.
 app and the backend. Required by ADR-0011.
 
 - Holds the five languages (en, uk, ru, de, es) as i18next resources, split
-  into namespaces: `app` (everything in today's
-  `apps/mobile/src/lib/i18n/locales/*.json`, moved, not copied) and
+  into namespaces: `app` (the app's copy, moved from
+  `apps/mobile/src/lib/i18n/locales/*.json` to
+  `packages/i18n/src/locales/<lng>/app.json`, not copied) and
   `notifications` (the five release-alert notifications).
 - Exports the language list, `isLanguage`, `formatLocale` (the region-qualified
   formatting locale the app already uses) and the resource types used by

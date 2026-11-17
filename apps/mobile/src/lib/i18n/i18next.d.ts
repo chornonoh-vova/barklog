@@ -1,10 +1,10 @@
 import "i18next";
 
-import type en from "./locales/en.json";
+import type { AppResources } from "@repo/i18n";
 
 declare module "i18next" {
   interface CustomTypeOptions {
-    defaultNS: "translation";
-    resources: { translation: typeof en };
+    defaultNS: "app";
+    resources: { app: AppResources };
   }
 }

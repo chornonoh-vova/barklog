@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput",
     "test": "vitest run",
     "test:contract": "vitest run --config vitest.contract.config.ts",
     "lint": "eslint . --max-warnings 0",

@@ -36,6 +36,7 @@
           "imageWidth": 180
         }
       ],
+      "./plugins/with-unique-group-file-references",
       [
         "expo-sharing",
         {

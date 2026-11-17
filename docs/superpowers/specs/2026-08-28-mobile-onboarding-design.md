@@ -41,7 +41,7 @@ The [page definitions](../../../apps/mobile/src/features/onboarding/pages.ts)
 now contain **five** localized pages: welcome, backlog, Explore, shared links,
 and IGDB attribution. The first four use mascot illustrations hosted through
 `RNHostView`; attribution uses an SF Symbol and an `igdb.com` link. Copy comes
-from the [locale resources](../../../apps/mobile/src/lib/i18n/locales/en.json).
+from the [locale resources](../../../packages/i18n/src/locales/en/app.json).
 The original symbol-only, English, four-page proposal is historical.
 
 The [screen](../../../apps/mobile/src/features/onboarding/onboarding-screen.tsx)

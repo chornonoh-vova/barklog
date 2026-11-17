@@ -41,7 +41,7 @@ Manual checklists describe scenarios to run. Record the build and environment wi
 
 ## Historical plans
 
-All 18 existing [implementation plans](superpowers/plans) are retired records. Obsolete code copies, install commands, task checkboxes and expected test output were removed. Each record retains relevant rationale and points to maintained references and code; original implementation sequences remain recoverable in Git history. No active implementation plan is implied by this directory.
+All 19 existing [implementation plans](superpowers/plans) are retired records. Obsolete code copies, install commands, task checkboxes and expected test output were removed. Each record retains relevant rationale and points to maintained references and code; original implementation sequences remain recoverable in Git history. No active implementation plan is implied by this directory.
 
 ## Follow-up limits
 
