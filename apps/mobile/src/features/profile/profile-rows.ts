@@ -51,10 +51,7 @@ export function premiumRow(premium: boolean | undefined): PremiumRow {
   };
 }
 
-export function versionLine(
-  version: string | null,
-  build: string | null,
-): string {
+export function versionLine(version: string | null, build: string | null): string {
   const v = version ?? "";
   return build
     ? i18n.t("profile.version", { version: v, build })

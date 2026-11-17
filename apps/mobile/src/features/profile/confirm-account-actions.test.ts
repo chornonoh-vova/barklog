@@ -6,7 +6,9 @@ afterEach(() => jest.restoreAllMocks());
 
 describe("confirmSignOut", () => {
   function run(anchor: number | null) {
-    const sheet = jest.spyOn(ActionSheetIOS, "showActionSheetWithOptions").mockImplementation(() => {});
+    const sheet = jest
+      .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
+      .mockImplementation(() => {});
     const onConfirm = jest.fn();
     confirmSignOut(anchor, onConfirm);
     const [options, callback] = sheet.mock.calls[0]!;
