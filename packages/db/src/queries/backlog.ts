@@ -50,14 +50,23 @@ const ORDER_BY: Record<BacklogSort, SQL> = {
 };
 
 /**
- * False, and nothing written, for an id with an account-deletion tombstone
+ * False, and nothing left behind, for an id with an account-deletion tombstone
  * (ADR-0006): a session issued before the deletion must not bring the account
  * back through any write, the app's automatic push registration included.
+ *
+ * Checked again after the insert: one racing an uncommitted deletion sees no
+ * tombstone, waits on the deleted row, and inserts once the deletion commits.
+ * The second check sees the committed tombstone and removes that row.
  */
 export async function ensureUser(db: Queryable, userId: string): Promise<boolean> {
   if (await isUserDeleted(db, userId)) return false;
 
   await db.insert(users).values({ id: userId }).onConflictDoNothing();
+
+  if (await isUserDeleted(db, userId)) {
+    await db.delete(users).where(eq(users.id, userId));
+    return false;
+  }
 
   return true;
 }

@@ -210,3 +210,28 @@ test("ensureUser refuses a tombstoned id and creates nothing", async () => {
   await expect(ensureUser(db, USER)).resolves.toBe(false);
   expect(await db.select().from(schema.users)).toHaveLength(0);
 });
+
+test("ensureUser racing an uncommitted deletion does not recreate the account", async () => {
+  let commit!: () => void;
+  const released = new Promise<void>((resolve) => (commit = resolve));
+  let deleted!: () => void;
+  const deletedYet = new Promise<void>((resolve) => (deleted = resolve));
+
+  // The webhook's transaction: user row gone and tombstone written, not yet committed.
+  const deletion = db.transaction(async (tx) => {
+    await recordUserDeletion(tx, USER);
+    await deleteUser(tx, USER);
+    deleted();
+    await released;
+  });
+
+  await deletedYet;
+  // Sees no tombstone yet, then its insert waits on the deleted row's lock.
+  const write = ensureUser(db, USER);
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  commit();
+  await deletion;
+
+  await expect(write).resolves.toBe(false);
+  expect(await db.select().from(schema.users).where(eq(schema.users.id, USER))).toHaveLength(0);
+});
