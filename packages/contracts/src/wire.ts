@@ -56,12 +56,6 @@ export interface BacklogListResponse {
   items: BacklogListItemWire[];
 }
 
-export interface BacklogStatsWire {
-  total: number;
-  counts: Record<BacklogStatus, number>;
-  averageRating: number | null;
-}
-
 /**
  * Stable, machine-readable reasons a client can look up in its own copy. The
  * `title` and `detail` beside them stay English and stay sent, for builds that
