@@ -1,7 +1,7 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
 import { backlogItem, backlogList, gameDetail, gameList } from "@test/fixtures";
-import { navigationBarItem } from "@test/queries";
+import { navigationBars } from "@test/queries";
 
 import { fakeServer, markOnboardingSeen, renderApp, requests } from "./app";
 
@@ -125,6 +125,17 @@ describe("Profile tab", () => {
     expect(screen).toHavePathname("/profile");
   });
 
+  it("opens About Barklog in the Profile stack", async () => {
+    fakeServer();
+    await renderApp("/profile");
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole("button", { name: "About Barklog" }));
+
+    expect(screen).toHaveSegments(["(tabs)", "profile", "about"]);
+    expect(await screen.findByText("Privacy Policy")).toBeOnTheScreen();
+  });
+
   it.each([
     ["/", "Your backlog is empty"],
     ["/explore", "Most Popular"],
@@ -138,8 +149,11 @@ describe("Profile tab", () => {
     await renderApp(path);
     await screen.findByText(loaded);
 
-    expect(navigationBarItem("Open account")).toBeUndefined();
-    expect(navigationBarItem("Get Barklog Premium")).toBeUndefined();
-    expect(navigationBarItem("Barklog Premium, manage subscription")).toBeUndefined();
+    // By symbol, not label: the old labels no longer exist in any locale, so a
+    // returning account button or star would slip past a label check.
+    const symbols = (navigationBars()[0]?.items ?? []).map((item) => item.sfSymbolName);
+    expect(symbols).not.toContain("person.crop.circle");
+    expect(symbols).not.toContain("star");
+    expect(symbols).not.toContain("star.fill");
   });
 });

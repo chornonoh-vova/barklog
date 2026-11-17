@@ -1,14 +1,14 @@
 import { accountRowText, premiumRow, versionLine } from "./profile-rows";
 
 describe("accountRowText", () => {
-  it("uses the full name with the email as subtitle", () => {
+  it("leads with the full name and describes what the row manages", () => {
     expect(
       accountRowText({
         fullName: "Ada Lovelace",
         primaryEmailAddress: "ada@x.io",
         imageUrl: null,
       }),
-    ).toEqual({ title: "Ada Lovelace", subtitle: "ada@x.io" });
+    ).toEqual({ title: "Ada Lovelace", subtitle: "Profile, email and security" });
   });
 
   it("falls back to the email when there is no name", () => {
@@ -18,7 +18,7 @@ describe("accountRowText", () => {
         primaryEmailAddress: "ada@x.io",
         imageUrl: null,
       }),
-    ).toEqual({ title: "ada@x.io", subtitle: null });
+    ).toEqual({ title: "ada@x.io", subtitle: "Profile, email and security" });
   });
 
   it("treats a blank name as missing", () => {
@@ -28,7 +28,7 @@ describe("accountRowText", () => {
         primaryEmailAddress: "ada@x.io",
         imageUrl: null,
       }),
-    ).toEqual({ title: "ada@x.io", subtitle: null });
+    ).toEqual({ title: "ada@x.io", subtitle: "Profile, email and security" });
   });
 
   it("falls back to a generic title with neither", () => {
@@ -38,7 +38,7 @@ describe("accountRowText", () => {
         primaryEmailAddress: null,
         imageUrl: null,
       }),
-    ).toEqual({ title: "Account", subtitle: null });
+    ).toEqual({ title: "Account", subtitle: "Profile, email and security" });
   });
 });
 
@@ -70,10 +70,10 @@ describe("premiumRow", () => {
 
 describe("versionLine", () => {
   it("includes the build when known", () => {
-    expect(versionLine("1.4.0", "123")).toBe("Barklog 1.4.0 (123)");
+    expect(versionLine("1.4.0", "123")).toBe("Version 1.4.0 (123)");
   });
 
   it("omits the build when unknown", () => {
-    expect(versionLine("1.4.0", null)).toBe("Barklog 1.4.0");
+    expect(versionLine("1.4.0", null)).toBe("Version 1.4.0");
   });
 });

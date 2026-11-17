@@ -26,7 +26,7 @@ function deferred() {
 }
 
 beforeEach(() => {
-  jest.mocked(confirmSignOut).mockImplementation((_anchor, onConfirm) => onConfirm());
+  jest.mocked(confirmSignOut).mockImplementation((onConfirm) => onConfirm());
   jest.mocked(confirmDeleteAccount).mockImplementation((onConfirm) => onConfirm());
   jest.spyOn(Alert, "alert").mockImplementation(() => {});
 });
@@ -34,14 +34,14 @@ beforeEach(() => {
 describe("signOut", () => {
   it("signs out once confirmed", async () => {
     const { result } = await setup();
-    await act(async () => result.current.signOut(null));
+    await act(async () => result.current.signOut());
     expect(clerk.signOut).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing when cancelled", async () => {
     jest.mocked(confirmSignOut).mockImplementation(() => {});
     const { result } = await setup();
-    await act(async () => result.current.signOut(3));
+    await act(async () => result.current.signOut());
     expect(clerk.signOut).not.toHaveBeenCalled();
   });
 });

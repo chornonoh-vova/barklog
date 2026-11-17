@@ -10,7 +10,10 @@ export default function ProfileRoute() {
   return (
     <>
       <Stack.Title large>{t("tabs.profile")}</Stack.Title>
-      <ProfileScreen onOpenAccount={() => router.push("/profile/account")} />
+      <ProfileScreen
+        onOpenAccount={() => router.push("/profile/account")}
+        onOpenAbout={() => router.push("/profile/about")}
+      />
     </>
   );
 }

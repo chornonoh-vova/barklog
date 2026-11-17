@@ -1,41 +1,25 @@
-import { ActionSheetIOS, Alert } from "react-native";
+import { Alert } from "react-native";
 
 import { confirmDeleteAccount, confirmSignOut } from "@/features/profile/confirm-account-actions";
 
 afterEach(() => jest.restoreAllMocks());
 
 describe("confirmSignOut", () => {
-  function run(anchor: number | null) {
-    const sheet = jest
-      .spyOn(ActionSheetIOS, "showActionSheetWithOptions")
-      .mockImplementation(() => {});
+  it("asks in a centred alert, like Delete Account, and confirms only on Sign Out", () => {
+    const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
     const onConfirm = jest.fn();
-    confirmSignOut(anchor, onConfirm);
-    const [options, callback] = sheet.mock.calls[0]!;
-    return { options, callback, onConfirm };
-  }
 
-  it("shows a destructive sign out sheet", () => {
-    const { options, onConfirm } = run(7);
-    expect(options).toEqual({
-      title: "Sign out of Barklog?",
-      options: ["Sign Out", "Cancel"],
-      destructiveButtonIndex: 0,
-      cancelButtonIndex: 1,
-      anchor: 7,
-    });
+    confirmSignOut(onConfirm);
+
+    const [title, message, buttons] = alert.mock.calls[0]!;
+    expect(title).toBe("Sign out of Barklog?");
+    expect(message).toContain("stays saved");
+    expect(buttons).toEqual([
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign Out", style: "destructive", onPress: onConfirm },
+    ]);
     expect(onConfirm).not.toHaveBeenCalled();
-  });
-
-  it("omits the anchor when there is none", () => {
-    expect(run(null).options.anchor).toBeUndefined();
-  });
-
-  it("confirms only on the sign out button", () => {
-    const { callback, onConfirm } = run(null);
-    callback(1);
-    expect(onConfirm).not.toHaveBeenCalled();
-    callback(0);
+    buttons![1]!.onPress!();
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });

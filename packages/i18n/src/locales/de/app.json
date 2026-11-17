@@ -15,22 +15,41 @@
   "profile": {
     "getPremium": "Barklog Premium holen",
     "account": "Konto",
+    "accountSubtitle": "Profil, E-Mail und Sicherheit",
     "premium": "Barklog Premium",
     "premiumActive": "Aktiv",
     "premiumActiveLabel": "Barklog Premium, aktiv",
     "signOut": "Abmelden",
     "signOutTitle": "Von Barklog abmelden?",
+    "signOutMessage": "Dein Backlog bleibt in deinem Konto gespeichert. Melde dich wieder an, um weiterzumachen.",
     "deleteAccount": "Konto löschen",
     "deleteTitle": "Konto löschen?",
     "deleteMessage": "Dein Backlog, deine Bewertungen und Release-Hinweise werden dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.\n\nDas Löschen deines Kontos kündigt ein Barklog-Premium-Abo nicht. Kündige es in deinen App-Store-Abonnements.",
     "deleteFailedTitle": "Konto konnte nicht gelöscht werden",
     "deleteFailedMessage": "Etwas ist schiefgelaufen. Versuche es gleich noch einmal.",
-    "version": "Barklog {{version}} ({{build}})",
-    "versionNoBuild": "Barklog {{version}}",
+    "version": "Version {{version}} ({{build}})",
+    "versionNoBuild": "Version {{version}}",
     "reverifyTitle": "Bestätige, dass du es bist",
     "reverifyMessage": "Melde dich zu deiner Sicherheit erneut an, bevor du dein Konto löschst. Öffne in deinem Konto „Sicherheit“ und dann „Konto löschen“.",
     "reverifyContinue": "Weiter",
-    "deleting": "Wird gelöscht"
+    "deletingLabel": "Konto löschen, wird gelöscht",
+    "rateApp": "Barklog bewerten",
+    "feedback": "Funktion vorschlagen oder Fehler melden",
+    "about": "Über Barklog"
+  },
+  "about": {
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen",
+    "support": "Support",
+    "igdb": "Spieldaten von IGDB",
+    "source": "Quellcode",
+    "creator": "Erstellt von Volodymyr Chornonoh",
+    "ukraine": "Entworfen und entwickelt in der Ukraine 🇺🇦"
+  },
+  "feedback": {
+    "detailsIntro": "Die Angaben unten helfen mir, deiner Anfrage nachzugehen. Entferne alles, was du nicht teilen möchtest.",
+    "noMailTitle": "Mail konnte nicht geöffnet werden",
+    "noMailMessage": "Schreib an {{email}} aus einer beliebigen Mail-App."
   },
   "status": {
     "waiting": "Wartet",

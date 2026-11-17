@@ -81,43 +81,79 @@ deletion flow" is not possible as such.
 ## Shipping
 
 Ships on its own from `main` as an app release, ahead of the release alerts
-work, because it is the App Review 5.1.1(v) fix. That release has only the
-account group (account + Premium), Sign Out, Delete Account and the version
-footer. Stats (#82) and Release alerts (#83) arrive in later releases in the
+work, because it is the App Review 5.1.1(v) fix. That release has the account
+group (account + Premium), Rate Barklog, About Barklog, Sign Out and Delete
+Account. Stats (#82) and Release alerts (#83) arrive in later releases in the
 positions fixed below; this deviates from step 4 of the release alerts
 rollout, which bundled the Profile tab with notifications.
+
+The website's privacy, support and terms pages already describe Profile →
+Delete Account, so deploy the site together with this app release, not before.
+The delete alert names release alerts among the data removed; that is
+intended, since #83 follows in a later release and the copy need not change
+then.
 
 ## Screen
 
 ```
 Profile                                  (large title, no toolbar items)
 ┌───────────────────────────────────────┐
-│ (avatar)  Name                        │
-│           email@example.com         › │  → Clerk profile (pushed)
+│ (avatar)  **Name**                    │  title3, semibold
+│           Profile, email and security › │  → Clerk profile (pushed)
 ├───────────────────────────────────────┤
-│ ★  Barklog Premium             Active │  subscriber → Customer Center
-│ ☆  Get Barklog Premium                │  free → paywall
+│ [★] Barklog Premium            Active │  orange tile; → Customer Center
+│ [☆] Get Barklog Premium               │  orange tile; → paywall
 └───────────────────────────────────────┘
  STATS                                       (#82)
  RELEASE ALERTS                              (#83)
 ┌───────────────────────────────────────┐
-│ ⇥  Sign Out                           │  normal tint
+│ [💬] Rate Barklog                    ↗ │  blue tile; → App Store review
+│ [✈] Request a Feature or Report an Issue │  green tile; → mail compose sheet
 └───────────────────────────────────────┘
 ┌───────────────────────────────────────┐
-│ 🗑  Delete Account                     │  red
+│ [i] About Barklog                   › │  indigo tile; → About (pushed)
 └───────────────────────────────────────┘
-            Barklog 1.4.0 (123)
+┌───────────────────────────────────────┐
+│ [⇥] Sign Out                          │  grey tile
+└───────────────────────────────────────┘
+┌───────────────────────────────────────┐
+│ [🗑] Delete Account                    │  red tile, red text
+└───────────────────────────────────────┘
 ```
 
 A grouped, inset list like iOS Settings, built with `@expo/ui` SwiftUI
-(`Form`/`List`, `Section`, `Button`, `ConfirmationDialog`, `Alert`) so it gets
+(`Form`, `Section`, `Button`) and React Native `Alert` for confirmations, so it gets
 native row metrics, Dynamic Type and dark mode. Section order is fixed: account
-group, Stats, Release alerts, later settings, Sign Out, Delete Account, version
-footer. A section with no content yet is simply absent, never an empty header.
+group, Stats, Release alerts, later settings, Rate Barklog and Feedback, About,
+Sign Out, Delete Account. A section with no content yet is simply absent, never an empty header.
+
+Rows follow Expo UI's
+[iOS Settings recipe](https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/#ios-settings-app)
+(design review, 2026-11-17): `plain` buttons, so the tint no longer turns every
+row into a blue link; text in hierarchical styles
+([secondary text styling](https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/#secondary-text-styling)),
+which follow light and dark mode; and a white symbol on a 28 pt rounded tile in
+an iOS system colour (`systemOrange`, `systemBlue`, `systemGreen`, `systemIndigo`, `systemGray`,
+`systemRed`),
+which have their own dark variants, as Settings' tiles do. Delete Account's text
+is system red. Each row carries an explicit accessibility label, so VoiceOver
+never reads a tile's symbol name.
+
+### Rate Barklog
+
+Added in design review (2026-11-17). Opens the App Store page from
+`ios.appStoreUrl` in `app.json` (read with `StoreReview.storeUrl()`) with
+`action=write-review` added, and has a trailing `arrow.up.forward` because it
+leaves the app. The row is left out of a build without a store URL.
+`expo-application` cannot supply this: it exposes the bundle id, version and
+build, not the App Store's numeric id. Not `StoreReview.requestReview()`: Apple forbids asking for the
+system rating prompt from a button, and the system may show nothing. The
+automatic prompt stays with `useReviewPrompt`.
 
 ### Tab
 
-- Fourth `NativeTabs` trigger after Search: label "Profile",
+- Fourth `NativeTabs` trigger, placed before Search so Search stays the
+  rightmost tab (design review, 2026-11-17): label "Profile",
   `person.crop.circle` / `person.crop.circle.fill`, Material `person`.
 - Route `src/app/(tabs)/profile/` with its own `Stack`, like Explore; screen in
   `src/features/profile/`.
@@ -130,9 +166,12 @@ footer. A section with no content yet is simply absent, never an empty header.
 
 - **Account row**: avatar (Clerk `imageUrl`; Clerk generates a default image
   when the user has no photo, so the `person.crop.circle.fill` symbol shows
-  only when there is no image URL at all), full name or, if absent, the primary email as the
-  title, with the email as a secondary line when a name exists. Disclosure
-  chevron (the only row with one).
+  only when there is no image URL at all). Title: full name in `title3`
+  semibold, like Settings' Apple Account row, or the primary email if there is
+  no name. Subtitle, in hierarchical secondary: what the row manages, "Profile,
+  email and security" (changed 2026-11-17; it showed the email before).
+  Disclosure chevron, like About Barklog; the rows that leave the app have
+  `arrow.up.forward` instead.
 - Tapping **pushes** `UserProfileView` on the Profile stack, with the route's
   header hidden, `isDismissible={false}` and `onHostBack={() => router.back()}`,
   so Clerk's own navigation chrome and swipe-back take over. This replaces the
@@ -165,23 +204,20 @@ subscriptions from a settings-like place, as on iOS.
 
 ### Sign Out
 
-- Own section, `rectangle.portrait.and.arrow.right`, normal tint (not red), so
-  it reads differently from Delete Account.
-- Tapping shows a **confirmation dialog** (action sheet; designed as a popover
-  anchored to the row on iPad, but see the known limitation below): title "Sign out of Barklog?", buttons "Sign Out"
-  (destructive) and Cancel. An action sheet is HIG's form for confirming a
-  destructive action the person started; sign-out is recoverable, so it gets
-  the lighter form.
+- Own section, `rectangle.portrait.and.arrow.right` on a grey tile, text in the
+  primary style (not red), so it reads differently from Delete Account.
+- Tapping shows an **alert**, the same form as Delete Account: title "Sign
+  out of Barklog?", a message that the backlog stays saved in the account,
+  and buttons Cancel and "Sign Out" (destructive). Changed in design review
+  (2026-11-17): it was an action sheet, which on iPad could not anchor to its
+  row and appeared as a centred sheet; one form for both account actions reads
+  more consistently.
 - Confirming calls Clerk `signOut()`; the auth gate clears personal data per
   ADR-0004, exactly as when signing out from Clerk's view.
-- **Known limitation (as built):** the dialog has no anchor, because the
-  `@expo/ui` `Button` exposes no view handle. On iPad it therefore appears as
-  a centered sheet rather than a popover from the row. Revisit if `@expo/ui`
-  exposes an anchor.
 
 ### Delete Account
 
-- Own section, last, `trash`, red (destructive role).
+- Own section, last, `trash.fill` on a red tile, red text (destructive role).
 - Tapping shows an **alert**:
   - title "Delete your account?";
   - message: the backlog, ratings and release alerts are permanently deleted
@@ -218,7 +254,7 @@ Per the [haptic rule](2026-08-27-barklog-mobile-design.md#haptics)
 
 | Event                         | Haptic                                         |
 | ----------------------------- | ---------------------------------------------- |
-| Sign out confirmed            | none (the dialog and sign-in screen are it)    |
+| Sign out confirmed            | none (the alert and sign-in screen are it)     |
 | Account deleted               | none (the alert and sign-in screen are it)     |
 | Account deletion failed       | error, via `writeFailed`, with the error alert |
 | Rows, navigation, Premium row | none / native                                  |
@@ -230,10 +266,46 @@ Per the [haptic rule](2026-08-27-barklog-mobile-design.md#haptics)
 - Strings `profile.openAccount` and the star's accessibility labels go; new
   `profile.*` strings are added in all five locales.
 
-### Version footer
+### Request a Feature or Report an Issue
 
-"Barklog {version} ({build})" from `expo-constants`/native app info, small and
-secondary, below the last section. Selectable is not required.
+Added in design review (2026-11-17), in one section with Rate Barklog. A
+`paperplane.fill` row that opens the system mail compose sheet
+(`expo-mail-composer`) inside the app, to `chernonog.vova+barklog@gmail.com`
+with the subject "Feedback About Barklog" (English: it is for the developer's
+inbox). The body is empty space to write in, then a "—" line, one translated
+sentence asking the user to keep or remove the details, and English-labelled
+details: app version and build, OTA update id and channel, iPhone or iPad with
+the iOS version, app language, Clerk user id and Premium status. Everything is
+visible and editable before sending; nothing is sent automatically. Without
+Mail set up it falls back to a `mailto:` link (the user's default mail app),
+and with no mail app at all an alert gives the address.
+
+### About Barklog
+
+Added in design review (2026-11-17); replaces the version footer that closed
+the Profile tab. A pushed screen in the Profile stack (`profile/about`):
+
+- Header: the mascot, "Barklog" and "Version {version} ({build})" from
+  `expo-application` (`nativeApplicationVersion`, `nativeBuildVersion`): the
+  installed binary's own values, which an over-the-air update cannot change
+  (`expo-constants`' `expoConfig.version` comes from the update manifest).
+- Privacy Policy, Terms of Use, Support (`barklog.gg/privacy`, `/terms`,
+  `/support`): App Review expects privacy and terms reachable inside the app
+  (5.1.1(i), 3.1.2), and the paywall, the only other place, is never seen again
+  by a subscriber.
+- Game data by IGDB (`igdb.com`), the credit IGDB's terms ask for, and Source
+  code (the GitHub repository the website already links).
+- Every link opens outside the app (`expo-linking`), as the share feature
+  does; no in-app browser dependency.
+- Last section: "Created by Volodymyr Chornonoh" linking to
+  `chornonoh-vova.com`, with the footer "Designed and developed in Ukraine 🇺🇦",
+  centred. The name stays in Latin script in every language.
+- Side effect of adding `expo-application`: `@clerk/expo` loads it when
+  present, then sends `x-bundle-id` and `x-app-version` on its requests and
+  enforces any minimum app version set on the Clerk instance (blocking with
+  its update screen). Neither instance sets one: on 2026-11-17 neither
+  `/v1/environment` had a `minimum_supported_version` under
+  `auth_config.native_settings`. Setting one later now takes effect.
 
 ## Accessibility
 

@@ -55,13 +55,19 @@ function Text({ modifiers, children }: Base) {
   return <RNText accessibilityLabel={labelOf(modifiers)}>{children}</RNText>;
 }
 
-function Label({ title, systemImage, modifiers }: Base & { title: string; systemImage?: string }) {
+/** `children` is the custom title view and wins over `title`, as natively. */
+function Label({
+  title,
+  systemImage,
+  modifiers,
+  children,
+}: Base & { title?: string; systemImage?: string }) {
   if (isHidden(modifiers)) return null;
 
   return (
     <>
       {systemImage === undefined ? null : <View testID={`symbol-${systemImage}`} />}
-      <RNText accessibilityLabel={labelOf(modifiers)}>{title}</RNText>
+      {children ?? <RNText accessibilityLabel={labelOf(modifiers)}>{title}</RNText>}
     </>
   );
 }

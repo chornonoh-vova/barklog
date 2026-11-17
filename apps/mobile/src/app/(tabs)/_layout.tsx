@@ -19,6 +19,14 @@ export default function TabsLayout() {
         <Icon sf={{ default: "safari", selected: "safari.fill" }} md="explore" />
       </Trigger>
 
+      <Trigger name="profile">
+        <Label>{t("tabs.profile")}</Label>
+        <Icon
+          sf={{ default: "person.crop.circle", selected: "person.crop.circle.fill" }}
+          md="person"
+        />
+      </Trigger>
+
       {/* No automatic activation: it morphs the tab bar into a search field,
           but the bar is `stacked` in the header with toolbar integration off,
           so on iPhone that field could appear without a search bar behind it
@@ -27,14 +35,6 @@ export default function TabsLayout() {
       <Trigger name="search" role="search" disableAutomaticSearchActivation>
         <Label>{t("tabs.search")}</Label>
         <Icon sf="magnifyingglass" md="search" />
-      </Trigger>
-
-      <Trigger name="profile">
-        <Label>{t("tabs.profile")}</Label>
-        <Icon
-          sf={{ default: "person.crop.circle", selected: "person.crop.circle.fill" }}
-          md="person"
-        />
       </Trigger>
     </NativeTabs>
   );

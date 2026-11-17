@@ -124,6 +124,8 @@ export const observe = {
 export const storeReview = {
   hasAction: jest.fn(async () => true),
   requestReview: jest.fn(async () => undefined),
+  /** What `ios.appStoreUrl` in app.json gives a real build. */
+  storeUrl: jest.fn((): string | null => "https://apps.apple.com/app/barklog/id6807319879"),
 };
 
 // --- expo-widgets -----------------------------------------------------------
@@ -179,4 +181,5 @@ export function resetNative(): void {
     error: null,
   });
   storeReview.hasAction.mockImplementation(async () => true);
+  storeReview.storeUrl.mockImplementation(() => "https://apps.apple.com/app/barklog/id6807319879");
 }

@@ -1,24 +1,17 @@
-import { ActionSheetIOS, Alert } from "react-native";
+import { Alert } from "react-native";
 
 import { i18n } from "@/lib/i18n/instance";
 
 /**
- * Sign out is reversible, so it gets an action sheet. `anchor` is the pressed
- * row's node handle, which iPad needs to place the popover; iPhone ignores it.
+ * The same centred alert as Delete Account, so both account actions confirm
+ * the same way. The message says nothing is lost: signing out is undone by
+ * signing back in.
  */
-export function confirmSignOut(anchor: number | null, onConfirm: () => void): void {
-  ActionSheetIOS.showActionSheetWithOptions(
-    {
-      title: i18n.t("profile.signOutTitle"),
-      options: [i18n.t("profile.signOut"), i18n.t("common.cancel")],
-      destructiveButtonIndex: 0,
-      cancelButtonIndex: 1,
-      anchor: anchor ?? undefined,
-    },
-    (index) => {
-      if (index === 0) onConfirm();
-    },
-  );
+export function confirmSignOut(onConfirm: () => void): void {
+  Alert.alert(i18n.t("profile.signOutTitle"), i18n.t("profile.signOutMessage"), [
+    { text: i18n.t("common.cancel"), style: "cancel" },
+    { text: i18n.t("profile.signOut"), style: "destructive", onPress: onConfirm },
+  ]);
 }
 
 /** Deletion is permanent, and does not cancel an App Store subscription. */

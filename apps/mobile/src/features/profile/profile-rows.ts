@@ -6,17 +6,13 @@ export type AccountUser = {
   imageUrl: string | null;
 };
 
-/** The account row leads with the name; the email only stands in when there is none. */
-export function accountRowText(user: AccountUser): {
-  title: string;
-  subtitle: string | null;
-} {
+/** The account row leads with the name, like Settings' Apple Account row; the
+ * email stands in when there is none. The subtitle says what the row manages. */
+export function accountRowText(user: AccountUser): { title: string; subtitle: string } {
   const name = user.fullName?.trim() || null;
-  const email = user.primaryEmailAddress;
+  const subtitle = i18n.t("profile.accountSubtitle");
 
-  if (name) return { title: name, subtitle: email };
-  if (email) return { title: email, subtitle: null };
-  return { title: i18n.t("profile.account"), subtitle: null };
+  return { title: name ?? user.primaryEmailAddress ?? i18n.t("profile.account"), subtitle };
 }
 
 export type PremiumRow = {

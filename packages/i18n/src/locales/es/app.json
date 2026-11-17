@@ -15,22 +15,41 @@
   "profile": {
     "getPremium": "Obtener Barklog Premium",
     "account": "Cuenta",
+    "accountSubtitle": "Perfil, correo y seguridad",
     "premium": "Barklog Premium",
     "premiumActive": "Activo",
     "premiumActiveLabel": "Barklog Premium, activo",
     "signOut": "Cerrar sesión",
     "signOutTitle": "¿Cerrar sesión en Barklog?",
+    "signOutMessage": "Tu backlog sigue guardado en tu cuenta. Vuelve a iniciar sesión para continuar donde lo dejaste.",
     "deleteAccount": "Eliminar cuenta",
     "deleteTitle": "¿Eliminar tu cuenta?",
-    "deleteMessage": "Tu lista de pendientes, tus valoraciones y tus avisos de lanzamiento se eliminarán de forma permanente. Esta acción no se puede deshacer.\n\nEliminar tu cuenta no cancela la suscripción a Barklog Premium. Cancélala en tus suscripciones de la App Store.",
+    "deleteMessage": "Tu backlog, tus valoraciones y tus avisos de lanzamiento se eliminarán de forma permanente. Esta acción no se puede deshacer.\n\nEliminar tu cuenta no cancela la suscripción a Barklog Premium. Cancélala en tus suscripciones de la App Store.",
     "deleteFailedTitle": "No se pudo eliminar tu cuenta",
     "deleteFailedMessage": "Algo salió mal. Inténtalo de nuevo en un momento.",
-    "version": "Barklog {{version}} ({{build}})",
-    "versionNoBuild": "Barklog {{version}}",
+    "version": "Versión {{version}} ({{build}})",
+    "versionNoBuild": "Versión {{version}}",
     "reverifyTitle": "Confirma que eres tú",
     "reverifyMessage": "Por tu seguridad, vuelve a iniciar sesión antes de eliminar tu cuenta. En tu cuenta, abre Seguridad y luego Eliminar cuenta.",
     "reverifyContinue": "Continuar",
-    "deleting": "Eliminando"
+    "deletingLabel": "Eliminar cuenta, eliminando",
+    "rateApp": "Valorar Barklog",
+    "feedback": "Sugerir una función o informar de un problema",
+    "about": "Acerca de Barklog"
+  },
+  "about": {
+    "privacy": "Política de privacidad",
+    "terms": "Términos de uso",
+    "support": "Soporte",
+    "igdb": "Datos de juegos de IGDB",
+    "source": "Código fuente",
+    "creator": "Creado por Volodymyr Chornonoh",
+    "ukraine": "Diseñado y desarrollado en Ucrania 🇺🇦"
+  },
+  "feedback": {
+    "detailsIntro": "Los datos de abajo me ayudan a revisar tu solicitud. Borra lo que prefieras no compartir.",
+    "noMailTitle": "No se pudo abrir Mail",
+    "noMailMessage": "Escribe a {{email}} desde cualquier app de correo."
   },
   "status": {
     "waiting": "Pendiente",

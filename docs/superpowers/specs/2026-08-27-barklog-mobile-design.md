@@ -18,8 +18,9 @@ onboarding mascot and screenshot viewer use it.
 The [root layout](../../../apps/mobile/src/app/_layout.tsx) installs Clerk, query,
 API, purchases and theme providers. Onboarding precedes authentication. The
 signed-in tree contains the tab stack and a widget observer; shared links and the
-paywall are modal routes. The tabs are Home, Explore, Search and Profile. Each has
-its own game-detail route so pushing a game preserves the tab's back history;
+paywall are modal routes. The tabs are Home, Explore, Profile and Search (Search
+stays rightmost). Home, Explore and Search each have their own game-detail route
+so pushing a game preserves the tab's back history;
 the share modal has a fourth detail route. Routes wire parameters and navigation
 into feature screens, as required by the [mobile guide](../../../apps/mobile/AGENTS.md).
 

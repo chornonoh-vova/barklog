@@ -13,7 +13,7 @@ function isReverificationRequired(error: unknown): boolean {
 }
 
 export interface AccountActions {
-  signOut(anchor: number | null): void;
+  signOut(): void;
   deleteAccount(): void;
   isDeleting: boolean;
 }
@@ -31,14 +31,11 @@ export function useAccountActions(options: {
   const [isDeleting, setIsDeleting] = useState(false);
   const inFlight = useRef(false);
 
-  const signOut = useCallback(
-    (anchor: number | null) => {
-      confirmSignOut(anchor, () => {
-        void clerk.signOut();
-      });
-    },
-    [clerk],
-  );
+  const signOut = useCallback(() => {
+    confirmSignOut(() => {
+      void clerk.signOut();
+    });
+  }, [clerk]);
 
   const deleteAccount = useCallback(() => {
     confirmDeleteAccount(() => {

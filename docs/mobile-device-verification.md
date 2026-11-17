@@ -42,8 +42,14 @@ Use the appropriate configured RevenueCat test or App Store environment.
 - [ ] **Profile tab:** the large title collapses and the tab bar minimizes on
       scroll. On iPad the tab sits in the sidebar and the list is not
       uncomfortably wide (cap with `frame(maxWidth)` if rows stretch).
-      Sign Out from the row shows an action sheet (Cancel keeps the session), and
+      Sign Out from the row shows an alert like Delete Account (Cancel keeps the session), and
       Sign Out also works from inside the pushed Clerk profile view.
+- [ ] **Profile rows:** icon tiles and text read correctly in light and dark
+      mode. Rate Barklog opens the App Store on the review composer (device
+      only; the simulator has no App Store). About Barklog shows the installed
+      version and build, and each of its links opens in Safari. Request a
+      Feature or Report an Issue opens the Mail sheet with the address, subject
+      and details filled in; with Mail signed out, it opens the default mail app.
 - [ ] **Account deletion, fresh session:** Profile, Delete Account, confirm the
       alert; the account is deleted and the app returns to sign-in.
 - [ ] **Account deletion, stale session:** with a session older than Clerk's

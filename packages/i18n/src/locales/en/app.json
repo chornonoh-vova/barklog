@@ -15,22 +15,41 @@
   "profile": {
     "getPremium": "Get Barklog Premium",
     "account": "Account",
+    "accountSubtitle": "Profile, email and security",
     "premium": "Barklog Premium",
     "premiumActive": "Active",
     "premiumActiveLabel": "Barklog Premium, active",
     "signOut": "Sign Out",
     "signOutTitle": "Sign out of Barklog?",
+    "signOutMessage": "Your backlog stays saved in your account. Sign in again to pick up where you left off.",
     "deleteAccount": "Delete Account",
     "deleteTitle": "Delete your account?",
     "deleteMessage": "Your backlog, ratings and release alerts will be permanently deleted. This can't be undone.\n\nDeleting your account doesn't cancel a Barklog Premium subscription. Cancel it in your App Store subscriptions.",
     "deleteFailedTitle": "Couldn't delete your account",
     "deleteFailedMessage": "Something went wrong. Try again in a moment.",
-    "version": "Barklog {{version}} ({{build}})",
-    "versionNoBuild": "Barklog {{version}}",
+    "version": "Version {{version}} ({{build}})",
+    "versionNoBuild": "Version {{version}}",
     "reverifyTitle": "Confirm it's you",
     "reverifyMessage": "For your security, sign in again before deleting your account. In your account, open Security, then Delete account.",
     "reverifyContinue": "Continue",
-    "deleting": "Deleting"
+    "deletingLabel": "Delete Account, deleting",
+    "rateApp": "Rate Barklog",
+    "feedback": "Request a Feature or Report an Issue",
+    "about": "About Barklog"
+  },
+  "about": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "support": "Support",
+    "igdb": "Game data by IGDB",
+    "source": "Source code",
+    "creator": "Created by Volodymyr Chornonoh",
+    "ukraine": "Designed and developed in Ukraine 🇺🇦"
+  },
+  "feedback": {
+    "detailsIntro": "The details below help me look into your request. Remove anything you'd rather not share.",
+    "noMailTitle": "Couldn't open Mail",
+    "noMailMessage": "Write to {{email}} from any mail app."
   },
   "status": {
     "waiting": "Waiting",

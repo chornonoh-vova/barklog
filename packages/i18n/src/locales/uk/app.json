@@ -15,22 +15,41 @@
   "profile": {
     "getPremium": "Отримати Barklog Premium",
     "account": "Акаунт",
+    "accountSubtitle": "Профіль, пошта та безпека",
     "premium": "Barklog Premium",
     "premiumActive": "Активна",
     "premiumActiveLabel": "Barklog Premium, активна",
     "signOut": "Вийти",
     "signOutTitle": "Вийти з Barklog?",
+    "signOutMessage": "Твій беклог залишиться в акаунті. Увійди знову, щоб продовжити з того ж місця.",
     "deleteAccount": "Видалити акаунт",
     "deleteTitle": "Видалити акаунт?",
     "deleteMessage": "Твій беклог, оцінки та сповіщення про релізи буде видалено назавжди. Це неможливо скасувати.\n\nВидалення акаунта не скасовує підписку Barklog Premium. Скасуй її в підписках App Store.",
     "deleteFailedTitle": "Не вдалося видалити акаунт",
     "deleteFailedMessage": "Щось пішло не так. Спробуй ще раз трохи згодом.",
-    "version": "Barklog {{version}} ({{build}})",
-    "versionNoBuild": "Barklog {{version}}",
+    "version": "Версія {{version}} ({{build}})",
+    "versionNoBuild": "Версія {{version}}",
     "reverifyTitle": "Підтверди, що це ти",
     "reverifyMessage": "З міркувань безпеки увійди знову, перш ніж видаляти акаунт. В акаунті відкрий «Безпека», потім «Видалити обліковий запис».",
     "reverifyContinue": "Продовжити",
-    "deleting": "Видаляється"
+    "deletingLabel": "Видалити акаунт, видаляється",
+    "rateApp": "Оцінити Barklog",
+    "feedback": "Запропонувати функцію або повідомити про проблему",
+    "about": "Про Barklog"
+  },
+  "about": {
+    "privacy": "Політика конфіденційності",
+    "terms": "Умови використання",
+    "support": "Підтримка",
+    "igdb": "Дані про ігри — IGDB",
+    "source": "Вихідний код",
+    "creator": "Автор: Volodymyr Chornonoh",
+    "ukraine": "Спроєктовано й розроблено в Україні 🇺🇦"
+  },
+  "feedback": {
+    "detailsIntro": "Дані нижче допоможуть мені розібратися з твоїм запитом. Видали все, чим не хочеш ділитися.",
+    "noMailTitle": "Не вдалося відкрити пошту",
+    "noMailMessage": "Напиши на {{email}} з будь-якого поштового застосунку."
   },
   "status": {
     "waiting": "У черзі",
