@@ -121,8 +121,10 @@ footer. A section with no content yet is simply absent, never an empty header.
   `person.crop.circle` / `person.crop.circle.fill`, Material `person`.
 - Route `src/app/(tabs)/profile/` with its own `Stack`, like Explore; screen in
   `src/features/profile/`.
-- iPad: with `sidebarAdaptable` it appears as a sidebar item. The list stays a
-  single readable column (the existing column-width helpers), not full width.
+- iPad: with `sidebarAdaptable` it appears as a sidebar item. As built, the list
+  uses SwiftUI's inset-grouped `Form` margins with no width cap. That is
+  accepted pending the device check; cap it with `frame(maxWidth)` if the check
+  shows rows stretching.
 
 ### Account group
 
@@ -138,12 +140,11 @@ footer. A section with no content yet is simply absent, never an empty header.
   push into.
 - Signing out from inside Clerk's view keeps working: the auth gate already
   reacts to the session ending.
-- Untested risk, so spike it first: today's `Modal` was chosen because Clerk
-  dismissed its own view and left a pushed route with nothing to pop (before
-  `onHostBack` existed); the iOS 26 toolbar wipe recorded in
-  `profile-toolbar.tsx` came from Clerk's `UserButton`, not this view. _Builder's
-  call:_ if the push misbehaves (title or toolbar lost, double back, sign-out
-  leaving a stale route), keep today's sheet presentation from the account row.
+- As built, the view is pushed on the Profile stack via `onHostBack`, and
+  `profile-toolbar.tsx` (with its `Modal`) was deleted. The device check is
+  still pending (title or toolbar lost, double back, sign-out leaving a stale
+  route). Fallback if the push misbehaves: present it as a sheet from the
+  account row.
   Deletion does not depend on it, since Delete Account is our own row.
 
 ### Premium
