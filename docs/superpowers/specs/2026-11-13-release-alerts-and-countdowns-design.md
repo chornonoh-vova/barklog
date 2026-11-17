@@ -552,7 +552,12 @@ own haptics setting turns all of this off; there is no in-app switch.
 ### Profile tab
 
 - Fourth `NativeTabs` trigger (`person.crop.circle`), replacing
-  `ProfileToolbar`'s account button. The Premium star stays in toolbars.
+  `ProfileToolbar`'s account button. ~~The Premium star stays in toolbars.~~
+  **Changed 2026-11-17:** the Premium star no longer stays in toolbars; it
+  moved into the Profile tab (free users still meet the paywall through the
+  slots counter and the slot-limit path). The tab also ships separately and
+  ahead of rollout step 4, as the App Review 5.1.1(v) fix. Details and as-built
+  behavior: [Profile tab design](2026-11-17-profile-tab-design.md).
 - Sections: account (opens Clerk `UserProfileView` as today), Premium status /
   manage, Release alerts (a time picker in 30-minute steps, default 09:00,
   with a footer stating the window from `alertWindow`, e.g. "Release alerts

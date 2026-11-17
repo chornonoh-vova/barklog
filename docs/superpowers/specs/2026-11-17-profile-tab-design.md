@@ -1,6 +1,6 @@
 # Profile tab
 
-Designed on 2026-11-17. Status: **agreed design, not implemented**. Tracks
+Designed on 2026-11-17. Status: **agreed design, implemented on `feat/profile-tab` (pending device check)**. Tracks
 [#72](https://github.com/chornonoh-vova/barklog/issues/72) under the Profile
 tab epic [#65](https://github.com/chornonoh-vova/barklog/issues/65). It refines
 the _Profile tab_ section of the
@@ -95,8 +95,8 @@ Profile                                  (large title, no toolbar items)
 │ (avatar)  Name                        │
 │           email@example.com         › │  → Clerk profile (pushed)
 ├───────────────────────────────────────┤
-│ ★  Barklog Premium          Active  › │  subscriber → Customer Center
-│ ☆  Get Barklog Premium              › │  free → paywall
+│ ★  Barklog Premium             Active │  subscriber → Customer Center
+│ ☆  Get Barklog Premium                │  free → paywall
 └───────────────────────────────────────┘
  STATS                                       (#82)
  RELEASE ALERTS                              (#83)
@@ -126,10 +126,11 @@ footer. A section with no content yet is simply absent, never an empty header.
 
 ### Account group
 
-- **Account row**: avatar (Clerk `imageUrl`, falling back to
-  `person.crop.circle`), full name or, if absent, the primary email as the
+- **Account row**: avatar (Clerk `imageUrl`; Clerk generates a default image
+  when the user has no photo, so the `person.crop.circle.fill` symbol shows
+  only when there is no image URL at all), full name or, if absent, the primary email as the
   title, with the email as a secondary line when a name exists. Disclosure
-  chevron.
+  chevron (the only row with one).
 - Tapping **pushes** `UserProfileView` on the Profile stack, with the route's
   header hidden, `isDismissible={false}` and `onHostBack={() => router.back()}`,
   so Clerk's own navigation chrome and swipe-back take over. This replaces the
@@ -152,6 +153,8 @@ the toolbars**. Free users still meet the paywall at the point of need (the
 slots counter on Home and the slot-limit / 402 path); subscribers manage
 subscriptions from a settings-like place, as on iOS.
 
+- As built, the Premium row has no disclosure chevron: it opens a modal sheet
+  (paywall or Customer Center), and iOS reserves the chevron for pushes.
 - Premium row in the account group, with `star.fill` / `star` like the old
   star (`usePremiumStar` logic):
   - subscriber: "Barklog Premium", trailing "Active", opens RevenueCat Customer
@@ -163,13 +166,17 @@ subscriptions from a settings-like place, as on iOS.
 
 - Own section, `rectangle.portrait.and.arrow.right`, normal tint (not red), so
   it reads differently from Delete Account.
-- Tapping shows a **confirmation dialog** (action sheet; a popover anchored to
-  the row on iPad): title "Sign out of Barklog?", buttons "Sign Out"
+- Tapping shows a **confirmation dialog** (action sheet; designed as a popover
+  anchored to the row on iPad, but see the known limitation below): title "Sign out of Barklog?", buttons "Sign Out"
   (destructive) and Cancel. An action sheet is HIG's form for confirming a
   destructive action the person started; sign-out is recoverable, so it gets
   the lighter form.
 - Confirming calls Clerk `signOut()`; the auth gate clears personal data per
   ADR-0004, exactly as when signing out from Clerk's view.
+- **Known limitation (as built):** the dialog has no anchor, because the
+  `@expo/ui` `Button` exposes no view handle. On iPad it therefore appears as
+  a centered sheet rather than a popover from the row. Revisit if `@expo/ui`
+  exposes an anchor.
 
 ### Delete Account
 
@@ -190,17 +197,18 @@ subscriptions from a settings-like place, as on iOS.
 - The server needs nothing new: `apps/api/src/routes/webhooks.ts` handles
   Clerk's `user.deleted` and scrubs the user's data in one transaction,
   regardless of where deletion started.
-- **Reverification.** Expected not to be needed: clerk-ios's own delete
-  section calls the same `DELETE /me` after only typing `DELETE`, verified with
-  no re-auth on both instances on 2026-09-10. Still verify `user.delete()` on
-  the dev **and** production instances (Clerk settings are per instance) as the
-  first step, including that "Allow users to delete their accounts" is on.
-  If reverification turns out to be required, the agreed fallback is: present
-  Clerk's own reverification prompt from the alert's confirm step (via
-  `useReverification`) if Clerk supplies a native UI for it; if it does not,
-  the Delete Account row opens Clerk's profile view instead (whose own delete
-  flow handles re-authentication) and the App Review notes describe that path.
-  No custom re-sign-in screen.
+- **Reverification (verified 2026-11-17).** The earlier expectation that it
+  would not be needed (clerk-ios's delete section calls the same `DELETE /me`
+  after only typing `DELETE`, seen on 2026-09-10) is superseded: on 2026-11-17
+  both Clerk instances' public `/v1/environment` report
+  `user_settings.actions.delete_self: true` and
+  `auth_config.reverification: true`. As built, `user.delete()` runs directly;
+  when Clerk answers `session_reverification_required` (the session was not
+  recently verified), a "Confirm it's you" alert's Continue pushes Clerk's
+  profile view, whose own delete flow re-authenticates. A recently signed-in
+  session (for example an App Review reviewer's) deletes directly. No custom
+  re-sign-in screen. Clerk settings are per instance, so recheck both if
+  either changes.
 
 ### Haptics
 
