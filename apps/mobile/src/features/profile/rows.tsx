@@ -15,45 +15,31 @@ function ExternalMark() {
   return <Image systemName="arrow.up.forward" modifiers={[imageScale("small"), TERTIARY]} />;
 }
 
-type RowProps = { title: string; icon?: ReactNode };
+type RowProps = { title: string; icon?: ReactNode; onPress: () => void };
 
-/** A row that pushes a screen inside the app. */
-export function NavigationRow({ title, icon, onPress }: RowProps & { onPress: () => void }) {
+/**
+ * The one Settings-style row the others build on; only the trailing mark
+ * differs. A row that opens a sheet in place, like the mail composer, has none.
+ */
+export function ActionRow({ title, icon, onPress, trailing }: RowProps & { trailing?: ReactNode }) {
   return (
     <Button onPress={onPress} modifiers={[...ROW, accessibilityLabel(title)]}>
       <HStack spacing={12} modifiers={[ROW_SHAPE]}>
         {icon}
         <Text modifiers={[PRIMARY]}>{title}</Text>
         <Spacer />
-        <Chevron />
+        {trailing}
       </HStack>
     </Button>
   );
 }
 
-/** A row that does something in place, such as opening a system sheet. */
-export function ActionRow({ title, icon, onPress }: RowProps & { onPress: () => void }) {
-  return (
-    <Button onPress={onPress} modifiers={[...ROW, accessibilityLabel(title)]}>
-      <HStack spacing={12} modifiers={[ROW_SHAPE]}>
-        {icon}
-        <Text modifiers={[PRIMARY]}>{title}</Text>
-        <Spacer />
-      </HStack>
-    </Button>
-  );
+/** A row that pushes a screen inside the app. */
+export function NavigationRow(props: RowProps) {
+  return <ActionRow {...props} trailing={<Chevron />} />;
 }
 
 /** A row that opens a web page or the App Store, outside the app. */
-export function ExternalLinkRow({ title, icon, url }: RowProps & { url: string }) {
-  return (
-    <Button onPress={() => void openURL(url)} modifiers={[...ROW, accessibilityLabel(title)]}>
-      <HStack spacing={12} modifiers={[ROW_SHAPE]}>
-        {icon}
-        <Text modifiers={[PRIMARY]}>{title}</Text>
-        <Spacer />
-        <ExternalMark />
-      </HStack>
-    </Button>
-  );
+export function ExternalLinkRow({ url, ...props }: Omit<RowProps, "onPress"> & { url: string }) {
+  return <ActionRow {...props} onPress={() => void openURL(url)} trailing={<ExternalMark />} />;
 }

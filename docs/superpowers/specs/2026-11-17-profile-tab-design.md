@@ -82,8 +82,8 @@ deletion flow" is not possible as such.
 
 Ships on its own from `main` as an app release, ahead of the release alerts
 work, because it is the App Review 5.1.1(v) fix. That release has the account
-group (account + Premium), Rate Barklog, About Barklog, Sign Out and Delete
-Account. Stats (#82) and Release alerts (#83) arrive in later releases in the
+group (account + Premium), Rate Barklog, Request a Feature or Report an Issue,
+About Barklog, Sign Out and Delete Account. Stats (#82) and Release alerts (#83) arrive in later releases in the
 positions fixed below; this deviates from step 4 of the release alerts
 rollout, which bundled the Profile tab with notifications.
 
@@ -274,11 +274,15 @@ Added in design review (2026-11-17), in one section with Rate Barklog. A
 with the subject "Feedback About Barklog" (English: it is for the developer's
 inbox). The body is empty space to write in, then a "—" line, one translated
 sentence asking the user to keep or remove the details, and English-labelled
-details: app version and build, OTA update id and channel, iPhone or iPad with
+details: app version and build, the running update (embedded, its id, or none
+in development) and channel, iPhone or iPad with
 the iOS version, app language, Clerk user id and Premium status. Everything is
 visible and editable before sending; nothing is sent automatically. Without
 Mail set up it falls back to a `mailto:` link (the user's default mail app),
-and with no mail app at all an alert gives the address.
+and with no mail app at all an alert gives the address. A failing sheet also
+falls back to `mailto:`, and a second tap while the sheet is open does nothing.
+The privacy policy's "Sending feedback" section discloses these details and
+lists Google (Gmail) among the services that handle data.
 
 ### About Barklog
 

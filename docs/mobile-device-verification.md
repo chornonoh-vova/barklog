@@ -49,7 +49,9 @@ Use the appropriate configured RevenueCat test or App Store environment.
       only; the simulator has no App Store). About Barklog shows the installed
       version and build, and each of its links opens in Safari. Request a
       Feature or Report an Issue opens the Mail sheet with the address, subject
-      and details filled in; with Mail signed out, it opens the default mail app.
+      and details filled in; cancelling and tapping again reopens it; with Mail
+      signed out, it opens the default mail app; with no mail app, an alert
+      gives the address.
 - [ ] **Account deletion, fresh session:** Profile, Delete Account, confirm the
       alert; the account is deleted and the app returns to sign-in.
 - [ ] **Account deletion, stale session:** with a session older than Clerk's

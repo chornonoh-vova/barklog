@@ -26,8 +26,9 @@ into feature screens, as required by the [mobile guide](../../../apps/mobile/AGE
 
 The account button and Premium star that used to sit in each tab's toolbar
 (`ProfileToolbar`) were replaced on 2026-11-17 by the Profile tab, which holds
-the account row (Clerk's `UserProfileView`), Premium status and management, Sign
-Out and Delete Account; see the
+the account row (Clerk's `UserProfileView`), Premium status and management,
+Rate Barklog, a feedback email, About Barklog, Sign Out and Delete Account; see
+the
 [Profile tab design](2026-11-17-profile-tab-design.md) and its
 [route](<../../../apps/mobile/src/app/(tabs)/profile>) and
 [feature](../../../apps/mobile/src/features/profile). The earlier proposal to

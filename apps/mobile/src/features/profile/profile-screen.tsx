@@ -64,7 +64,7 @@ export function ProfileScreen({
         <Section>
           <Button
             onPress={onOpenAccount}
-            modifiers={[...ROW, accessibilityLabel(`${title}, ${subtitle}`)]}
+            modifiers={[...ROW, disabled(isDeleting), accessibilityLabel(`${title}, ${subtitle}`)]}
           >
             <HStack spacing={12} modifiers={[ROW_SHAPE]}>
               <AccountAvatar imageUrl={user.imageUrl} />

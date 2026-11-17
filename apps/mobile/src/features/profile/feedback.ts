@@ -8,8 +8,11 @@ export const FEEDBACK_SUBJECT = "Feedback About Barklog";
 export type DebugInfo = {
   version: string | null;
   build: string | null;
-  /** `expo-updates`' id, `null` for the JS embedded in the binary. */
+  /** `expo-updates`' id of whatever is running, the embedded bundle included;
+   * `null` only in development or with updates disabled. */
   updateId: string | null;
+  /** Whether the running JS is the bundle shipped inside the binary. */
+  isEmbeddedLaunch: boolean;
   channel: string | null;
   osVersion: string;
   isPad: boolean;
@@ -28,7 +31,12 @@ export function feedbackBody(info: DebugInfo): string {
   const app = [info.version ?? "unknown", info.build ? `(${info.build})` : null]
     .filter(Boolean)
     .join(" ");
-  const update = info.updateId ?? "embedded";
+  const update =
+    info.updateId === null
+      ? "none (development)"
+      : info.isEmbeddedLaunch
+        ? `embedded, ${info.updateId}`
+        : info.updateId;
   const premium = info.premium === undefined ? "unknown" : info.premium ? "yes" : "no";
 
   return [
@@ -49,6 +57,9 @@ export function feedbackBody(info: DebugInfo): string {
 /** The `mailto:` fallback for a device without Mail set up. */
 export function feedbackMailto(body: string): string {
   const query = new URLSearchParams({ subject: FEEDBACK_SUBJECT, body });
-  // `URLSearchParams` writes spaces as `+`, which mail apps show literally.
-  return `mailto:${FEEDBACK_EMAIL}?${query.toString().replace(/\+/g, "%20")}`;
+  // `URLSearchParams` writes spaces as `+`, which mail apps show literally,
+  // and RFC 6068 asks for CRLF line breaks. The `+` in the address is encoded
+  // too, for clients that read it as a space.
+  const params = query.toString().replace(/\+/g, "%20").replace(/%0A/g, "%0D%0A");
+  return `mailto:${FEEDBACK_EMAIL.replace("+", "%2B")}?${params}`;
 }

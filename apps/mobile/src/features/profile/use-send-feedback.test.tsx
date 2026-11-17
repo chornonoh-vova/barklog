@@ -1,10 +1,11 @@
-import { act } from "@testing-library/react-native";
+import { act, waitFor } from "@testing-library/react-native";
 import { openURL } from "expo-linking";
 import * as MailComposer from "expo-mail-composer";
 import { Alert } from "react-native";
 
 import { useSendFeedback } from "@/features/profile/use-send-feedback";
-import { renderHookWithProviders } from "@test/render";
+import { me } from "@test/fixtures";
+import { fakeEndpoints, renderHookWithProviders } from "@test/render";
 
 jest.mock("expo-mail-composer", () => ({
   isAvailableAsync: jest.fn(async () => true),
@@ -19,8 +20,12 @@ jest.mock("expo-application", () => ({
   nativeBuildVersion: "123",
 }));
 
-async function send() {
-  const { result } = await renderHookWithProviders(() => useSendFeedback());
+async function send({ premium }: { premium?: boolean } = {}) {
+  const getMe = premium === undefined ? undefined : async () => me({ premium });
+  const { result, api } = await renderHookWithProviders(() => useSendFeedback(), {
+    api: fakeEndpoints(getMe ? { getMe } : {}),
+  });
+  if (getMe) await waitFor(() => expect(api.getMe).toHaveBeenCalled());
   await act(async () => result.current());
 }
 
@@ -44,8 +49,40 @@ describe("useSendFeedback", () => {
 
     expect(MailComposer.composeAsync).not.toHaveBeenCalled();
     expect(jest.mocked(openURL).mock.calls[0]![0]).toMatch(
-      /^mailto:chernonog\.vova\+barklog@gmail\.com\?subject=Feedback%20About%20Barklog&body=/,
+      /^mailto:chernonog\.vova%2Bbarklog@gmail\.com\?subject=Feedback%20About%20Barklog&body=/,
     );
+  });
+
+  it("hands the draft to the default mail app when the sheet fails", async () => {
+    jest.mocked(MailComposer.composeAsync).mockRejectedValueOnce(new Error("SendingFailed"));
+
+    await send();
+
+    expect(jest.mocked(openURL).mock.calls[0]![0]).toMatch(/^mailto:/);
+  });
+
+  it("opens one sheet at a time", async () => {
+    let close!: () => void;
+    jest
+      .mocked(MailComposer.composeAsync)
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (close = () => resolve({ status: "cancelled" } as never))),
+      );
+    const { result } = await renderHookWithProviders(() => useSendFeedback());
+
+    await act(async () => result.current());
+    await act(async () => result.current());
+    expect(MailComposer.composeAsync).toHaveBeenCalledTimes(1);
+
+    await act(async () => close());
+    await act(async () => result.current());
+    expect(MailComposer.composeAsync).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports the entitlement the app knows", async () => {
+    await send({ premium: true });
+
+    expect(jest.mocked(MailComposer.composeAsync).mock.calls[0]![0].body).toContain("Premium: yes");
   });
 
   it("gives the address when no mail app can open", async () => {

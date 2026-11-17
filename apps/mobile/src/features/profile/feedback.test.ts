@@ -3,7 +3,8 @@ import { feedbackBody, feedbackMailto, type DebugInfo } from "./feedback";
 const info: DebugInfo = {
   version: "1.4.0",
   build: "123",
-  updateId: null,
+  updateId: "0f1e-embedded",
+  isEmbeddedLaunch: true,
   channel: "production",
   osVersion: "27.2",
   isPad: false,
@@ -22,12 +23,18 @@ describe("feedbackBody", () => {
         "—",
         "The details below help me look into your request. Remove anything you'd rather not share.",
         "App: Barklog 1.4.0 (123)",
-        "Update: embedded (production)",
+        "Update: embedded, 0f1e-embedded (production)",
         "Device: iPhone, iOS 27.2",
         "Language: uk",
         "Account: user_1",
         "Premium: yes",
       ].join("\n"),
+    );
+  });
+
+  it("says when no update system is running, as in development", () => {
+    expect(feedbackBody({ ...info, updateId: null, channel: null })).toContain(
+      "Update: none (development)\n",
     );
   });
 
@@ -37,6 +44,7 @@ describe("feedbackBody", () => {
       version: null,
       build: null,
       updateId: "abc-123",
+      isEmbeddedLaunch: false,
       channel: null,
       isPad: true,
       userId: null,
@@ -56,8 +64,8 @@ describe("feedbackMailto", () => {
     const url = feedbackMailto("Hi there\n—\nApp: Barklog 1.4.0 (123)");
 
     expect(url).toBe(
-      "mailto:chernonog.vova+barklog@gmail.com?subject=Feedback%20About%20Barklog" +
-        "&body=Hi%20there%0A%E2%80%94%0AApp%3A%20Barklog%201.4.0%20%28123%29",
+      "mailto:chernonog.vova%2Bbarklog@gmail.com?subject=Feedback%20About%20Barklog" +
+        "&body=Hi%20there%0D%0A%E2%80%94%0D%0AApp%3A%20Barklog%201.4.0%20%28123%29",
     );
   });
 });
