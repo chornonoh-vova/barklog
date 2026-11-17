@@ -28,6 +28,14 @@ export default function TabsLayout() {
         <Label>{t("tabs.search")}</Label>
         <Icon sf="magnifyingglass" md="search" />
       </Trigger>
+
+      <Trigger name="profile">
+        <Label>{t("tabs.profile")}</Label>
+        <Icon
+          sf={{ default: "person.crop.circle", selected: "person.crop.circle.fill" }}
+          md="person"
+        />
+      </Trigger>
     </NativeTabs>
   );
 }

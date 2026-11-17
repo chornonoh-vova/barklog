@@ -43,8 +43,18 @@ export const clerkNativeComponents = {
     isAuthFlowComplete: clerk.isAuthFlowComplete,
   }),
   AuthView: () => <View testID="clerk-auth-view" />,
-  UserProfileView: ({ onDismiss }: { onDismiss?: () => void }) => (
-    <Pressable testID="clerk-user-profile" accessibilityRole="button" onPress={onDismiss}>
+  UserProfileView: ({
+    onDismiss,
+    onHostBack,
+  }: {
+    onDismiss?: () => void;
+    onHostBack?: () => void;
+  }) => (
+    <Pressable
+      testID="clerk-user-profile"
+      accessibilityRole="button"
+      onPress={onHostBack ?? onDismiss}
+    >
       <Text>Profile</Text>
     </Pressable>
   ),
