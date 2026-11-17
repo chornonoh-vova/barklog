@@ -9,6 +9,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/errors";
 import { keys } from "@/lib/api/keys";
+import type { HapticFeedback } from "@/lib/haptics/decision";
 import { createEntryWrites, type EntryWrites } from "@/features/backlog/entry-writes";
 import { backlogEntry, backlogItem, gameDetail, me } from "@test/fixtures";
 import { testQueryClient } from "@test/render";
@@ -43,7 +44,7 @@ let api: {
 let effects: {
   openPaywall: jest.MockedFunction<() => void>;
   alertError: jest.MockedFunction<(error: unknown) => void>;
-  playStatusHaptic: jest.MockedFunction<() => void>;
+  playHaptic: jest.MockedFunction<(feedback: HapticFeedback) => void>;
 };
 let writes: EntryWrites;
 
@@ -56,7 +57,7 @@ beforeEach(() => {
   effects = {
     openPaywall: jest.fn<void, []>(),
     alertError: jest.fn<void, [unknown]>(),
-    playStatusHaptic: jest.fn<void, []>(),
+    playHaptic: jest.fn<void, [HapticFeedback]>(),
   };
   writes = createEntryWrites(queryClient, api as never, effects);
 });
@@ -114,11 +115,11 @@ describe("createEntryWrites", () => {
     expect(getList()).toBe(list);
     expect(effects.openPaywall).toHaveBeenCalledTimes(1);
     expect(effects.alertError).not.toHaveBeenCalled();
-    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(effects.playHaptic).not.toHaveBeenCalled();
     expect(queryClient.getQueryState(keys.me())?.isInvalidated).toBe(true);
   });
 
-  it("any other failure alerts", async () => {
+  it("any other failure alerts, with the error haptic", async () => {
     queryClient.setQueryData(keys.backlog.list(), { items: [item(1, "waiting")] });
     const error = new ApiError({ status: 500, type: "about:blank", title: "Server Error" });
     api.upsertBacklogEntry.mockRejectedValue(error);
@@ -128,10 +129,11 @@ describe("createEntryWrites", () => {
     expect(effects.alertError).toHaveBeenCalledTimes(1);
     expect(effects.alertError).toHaveBeenCalledWith(error);
     expect(effects.openPaywall).not.toHaveBeenCalled();
-    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(effects.playHaptic).toHaveBeenCalledTimes(1);
+    expect(effects.playHaptic).toHaveBeenCalledWith("error");
   });
 
-  it("the haptic plays once the server confirms a status change, not on a re-rate", async () => {
+  it("the success haptic plays once the server confirms a status change, not on a re-rate", async () => {
     queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "waiting", rating: null }));
     const pending = deferred();
     api.upsertBacklogEntry.mockReturnValue(pending.promise);
@@ -139,16 +141,17 @@ describe("createEntryWrites", () => {
     const moved = writes.move(1, "playing");
 
     await waitFor(() => expect(api.upsertBacklogEntry).toHaveBeenCalled());
-    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(effects.playHaptic).not.toHaveBeenCalled();
     pending.resolve();
     await moved;
-    expect(effects.playStatusHaptic).toHaveBeenCalledTimes(1);
+    expect(effects.playHaptic).toHaveBeenCalledTimes(1);
 
     queryClient.setQueryData(keys.games.detail(1), detail(1, { status: "playing", rating: null }));
     api.upsertBacklogEntry.mockResolvedValue({});
     await writes.rate(1, "playing", 9);
 
-    expect(effects.playStatusHaptic).toHaveBeenCalledTimes(1);
+    expect(effects.playHaptic).toHaveBeenCalledTimes(1);
+    expect(effects.playHaptic).toHaveBeenCalledWith("success");
   });
 
   // Home acts without opening the game's page, so the list knows the old status.
@@ -157,7 +160,7 @@ describe("createEntryWrites", () => {
 
     await writes.rate(1, "completed", 5);
 
-    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(effects.playHaptic).not.toHaveBeenCalled();
   });
 
   it("remove plays no haptic and refetches the backlog", async () => {
@@ -166,7 +169,7 @@ describe("createEntryWrites", () => {
     await writes.remove(1);
 
     expect(api.deleteBacklogEntry).toHaveBeenCalledWith(1);
-    expect(effects.playStatusHaptic).not.toHaveBeenCalled();
+    expect(effects.playHaptic).not.toHaveBeenCalled();
     expect(queryClient.getQueryState(keys.backlog.list())?.isInvalidated).toBe(true);
   });
   it("a slot-consuming move at the cap opens the paywall and writes nothing", async () => {
