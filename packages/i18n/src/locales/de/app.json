@@ -9,12 +9,50 @@
   "tabs": {
     "home": "Start",
     "explore": "Entdecken",
-    "search": "Suche"
+    "search": "Suche",
+    "profile": "Profil"
   },
   "profile": {
     "getPremium": "Barklog Premium holen",
-    "manageSubscription": "Barklog Premium, Abo verwalten",
-    "openAccount": "Konto öffnen"
+    "account": "Konto",
+    "accountSubtitle": "Profil, E-Mail und Sicherheit",
+    "premium": "Barklog Premium",
+    "premiumActive": "Aktiv",
+    "premiumActiveLabel": "Barklog Premium, aktiv",
+    "signOut": "Abmelden",
+    "signOutTitle": "Von Barklog abmelden?",
+    "signOutMessage": "Dein Backlog bleibt in deinem Konto gespeichert. Melde dich wieder an, um weiterzumachen.",
+    "deleteAccount": "Konto löschen",
+    "deleteTitle": "Konto löschen?",
+    "deleteMessage": "Dein Backlog, deine Bewertungen und Release-Hinweise werden dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.\n\nDas Löschen deines Kontos kündigt ein Barklog-Premium-Abo nicht. Kündige es in deinen App-Store-Abonnements.",
+    "deleteFailedTitle": "Konto konnte nicht gelöscht werden",
+    "deleteFailedMessage": "Etwas ist schiefgelaufen. Versuche es gleich noch einmal.",
+    "version": "Version {{version}} ({{build}})",
+    "versionNoBuild": "Version {{version}}",
+    "reverifyTitle": "Bestätige, dass du es bist",
+    "reverifyMessage": "Melde dich zu deiner Sicherheit erneut an, bevor du dein Konto löschst. Öffne in deinem Konto „Sicherheit“ und dann „Konto löschen“.",
+    "reverifyContinue": "Weiter",
+    "deletingLabel": "Konto löschen, wird gelöscht",
+    "appSection": "Barklog",
+    "rateApp": "Im App Store bewerten",
+    "feedback": "Feedback senden",
+    "feedbackFooter": "Schlag eine Funktion vor oder melde ein Problem. Ich lese jede Nachricht.",
+    "about": "Über Barklog",
+    "aboutRow": "Über"
+  },
+  "about": {
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen",
+    "support": "Support",
+    "igdb": "Spieldaten von IGDB",
+    "source": "Quellcode",
+    "creator": "Erstellt von Volodymyr Chornonoh",
+    "ukraine": "Entworfen und entwickelt in der Ukraine 🇺🇦"
+  },
+  "feedback": {
+    "detailsIntro": "Die Angaben unten helfen mir, deiner Anfrage nachzugehen. Entferne alles, was du nicht teilen möchtest.",
+    "noMailTitle": "Mail konnte nicht geöffnet werden",
+    "noMailMessage": "Schreib an {{email}} aus einer beliebigen Mail-App."
   },
   "status": {
     "waiting": "Wartet",

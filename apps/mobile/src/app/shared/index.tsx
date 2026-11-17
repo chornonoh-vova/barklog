@@ -41,8 +41,7 @@ export default function SharedIndex() {
 
       {/* A toolbar button, not `Stack.Screen.BackButton`: this is the root of a
           modal with nothing behind it to pop to, and leaving needs to clear the
-          payload as well as navigate. Icon-only, like the `star.fill` button in
-          `components/profile-toolbar.tsx`. */}
+          payload as well as navigate. Icon-only, as toolbar buttons are. */}
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
           icon="xmark"

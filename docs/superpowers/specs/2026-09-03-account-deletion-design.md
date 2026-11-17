@@ -5,8 +5,9 @@ The established decision is [ADR-0006](../../adr/0006-clerk-account-deletion.md)
 
 ## Flow and rationale
 
-Clerk owns identity and initiates deletion through its account controls or
-dashboard. Barklog acts on verified `user.deleted` notifications at
+Clerk owns identity and initiates deletion through its account controls, the
+app's own Delete Account row (Clerk's SDK `user.delete()`; see the
+[Profile tab design](2026-11-17-profile-tab-design.md)) or the dashboard. Barklog acts on verified `user.deleted` notifications at
 `POST /webhooks/clerk`. There is no separate `DELETE /api/me` path. A webhook
 covers dashboard deletion and avoids depending on the app remaining open after
 Clerk has deleted the identity.

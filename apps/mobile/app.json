@@ -12,6 +12,7 @@
       "icon": "./assets/icon/Barklog.icon",
       "supportsTablet": true,
       "bundleIdentifier": "gg.barklog.app",
+      "appStoreUrl": "https://apps.apple.com/app/barklog/id6807319879",
       "associatedDomains": ["applinks:barklog.gg"],
       "entitlements": {
         "com.apple.security.application-groups": ["group.gg.barklog.app"]

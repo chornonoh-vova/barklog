@@ -16,6 +16,13 @@ export const clerk = {
   isAuthFlowComplete: true,
   userId: "user_1" as string | null | undefined,
   getToken: jest.fn(async () => "tok_test" as string | null),
+  signOut: jest.fn(async () => {}),
+  user: null as {
+    fullName: string | null;
+    primaryEmailAddress: { emailAddress: string } | null;
+    imageUrl: string;
+    delete: jest.Mock<Promise<void>, []>;
+  } | null,
 };
 
 export const clerkExpo = {
@@ -26,6 +33,8 @@ export const clerkExpo = {
     userId: clerk.userId,
     getToken: clerk.getToken,
   }),
+  useUser: () => ({ isLoaded: clerk.isLoaded, user: clerk.user }),
+  useClerk: () => ({ signOut: clerk.signOut }),
 };
 
 export const clerkNativeComponents = {
@@ -34,8 +43,18 @@ export const clerkNativeComponents = {
     isAuthFlowComplete: clerk.isAuthFlowComplete,
   }),
   AuthView: () => <View testID="clerk-auth-view" />,
-  UserProfileView: ({ onDismiss }: { onDismiss?: () => void }) => (
-    <Pressable testID="clerk-user-profile" accessibilityRole="button" onPress={onDismiss}>
+  UserProfileView: ({
+    onDismiss,
+    onHostBack,
+  }: {
+    onDismiss?: () => void;
+    onHostBack?: () => void;
+  }) => (
+    <Pressable
+      testID="clerk-user-profile"
+      accessibilityRole="button"
+      onPress={onHostBack ?? onDismiss}
+    >
       <Text>Profile</Text>
     </Pressable>
   ),
@@ -105,6 +124,8 @@ export const observe = {
 export const storeReview = {
   hasAction: jest.fn(async () => true),
   requestReview: jest.fn(async () => undefined),
+  /** What `ios.appStoreUrl` in app.json gives a real build. */
+  storeUrl: jest.fn((): string | null => "https://apps.apple.com/app/barklog/id6807319879"),
 };
 
 // --- expo-widgets -----------------------------------------------------------
@@ -143,6 +164,14 @@ export function resetNative(): void {
     userId: "user_1",
   });
   clerk.getToken.mockImplementation(async () => "tok_test");
+  clerk.signOut.mockReset();
+  clerk.signOut.mockResolvedValue(undefined);
+  clerk.user = {
+    fullName: "Ada Lovelace",
+    primaryEmailAddress: { emailAddress: "ada@example.com" },
+    imageUrl: "https://img.example/ada.png",
+    delete: jest.fn(async () => {}),
+  };
   customerInfoListeners.clear();
   purchases.isAnonymous.mockResolvedValue(false);
   Object.assign(share, {
@@ -152,4 +181,5 @@ export function resetNative(): void {
     error: null,
   });
   storeReview.hasAction.mockImplementation(async () => true);
+  storeReview.storeUrl.mockImplementation(() => "https://apps.apple.com/app/barklog/id6807319879");
 }

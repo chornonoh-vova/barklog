@@ -9,12 +9,50 @@
   "tabs": {
     "home": "Головна",
     "explore": "Огляд",
-    "search": "Пошук"
+    "search": "Пошук",
+    "profile": "Профіль"
   },
   "profile": {
     "getPremium": "Отримати Barklog Premium",
-    "manageSubscription": "Barklog Premium, керувати підпискою",
-    "openAccount": "Відкрити акаунт"
+    "account": "Акаунт",
+    "accountSubtitle": "Профіль, пошта та безпека",
+    "premium": "Barklog Premium",
+    "premiumActive": "Активна",
+    "premiumActiveLabel": "Barklog Premium, активна",
+    "signOut": "Вийти",
+    "signOutTitle": "Вийти з Barklog?",
+    "signOutMessage": "Твій беклог залишиться в акаунті. Увійди знову, щоб продовжити з того ж місця.",
+    "deleteAccount": "Видалити акаунт",
+    "deleteTitle": "Видалити акаунт?",
+    "deleteMessage": "Твій беклог, оцінки та сповіщення про релізи буде видалено назавжди. Це неможливо скасувати.\n\nВидалення акаунта не скасовує підписку Barklog Premium. Скасуй її в підписках App Store.",
+    "deleteFailedTitle": "Не вдалося видалити акаунт",
+    "deleteFailedMessage": "Щось пішло не так. Спробуй ще раз трохи згодом.",
+    "version": "Версія {{version}} ({{build}})",
+    "versionNoBuild": "Версія {{version}}",
+    "reverifyTitle": "Підтверди, що це ти",
+    "reverifyMessage": "З міркувань безпеки увійди знову, перш ніж видаляти акаунт. В акаунті відкрий «Безпека», потім «Видалити обліковий запис».",
+    "reverifyContinue": "Продовжити",
+    "deletingLabel": "Видалити акаунт, видаляється",
+    "appSection": "Barklog",
+    "rateApp": "Оцінити в App Store",
+    "feedback": "Надіслати відгук",
+    "feedbackFooter": "Запропонуй функцію або повідом про проблему. Я читаю кожне повідомлення.",
+    "about": "Про Barklog",
+    "aboutRow": "Про застосунок"
+  },
+  "about": {
+    "privacy": "Політика конфіденційності",
+    "terms": "Умови використання",
+    "support": "Підтримка",
+    "igdb": "Дані про ігри — IGDB",
+    "source": "Вихідний код",
+    "creator": "Автор: Volodymyr Chornonoh",
+    "ukraine": "Спроєктовано й розроблено в Україні 🇺🇦"
+  },
+  "feedback": {
+    "detailsIntro": "Дані нижче допоможуть мені розібратися з твоїм запитом. Видали все, чим не хочеш ділитися.",
+    "noMailTitle": "Не вдалося відкрити пошту",
+    "noMailMessage": "Напиши на {{email}} з будь-якого поштового застосунку."
   },
   "status": {
     "waiting": "У черзі",

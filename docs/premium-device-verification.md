@@ -54,8 +54,8 @@ paywall and deployed webhook work together. See the
       disconnect and attempt a write. Verify the network error is not treated as
       a server 402. At a known full cap, the cached slot check can open the paywall
       before a network request, so that case cannot prove offline error handling.
-- [ ] **Customer Center:** As a Premium account, check the toolbar entry on Home,
-      Explore and Search, open it and verify purchase management/restore actions.
+- [ ] **Customer Center:** As a Premium account, open the Premium row on the Profile
+      tab (a free account sees the paywall there instead) and verify purchase management/restore actions.
 
 A completed pass records observed behavior for that build and environment. It
 must not be used to close the separate asynchronous account-isolation gap in

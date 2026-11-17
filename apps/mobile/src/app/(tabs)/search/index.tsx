@@ -3,7 +3,6 @@ import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { SearchBarCommands } from "react-native-screens";
 
-import { ProfileToolbar } from "@/components/profile-toolbar";
 import { clearRecents, recordRecent, useRecents } from "@/features/search/recents-storage";
 import { SearchScreen } from "@/features/search/search-screen";
 
@@ -23,7 +22,6 @@ export default function SearchRoute() {
   return (
     <>
       <Stack.Title large>{t("tabs.search")}</Stack.Title>
-      <ProfileToolbar />
       <Stack.SearchBar
         ref={searchBar}
         placement="stacked"

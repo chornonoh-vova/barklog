@@ -39,8 +39,25 @@ Use the appropriate configured RevenueCat test or App Store environment.
       storage when preparing a fresh-install test.
 - [ ] Apple sign-in and any enrollment prompts finish without premature dismissal.
       Authenticated requests reach the API.
-- [ ] Each tab's avatar opens the profile; native dismissal and sheet swipe allow
-      it to reopen. Sign-out and account deletion remain reachable in Clerk's UI.
+- [ ] **Profile tab:** the large title collapses and the tab bar minimizes on
+      scroll. On iPad the tab sits in the sidebar and the list is not
+      uncomfortably wide (cap with `frame(maxWidth)` if rows stretch).
+      Sign Out from the row shows an alert like Delete Account (Cancel keeps the session), and
+      Sign Out also works from inside the pushed Clerk profile view.
+- [ ] **Profile rows:** icon tiles and text read correctly in light and dark
+      mode, and the Barklog section's rows fit one line in every language. Rate on
+      the App Store opens the review composer (device only; the simulator has
+      no App Store). About shows the installed version and build, and each of
+      its links opens in Safari. Send Feedback opens the Mail sheet with the address, subject
+      and details filled in; cancelling and tapping again reopens it; with Mail
+      signed out, it opens the default mail app; with no mail app, an alert
+      gives the address.
+- [ ] **Account deletion, fresh session:** Profile, Delete Account, confirm the
+      alert; the account is deleted and the app returns to sign-in.
+- [ ] **Account deletion, stale session:** with a session older than Clerk's
+      reverification window, Delete Account shows "Confirm it's you"; Continue
+      pushes the Clerk profile, and Security, Delete account completes
+      (Clerk reverifies).
 - [ ] Switch accounts directly and through sign-out; also cold-launch signed out
       after session revocation. Check backlog, recents, persisted reads and widgets
       for prior-account data.
@@ -66,7 +83,8 @@ question.
       rating-only changes and removal do not.
 - [ ] Free-tier slot checks and server 402 responses open the paywall without a
       duplicate error alert. Purchase and restore refresh server entitlement;
-      Premium users can open Customer Center from the toolbar.
+      the Profile tab's Premium row opens the paywall for a free account and Customer
+      Center for a subscriber.
 - [ ] Search supports typing, no-result and error states; opening a result records
       a recent query, repeated casing deduplicates it, tapping it fills the field and
       Clear removes recents. Observe 429 handling if the server returns it.

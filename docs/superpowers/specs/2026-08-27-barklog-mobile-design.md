@@ -18,16 +18,24 @@ onboarding mascot and screenshot viewer use it.
 The [root layout](../../../apps/mobile/src/app/_layout.tsx) installs Clerk, query,
 API, purchases and theme providers. Onboarding precedes authentication. The
 signed-in tree contains the tab stack and a widget observer; shared links and the
-paywall are modal routes. The three tabs are Home, Explore and Search. Each has
-its own game-detail route so pushing a game preserves the tab's back history;
+paywall are modal routes. The tabs are Home, Explore, Profile and Search (Search
+stays rightmost). Home, Explore and Search each have their own game-detail route
+so pushing a game preserves the tab's back history;
 the share modal has a fourth detail route. Routes wire parameters and navigation
 into feature screens, as required by the [mobile guide](../../../apps/mobile/AGENTS.md).
 
-[ProfileToolbar](../../../apps/mobile/src/components/profile-toolbar.tsx) uses an
-app-owned avatar button and presents Clerk's `UserProfileView` in a React Native
-modal. The original proposal to use `UserButton` was replaced because its native
-presentation interfered with the navigation header. Premium users also have a
-Customer Center action here.
+The account button and Premium star that used to sit in each tab's toolbar
+(`ProfileToolbar`) were replaced on 2026-11-17 by the Profile tab, which holds
+the account row (Clerk's `UserProfileView`), Premium status and management,
+a Barklog section (Rate on the App Store, Send Feedback, About), Sign Out and
+Delete Account; see
+the
+[Profile tab design](2026-11-17-profile-tab-design.md) and its
+[route](<../../../apps/mobile/src/app/(tabs)/profile>) and
+[feature](../../../apps/mobile/src/features/profile). The earlier proposal to
+use Clerk's `UserButton` was dropped because its native presentation interfered
+with the navigation header; the toolbar button's modal presentation is
+historical.
 
 ## Authentication and data
 

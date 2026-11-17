@@ -1,6 +1,7 @@
 import { screen, userEvent } from "@testing-library/react-native";
 
 import { backlogItem, backlogList, gameDetail, gameList } from "@test/fixtures";
+import { navigationBars } from "@test/queries";
 
 import { fakeServer, markOnboardingSeen, renderApp, requests } from "./app";
 
@@ -98,5 +99,61 @@ describe("Search tab", () => {
     await userEvent.setup().press(await screen.findByRole("button", { name: /^Game 8/ }));
 
     expect(screen).toHavePathname("/search/game/8");
+  });
+});
+
+describe("Profile tab", () => {
+  it("shows the account actions", async () => {
+    fakeServer();
+    await renderApp("/profile");
+
+    expect(await screen.findByText("Delete Account")).toBeOnTheScreen();
+    expect(screen.getByText("Sign Out")).toBeOnTheScreen();
+    expect(screen).toHaveSegments(["(tabs)", "profile"]);
+  });
+
+  it("opens the Clerk account screen from the account row, and goes back from it", async () => {
+    fakeServer();
+    await renderApp("/profile");
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole("button", { name: /^Ada Lovelace/ }));
+
+    expect(screen).toHaveSegments(["(tabs)", "profile", "account"]);
+    await user.press(await screen.findByTestId("clerk-user-profile"));
+
+    expect(screen).toHavePathname("/profile");
+  });
+
+  it("opens About Barklog in the Profile stack", async () => {
+    fakeServer();
+    await renderApp("/profile");
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole("button", { name: "About" }));
+
+    expect(screen).toHaveSegments(["(tabs)", "profile", "about"]);
+    expect(await screen.findByText("Privacy Policy")).toBeOnTheScreen();
+  });
+
+  it.each([
+    ["/", "Your backlog is empty"],
+    ["/explore", "Most Popular"],
+    ["/search", "Fetch a game"],
+  ])("%s has no account button or Premium star", async (path, loaded) => {
+    fakeServer({
+      "/api/games/popular": gameList(1),
+      "/api/games/upcoming": gameList(2),
+      "/api/games/recent": gameList(3),
+    });
+    await renderApp(path);
+    await screen.findByText(loaded);
+
+    // By symbol, not label: the old labels no longer exist in any locale, so a
+    // returning account button or star would slip past a label check.
+    const symbols = (navigationBars()[0]?.items ?? []).map((item) => item.sfSymbolName);
+    expect(symbols).not.toContain("person.crop.circle");
+    expect(symbols).not.toContain("star");
+    expect(symbols).not.toContain("star.fill");
   });
 });

@@ -26,6 +26,7 @@ ADRs express agreed intent; code and tests show the implementation. A mismatch m
 | Marketing and legal site         | [Landing site](superpowers/specs/2026-09-03-landing-site-design.md)                                              |
 | Resizing and accessibility       | [Adaptive layout](superpowers/specs/2026-10-12-ipad-duo-adaptive-layout-design.md)                               |
 | Persisted backlog and widgets    | [Widgets](superpowers/specs/2026-10-21-home-screen-widgets-design.md)                                            |
+| Profile tab and account actions  | [Profile tab](superpowers/specs/2026-11-17-profile-tab-design.md) (implemented, pending device check)            |
 | Release alerts and countdowns    | [Release alerts](superpowers/specs/2026-11-13-release-alerts-and-countdowns-design.md) (agreed, not implemented) |
 
 The dated filenames remain stable so links from code and ADRs continue to resolve; they do not identify the current review date. The former [video-only](superpowers/specs/2026-08-31-share-video-to-backlog-design.md) and [source-preview](superpowers/specs/2026-09-03-share-source-preview-design.md) specs redirect to the consolidated sharing reference.
