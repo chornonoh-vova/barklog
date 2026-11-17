@@ -9,12 +9,30 @@
   "tabs": {
     "home": "Inicio",
     "explore": "Explorar",
-    "search": "Buscar"
+    "search": "Buscar",
+    "profile": "Perfil"
   },
   "profile": {
     "getPremium": "Obtener Barklog Premium",
     "manageSubscription": "Barklog Premium, gestionar suscripción",
-    "openAccount": "Abrir cuenta"
+    "openAccount": "Abrir cuenta",
+    "title": "Perfil",
+    "account": "Cuenta",
+    "premium": "Barklog Premium",
+    "premiumActive": "Activo",
+    "premiumActiveLabel": "Barklog Premium, activo",
+    "signOut": "Cerrar sesión",
+    "signOutTitle": "¿Cerrar sesión en Barklog?",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteTitle": "¿Eliminar tu cuenta?",
+    "deleteMessage": "Tu lista de pendientes, tus valoraciones y tus avisos de lanzamiento se eliminarán de forma permanente. Esta acción no se puede deshacer.\n\nEliminar tu cuenta no cancela la suscripción a Barklog Premium. Cancélala en tus suscripciones de la App Store.",
+    "deleteFailedTitle": "No se pudo eliminar tu cuenta",
+    "deleteFailedMessage": "Comprueba tu conexión e inténtalo de nuevo.",
+    "version": "Barklog {{version}} ({{build}})",
+    "versionNoBuild": "Barklog {{version}}",
+    "reverifyTitle": "Confirma que eres tú",
+    "reverifyMessage": "Por tu seguridad, vuelve a iniciar sesión antes de eliminar tu cuenta. En tu cuenta, abre Seguridad y luego Eliminar cuenta.",
+    "reverifyContinue": "Continuar"
   },
   "status": {
     "waiting": "Pendiente",

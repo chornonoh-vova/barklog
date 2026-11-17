@@ -9,12 +9,30 @@
   "tabs": {
     "home": "Головна",
     "explore": "Огляд",
-    "search": "Пошук"
+    "search": "Пошук",
+    "profile": "Профіль"
   },
   "profile": {
     "getPremium": "Отримати Barklog Premium",
     "manageSubscription": "Barklog Premium, керувати підпискою",
-    "openAccount": "Відкрити акаунт"
+    "openAccount": "Відкрити акаунт",
+    "title": "Профіль",
+    "account": "Обліковий запис",
+    "premium": "Barklog Premium",
+    "premiumActive": "Активна",
+    "premiumActiveLabel": "Barklog Premium, активна",
+    "signOut": "Вийти",
+    "signOutTitle": "Вийти з Barklog?",
+    "deleteAccount": "Видалити обліковий запис",
+    "deleteTitle": "Видалити обліковий запис?",
+    "deleteMessage": "Ваш беклог, оцінки та сповіщення про релізи буде видалено назавжди. Це неможливо скасувати.\n\nВидалення облікового запису не скасовує підписку Barklog Premium. Скасуйте її в підписках App Store.",
+    "deleteFailedTitle": "Не вдалося видалити обліковий запис",
+    "deleteFailedMessage": "Перевірте з'єднання та спробуйте ще раз.",
+    "version": "Barklog {{version}} ({{build}})",
+    "versionNoBuild": "Barklog {{version}}",
+    "reverifyTitle": "Підтвердіть, що це ви",
+    "reverifyMessage": "З міркувань безпеки увійдіть знову, перш ніж видаляти обліковий запис. В обліковому записі відкрийте «Безпека», потім «Видалити обліковий запис».",
+    "reverifyContinue": "Продовжити"
   },
   "status": {
     "waiting": "У черзі",

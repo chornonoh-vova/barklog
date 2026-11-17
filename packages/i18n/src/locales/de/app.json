@@ -9,12 +9,30 @@
   "tabs": {
     "home": "Start",
     "explore": "Entdecken",
-    "search": "Suche"
+    "search": "Suche",
+    "profile": "Profil"
   },
   "profile": {
     "getPremium": "Barklog Premium holen",
     "manageSubscription": "Barklog Premium, Abo verwalten",
-    "openAccount": "Konto öffnen"
+    "openAccount": "Konto öffnen",
+    "title": "Profil",
+    "account": "Konto",
+    "premium": "Barklog Premium",
+    "premiumActive": "Aktiv",
+    "premiumActiveLabel": "Barklog Premium, aktiv",
+    "signOut": "Abmelden",
+    "signOutTitle": "Von Barklog abmelden?",
+    "deleteAccount": "Konto löschen",
+    "deleteTitle": "Konto löschen?",
+    "deleteMessage": "Dein Backlog, deine Bewertungen und Release-Hinweise werden dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.\n\nDas Löschen deines Kontos kündigt ein Barklog-Premium-Abo nicht. Kündige es in deinen App-Store-Abonnements.",
+    "deleteFailedTitle": "Konto konnte nicht gelöscht werden",
+    "deleteFailedMessage": "Prüfe deine Verbindung und versuche es erneut.",
+    "version": "Barklog {{version}} ({{build}})",
+    "versionNoBuild": "Barklog {{version}}",
+    "reverifyTitle": "Bestätige, dass du es bist",
+    "reverifyMessage": "Melde dich zu deiner Sicherheit erneut an, bevor du dein Konto löschst. Öffne in deinem Konto „Sicherheit“ und dann „Konto löschen“.",
+    "reverifyContinue": "Weiter"
   },
   "status": {
     "waiting": "Wartet",

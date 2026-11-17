@@ -9,12 +9,30 @@
   "tabs": {
     "home": "Home",
     "explore": "Explore",
-    "search": "Search"
+    "search": "Search",
+    "profile": "Profile"
   },
   "profile": {
     "getPremium": "Get Barklog Premium",
     "manageSubscription": "Barklog Premium, manage subscription",
-    "openAccount": "Open account"
+    "openAccount": "Open account",
+    "title": "Profile",
+    "account": "Account",
+    "premium": "Barklog Premium",
+    "premiumActive": "Active",
+    "premiumActiveLabel": "Barklog Premium, active",
+    "signOut": "Sign Out",
+    "signOutTitle": "Sign out of Barklog?",
+    "deleteAccount": "Delete Account",
+    "deleteTitle": "Delete your account?",
+    "deleteMessage": "Your backlog, ratings and release alerts will be permanently deleted. This can't be undone.\n\nDeleting your account doesn't cancel a Barklog Premium subscription. Cancel it in your App Store subscriptions.",
+    "deleteFailedTitle": "Couldn't delete your account",
+    "deleteFailedMessage": "Check your connection and try again.",
+    "version": "Barklog {{version}} ({{build}})",
+    "versionNoBuild": "Barklog {{version}}",
+    "reverifyTitle": "Confirm it's you",
+    "reverifyMessage": "For your security, sign in again before deleting your account. In your account, open Security, then Delete account.",
+    "reverifyContinue": "Continue"
   },
   "status": {
     "waiting": "Waiting",
