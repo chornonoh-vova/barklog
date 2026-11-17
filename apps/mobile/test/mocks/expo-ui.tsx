@@ -55,10 +55,15 @@ function Text({ modifiers, children }: Base) {
   return <RNText accessibilityLabel={labelOf(modifiers)}>{children}</RNText>;
 }
 
-function Label({ title, modifiers }: Base & { title: string; systemImage?: string }) {
+function Label({ title, systemImage, modifiers }: Base & { title: string; systemImage?: string }) {
   if (isHidden(modifiers)) return null;
 
-  return <RNText accessibilityLabel={labelOf(modifiers)}>{title}</RNText>;
+  return (
+    <>
+      {systemImage === undefined ? null : <View testID={`symbol-${systemImage}`} />}
+      <RNText accessibilityLabel={labelOf(modifiers)}>{title}</RNText>
+    </>
+  );
 }
 
 function Image({
@@ -70,10 +75,16 @@ function Image({
   return <View testID={systemName ? `symbol-${systemName}` : "swiftui-image"} />;
 }
 
+/**
+ * The role reads as the hint, and the symbol renders as `symbol-<name>` inside
+ * the button, so a test reads both the way it reads an `Image`. Disabled comes
+ * from the `disabled` modifier, the only way the real `Button` takes it.
+ */
 function Button({
   label,
+  systemImage,
   onPress,
-  disabled,
+  disabled: disabledProp,
   role,
   modifiers,
   children,
@@ -86,17 +97,40 @@ function Button({
 }) {
   if (isHidden(modifiers)) return null;
 
+  const disabled = disabledProp === true || modifier(modifiers, "disabled")?.disabled === true;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={labelOf(modifiers) ?? label}
-      accessibilityState={{ disabled: disabled === true }}
+      accessibilityState={{ disabled }}
       accessibilityHint={role === "destructive" ? "destructive" : undefined}
       disabled={disabled}
       onPress={onPress}
     >
+      {systemImage === undefined ? null : <View testID={`symbol-${systemImage}`} />}
       {label === undefined ? children : <RNText>{label}</RNText>}
     </Pressable>
+  );
+}
+
+/** A grouped list's section: its header, its rows, then its footer. */
+function Section({
+  title,
+  header,
+  footer,
+  modifiers,
+  children,
+}: Base & { title?: string; header?: ReactNode; footer?: ReactNode }) {
+  if (isHidden(modifiers)) return null;
+
+  return (
+    <View testID="swiftui-section">
+      {title === undefined ? null : <RNText accessibilityRole="header">{title}</RNText>}
+      {header}
+      {children}
+      {typeof footer === "string" ? <RNText>{footer}</RNText> : footer}
+    </View>
   );
 }
 
@@ -196,4 +230,18 @@ export const ZStack = container("ZStack");
 export const Spacer = container("Spacer");
 export const RoundedRectangle = container("RoundedRectangle");
 export const RNHostView = container("RNHostView");
-export { Button, Divider, Image, Label, Link, Menu, Picker, ProgressView, TabView, Text, Toolbar };
+export const Form = container("Form");
+export {
+  Button,
+  Divider,
+  Image,
+  Label,
+  Link,
+  Menu,
+  Picker,
+  ProgressView,
+  Section,
+  TabView,
+  Text,
+  Toolbar,
+};
