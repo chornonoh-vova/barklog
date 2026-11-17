@@ -57,7 +57,7 @@ Widgets derive their snapshot from that same query, per
 the server and invalidate detail and backlog queries when they settle. There is
 no optimistic cache patch or rollback. A move omits the rating to preserve it;
 explicit `null` clears a rating. The device's slot check is advisory, a server
-402 opens the paywall, and successful status changes trigger a haptic. See
+402 opens the paywall, and haptics follow the [haptic rule](#haptics). See
 [ADR-0002](../../adr/0002-server-authoritative-backlog-writes.md) and
 [ADR-0005](../../adr/0005-server-derived-entitlement.md).
 
@@ -78,6 +78,34 @@ explicit `null` clears a rating. The device's slot check is advisory, a server
   [adaptive layouts](2026-10-12-ipad-duo-adaptive-layout-design.md), and
   [widgets and persistence](2026-10-21-home-screen-widgets-design.md) describe
   their current behavior and retained rationale.
+
+## Haptics
+
+One rule covers the whole app, decided by
+[decisionHaptic](../../../apps/mobile/src/lib/haptics/decision.ts) and played with
+[playDecisionHaptic](../../../apps/mobile/src/lib/haptics/play.ts); entry writes
+call `decisionHaptic` themselves and play through an injected effect, so their
+tests need no device. It plays the system notification patterns only for their
+documented meaning, per Apple's
+[Playing haptics](https://developer.apple.com/design/human-interface-guidelines/playing-haptics):
+consistent, and not overused. New features add an event to the function rather
+than calling `expo-haptics` directly.
+
+| Event                                    | Haptic                                  |
+| ---------------------------------------- | --------------------------------------- |
+| Status change confirmed (add or move)    | success                                 |
+| Release alert turned on                  | success (a deliberate decision)         |
+| Release alert turned off                 | none (undoable, like a rating edit)     |
+| Rating change                            | none                                    |
+| Remove from backlog                      | none (the confirmation is the feedback) |
+| Write failed (error alert shown)         | error, together with the alert          |
+| 402 or slot check → paywall              | none (the sheet is the feedback)        |
+| Pickers, menus, pull to refresh, filter  | native; the app adds nothing            |
+| RevenueCat paywall and StoreKit purchase | native (package/tab selection, payment) |
+| Navigation, sharing, onboarding, toolbar | none                                    |
+
+The system's own haptics setting turns all of this off; there is no in-app
+switch. The success haptic waits for the server, like every write.
 
 ## Validation and limits
 

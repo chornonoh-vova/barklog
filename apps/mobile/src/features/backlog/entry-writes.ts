@@ -10,15 +10,15 @@ import { MutationObserver, type QueryClient } from "@tanstack/react-query";
 import type { Endpoints } from "@/lib/api/endpoints";
 import { isApiError } from "@/lib/api/errors";
 import { keys } from "@/lib/api/keys";
+import { decisionHaptic, type HapticEvent, type HapticFeedback } from "@/lib/haptics/decision";
 import { activeSlotsUsed } from "@/features/backlog/slots";
-import { shouldPlayStatusHaptic } from "@/features/backlog/status-haptic";
 import { wouldExceedSlots } from "@/features/paywall/should-offer-paywall";
 
 /** The device side of a write: injected, so a test drives the core with fakes. */
 export interface EntryWriteEffects {
   openPaywall(): void;
   alertError(error: unknown): void;
-  playStatusHaptic(): void;
+  playHaptic(feedback: HapticFeedback): void;
 }
 
 /** Each promise settles once the write has, and never rejects: a failure is
@@ -72,11 +72,17 @@ export function createEntryWrites(
   ): Promise<void> => {
     // Read at tap time: the refetch after the write replaces it.
     const from = cachedEntry(gameId)?.status;
+    const play = (event: HapticEvent) => {
+      const feedback = decisionHaptic(event);
+      if (feedback !== null) effects.playHaptic(feedback);
+    };
     const observer = new MutationObserver(queryClient, {
       mutationFn: request,
 
       onSuccess: () => {
-        if (status !== null && shouldPlayStatusHaptic(from, status)) effects.playStatusHaptic();
+        play(
+          status === null ? { kind: "entryRemoved" } : { kind: "entryWritten", from, to: status },
+        );
       },
 
       onError: (error) => {
@@ -85,10 +91,12 @@ export function createEntryWrites(
           // The slot check let this through, so the cached entitlement or
           // count was wrong; refetch `me` before the next tap.
           void queryClient.invalidateQueries({ queryKey: keys.me() });
+          play({ kind: "paywallOpened" });
           effects.openPaywall();
           return;
         }
 
+        play({ kind: "writeFailed" });
         effects.alertError(error);
       },
 

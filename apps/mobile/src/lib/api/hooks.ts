@@ -16,12 +16,12 @@ import {
   type MeResponse,
   type ShareIdentifyResponse,
 } from "@repo/contracts";
-import { notificationAsync, NotificationFeedbackType } from "expo-haptics";
 import { useMemo } from "react";
 import { Alert } from "react-native";
 
 import { createEntryWrites, type EntryWriteEffects } from "@/features/backlog/entry-writes";
 import { openPaywall } from "@/features/paywall/open-paywall";
+import { playHaptic } from "@/lib/haptics/play";
 
 import { errorCopy } from "./error-copy";
 import { keys } from "./keys";
@@ -103,7 +103,7 @@ export function useIdentifyShare(url: string | null): UseQueryResult<ShareIdenti
 const ENTRY_WRITE_EFFECTS: EntryWriteEffects = {
   openPaywall,
   alertError: alertOnMutationError,
-  playStatusHaptic: () => void notificationAsync(NotificationFeedbackType.Success),
+  playHaptic,
 };
 
 /** Backlog entry writes for one game; see `createEntryWrites`. */
