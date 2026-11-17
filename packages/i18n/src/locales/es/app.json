@@ -33,9 +33,12 @@
     "reverifyMessage": "Por tu seguridad, vuelve a iniciar sesión antes de eliminar tu cuenta. En tu cuenta, abre Seguridad y luego Eliminar cuenta.",
     "reverifyContinue": "Continuar",
     "deletingLabel": "Eliminar cuenta, eliminando",
-    "rateApp": "Valorar Barklog",
-    "feedback": "Sugerir una función o informar de un problema",
-    "about": "Acerca de Barklog"
+    "appSection": "Barklog",
+    "rateApp": "Valorar en la App Store",
+    "feedback": "Enviar comentarios",
+    "feedbackFooter": "Sugiere una función o informa de un problema. Leo todos los mensajes.",
+    "about": "Acerca de Barklog",
+    "aboutRow": "Acerca de"
   },
   "about": {
     "privacy": "Política de privacidad",

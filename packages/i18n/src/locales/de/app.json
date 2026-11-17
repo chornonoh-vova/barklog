@@ -33,9 +33,12 @@
     "reverifyMessage": "Melde dich zu deiner Sicherheit erneut an, bevor du dein Konto löschst. Öffne in deinem Konto „Sicherheit“ und dann „Konto löschen“.",
     "reverifyContinue": "Weiter",
     "deletingLabel": "Konto löschen, wird gelöscht",
-    "rateApp": "Barklog bewerten",
-    "feedback": "Funktion vorschlagen oder Fehler melden",
-    "about": "Über Barklog"
+    "appSection": "Barklog",
+    "rateApp": "Im App Store bewerten",
+    "feedback": "Feedback senden",
+    "feedbackFooter": "Schlag eine Funktion vor oder melde ein Problem. Ich lese jede Nachricht.",
+    "about": "Über Barklog",
+    "aboutRow": "Über"
   },
   "about": {
     "privacy": "Datenschutzerklärung",

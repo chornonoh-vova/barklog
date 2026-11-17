@@ -136,12 +136,12 @@ describe("Premium row", () => {
   });
 });
 
-describe("Rate Barklog", () => {
+describe("Rate on the App Store", () => {
   it("opens the App Store review composer, not the system prompt", async () => {
     const user = userEvent.setup();
     await renderScreen();
 
-    await user.press(button("Rate Barklog"));
+    await user.press(button("Rate on the App Store"));
 
     expect(openURL).toHaveBeenCalledWith(
       "https://apps.apple.com/app/barklog/id6807319879?action=write-review",
@@ -153,15 +153,28 @@ describe("Rate Barklog", () => {
     jest.mocked(StoreReview.storeUrl).mockReturnValue(null);
     await renderScreen();
 
-    expect(screen.queryByRole("button", { name: "Rate Barklog" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Rate on the App Store" })).toBeNull();
   });
 
   it("sits between the account group and Sign Out", async () => {
     await renderScreen();
 
     const order = screen.getAllByRole("button").map((b) => b.props.accessibilityLabel);
-    expect(order.indexOf("Rate Barklog")).toBeGreaterThan(order.indexOf("Get Barklog Premium"));
-    expect(order.indexOf("Rate Barklog")).toBeLessThan(order.indexOf("Sign Out"));
+    expect(order.indexOf("Rate on the App Store")).toBeGreaterThan(
+      order.indexOf("Get Barklog Premium"),
+    );
+    expect(order.indexOf("Rate on the App Store")).toBeLessThan(order.indexOf("Sign Out"));
+  });
+});
+
+describe("Barklog section", () => {
+  it("names the section and explains the feedback row in its footer", async () => {
+    await renderScreen();
+
+    expect(screen.getByRole("header", { name: "Barklog" })).toBeOnTheScreen();
+    expect(
+      screen.getByText("Suggest a feature or report a problem. I read every message."),
+    ).toBeOnTheScreen();
   });
 });
 
@@ -209,35 +222,35 @@ describe("Sign Out and Delete Account", () => {
   });
 });
 
-describe("Request a Feature or Report an Issue", () => {
-  it("sends feedback from a row grouped with Rate Barklog", async () => {
+describe("Send Feedback", () => {
+  it("sends feedback from the row after Rate on the App Store", async () => {
     const sendFeedback = jest.fn();
     jest.mocked(useSendFeedback).mockReturnValue(sendFeedback);
     const user = userEvent.setup();
     await renderScreen();
 
-    const row = button("Request a Feature or Report an Issue");
+    const row = button("Send Feedback");
     expect(within(row).getByTestId("symbol-paperplane.fill")).toBeTruthy();
     await user.press(row);
     expect(sendFeedback).toHaveBeenCalledTimes(1);
 
     const order = screen.getAllByRole("button").map((b) => b.props.accessibilityLabel);
-    const feedback = order.indexOf("Request a Feature or Report an Issue");
-    expect(feedback).toBe(order.indexOf("Rate Barklog") + 1);
-    expect(feedback).toBeLessThan(order.indexOf("About Barklog"));
+    const feedback = order.indexOf("Send Feedback");
+    expect(feedback).toBe(order.indexOf("Rate on the App Store") + 1);
+    expect(feedback).toBeLessThan(order.indexOf("About"));
   });
 });
 
-describe("About Barklog", () => {
-  it("opens the About screen, after Rate Barklog and before Sign Out", async () => {
+describe("About", () => {
+  it("opens the About screen, after Send Feedback and before Sign Out", async () => {
     const user = userEvent.setup();
     await renderScreen();
 
-    await user.press(button("About Barklog"));
+    await user.press(button("About"));
     expect(onOpenAbout).toHaveBeenCalledTimes(1);
 
     const order = screen.getAllByRole("button").map((b) => b.props.accessibilityLabel);
-    expect(order.indexOf("About Barklog")).toBeGreaterThan(order.indexOf("Rate Barklog"));
-    expect(order.indexOf("About Barklog")).toBeLessThan(order.indexOf("Sign Out"));
+    expect(order.indexOf("About")).toBe(order.indexOf("Send Feedback") + 1);
+    expect(order.indexOf("About")).toBeLessThan(order.indexOf("Sign Out"));
   });
 });

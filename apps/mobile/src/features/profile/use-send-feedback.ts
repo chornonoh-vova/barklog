@@ -32,7 +32,7 @@ async function composeInApp(body: string): Promise<boolean> {
 }
 
 /**
- * "Request a Feature or Report an Issue": the system compose sheet with the
+ * "Send Feedback": the system compose sheet with the
  * subject, address and debug details filled in. If it cannot open, or fails,
  * `mailto:` hands the draft to whatever mail app the user chose; with no mail
  * app at all the alert gives the address. One sheet at a time: a second tap

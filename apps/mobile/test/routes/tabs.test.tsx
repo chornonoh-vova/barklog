@@ -130,7 +130,7 @@ describe("Profile tab", () => {
     await renderApp("/profile");
     const user = userEvent.setup();
 
-    await user.press(await screen.findByRole("button", { name: "About Barklog" }));
+    await user.press(await screen.findByRole("button", { name: "About" }));
 
     expect(screen).toHaveSegments(["(tabs)", "profile", "about"]);
     expect(await screen.findByText("Privacy Policy")).toBeOnTheScreen();

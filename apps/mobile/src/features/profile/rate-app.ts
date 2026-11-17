@@ -1,7 +1,7 @@
 import * as StoreReview from "expo-store-review";
 
 /**
- * The Profile tab's "Rate Barklog" link: the App Store page from
+ * The Profile tab's "Rate on the App Store" link: the App Store page from
  * `ios.appStoreUrl` in `app.json` (read by `StoreReview.storeUrl()`), opened
  * on the review composer. `null` when the build carries no store URL, and the
  * row is then left out.

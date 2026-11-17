@@ -45,10 +45,10 @@ Use the appropriate configured RevenueCat test or App Store environment.
       Sign Out from the row shows an alert like Delete Account (Cancel keeps the session), and
       Sign Out also works from inside the pushed Clerk profile view.
 - [ ] **Profile rows:** icon tiles and text read correctly in light and dark
-      mode. Rate Barklog opens the App Store on the review composer (device
-      only; the simulator has no App Store). About Barklog shows the installed
-      version and build, and each of its links opens in Safari. Request a
-      Feature or Report an Issue opens the Mail sheet with the address, subject
+      mode, and the Barklog section's rows fit one line in every language. Rate on
+      the App Store opens the review composer (device only; the simulator has
+      no App Store). About shows the installed version and build, and each of
+      its links opens in Safari. Send Feedback opens the Mail sheet with the address, subject
       and details filled in; cancelling and tapping again reopens it; with Mail
       signed out, it opens the default mail app; with no mail app, an alert
       gives the address.

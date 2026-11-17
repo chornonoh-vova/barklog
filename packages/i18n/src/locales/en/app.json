@@ -33,9 +33,12 @@
     "reverifyMessage": "For your security, sign in again before deleting your account. In your account, open Security, then Delete account.",
     "reverifyContinue": "Continue",
     "deletingLabel": "Delete Account, deleting",
-    "rateApp": "Rate Barklog",
-    "feedback": "Request a Feature or Report an Issue",
-    "about": "About Barklog"
+    "appSection": "Barklog",
+    "rateApp": "Rate on the App Store",
+    "feedback": "Send Feedback",
+    "feedbackFooter": "Suggest a feature or report a problem. I read every message.",
+    "about": "About Barklog",
+    "aboutRow": "About"
   },
   "about": {
     "privacy": "Privacy Policy",

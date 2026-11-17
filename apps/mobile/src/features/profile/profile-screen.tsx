@@ -28,7 +28,8 @@ import { usePremium } from "@/lib/api/hooks";
 
 /**
  * The Profile tab: a grouped list like iOS Settings. Section order is fixed
- * (account group; Rate and Feedback; About; Sign Out; then Delete Account), and
+ * (account group; the Barklog section with Rate, Feedback and About; Sign Out;
+ * then Delete Account), and
  * a section with nothing in it yet is absent.
  */
 export function ProfileScreen({
@@ -100,7 +101,10 @@ export function ProfileScreen({
           )}
         </Section>
 
-        <Section>
+        <Section
+          title={t("profile.appSection")}
+          footer={<Text>{t("profile.feedbackFooter")}</Text>}
+        >
           {reviewUrl === null ? null : (
             <ExternalLinkRow
               title={t("profile.rateApp")}
@@ -113,11 +117,8 @@ export function ProfileScreen({
             onPress={sendFeedback}
             icon={<SettingsIcon systemName="paperplane.fill" color="systemGreen" />}
           />
-        </Section>
-
-        <Section>
           <NavigationRow
-            title={t("profile.about")}
+            title={t("profile.aboutRow")}
             onPress={onOpenAbout}
             icon={<SettingsIcon systemName="info" color="systemIndigo" />}
           />

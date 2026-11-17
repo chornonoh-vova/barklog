@@ -82,8 +82,8 @@ deletion flow" is not possible as such.
 
 Ships on its own from `main` as an app release, ahead of the release alerts
 work, because it is the App Review 5.1.1(v) fix. That release has the account
-group (account + Premium), Rate Barklog, Request a Feature or Report an Issue,
-About Barklog, Sign Out and Delete Account. Stats (#82) and Release alerts (#83) arrive in later releases in the
+group (account + Premium), the Barklog section (Rate on the App Store, Send
+Feedback, About), Sign Out and Delete Account. Stats (#82) and Release alerts (#83) arrive in later releases in the
 positions fixed below; this deviates from step 4 of the release alerts
 rollout, which bundled the Profile tab with notifications.
 
@@ -106,13 +106,13 @@ Profile                                  (large title, no toolbar items)
 └───────────────────────────────────────┘
  STATS                                       (#82)
  RELEASE ALERTS                              (#83)
+ BARKLOG
 ┌───────────────────────────────────────┐
-│ [💬] Rate Barklog                    ↗ │  blue tile; → App Store review
-│ [✈] Request a Feature or Report an Issue │  green tile; → mail compose sheet
+│ [💬] Rate on the App Store           ↗ │  blue tile; → App Store review
+│ [✈] Send Feedback                     │  green tile; → mail compose sheet
+│ [i] About                           › │  indigo tile; → About Barklog (pushed)
 └───────────────────────────────────────┘
-┌───────────────────────────────────────┐
-│ [i] About Barklog                   › │  indigo tile; → About (pushed)
-└───────────────────────────────────────┘
+ Suggest a feature or report a problem. I read every message.
 ┌───────────────────────────────────────┐
 │ [⇥] Sign Out                          │  grey tile
 └───────────────────────────────────────┘
@@ -124,8 +124,14 @@ Profile                                  (large title, no toolbar items)
 A grouped, inset list like iOS Settings, built with `@expo/ui` SwiftUI
 (`Form`, `Section`, `Button`) and React Native `Alert` for confirmations, so it gets
 native row metrics, Dynamic Type and dark mode. Section order is fixed: account
-group, Stats, Release alerts, later settings, Rate Barklog and Feedback, About,
-Sign Out, Delete Account. A section with no content yet is simply absent, never an empty header.
+group, Stats, Release alerts, later settings, the Barklog section (Rate, Send
+Feedback, About), Sign Out, Delete Account.
+
+The Barklog section (changed in design review, 2026-11-17) has a "Barklog"
+header, so its rows drop the app name and fit one line in all five languages
+at the default text size; the longest is "Valorar en la App Store". "Send
+Feedback" is Apple's own wording; the footer says what it is for: "Suggest a
+feature or report a problem. I read every message." A section with no content yet is simply absent, never an empty header.
 
 Rows follow Expo UI's
 [iOS Settings recipe](https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/#ios-settings-app)
@@ -139,7 +145,7 @@ which have their own dark variants, as Settings' tiles do. Delete Account's text
 is system red. Each row carries an explicit accessibility label, so VoiceOver
 never reads a tile's symbol name.
 
-### Rate Barklog
+### Rate on the App Store
 
 Added in design review (2026-11-17). Opens the App Store page from
 `ios.appStoreUrl` in `app.json` (read with `StoreReview.storeUrl()`) with
@@ -170,7 +176,7 @@ automatic prompt stays with `useReviewPrompt`.
   semibold, like Settings' Apple Account row, or the primary email if there is
   no name. Subtitle, in hierarchical secondary: what the row manages, "Profile,
   email and security" (changed 2026-11-17; it showed the email before).
-  Disclosure chevron, like About Barklog; the rows that leave the app have
+  Disclosure chevron, like About; the rows that leave the app have
   `arrow.up.forward` instead.
 - Tapping **pushes** `UserProfileView` on the Profile stack, with the route's
   header hidden, `isDismissible={false}` and `onHostBack={() => router.back()}`,
@@ -266,9 +272,9 @@ Per the [haptic rule](2026-08-27-barklog-mobile-design.md#haptics)
 - Strings `profile.openAccount` and the star's accessibility labels go; new
   `profile.*` strings are added in all five locales.
 
-### Request a Feature or Report an Issue
+### Send Feedback
 
-Added in design review (2026-11-17), in one section with Rate Barklog. A
+Added in design review (2026-11-17), in the Barklog section. A
 `paperplane.fill` row that opens the system mail compose sheet
 (`expo-mail-composer`) inside the app, to `chernonog.vova+barklog@gmail.com`
 with the subject "Feedback About Barklog" (English: it is for the developer's
