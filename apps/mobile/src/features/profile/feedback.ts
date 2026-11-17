@@ -54,12 +54,16 @@ export function feedbackBody(info: DebugInfo): string {
   ].join("\n");
 }
 
-/** The `mailto:` fallback for a device without Mail set up. */
+/**
+ * The `mailto:` fallback for a device without Mail set up. Each part is
+ * percent-encoded with `encodeURIComponent`, as RFC 6068 expects: not
+ * `URLSearchParams`, whose form encoding turns spaces into `+`, which mail
+ * apps show literally. Only the address's local part is encoded, so its `+`
+ * becomes `%2B` and the `@` stays readable. Line breaks are CRLF, per the RFC.
+ */
 export function feedbackMailto(body: string): string {
-  const query = new URLSearchParams({ subject: FEEDBACK_SUBJECT, body });
-  // `URLSearchParams` writes spaces as `+`, which mail apps show literally,
-  // and RFC 6068 asks for CRLF line breaks. The `+` in the address is encoded
-  // too, for clients that read it as a space.
-  const params = query.toString().replace(/\+/g, "%20").replace(/%0A/g, "%0D%0A");
-  return `mailto:${FEEDBACK_EMAIL.replace("+", "%2B")}?${params}`;
+  const [local, domain] = FEEDBACK_EMAIL.split("@");
+  const subject = encodeURIComponent(FEEDBACK_SUBJECT);
+  const text = encodeURIComponent(body.replace(/\r?\n/g, "\r\n"));
+  return `mailto:${encodeURIComponent(local!)}@${domain}?subject=${subject}&body=${text}`;
 }

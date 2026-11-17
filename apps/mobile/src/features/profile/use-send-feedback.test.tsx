@@ -4,6 +4,7 @@ import * as MailComposer from "expo-mail-composer";
 import { Alert } from "react-native";
 
 import { useSendFeedback } from "@/features/profile/use-send-feedback";
+import { usePremium } from "@/lib/api/hooks";
 import { me } from "@test/fixtures";
 import { fakeEndpoints, renderHookWithProviders } from "@test/render";
 
@@ -22,11 +23,14 @@ jest.mock("expo-application", () => ({
 
 async function send({ premium }: { premium?: boolean } = {}) {
   const getMe = premium === undefined ? undefined : async () => me({ premium });
-  const { result, api } = await renderHookWithProviders(() => useSendFeedback(), {
-    api: fakeEndpoints(getMe ? { getMe } : {}),
-  });
-  if (getMe) await waitFor(() => expect(api.getMe).toHaveBeenCalled());
-  await act(async () => result.current());
+  // Rendered next to `usePremium`, so the press waits for the entitlement the
+  // row would see rather than racing its query.
+  const { result } = await renderHookWithProviders(
+    () => ({ sendFeedback: useSendFeedback(), premium: usePremium() }),
+    { api: fakeEndpoints(getMe ? { getMe } : {}) },
+  );
+  if (premium !== undefined) await waitFor(() => expect(result.current.premium).toBe(premium));
+  await act(async () => result.current.sendFeedback());
 }
 
 describe("useSendFeedback", () => {

@@ -65,7 +65,11 @@ describe("feedbackMailto", () => {
 
     expect(url).toBe(
       "mailto:chernonog.vova%2Bbarklog@gmail.com?subject=Feedback%20About%20Barklog" +
-        "&body=Hi%20there%0D%0A%E2%80%94%0D%0AApp%3A%20Barklog%201.4.0%20%28123%29",
+        "&body=Hi%20there%0D%0A%E2%80%94%0D%0AApp%3A%20Barklog%201.4.0%20(123)",
     );
+  });
+
+  it("keeps characters that mean something in a query inside the body", () => {
+    expect(feedbackMailto("1+1 = 2 & more")).toMatch(/&body=1%2B1%20%3D%202%20%26%20more$/);
   });
 });
