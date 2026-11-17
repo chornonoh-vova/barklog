@@ -52,6 +52,10 @@ _Avoid_: upsert (outside the db query), mutation
 A user's opt-in, on one backlog entry, to be notified when the game's precise release date is announced, changes or arrives. It is deleted with the entry, so only backlog games can notify.
 _Avoid_: subscription (that is the App Store purchase), notification (a release alert produces notifications)
 
+**Alert time**:
+The local time of day, in 30-minute steps and 09:00 by default, from which a user's release alert notifications may be sent each day.
+_Avoid_: reminder time, quiet hours
+
 ### Device
 
 **Recents**:
@@ -61,6 +65,10 @@ _Avoid_: history, search history
 **Account switch**:
 Any change of the signed-in user on the device, including sign-out. Personal data must not carry across accounts; asynchronous clearing has a known gap recorded in [ADR-0004](docs/adr/0004-account-switch-isolation.md).
 _Avoid_: logout (it is only one case)
+
+**Push device**:
+An app installation registered to receive notifications for the signed-in user, with the language its notifications are written in. Registering it under another account moves it to that account.
+_Avoid_: device token (the token is how a push device is addressed)
 
 **Persisted backlog**:
 The successful backlog query saved on the device under a per-account key so Home can render before a fresh response arrives. It is restored as stale data, not an independent authority.
@@ -121,7 +129,7 @@ Removal of the Barklog user, backlog and subscription following Clerk's verified
 _Avoid_: account switch, sign-out
 
 **Tombstone**:
-A retained marker for a deleted Clerk user id that prevents later RevenueCat events from recreating that account.
+A retained marker for a deleted Clerk user id that prevents later RevenueCat events, or writes from a session issued before the deletion, from recreating that account.
 _Avoid_: deleted account (the marker is not the former account's data)
 
 **Subscription event**:
