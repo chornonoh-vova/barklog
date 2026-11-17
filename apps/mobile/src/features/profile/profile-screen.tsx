@@ -65,6 +65,9 @@ export function ProfileScreen({ onOpenAccount }: { onOpenAccount: () => void }) 
   };
   const { title, subtitle } = accountRowText(user);
   const deleteLabel = t("profile.deleteAccount");
+  const deleteA11yLabel = isDeleting
+    ? `${deleteLabel}, ${t("profile.deleting").toLocaleLowerCase()}`
+    : deleteLabel;
 
   return (
     <Host style={styles.host}>
@@ -121,6 +124,7 @@ export function ProfileScreen({ onOpenAccount }: { onOpenAccount: () => void }) 
             label={t("profile.signOut")}
             systemImage="rectangle.portrait.and.arrow.right"
             onPress={() => signOut(null)}
+            modifiers={[disabled(isDeleting)]}
           />
         </Section>
 
@@ -128,7 +132,7 @@ export function ProfileScreen({ onOpenAccount }: { onOpenAccount: () => void }) 
           <Button
             role="destructive"
             onPress={deleteAccount}
-            modifiers={[disabled(isDeleting), accessibilityLabel(deleteLabel)]}
+            modifiers={[disabled(isDeleting), accessibilityLabel(deleteA11yLabel)]}
           >
             <HStack>
               <Label title={deleteLabel} systemImage="trash" />

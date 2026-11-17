@@ -14,7 +14,6 @@
   },
   "profile": {
     "getPremium": "Получить Barklog Premium",
-    "title": "Профиль",
     "account": "Аккаунт",
     "premium": "Barklog Premium",
     "premiumActive": "Активна",
@@ -25,12 +24,13 @@
     "deleteTitle": "Удалить аккаунт?",
     "deleteMessage": "Твой бэклог, оценки и уведомления о релизах будут удалены навсегда. Это нельзя отменить.\n\nУдаление аккаунта не отменяет подписку Barklog Premium. Отмени её в подписках App Store.",
     "deleteFailedTitle": "Не удалось удалить аккаунт",
-    "deleteFailedMessage": "Проверь подключение и попробуй снова.",
+    "deleteFailedMessage": "Что-то пошло не так. Попробуй ещё раз чуть позже.",
     "version": "Barklog {{version}} ({{build}})",
     "versionNoBuild": "Barklog {{version}}",
     "reverifyTitle": "Подтверди, что это ты",
-    "reverifyMessage": "В целях безопасности войди снова, прежде чем удалять аккаунт. В аккаунте открой «Безопасность», затем «Удалить аккаунт».",
-    "reverifyContinue": "Продолжить"
+    "reverifyMessage": "В целях безопасности войди снова, прежде чем удалять аккаунт. В аккаунте открой «Безопасность», затем «Удалить учетную запись».",
+    "reverifyContinue": "Продолжить",
+    "deleting": "Удаляется"
   },
   "status": {
     "waiting": "В очереди",

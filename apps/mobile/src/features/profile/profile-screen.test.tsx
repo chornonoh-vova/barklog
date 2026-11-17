@@ -155,14 +155,21 @@ describe("Sign Out and Delete Account", () => {
     expect(actions.deleteAccount).toHaveBeenCalledTimes(1);
   });
 
-  it("disables Delete Account and shows progress while deleting", async () => {
+  it("disables Sign Out and Delete Account and shows progress while deleting", async () => {
     actions.isDeleting = true;
     await renderScreen();
 
-    const del = button("Delete Account");
+    const del = button("Delete Account, deleting");
     expect(del).toBeDisabled();
     expect(within(del).getByRole("progressbar")).toBeOnTheScreen();
-    expect(button("Sign Out")).not.toBeDisabled();
+    expect(button("Sign Out")).toBeDisabled();
+  });
+
+  it("announces deleting to VoiceOver only while it runs", async () => {
+    await renderScreen();
+
+    expect(screen.queryByRole("button", { name: "Delete Account, deleting" })).toBeNull();
+    expect(button("Delete Account")).toBeTruthy();
   });
 
   it("closes with the version footer", async () => {
