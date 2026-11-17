@@ -1,4 +1,5 @@
-import { screen, userEvent, waitFor, within } from "@testing-library/react-native";
+import type { QueryClient } from "@tanstack/react-query";
+import { act, screen, userEvent, waitFor, within } from "@testing-library/react-native";
 import { openURL } from "expo-linking";
 import { Stack } from "expo-router";
 import * as StoreReview from "expo-store-review";
@@ -8,9 +9,15 @@ import { ProfileScreen } from "@/features/profile/profile-screen";
 import { useAccountActions, type AccountActions } from "@/features/profile/use-account-actions";
 import { useSendFeedback } from "@/features/profile/use-send-feedback";
 import type { Endpoints } from "@/lib/api/endpoints";
-import { me } from "@test/fixtures";
+import { keys } from "@/lib/api/keys";
+import { backlogItem, backlogList, me } from "@test/fixtures";
 import { clerk } from "@test/mocks/native";
-import { fakeEndpoints, renderRouterWithProviders, renderWithProviders } from "@test/render";
+import {
+  fakeEndpoints,
+  renderRouterWithProviders,
+  renderWithProviders,
+  testQueryClient,
+} from "@test/render";
 
 jest.mock("@/features/profile/use-account-actions");
 jest.mock("@/features/profile/use-send-feedback");
@@ -21,6 +28,19 @@ jest.mock("expo-linking", () => ({
 
 const onOpenAccount = jest.fn();
 const onOpenAbout = jest.fn();
+const onOpenStatus = jest.fn();
+const onFindGames = jest.fn();
+
+function Profile() {
+  return (
+    <ProfileScreen
+      onOpenAccount={onOpenAccount}
+      onOpenAbout={onOpenAbout}
+      onOpenStatus={onOpenStatus}
+      onFindGames={onFindGames}
+    />
+  );
+}
 let actions: AccountActions;
 
 beforeEach(() => {
@@ -37,14 +57,16 @@ beforeEach(() => {
 async function renderScreen({
   premium = false,
   getMe = async () => me({ premium }),
-}: { premium?: boolean; getMe?: Endpoints["getMe"] } = {}) {
-  const api = fakeEndpoints({ getMe });
-  const result = await renderWithProviders(
-    <ProfileScreen onOpenAccount={onOpenAccount} onOpenAbout={onOpenAbout} />,
-    {
-      api,
-    },
-  );
+  listBacklog = async () => backlogList(),
+  queryClient,
+}: {
+  premium?: boolean;
+  getMe?: Endpoints["getMe"];
+  listBacklog?: Endpoints["listBacklog"];
+  queryClient?: QueryClient;
+} = {}) {
+  const api = fakeEndpoints({ getMe, listBacklog });
+  const result = await renderWithProviders(<Profile />, { api, queryClient });
   await waitFor(() => expect(api.getMe).toHaveBeenCalled());
   return result;
 }
@@ -55,7 +77,7 @@ async function renderScreenInRouter({ premium = false }: { premium?: boolean } =
   const result = await renderRouterWithProviders(
     {
       _layout: () => <Stack />,
-      index: () => <ProfileScreen onOpenAccount={onOpenAccount} onOpenAbout={onOpenAbout} />,
+      index: () => <Profile />,
       paywall: () => null,
     },
     { api },
@@ -252,5 +274,131 @@ describe("About", () => {
     const order = screen.getAllByRole("button").map((b) => b.props.accessibilityLabel);
     expect(order.indexOf("About")).toBe(order.indexOf("Send Feedback") + 1);
     expect(order.indexOf("About")).toBeLessThan(order.indexOf("Sign Out"));
+  });
+});
+
+describe("Stats", () => {
+  const backlog = backlogList(
+    backlogItem(1, "waiting", { rating: 8 }),
+    backlogItem(2, "waiting"),
+    backlogItem(3, "playing", { rating: 6 }),
+  );
+
+  it("shows the total and a count per status, zero counts included", async () => {
+    await renderScreen({ listBacklog: async () => backlog });
+
+    expect(await screen.findByRole("header", { name: "Stats · 3 games" })).toBeOnTheScreen();
+    expect(button("Waiting, 2 games")).toBeOnTheScreen();
+    expect(button("Playing, 1 game")).toBeOnTheScreen();
+    expect(button("Completed, 0 games")).toBeOnTheScreen();
+    expect(button("Abandoned, 0 games")).toBeOnTheScreen();
+  });
+
+  it("opens the tapped status", async () => {
+    const user = userEvent.setup();
+    await renderScreen({ listBacklog: async () => backlog });
+
+    await user.press(await screen.findByRole("button", { name: "Playing, 1 game" }));
+
+    expect(onOpenStatus).toHaveBeenCalledWith("playing");
+  });
+
+  it("shows the average rating as a label, not a button", async () => {
+    await renderScreen({ listBacklog: async () => backlog });
+
+    expect(
+      await screen.findByLabelText("My average rating 7.0 out of 10, from 2 rated games"),
+    ).toBeOnTheScreen();
+    expect(screen.getByText("7.0")).toBeOnTheScreen();
+    expect(screen.getByText("from 2 rated games")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: /average rating/i })).not.toBeOnTheScreen();
+  });
+
+  it("sets the average rating apart in its own group", async () => {
+    await renderScreen({ listBacklog: async () => backlog });
+
+    const average = await screen.findByLabelText(/^My average rating/);
+    const statusGroup = screen.getByRole("header", { name: "Stats · 3 games" }).parent!;
+    expect(within(statusGroup).getByRole("button", { name: "Waiting, 2 games" })).toBeOnTheScreen();
+    expect(within(statusGroup).queryByLabelText(/^My average rating/)).not.toBeOnTheScreen();
+    expect(average).toBeOnTheScreen();
+  });
+
+  it("has no average rating when nothing is rated", async () => {
+    await renderScreen({ listBacklog: async () => backlogList(backlogItem(1, "waiting")) });
+
+    await screen.findByRole("button", { name: "Waiting, 1 game" });
+    expect(screen.queryByLabelText(/average rating/i)).not.toBeOnTheScreen();
+  });
+
+  it("offers to find games for an empty backlog", async () => {
+    const user = userEvent.setup();
+    await renderScreen();
+
+    const row = await screen.findByRole("button", { name: "Find games to add" });
+    expect(
+      screen.getByText("Your stats show up here once your backlog has games."),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: /^Waiting/ })).not.toBeOnTheScreen();
+
+    await user.press(row);
+
+    expect(onFindGames).toHaveBeenCalledTimes(1);
+  });
+
+  it("is absent while the backlog loads", async () => {
+    await renderScreen({ listBacklog: () => new Promise(() => {}) });
+
+    expect(screen.queryByRole("header", { name: /^Stats/ })).not.toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Find games to add" })).not.toBeOnTheScreen();
+  });
+
+  it("is absent when the backlog fails with nothing cached", async () => {
+    const listBacklog = jest.fn(async () => {
+      throw new Error("offline");
+    });
+    await renderScreen({ listBacklog });
+    await waitFor(() => expect(listBacklog).toHaveBeenCalled());
+
+    expect(screen.queryByRole("header", { name: /^Stats/ })).not.toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Find games to add" })).not.toBeOnTheScreen();
+  });
+
+  it("keeps showing a cached backlog when a refetch fails", async () => {
+    const queryClient = testQueryClient();
+    queryClient.setQueryData(keys.backlog.list(), backlog);
+    const listBacklog = jest.fn(async () => {
+      throw new Error("offline");
+    });
+    await renderScreen({ listBacklog, queryClient });
+
+    await act(() => queryClient.refetchQueries({ queryKey: keys.backlog.list() }));
+
+    expect(listBacklog).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Waiting, 2 games" })).toBeOnTheScreen();
+  });
+
+  it("switches to the call to action when the backlog empties", async () => {
+    const queryClient = testQueryClient();
+    const listBacklog = jest
+      .fn<ReturnType<Endpoints["listBacklog"]>, []>()
+      .mockResolvedValueOnce(backlogList(backlogItem(1, "waiting")))
+      .mockResolvedValue(backlogList());
+    await renderScreen({ listBacklog, queryClient });
+    await screen.findByRole("button", { name: "Waiting, 1 game" });
+
+    await act(() => queryClient.invalidateQueries({ queryKey: keys.backlog.all }));
+
+    expect(await screen.findByRole("button", { name: "Find games to add" })).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: /^Waiting/ })).not.toBeOnTheScreen();
+  });
+
+  it("sits between the account group and the Barklog section", async () => {
+    await renderScreen({ listBacklog: async () => backlog });
+    await screen.findByRole("header", { name: /^Stats/ });
+
+    const headers = screen.getAllByRole("header").map((header) => header.props.children);
+    expect(headers.indexOf("Stats · 3 games")).toBeLessThan(headers.indexOf("Barklog"));
+    expect(screen.getByRole("button", { name: "Get Barklog Premium" })).toBeOnTheScreen();
   });
 });

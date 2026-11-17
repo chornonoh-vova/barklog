@@ -11,6 +11,7 @@ import {
   VStack,
 } from "@expo/ui/swift-ui";
 import { accessibilityLabel, disabled, font, opacity } from "@expo/ui/swift-ui/modifiers";
+import type { BacklogStatus } from "@repo/contracts";
 import { useTranslation } from "react-i18next";
 import RevenueCatUI from "react-native-purchases-ui";
 import { StyleSheet } from "react-native";
@@ -22,22 +23,29 @@ import { appStoreReviewUrl } from "@/features/profile/rate-app";
 import { DESTRUCTIVE, PRIMARY, ROW, ROW_SHAPE, SECONDARY } from "@/features/profile/row-styles";
 import { ActionRow, Chevron, ExternalLinkRow, NavigationRow } from "@/features/profile/rows";
 import { SettingsIcon } from "@/features/profile/settings-icon";
+import { StatsSection } from "@/features/profile/stats-section";
 import { useAccountActions } from "@/features/profile/use-account-actions";
 import { useSendFeedback } from "@/features/profile/use-send-feedback";
 import { usePremium } from "@/lib/api/hooks";
 
 /**
  * The Profile tab: a grouped list like iOS Settings. Section order is fixed
- * (account group; the Barklog section with Rate, Feedback and About; Sign Out;
- * then Delete Account), and
+ * (account group; Stats; the Barklog section with Rate, Feedback and About;
+ * Sign Out; then Delete Account), and
  * a section with nothing in it yet is absent.
  */
 export function ProfileScreen({
   onOpenAccount,
   onOpenAbout,
+  onOpenStatus,
+  onFindGames,
 }: {
   onOpenAccount: () => void;
   onOpenAbout: () => void;
+  /** A Stats row: Home, filtered to that status. */
+  onOpenStatus: (status: BacklogStatus) => void;
+  /** The empty backlog's Stats row. */
+  onFindGames: () => void;
 }) {
   const { user: clerkUser } = useUser();
   const premium = premiumRow(usePremium());
@@ -100,6 +108,8 @@ export function ProfileScreen({
             </Button>
           )}
         </Section>
+
+        <StatsSection onOpenStatus={onOpenStatus} onFindGames={onFindGames} />
 
         <Section
           title={t("profile.appSection")}
