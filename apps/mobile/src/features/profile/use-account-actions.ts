@@ -22,7 +22,9 @@ export interface AccountActions {
  * Sign out and delete account, each behind its confirmation. Neither clears
  * device data: the auth gate does that when the user id changes (ADR-0004).
  */
-export function useAccountActions(options: { onReverificationRequired: () => void }): AccountActions {
+export function useAccountActions(options: {
+  onReverificationRequired: () => void;
+}): AccountActions {
   const { onReverificationRequired } = options;
   const clerk = useClerk();
   const { user } = useUser();
