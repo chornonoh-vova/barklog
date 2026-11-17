@@ -1,4 +1,5 @@
-import { screen, userEvent } from "@testing-library/react-native";
+import { act, screen, userEvent } from "@testing-library/react-native";
+import { router } from "expo-router";
 
 import { backlogItem, backlogList, gameDetail, gameList } from "@test/fixtures";
 import { navigationBars } from "@test/queries";
@@ -14,6 +15,31 @@ const gameSeven = {
 };
 
 beforeEach(() => markOnboardingSeen());
+
+/** React Navigation reports an action no navigator took (a pop with nothing to
+ * pop) as a console error in development, which LogBox shows on device. */
+function expectEveryActionHandled() {
+  const calls = jest.mocked(console.error).mock.calls.flat().map(String);
+  expect(calls.filter((message) => message.includes("was not handled"))).toEqual([]);
+}
+
+beforeEach(() => jest.spyOn(console, "error"));
+
+type State = { routes: { name: string; state?: State }[] };
+
+/** The routes in Home's own stack, from the root tabs down. */
+function homeStack(app: { getRouterState(): unknown }): State["routes"] {
+  const find = (state: State | undefined): State | undefined => {
+    for (const route of state?.routes ?? []) {
+      if (route.name === "(home)") return route.state;
+      const nested = find(route.state);
+      if (nested !== undefined) return nested;
+    }
+    return undefined;
+  };
+
+  return find(app.getRouterState() as State)?.routes ?? [];
+}
 
 describe("Home tab", () => {
   it("lands on Home, showing the empty state for an empty backlog", async () => {
@@ -134,6 +160,64 @@ describe("Profile tab", () => {
 
     expect(screen).toHaveSegments(["(tabs)", "profile", "about"]);
     expect(await screen.findByText("Privacy Policy")).toBeOnTheScreen();
+  });
+
+  it("opens Home filtered to the status a Stats row names", async () => {
+    fakeServer({ "/api/backlog": backlogList(backlogItem(3, "playing")) });
+    const app = await renderApp("/profile");
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole("button", { name: "Playing, 1 game" }));
+
+    expect(screen).toHaveSegments(["(tabs)", "(home)"]);
+    // Switching tabs adds Expo Router's own no-animation param.
+    expect(app.getSearchParams()).toMatchObject({ status: "playing" });
+    expectEveryActionHandled();
+  });
+
+  it("replaces a filter Home already had with the tapped status", async () => {
+    fakeServer({ "/api/backlog": backlogList(backlogItem(3, "playing")) });
+    const app = await renderApp("/?status=completed");
+    expect(screen).toHaveSearchParams({ status: "completed" });
+    const user = userEvent.setup();
+
+    await act(() => router.navigate("/profile"));
+    await user.press(await screen.findByRole("button", { name: "Playing, 1 game" }));
+
+    expect(screen).toHaveSegments(["(tabs)", "(home)"]);
+    // Switching tabs adds Expo Router's own no-animation param.
+    expect(app.getSearchParams()).toMatchObject({ status: "playing" });
+    expectEveryActionHandled();
+  });
+
+  it("returns Home to its filtered list when a game was open there", async () => {
+    fakeServer({ "/api/backlog": backlogList(backlogItem(3, "playing")), ...gameSeven });
+    const app = await renderApp("/game/7");
+    await screen.findByText("Game 7");
+    const user = userEvent.setup();
+
+    await act(() => router.navigate("/profile"));
+    await user.press(await screen.findByRole("button", { name: "Playing, 1 game" }));
+
+    expect(screen).toHaveSegments(["(tabs)", "(home)"]);
+    expect(app.getSearchParams()).toMatchObject({ status: "playing" });
+    // Home's stack is back to its list alone: no game, no second Home.
+    expect(homeStack(app).map((route) => route.name)).toEqual(["index"]);
+    expectEveryActionHandled();
+  });
+
+  it("opens Explore from an empty backlog's Stats row", async () => {
+    fakeServer({
+      "/api/games/popular": gameList(1),
+      "/api/games/upcoming": gameList(2),
+      "/api/games/recent": gameList(3),
+    });
+    await renderApp("/profile");
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole("button", { name: "Find games to add" }));
+
+    expect(screen).toHaveSegments(["(tabs)", "explore"]);
   });
 
   it.each([

@@ -6,7 +6,14 @@ import type { SFSymbol } from "sf-symbols-typescript";
 /** iOS system colours, so each tile follows the system's light and dark
  * variants the way Settings' tiles do. */
 export type TileColor =
-  "systemOrange" | "systemBlue" | "systemGreen" | "systemIndigo" | "systemGray" | "systemRed";
+  | "systemOrange"
+  | "systemBlue"
+  | "systemGreen"
+  | "systemIndigo"
+  | "systemGray"
+  | "systemRed"
+  | "systemBrown"
+  | "systemYellow";
 
 const TILE = 28;
 

@@ -38,7 +38,16 @@
     "feedback": "Send Feedback",
     "feedbackFooter": "Suggest a feature or report a problem. I read every message.",
     "about": "About Barklog",
-    "aboutRow": "About"
+    "aboutRow": "About",
+    "stats": {
+      "title": "Stats",
+      "averageRating": "My average rating",
+      "averageRatingSpoken": "My average rating {{rating}} out of {{max}}",
+      "ratedGames_one": "from {{count, number}} rated game",
+      "ratedGames_other": "from {{count, number}} rated games",
+      "findGames": "Find games to add",
+      "emptyFooter": "Your stats show up here once your backlog has games."
+    }
   },
   "about": {
     "privacy": "Privacy Policy",
@@ -99,6 +108,8 @@
   "game": {
     "ratingsCount_one": "{{count, number}} rating",
     "ratingsCount_other": "{{count, number}} ratings",
+    "gamesCount_one": "{{count, number}} game",
+    "gamesCount_other": "{{count, number}} games",
     "ratedSpoken": "Rated {{rating}} out of 100, from {{ratings}}",
     "addToBacklog": "Add to Backlog",
     "rate": "Rate",

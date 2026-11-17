@@ -38,7 +38,17 @@
     "feedback": "Enviar comentarios",
     "feedbackFooter": "Sugiere una función o informa de un problema. Leo todos los mensajes.",
     "about": "Acerca de Barklog",
-    "aboutRow": "Acerca de"
+    "aboutRow": "Acerca de",
+    "stats": {
+      "title": "Estadísticas",
+      "averageRating": "Mi valoración media",
+      "averageRatingSpoken": "Mi valoración media {{rating}} de {{max}}",
+      "ratedGames_one": "de {{count, number}} juego valorado",
+      "ratedGames_many": "de {{count, number}} de juegos valorados",
+      "ratedGames_other": "de {{count, number}} juegos valorados",
+      "findGames": "Buscar juegos para añadir",
+      "emptyFooter": "Tus estadísticas aparecerán aquí cuando tu backlog tenga juegos."
+    }
   },
   "about": {
     "privacy": "Política de privacidad",
@@ -100,6 +110,9 @@
     "ratingsCount_one": "{{count, number}} valoración",
     "ratingsCount_many": "{{count, number}} de valoraciones",
     "ratingsCount_other": "{{count, number}} valoraciones",
+    "gamesCount_one": "{{count, number}} juego",
+    "gamesCount_many": "{{count, number}} de juegos",
+    "gamesCount_other": "{{count, number}} juegos",
     "ratedSpoken": "Valorado con {{rating}} de 100, a partir de {{ratings}}",
     "addToBacklog": "Añadir al backlog",
     "rate": "Valorar",
