@@ -104,7 +104,7 @@ Profile                                  (large title, no toolbar items)
 │ [★] Barklog Premium            Active │  orange tile; → Customer Center
 │ [☆] Get Barklog Premium               │  orange tile; → paywall
 └───────────────────────────────────────┘
- STATS                                       (#82)
+ STATS                                       (#82: 2026-11-17-profile-stats-design.md)
  RELEASE ALERTS                              (#83)
  BARKLOG
 ┌───────────────────────────────────────┐
