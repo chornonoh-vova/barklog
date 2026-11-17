@@ -1,3 +1,4 @@
+import { recordUserDeletion } from "@repo/db";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
 import { callApi, createTestApp, TEST_USER } from "./helpers.js";
@@ -64,4 +65,29 @@ test("provisioning twice is not an error", async () => {
 
   const rows = await harness.db.execute("select id from users");
   expect(rows.rows).toHaveLength(1);
+});
+
+test("a write for a deleted account is refused and recreates nothing", async () => {
+  await recordUserDeletion(harness.db, TEST_USER);
+
+  const response = await callApi(harness.app, "/api/backlog/1", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "waiting" }),
+  });
+
+  expect(response.status).toBe(401);
+  expect(await response.json()).toMatchObject({
+    code: "unauthorized",
+    detail: "This account has been deleted.",
+  });
+
+  const rows = await harness.db.execute("select id from users");
+  expect(rows.rows).toEqual([]);
+});
+
+test("a read for a deleted account is still answered", async () => {
+  await recordUserDeletion(harness.db, TEST_USER);
+
+  expect((await callApi(harness.app, "/api/me")).status).toBe(200);
 });

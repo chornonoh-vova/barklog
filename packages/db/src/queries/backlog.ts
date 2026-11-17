@@ -9,6 +9,7 @@ import {
 } from "../schema/backlog.js";
 import { games } from "../schema/mirror.js";
 import { GAME_SUMMARY_COLUMNS, type GameSummary } from "./games.js";
+import { isUserDeleted } from "./users.js";
 
 export const BACKLOG_SORTS = ["updated_at", "added_at", "rating", "name"] as const;
 export type BacklogSort = (typeof BACKLOG_SORTS)[number];
@@ -48,8 +49,17 @@ const ORDER_BY: Record<BacklogSort, SQL> = {
   name: asc(games.name),
 };
 
-export async function ensureUser(db: Queryable, userId: string): Promise<void> {
+/**
+ * False, and nothing written, for an id with an account-deletion tombstone
+ * (ADR-0006): a session issued before the deletion must not bring the account
+ * back through any write, the app's automatic push registration included.
+ */
+export async function ensureUser(db: Queryable, userId: string): Promise<boolean> {
+  if (await isUserDeleted(db, userId)) return false;
+
   await db.insert(users).values({ id: userId }).onConflictDoNothing();
+
+  return true;
 }
 
 export async function getBacklogEntry(

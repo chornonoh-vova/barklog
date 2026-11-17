@@ -29,9 +29,17 @@ export function requireAuth(authenticate: Authenticator): MiddlewareHandler<AppE
   };
 }
 
+/**
+ * A deleted account answers 401, not 403 or 410: Clerk revoked the session, so
+ * only a token issued before the deletion gets here, and the app already
+ * treats 401 as "signed out".
+ */
 export function ensureUserMiddleware(db: Db): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
-    await ensureUser(db, c.get("userId"));
+    if (!(await ensureUser(db, c.get("userId")))) {
+      throw problems.create("UNAUTHORIZED", { detail: "This account has been deleted." });
+    }
+
     await next();
   };
 }

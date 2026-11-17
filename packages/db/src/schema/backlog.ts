@@ -46,9 +46,10 @@ export const users = pgTable(
 /**
  * A tombstone, not a soft delete: the `users` row really is gone. It exists
  * because deleting a Barklog account cannot cancel an App Store subscription,
- * so RevenueCat keeps delivering renewals and expirations for the id — and the
- * webhook's `ensureUser` would recreate the account the deletion removed. The
- * id is all it holds; there is nothing else left to hold.
+ * so RevenueCat keeps delivering renewals and expirations for the id, and a
+ * session issued before the deletion can still send writes. `ensureUser`
+ * checks it, so neither recreates the account the deletion removed. The id is
+ * all it holds; there is nothing else left to hold.
  */
 export const deletedUsers = pgTable("deleted_users", {
   id: text("id").primaryKey(),

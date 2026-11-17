@@ -195,3 +195,18 @@ test("recordUserDeletion survives a redelivery", async () => {
   await expect(recordUserDeletion(db, USER)).resolves.toBeUndefined();
   expect(await db.select().from(schema.deletedUsers)).toHaveLength(1);
 });
+
+test("ensureUser returns true for a live id, new or existing", async () => {
+  await expect(ensureUser(db, USER)).resolves.toBe(true);
+  await expect(ensureUser(db, "user_2freshCCC")).resolves.toBe(true);
+});
+
+test("ensureUser refuses a tombstoned id and creates nothing", async () => {
+  await db.transaction(async (tx) => {
+    await recordUserDeletion(tx, USER);
+    await deleteUser(tx, USER);
+  });
+
+  await expect(ensureUser(db, USER)).resolves.toBe(false);
+  expect(await db.select().from(schema.users)).toHaveLength(0);
+});
