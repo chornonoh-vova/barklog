@@ -38,7 +38,18 @@
     "feedback": "Отправить отзыв",
     "feedbackFooter": "Предложи функцию или сообщи о проблеме. Я читаю каждое сообщение.",
     "about": "О Barklog",
-    "aboutRow": "О приложении"
+    "aboutRow": "О приложении",
+    "stats": {
+      "title": "Статистика",
+      "averageRating": "Моя средняя оценка",
+      "averageRatingSpoken": "Моя средняя оценка {{rating}} из {{max}}",
+      "ratedGames_one": "по {{count, number}} оценённой игре",
+      "ratedGames_few": "по {{count, number}} оценённым играм",
+      "ratedGames_many": "по {{count, number}} оценённым играм",
+      "ratedGames_other": "по {{count, number}} оценённой игры",
+      "findGames": "Найти игры",
+      "emptyFooter": "Статистика появится здесь, когда в бэклоге будут игры."
+    }
   },
   "about": {
     "privacy": "Политика конфиденциальности",
@@ -101,6 +112,10 @@
     "ratingsCount_few": "{{count, number}} оценки",
     "ratingsCount_many": "{{count, number}} оценок",
     "ratingsCount_other": "{{count, number}} оценки",
+    "gamesCount_one": "{{count, number}} игра",
+    "gamesCount_few": "{{count, number}} игры",
+    "gamesCount_many": "{{count, number}} игр",
+    "gamesCount_other": "{{count, number}} игры",
     "ratedSpoken": "Оценка {{rating}} из 100, {{ratings}}",
     "addToBacklog": "Добавить в бэклог",
     "rate": "Оценить",

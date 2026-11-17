@@ -38,7 +38,18 @@
     "feedback": "Надіслати відгук",
     "feedbackFooter": "Запропонуй функцію або повідом про проблему. Я читаю кожне повідомлення.",
     "about": "Про Barklog",
-    "aboutRow": "Про застосунок"
+    "aboutRow": "Про застосунок",
+    "stats": {
+      "title": "Статистика",
+      "averageRating": "Моя середня оцінка",
+      "averageRatingSpoken": "Моя середня оцінка {{rating}} з {{max}}",
+      "ratedGames_one": "за {{count, number}} оціненою грою",
+      "ratedGames_few": "за {{count, number}} оціненими іграми",
+      "ratedGames_many": "за {{count, number}} оціненими іграми",
+      "ratedGames_other": "за {{count, number}} оціненої гри",
+      "findGames": "Знайти ігри",
+      "emptyFooter": "Статистика з'явиться тут, коли в беклозі будуть ігри."
+    }
   },
   "about": {
     "privacy": "Політика конфіденційності",
@@ -101,6 +112,10 @@
     "ratingsCount_few": "{{count, number}} оцінки",
     "ratingsCount_many": "{{count, number}} оцінок",
     "ratingsCount_other": "{{count, number}} оцінки",
+    "gamesCount_one": "{{count, number}} гра",
+    "gamesCount_few": "{{count, number}} гри",
+    "gamesCount_many": "{{count, number}} ігор",
+    "gamesCount_other": "{{count, number}} гри",
     "ratedSpoken": "Оцінка {{rating}} зі 100, {{ratings}}",
     "addToBacklog": "Додати в беклог",
     "rate": "Оцінити",
