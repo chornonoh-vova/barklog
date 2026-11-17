@@ -36,7 +36,7 @@ import { fakeEndpoints, renderHookWithProviders, testQueryClient } from "@test/r
 
 jest.mock("expo-haptics", () => ({
   notificationAsync: jest.fn(async () => undefined),
-  NotificationFeedbackType: { Success: "success" },
+  NotificationFeedbackType: { Success: "success", Error: "error" },
 }));
 
 let push: jest.SpyInstance;
@@ -277,7 +277,7 @@ describe("useBacklogEntry", () => {
     await waitFor(() => expect(api.deleteBacklogEntry).toHaveBeenCalledWith(3));
   });
 
-  it("alerts with the error's copy when a write fails", async () => {
+  it("alerts with the error's copy and the error haptic when a write fails", async () => {
     const api = fakeEndpoints({
       upsertBacklogEntry: async () => {
         throw new ApiError({ status: 0, type: "about:blank", title: "Network unavailable" });
@@ -296,6 +296,7 @@ describe("useBacklogEntry", () => {
         "Barklog could not reach the server. Check your connection.",
       ),
     );
+    expect(notificationAsync).toHaveBeenCalledWith(NotificationFeedbackType.Error);
     expect(push).not.toHaveBeenCalled();
   });
 
