@@ -16,9 +16,11 @@ The package is held to a stricter testing standard than the rest of the codebase
 
 Agreed on 2026-11-18 ([#75](https://github.com/chornonoh-vova/barklog/issues/75)). The shared normalisation, `toReleaseDate`, moves a month, quarter or year date to the last day of that period. IGDB's placeholder day is not reliably at the end: months sit on the 1st and some old years on 1 January ([findings](../superpowers/specs/2026-11-13-release-alerts-and-countdowns-design.md#igdb-placeholder-dates-checked-2026-11-18-75)). Without this, a "June 2027" game would lapse on 2 June. The mirror keeps IGDB's timestamp unchanged; only the package interprets it.
 
-## Known mismatch
+## Amendment: Explore's release shelves filter in SQL
 
-Existing code predates this decision. Explore's `upcomingGames` and `recentGames` queries (`packages/db/src/queries/games.ts`) compare `first_release_date` directly and ignore precision, so "Recently Released" can list a vague game whose placeholder day has passed, which this decision says is never shown as released. The agreed fix restricts both shelves to exact (day) release dates, held to the package by an agreement test; it is a follow-up outside the release alerts design, tracked in [#89](https://github.com/chornonoh-vova/barklog/issues/89).
+Agreed on 2026-11-18 ([#89](https://github.com/chornonoh-vova/barklog/issues/89)). Explore's `upcomingGames` and `recentGames` queries (`packages/db/src/queries/games.ts`) compare `first_release_date` in SQL, so that `LIMIT` and the ordering hold, and list exact (day) dates only. Vague, `none` and unclassified games reach neither shelf; a game joins "Upcoming" once its day is announced. In display terms, "Upcoming" holds `countdown` and `releaseDay`, and "Recently Released" holds `released` from the last 90 days. The shelf is therefore narrower than **upcoming** in [CONTEXT.md](../../CONTEXT.md). An agreement test in `packages/db/test/games-queries.test.ts` holds both queries to `releaseDisplay` on the same day, which is what lets them compare dates outside the package.
+
+"Today" for these feeds is the UTC day. They are cached once for every user, so they cannot use a user's time zone; this is the one place where the server's day stands in for the user's.
 
 ## Evidence
 

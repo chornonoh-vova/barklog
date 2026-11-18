@@ -21,8 +21,6 @@ Records 0001–0008 were backfilled on 2026-10-28 from the current implementatio
 - **Account switch:** ADR-0004 records the intended isolation rule and the current widget queue gap. It does not select a new coordination design or claim stale work is already suppressed everywhere.
 - **Sync cleanup:** ADR-0001 records uncovered startup and unlock failure paths. It does not select a new owner for the run lifetime or claim every acquired connection is already released on failure.
 
-- **Release-date comparisons:** ADR-0010 makes `@repo/release-dates` the only place that compares release dates, but Explore's upcoming and recently released queries still compare them directly and ignore precision.
-
 These are code-path findings from inspection, not reproduced runtime failures. A future change should establish failing regression tests before changing the implementation.
 
 ## Documented limits
