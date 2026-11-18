@@ -72,11 +72,11 @@ RUN pnpm install --prod --frozen-lockfile
 FROM base AS runtime-base
 ENV NODE_ENV=production
 COPY --from=prod-deps /app/ .
-COPY --from=builder /app/packages/cache/dist ./packages/cache/dist
-COPY --from=builder /app/packages/contracts/dist ./packages/contracts/dist
-COPY --from=builder /app/packages/db/dist ./packages/db/dist
-COPY --from=builder /app/packages/igdb/dist ./packages/igdb/dist
-COPY --from=builder /app/packages/logging/dist ./packages/logging/dist
+# Every workspace package the build produced, by glob rather than by name, so
+# a package api or worker starts importing ships without editing this list.
+# The `./` marks where the kept path starts: /app/packages/db/dist lands at
+# ./packages/db/dist.
+COPY --from=builder --parents /app/./packages/*/dist ./
 # runMigrations resolves ../drizzle relative to its own compiled location, so
 # the SQL has to sit beside packages/db/dist. All three targets inherit it;
 # only `migrate` reads it.
@@ -85,21 +85,11 @@ USER node
 
 FROM runtime-base AS api
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
-# Fail the build, not the deploy, when a workspace package the app imports at
-# runtime is missing from the COPY list in runtime-base. Node links every
-# static import before running any code, so an entrypoint started without its
-# environment must get as far as rejecting that environment; a missing package
-# stops it earlier with ERR_MODULE_NOT_FOUND.
-RUN out=$(node apps/api/dist/index.js 2>&1 </dev/null || true); \
-    case "$out" in *"Invalid API environment"*) ;; *) echo "$out"; exit 1;; esac
 EXPOSE 3000
 CMD ["node", "apps/api/dist/index.js"]
 
 FROM runtime-base AS worker
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
-# The same link check as the api target.
-RUN out=$(node apps/worker/dist/index.js 2>&1 </dev/null || true); \
-    case "$out" in *"Invalid worker environment"*) ;; *) echo "$out"; exit 1;; esac
 CMD ["node", "apps/worker/dist/index.js"]
 
 FROM runtime-base AS migrate
