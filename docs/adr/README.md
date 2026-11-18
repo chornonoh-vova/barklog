@@ -2,19 +2,19 @@
 
 Records 0001–0008 were backfilled on 2026-10-28 from the current implementation and existing design documents; their date records the backfill, not when each decision was originally made. Records from 0009 onward are written when the decision is agreed and say whether it is implemented. Specs are maintained implementation references; retired plan records preserve key rationale and navigation, with their original contents in Git history. Where behavior differs from an agreed guarantee, the ADR says so.
 
-| Record                                              | Decision                                                                    |
-| --------------------------------------------------- | --------------------------------------------------------------------------- |
-| [0001](0001-local-game-mirror.md)                   | Serve games from a local mirror                                             |
-| [0002](0002-server-authoritative-backlog-writes.md) | Keep backlog entry writes server-authoritative                              |
-| [0003](0003-derived-device-backlog.md)              | Derive device views from one backlog query                                  |
-| [0004](0004-account-switch-isolation.md)            | Isolate personal data across account switches                               |
-| [0005](0005-server-derived-entitlement.md)          | Derive entitlement on the server                                            |
-| [0006](0006-clerk-account-deletion.md)              | Process account deletion through Clerk notifications                        |
-| [0007](0007-staged-share-identification.md)         | Identify shared links through staged processing                             |
-| [0008](0008-turborepo-remote-cache.md)              | Share Turborepo task results through Vercel Remote Cache                    |
-| [0009](0009-server-push-release-alerts.md)          | Deliver release alerts as server push (partially implemented)               |
-| [0010](0010-release-date-state-functions.md)        | Define release-date state once, as tested pure functions (not implemented)  |
-| [0011](0011-shared-translations-package.md)         | Keep user-facing translations in one shared package (partially implemented) |
+| Record                                              | Decision                                                                         |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [0001](0001-local-game-mirror.md)                   | Serve games from a local mirror                                                  |
+| [0002](0002-server-authoritative-backlog-writes.md) | Keep backlog entry writes server-authoritative                                   |
+| [0003](0003-derived-device-backlog.md)              | Derive device views from one backlog query                                       |
+| [0004](0004-account-switch-isolation.md)            | Isolate personal data across account switches                                    |
+| [0005](0005-server-derived-entitlement.md)          | Derive entitlement on the server                                                 |
+| [0006](0006-clerk-account-deletion.md)              | Process account deletion through Clerk notifications                             |
+| [0007](0007-staged-share-identification.md)         | Identify shared links through staged processing                                  |
+| [0008](0008-turborepo-remote-cache.md)              | Share Turborepo task results through Vercel Remote Cache                         |
+| [0009](0009-server-push-release-alerts.md)          | Deliver release alerts as server push (partially implemented)                    |
+| [0010](0010-release-date-state-functions.md)        | Define release-date state once, as tested pure functions (partially implemented) |
+| [0011](0011-shared-translations-package.md)         | Keep user-facing translations in one shared package (partially implemented)      |
 
 ## Unresolved guarantees
 

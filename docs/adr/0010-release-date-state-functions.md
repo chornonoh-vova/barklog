@@ -4,7 +4,7 @@ status: accepted
 
 # Define release-date state once, as tested pure functions
 
-Agreed on 2026-11-13; not yet implemented.
+Agreed on 2026-11-13. The display family is implemented (#68): `toReleaseDate`, `releaseDisplay` and `isUpcoming` in `@repo/release-dates`, used by the app (#77) and the Explore release shelves (#89). The alert family, `evaluateAlert`, is not yet implemented.
 
 What a release date means — counted down, release day, released, vague, unannounced — and which release-alert notification a change produces are decided in one pure package, `@repo/release-dates`. The API, worker and app import it and do not compare release dates or date precisions themselves. Release dates arrive with a precision, IGDB stores vague dates as placeholder timestamps, and "today" depends on the user's time zone; scattered comparisons would disagree at exactly the edges users notice: a countdown to a placeholder, an alert on the wrong day, a bell on a released game.
 
