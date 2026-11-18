@@ -8,7 +8,7 @@ import { useIdentifyShare } from "@/lib/api/hooks";
 import { EmptyState } from "@/components/empty-state";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
-import { summarySubtitle } from "@/features/game/format";
+import { releaseYear } from "@/features/game/format";
 import { noLink, noMatch, unreadable } from "@/features/share/empty-states";
 import { displayHost } from "@/features/share/host";
 import { toShareSections, type ShareSection } from "@/features/share/sections";
@@ -64,7 +64,7 @@ export function ShareScreen({
       <GameRow
         id={item.id}
         title={item.name}
-        subtitle={summarySubtitle(item)}
+        subtitle={releaseYear(item)}
         coverImageId={item.coverImageId}
         subtitleLines={subtitleLines}
         onPress={onSelect}

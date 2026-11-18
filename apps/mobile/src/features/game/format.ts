@@ -1,13 +1,11 @@
 import { RATING_MAX, type BacklogStatus, type GameSummaryWire } from "@repo/contracts";
-import { formatReleaseDate } from "@repo/i18n";
+import { formatReleaseDate, formatReleaseYear } from "@repo/i18n";
 import {
-  localDay,
   releaseDisplay,
   toReleaseDate,
   type CalendarDay,
   type ReleaseDate,
 } from "@repo/release-dates";
-import { getCalendars } from "expo-localization";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import { currentLanguage, i18n } from "@/lib/i18n/instance";
@@ -41,27 +39,14 @@ function releaseDateOf(game: Dated): ReleaseDate {
 
 /** "2027", true of every precision, or "TBA" when there is no date. */
 export function releaseYear(game: Dated): string {
-  const date = releaseDateOf(game);
-
-  return formatReleaseDate(
-    date.day === null ? date : { day: date.day, precision: "year" },
-    currentLanguage(),
-  );
+  return formatReleaseYear(releaseDateOf(game), currentLanguage());
 }
 
 export function metaLine(game: Dated & { genres: { name: string }[] }): string {
+  const year = releaseYear(game);
   const genres = namesLine(game.genres);
 
-  return genres === null ? releaseYear(game) : `${releaseYear(game)}${SEPARATOR}${genres}`;
-}
-
-export function summarySubtitle(game: GameSummaryWire): string {
-  return releaseYear(game);
-}
-
-/** The device's calendar day: release dates are judged against the user's today. */
-export function localToday(now: Date = new Date()): CalendarDay {
-  return localDay(now, getCalendars()[0]?.timeZone ?? "UTC");
+  return genres === null ? year : `${year}${SEPARATOR}${genres}`;
 }
 
 /**

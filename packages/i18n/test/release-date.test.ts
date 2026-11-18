@@ -2,7 +2,7 @@ import { toReleaseDate } from "@repo/release-dates";
 import type { DatePrecision } from "@repo/contracts";
 import { describe, expect, it } from "vitest";
 
-import { formatReleaseDate, LANGUAGES, type Language } from "../src/index.js";
+import { formatReleaseDate, formatReleaseYear, LANGUAGES, type Language } from "../src/index.js";
 
 type Case = "day" | "month" | "quarter" | "year" | "none" | "unclassified";
 
@@ -68,6 +68,14 @@ describe.each(LANGUAGES)("formatReleaseDate in %s", (lng) => {
 
   it("formats a missing date as unannounced, whatever its precision", () => {
     expect(formatReleaseDate(toReleaseDate(null, null), lng)).toBe(EXPECTED[lng].none);
+  });
+});
+
+describe.each(LANGUAGES)("formatReleaseYear in %s", (lng) => {
+  it.each(Object.keys(PRECISION) as Case[])("gives the year of a %s date", (name) => {
+    expect(formatReleaseYear(toReleaseDate(AT, PRECISION[name]), lng)).toBe(
+      name === "none" ? EXPECTED[lng].none : EXPECTED[lng].year,
+    );
   });
 });
 

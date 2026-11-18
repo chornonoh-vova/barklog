@@ -53,12 +53,6 @@ describe("GameRow", () => {
     expect(screen.getByText("2020 · ★ 93")).toBeOnTheScreen();
   });
 
-  it("shows and reads only the title when there is no subtitle", async () => {
-    await render(<GameRow {...props} subtitle={null} />);
-
-    expect(screen.getByRole("button", { name: "Hades" })).toHaveTextContent("Hades");
-  });
-
   it("gives the subtitle more lines when asked, for accessibility text sizes", async () => {
     await render(<GameRow {...props} />);
     expect(screen.getByText("2020 · ★ 93")).toHaveProp("numberOfLines", 1);

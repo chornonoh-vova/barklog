@@ -2,7 +2,6 @@ import { BACKLOG_STATUSES, type DatePrecision } from "@repo/contracts";
 import { toCalendarDay } from "@repo/release-dates";
 
 import {
-  localToday,
   metaLine,
   ratingButtonLabel,
   ratingButtonSymbol,
@@ -92,13 +91,6 @@ describe("releaseDateRow", () => {
   it("never shows a placeholder day from a server without precision", () => {
     expect(row("2027-12-31T00:00:00.000Z")).toEqual({ label: "Release date", value: "2027" });
     expect(row("2020-03-01T00:00:00.000Z")).toEqual({ label: "Release date", value: "2020" });
-  });
-});
-
-describe("localToday", () => {
-  it("is the calendar day in the device's time zone", () => {
-    // jest-expo's expo-localization reports America/New_York.
-    expect(localToday(new Date("2026-11-19T03:00:00.000Z"))).toBe("2026-11-18");
   });
 });
 

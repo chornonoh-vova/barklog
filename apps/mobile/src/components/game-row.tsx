@@ -27,7 +27,7 @@ export const GameRow = memo(function GameRow({
 }: {
   id: number;
   title: string;
-  subtitle: string | null;
+  subtitle: string;
   /** What VoiceOver reads instead of `subtitle`, when the visible one uses glyphs. */
   spokenSubtitle?: string;
   /** 2 at accessibility text sizes. A prop, so the list reads the text size
@@ -52,7 +52,7 @@ export const GameRow = memo(function GameRow({
         pressed && (card ? styles.cardPressed : styles.pressed),
       ]}
       accessibilityRole="button"
-      accessibilityLabel={spoken === null ? title : `${title}, ${spoken}`}
+      accessibilityLabel={`${title}, ${spoken}`}
     >
       <Cover imageId={coverImageId} size="small" width={COVER_WIDTH} />
 
@@ -60,11 +60,9 @@ export const GameRow = memo(function GameRow({
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
-        {subtitle === null ? null : (
-          <Text style={styles.subtitle} numberOfLines={subtitleLines}>
-            {subtitle}
-          </Text>
-        )}
+        <Text style={styles.subtitle} numberOfLines={subtitleLines}>
+          {subtitle}
+        </Text>
       </View>
 
       {!card && menu === undefined ? (

@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { useSimilarGames } from "@/lib/api/hooks";
 import { GameTile } from "@/components/game-tile";
-import { summarySubtitle } from "@/features/game/format";
+import { releaseYear } from "@/features/game/format";
 import { ShelfTitle } from "@/ui/theme";
 import { useShelfInset } from "@/ui/use-shelf-inset";
 
@@ -28,7 +28,7 @@ export function SimilarGames({
       <GameTile
         id={item.id}
         title={item.name}
-        subtitle={summarySubtitle(item)}
+        subtitle={releaseYear(item)}
         coverImageId={item.coverImageId}
         onPress={onPressGame}
       />

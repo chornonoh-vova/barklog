@@ -2,7 +2,8 @@ import type { GameDetailResponse } from "@repo/contracts";
 import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
-import { localToday, namesLine, platformNames, releaseDateRow } from "@/features/game/format";
+import { namesLine, platformNames, releaseDateRow } from "@/features/game/format";
+import { localToday } from "@/lib/today";
 import { Type } from "@/ui/theme";
 
 export function DetailRows({ game }: { game: GameDetailResponse }) {

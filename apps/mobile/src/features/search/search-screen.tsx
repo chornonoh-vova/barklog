@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/empty-state";
 import { GameGridRow } from "@/components/game-grid-row";
 import { GameRow } from "@/components/game-row";
 import { QueryBoundary } from "@/components/query-boundary";
-import { summarySubtitle } from "@/features/game/format";
+import { releaseYear } from "@/features/game/format";
 import { RecentSearches } from "@/features/search/recent-searches";
 import { useDebounced } from "@/lib/use-debounced";
 import { Screen } from "@/ui/theme";
@@ -73,7 +73,7 @@ export function SearchScreen({
             key={summary.id}
             id={summary.id}
             title={summary.name}
-            subtitle={summarySubtitle(summary)}
+            subtitle={releaseYear(summary)}
             coverImageId={summary.coverImageId}
             variant={grid ? "card" : "row"}
             subtitleLines={subtitleLines}
