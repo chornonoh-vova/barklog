@@ -9,12 +9,14 @@ on:
   push:
     branches: ["main"]
     # API/worker/landing changes don't change the app, so they shouldn't
-    # publish an update. contracts and i18n (all user-facing copy) are bundled
-    # into the app; the lockfile covers dependency bumps.
+    # publish an update. contracts, i18n (all user-facing copy) and
+    # release-dates (every release date the app reads) are bundled into the
+    # app; the lockfile covers dependency bumps.
     paths:
       - "apps/mobile/**"
       - "packages/contracts/**"
       - "packages/i18n/**"
+      - "packages/release-dates/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
 
