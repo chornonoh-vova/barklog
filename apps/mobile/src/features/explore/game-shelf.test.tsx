@@ -26,10 +26,10 @@ describe("GameShelf", () => {
     expect(screen.getByRole("button", { name: "Celeste, 2018" })).toBeOnTheScreen();
   });
 
-  it("names an undated game by its title alone", async () => {
+  it("names an undated game with TBA instead of a year", async () => {
     await renderWithProviders(<GameShelf shelf={shelf} onPressGame={jest.fn()} />);
 
-    expect(screen.getByRole("button", { name: "Unreleased" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Unreleased, TBA" })).toBeOnTheScreen();
   });
 
   it("reports the game pressed", async () => {

@@ -31,7 +31,12 @@ export function initI18n(lng: Language): void {
   });
 }
 
+/** The language i18next is rendering, English until it is initialised. */
+export function currentLanguage(): Language {
+  return isLanguage(i18n.language) ? i18n.language : "en";
+}
+
 /** The locale for `Intl` and `toLocale*` calls in the current language. */
 export function formatLocale(): string {
-  return localeFor(isLanguage(i18n.language) ? i18n.language : "en");
+  return localeFor(currentLanguage());
 }

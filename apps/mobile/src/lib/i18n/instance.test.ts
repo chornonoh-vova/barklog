@@ -1,6 +1,8 @@
 import { errorCopy } from "@/lib/api/error-copy";
 import { ApiError } from "@/lib/api/errors";
-import { ratingLine, releaseDateLine } from "@/features/game/format";
+import { toCalendarDay } from "@repo/release-dates";
+
+import { ratingLine, releaseDateRow, releaseYear } from "@/features/game/format";
 import { formatLocale, i18n, initI18n, LANGUAGES, resources } from "@/lib/i18n/instance";
 
 import appJson from "../../../app.json";
@@ -50,16 +52,30 @@ describe("plurals", () => {
 });
 
 describe("release dates", () => {
+  const today = toCalendarDay("2026-11-18");
+
   it.each([
-    ["en", "22 February 2022"],
-    ["uk", "22 лютого 2022 р."],
-    ["ru", "22 февраля 2022 г."],
-    ["de", "22. Februar 2022"],
-    ["es", "22 de febrero de 2022"],
-  ] as const)("%s", (lng, expected) => {
+    ["en", "Released", "22 February 2022", "Release date", "Q3 2027", "TBA"],
+    ["uk", "Вийшла", "22 лютого 2022 р.", "Дата виходу", "3-й квартал 2027", "Дата невідома"],
+    ["ru", "Вышла", "22 февраля 2022 г.", "Дата выхода", "3-й квартал 2027", "Дата неизвестна"],
+    ["de", "Erschienen", "22. Februar 2022", "Erscheinungsdatum", "Q3 2027", "Noch offen"],
+    ["es", "Lanzado", "22 de febrero de 2022", "Fecha de lanzamiento", "T3 2027", "Por anunciar"],
+  ] as const)("%s", (lng, released, day, upcoming, quarter, unannounced) => {
     initI18n(lng);
 
-    expect(releaseDateLine("2022-02-22T00:00:00.000Z")).toBe(expected);
+    expect(
+      releaseDateRow(
+        { firstReleaseDate: "2022-02-22T00:00:00.000Z", releaseDatePrecision: "day" },
+        today,
+      ),
+    ).toEqual({ label: released, value: day });
+    expect(
+      releaseDateRow(
+        { firstReleaseDate: "2027-07-01T00:00:00.000Z", releaseDatePrecision: "quarter" },
+        today,
+      ),
+    ).toEqual({ label: upcoming, value: quarter });
+    expect(releaseYear({ firstReleaseDate: null })).toBe(unannounced);
   });
 });
 

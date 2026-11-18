@@ -9,7 +9,7 @@ import { useIsAccessibilitySize } from "@/ui/use-accessibility-size";
 const COVER_WIDTH = 132;
 
 export function Hero({ game }: { game: GameDetailResponse }) {
-  const meta = metaLine({ firstReleaseDate: game.firstReleaseDate, genres: game.genres });
+  const meta = metaLine(game);
   const rating = ratingLine(game);
   const developer = game.developers[0]?.name ?? null;
   const ax = useIsAccessibilitySize();
@@ -24,7 +24,7 @@ export function Hero({ game }: { game: GameDetailResponse }) {
             {game.name}
           </Text>
           {developer === null ? null : <Text style={styles.developer}>{developer}</Text>}
-          {meta === null ? null : <Text style={styles.meta}>{meta}</Text>}
+          <Text style={styles.meta}>{meta}</Text>
           {rating === null ? null : (
             <Text style={styles.meta} accessibilityLabel={ratingLineSpoken(game) ?? undefined}>
               {rating}

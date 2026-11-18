@@ -21,6 +21,7 @@ export function gameSummary(overrides: Partial<GameSummaryWire> = {}): GameSumma
     slug: `game-${id}`,
     coverImageId: `cover${id}`,
     firstReleaseDate: "2020-03-01T00:00:00.000Z",
+    releaseDatePrecision: "day",
     totalRating: 85,
     totalRatingCount: 120,
     ...overrides,

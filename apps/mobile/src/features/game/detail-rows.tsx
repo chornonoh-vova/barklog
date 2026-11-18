@@ -2,13 +2,13 @@ import type { GameDetailResponse } from "@repo/contracts";
 import { useTranslation } from "react-i18next";
 import { PlatformColor, StyleSheet, Text, View } from "react-native";
 
-import { namesLine, platformNames, releaseDateLine } from "@/features/game/format";
+import { localToday, namesLine, platformNames, releaseDateRow } from "@/features/game/format";
 import { Type } from "@/ui/theme";
 
 export function DetailRows({ game }: { game: GameDetailResponse }) {
   const { t } = useTranslation();
   const rows: { label: string; value: string | null }[] = [
-    { label: t("game.released"), value: releaseDateLine(game.firstReleaseDate) },
+    releaseDateRow(game, localToday()),
     { label: t("game.type"), value: game.gameType?.name ?? null },
     { label: t("game.genres"), value: namesLine(game.genres) },
     { label: t("game.platforms"), value: platformNames(game.platforms) },

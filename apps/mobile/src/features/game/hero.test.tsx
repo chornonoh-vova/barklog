@@ -33,7 +33,7 @@ describe("Hero", () => {
     expect(screen.getByLabelText("Rated 85 out of 100, from 1 rating")).toBeOnTheScreen();
   });
 
-  it("leaves out the lines IGDB has nothing for", async () => {
+  it("leaves out the lines IGDB has nothing for, and says TBA for no date", async () => {
     await render(
       <Hero
         game={gameDetail({
@@ -48,7 +48,7 @@ describe("Hero", () => {
 
     expect(screen.getByText("Mystery")).toBeOnTheScreen();
     expect(screen.queryByText("Studio")).not.toBeOnTheScreen();
-    expect(screen.queryByText(/2020/)).not.toBeOnTheScreen();
+    expect(screen.getByText("TBA")).toBeOnTheScreen();
     expect(screen.queryByText(/★/)).not.toBeOnTheScreen();
   });
 

@@ -22,7 +22,7 @@ describe("DetailRows", () => {
     );
 
     const facts: [string, string][] = [
-      ["Release", "1 March 2020"],
+      ["Released", "1 March 2020"],
       ["Type", "Main Game"],
       ["Genres", "Adventure, Indie"],
       ["Platforms", "PS5, Nintendo Switch"],
@@ -35,7 +35,22 @@ describe("DetailRows", () => {
     }
   });
 
-  it("leaves out what IGDB does not know, but says when the date is unknown", async () => {
+  it("reads Release date with the vague wording before a game is out", async () => {
+    await render(
+      <DetailRows
+        game={gameDetail({
+          firstReleaseDate: "2999-07-01T00:00:00.000Z",
+          releaseDatePrecision: "quarter",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Release date")).toBeOnTheScreen();
+    expect(screen.getByText("Q3 2999")).toBeOnTheScreen();
+    expect(screen.queryByText("Released")).not.toBeOnTheScreen();
+  });
+
+  it("leaves out what IGDB does not know, but says when the date is unannounced", async () => {
     await render(
       <DetailRows
         game={gameDetail({
@@ -49,8 +64,8 @@ describe("DetailRows", () => {
       />,
     );
 
-    expect(screen.getByText("Release")).toBeOnTheScreen();
-    expect(screen.getByText("Unknown")).toBeOnTheScreen();
+    expect(screen.getByText("Release date")).toBeOnTheScreen();
+    expect(screen.getByText("TBA")).toBeOnTheScreen();
     for (const label of ["Type", "Genres", "Platforms", "Developers", "Publishers"]) {
       expect(screen.queryByText(label)).not.toBeOnTheScreen();
     }
