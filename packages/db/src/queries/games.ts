@@ -13,6 +13,7 @@ import {
   gameTypes,
   genres,
   platforms,
+  type DatePrecisionValue,
 } from "../schema/mirror.js";
 
 /** Main Game, Standalone Expansion, Remake, Remaster, Expanded Game. */
@@ -39,6 +40,7 @@ export interface GameSummary {
   slug: string;
   coverImageId: string | null;
   firstReleaseDate: Date | null;
+  releaseDatePrecision: DatePrecisionValue | null;
   totalRating: number | null;
   totalRatingCount: number;
 }
@@ -70,6 +72,7 @@ export const GAME_SUMMARY_COLUMNS = {
   slug: games.slug,
   coverImageId: games.coverImageId,
   firstReleaseDate: games.firstReleaseDate,
+  releaseDatePrecision: games.releaseDatePrecision,
   totalRating: games.totalRating,
   totalRatingCount: games.totalRatingCount,
 };
@@ -261,6 +264,7 @@ export async function getGameDetail(db: Queryable, gameId: number): Promise<Game
     summary: row.summary,
     coverImageId: row.coverImageId,
     firstReleaseDate: row.firstReleaseDate,
+    releaseDatePrecision: row.releaseDatePrecision,
     totalRating: row.totalRating,
     totalRatingCount: row.totalRatingCount,
     gameType:

@@ -1,6 +1,7 @@
 import {
   BACKLOG_SORTS as CONTRACT_SORTS,
   BACKLOG_STATUSES as CONTRACT_STATUSES,
+  DATE_PRECISIONS as CONTRACT_PRECISIONS,
   PERIOD_TYPES as CONTRACT_PERIODS,
   SUBSCRIPTION_STORES as CONTRACT_STORES,
 } from "@repo/contracts";
@@ -8,6 +9,7 @@ import { expect, test } from "vitest";
 
 import { BACKLOG_SORTS } from "../src/queries/backlog.js";
 import { BACKLOG_STATUSES } from "../src/schema/backlog.js";
+import { DATE_PRECISIONS } from "../src/schema/mirror.js";
 import { PERIOD_TYPES, SUBSCRIPTION_STORES } from "../src/schema/subscriptions.js";
 
 test("the contract status union matches the database enum, in order", () => {
@@ -24,4 +26,8 @@ test("the contract store union matches the database enum, in order", () => {
 
 test("the contract period-type union matches the database enum, in order", () => {
   expect([...PERIOD_TYPES]).toEqual([...CONTRACT_PERIODS]);
+});
+
+test("the contract date-precision union matches the database enum, in order", () => {
+  expect([...DATE_PRECISIONS]).toEqual([...CONTRACT_PRECISIONS]);
 });
