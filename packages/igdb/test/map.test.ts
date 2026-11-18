@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import * as v from "valibot";
 
@@ -41,6 +41,7 @@ test("maps a fully populated game", () => {
     slug: "the-witcher-3-wild-hunt",
     summary: "A story-driven open world RPG.",
     firstReleaseDate: new Date("2015-05-19T00:00:00.000Z"),
+    releaseDatePrecision: null,
     gameTypeId: 0,
     parentGameId: null,
     totalRating: 93.5,
@@ -62,6 +63,7 @@ test("IGDB omits absent optional fields entirely", () => {
     slug: "minimal",
     summary: null,
     firstReleaseDate: null,
+    releaseDatePrecision: "none",
     gameTypeId: null,
     parentGameId: null,
     totalRating: null,
@@ -197,4 +199,80 @@ test("an empty sweep page maps to no ids", () => {
 
 test("a malformed sweep row is rejected loudly rather than silently dropped", () => {
   expect(() => mapGameIds([{ id: "not-a-number" }])).toThrow(v.ValiError);
+});
+
+describe("release date precision", () => {
+  const SEPT_2027 = Date.UTC(2027, 8, 1) / 1000;
+  const entry = (date: number | undefined, format: string, id = 1) => ({
+    id,
+    ...(date === undefined ? {} : { date }),
+    date_format: { id: 0, format },
+  });
+  const precisionOf = (game: Record<string, unknown>) =>
+    mapGames([{ id: 7, name: "Upcoming", slug: "upcoming", updated_at: 1700000000, ...game }])
+      .games[0]!.releaseDatePrecision;
+
+  test.each([
+    ["day", "YYYYMMDD", Date.UTC(2027, 5, 5) / 1000],
+    ["month", "YYYYMM", SEPT_2027],
+    ["quarter", "YYYYQ3", Date.UTC(2027, 8, 30) / 1000],
+    ["year", "YYYY", Date.UTC(2027, 11, 31) / 1000],
+  ])("a %s-precise entry matching first_release_date classifies it", (expected, format, date) => {
+    expect(precisionOf({ first_release_date: date, release_dates: [entry(date, format)] })).toBe(
+      expected,
+    );
+  });
+
+  test("every quarter format is a quarter", () => {
+    for (const format of ["YYYYQ1", "YYYYQ2", "YYYYQ3", "YYYYQ4"]) {
+      expect(precisionOf({ first_release_date: 1, release_dates: [entry(1, format)] })).toBe(
+        "quarter",
+      );
+    }
+  });
+
+  test("no date at all is none, even beside TBD entries", () => {
+    expect(precisionOf({})).toBe("none");
+    expect(precisionOf({ release_dates: [entry(undefined, "TBD")] })).toBe("none");
+  });
+
+  test("a date with no matching entry stays unclassified rather than guessed", () => {
+    expect(
+      precisionOf({
+        first_release_date: SEPT_2027,
+        release_dates: [entry(SEPT_2027 + 1, "YYYYMM")],
+      }),
+    ).toBeNull();
+    expect(precisionOf({ first_release_date: SEPT_2027 })).toBeNull();
+  });
+
+  test("an unknown date format stays unclassified", () => {
+    expect(
+      precisionOf({ first_release_date: SEPT_2027, release_dates: [entry(SEPT_2027, "YYYYH2")] }),
+    ).toBeNull();
+  });
+
+  test("entries for other dates are ignored", () => {
+    const earlier = SEPT_2027 - 86_400 * 30;
+    expect(
+      precisionOf({
+        first_release_date: SEPT_2027,
+        release_dates: [entry(earlier, "YYYYMMDD", 1), entry(SEPT_2027, "YYYYMM", 2)],
+      }),
+    ).toBe("month");
+  });
+
+  test("conflicting entries on the same timestamp resolve to the most precise", () => {
+    const date = Date.UTC(2027, 11, 31) / 1000;
+    expect(
+      precisionOf({
+        first_release_date: date,
+        release_dates: [
+          entry(date, "YYYY", 1),
+          entry(date, "YYYYMMDD", 2),
+          entry(date, "YYYYQ4", 3),
+        ],
+      }),
+    ).toBe("day");
+  });
 });

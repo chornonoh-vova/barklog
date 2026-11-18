@@ -1,6 +1,9 @@
 import * as v from "valibot";
 
+import type { DatePrecision } from "@repo/contracts";
+
 import { EROTIC_THEME_ID } from "./erotic-theme.js";
+import { classifyReleaseDate } from "./precision.js";
 import { igdbGameIdSchema, igdbGameSchema } from "./schemas.js";
 
 export interface MappedPage {
@@ -14,6 +17,8 @@ export interface MappedPage {
     slug: string;
     summary: string | null;
     firstReleaseDate: Date | null;
+    /** `null` is unclassified: a date no IGDB release-date entry explains. */
+    releaseDatePrecision: DatePrecision | null;
     gameTypeId: number | null;
     parentGameId: number | null;
     totalRating: number | null;
@@ -71,6 +76,10 @@ export function mapGames(raw: unknown[]): MappedPage {
       slug: game.slug,
       summary: game.summary ?? null,
       firstReleaseDate: game.first_release_date ? seconds(game.first_release_date) : null,
+      releaseDatePrecision: classifyReleaseDate(
+        game.first_release_date || undefined,
+        game.release_dates,
+      ),
       gameTypeId: game.game_type?.id ?? null,
       parentGameId: game.parent_game ?? null,
       totalRating: game.total_rating ?? null,

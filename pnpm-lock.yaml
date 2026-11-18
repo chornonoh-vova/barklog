@@ -670,6 +670,9 @@ importers:
       '@repo/cache':
         specifier: workspace:*
         version: link:../cache
+      '@repo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       valibot:
         specifier: 'catalog:'
         version: 1.5.0(typescript@6.0.3)
