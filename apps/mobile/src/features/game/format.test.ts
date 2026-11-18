@@ -1,4 +1,5 @@
-import { BACKLOG_STATUSES } from "@repo/contracts";
+import { BACKLOG_STATUSES, type DatePrecision } from "@repo/contracts";
+import { toCalendarDay } from "@repo/release-dates";
 
 import {
   metaLine,
@@ -7,7 +8,7 @@ import {
   ratingLine,
   ratingLineSpoken,
   ratingSpoken,
-  releaseDateLine,
+  releaseDateRow,
   releaseYear,
   rowSubtitle,
   rowSubtitleSpoken,
@@ -18,11 +19,25 @@ import {
 
 describe("releaseYear", () => {
   it("extracts the year", () => {
-    expect(releaseYear("2022-02-22T00:00:00.000Z")).toBe("2022");
+    expect(releaseYear({ firstReleaseDate: "2022-02-22T00:00:00.000Z" })).toBe("2022");
   });
 
-  it("returns null for an unreleased game", () => {
-    expect(releaseYear(null)).toBeNull();
+  it("is the year for every precision", () => {
+    for (const precision of ["day", "month", "quarter", "year", null] as const) {
+      expect(
+        releaseYear({
+          firstReleaseDate: "2027-07-01T00:00:00.000Z",
+          releaseDatePrecision: precision,
+        }),
+      ).toBe("2027");
+    }
+  });
+
+  it("says TBA when there is no date", () => {
+    expect(releaseYear({ firstReleaseDate: null })).toBe("TBA");
+    expect(
+      releaseYear({ firstReleaseDate: "2027-07-01T00:00:00.000Z", releaseDatePrecision: "none" }),
+    ).toBe("TBA");
   });
 });
 
@@ -36,16 +51,46 @@ describe("metaLine", () => {
     ).toBe("2022 · Role-playing (RPG), Adventure");
   });
 
-  it("omits the year when there is no release date", () => {
-    expect(metaLine({ firstReleaseDate: null, genres: [{ name: "Indie" }] })).toBe("Indie");
+  it("says TBA when there is no release date", () => {
+    expect(metaLine({ firstReleaseDate: null, genres: [{ name: "Indie" }] })).toBe("TBA · Indie");
   });
 
   it("omits genres when there are none", () => {
     expect(metaLine({ firstReleaseDate: "1998-11-21T00:00:00.000Z", genres: [] })).toBe("1998");
   });
+});
 
-  it("returns null when there is nothing to say", () => {
-    expect(metaLine({ firstReleaseDate: null, genres: [] })).toBeNull();
+describe("releaseDateRow", () => {
+  const today = toCalendarDay("2026-11-18");
+  const row = (
+    firstReleaseDate: string | null,
+    releaseDatePrecision?: DatePrecision | null,
+    on = today,
+  ) => releaseDateRow({ firstReleaseDate, releaseDatePrecision }, on);
+
+  it.each([
+    ["a precise past date", "2020-03-01T00:00:00.000Z", "day", "Released", "1 March 2020"],
+    ["release day", "2026-11-18T00:00:00.000Z", "day", "Release date", "18 November 2026"],
+    ["a precise future date", "2027-06-05T00:00:00.000Z", "day", "Release date", "5 June 2027"],
+    ["a month", "2027-06-01T00:00:00.000Z", "month", "Release date", "June 2027"],
+    ["a quarter", "2027-07-01T00:00:00.000Z", "quarter", "Release date", "Q3 2027"],
+    ["a year", "2027-12-31T00:00:00.000Z", "year", "Release date", "2027"],
+    ["no date", null, null, "Release date", "TBA"],
+    ["precision none", "2027-12-31T00:00:00.000Z", "none", "Release date", "TBA"],
+  ] as const)("%s", (_, date, precision, label, value) => {
+    expect(row(date, precision)).toEqual({ label, value });
+  });
+
+  it("keeps Release date on a vague date whose period has passed", () => {
+    expect(row("2027-07-01T00:00:00.000Z", "quarter", toCalendarDay("2027-10-01"))).toEqual({
+      label: "Release date",
+      value: "Q3 2027",
+    });
+  });
+
+  it("never shows a placeholder day from a server without precision", () => {
+    expect(row("2027-12-31T00:00:00.000Z")).toEqual({ label: "Release date", value: "2027" });
+    expect(row("2020-03-01T00:00:00.000Z")).toEqual({ label: "Release date", value: "2020" });
   });
 });
 
@@ -127,16 +172,6 @@ describe("rowSubtitle", () => {
 
   it("shows only the status when unrated", () => {
     expect(rowSubtitle({ status: "waiting", rating: null })).toBe("Waiting");
-  });
-});
-
-describe("releaseDateLine", () => {
-  it("formats a full date", () => {
-    expect(releaseDateLine("2022-02-22T00:00:00.000Z")).toBe("22 February 2022");
-  });
-
-  it("says unknown when there is no date", () => {
-    expect(releaseDateLine(null)).toBe("Unknown");
   });
 });
 

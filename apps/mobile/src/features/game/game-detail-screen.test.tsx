@@ -77,7 +77,7 @@ describe("GameDetailScreen", () => {
       "Hades",
       "A game about games.",
       "Screenshots",
-      "Release",
+      "Released",
       "Powered by IGDB",
     ]) {
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
@@ -120,7 +120,7 @@ describe("GameDetailScreen", () => {
   it("leaves out the summary when IGDB has none", async () => {
     await renderDetail([gameDetail({ id: 7, summary: null })]);
 
-    expect(await screen.findByText("Release")).toBeOnTheScreen();
+    expect(await screen.findByText("Released")).toBeOnTheScreen();
     expect(screen.queryByText("Summary")).not.toBeOnTheScreen();
   });
 
@@ -257,7 +257,7 @@ describe("GameDetailScreen", () => {
     await screen.findByText("Summary");
 
     const texts = textsInOrder();
-    expect(texts.indexOf("Screenshots")).toBeLessThan(texts.indexOf("Release"));
+    expect(texts.indexOf("Screenshots")).toBeLessThan(texts.indexOf("Released"));
   });
 
   it("puts the facts beside the overview, above the screenshots, on a wide window", async () => {
@@ -266,8 +266,8 @@ describe("GameDetailScreen", () => {
     await screen.findByText("Summary");
 
     const texts = textsInOrder();
-    expect(texts.indexOf("Release")).toBeLessThan(texts.indexOf("Screenshots"));
-    expect(texts.filter((text) => text === "Release")).toHaveLength(1);
+    expect(texts.indexOf("Released")).toBeLessThan(texts.indexOf("Screenshots"));
+    expect(texts.filter((text) => text === "Released")).toHaveLength(1);
   });
 
   it("insets the details but lets the shelves run under a tab sidebar", async () => {
@@ -288,7 +288,7 @@ describe("GameDetailScreen", () => {
     });
     // The details still keep clear of it.
     const details = ancestor(
-      screen.getByText("Release"),
+      screen.getByText("Released"),
       (node) => node.props.style?.paddingRight !== undefined,
     );
     expect(details).toHaveStyle({ paddingLeft: 0, paddingRight: 60 });

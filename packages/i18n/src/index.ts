@@ -6,4 +6,4 @@ export {
   type AppResources,
   type Language,
 } from "./locales.js";
-export { formatReleaseDate } from "./release-date.js";
+export { formatReleaseDate, formatReleaseYear } from "./release-date.js";

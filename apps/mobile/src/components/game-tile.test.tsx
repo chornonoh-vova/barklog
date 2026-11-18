@@ -20,13 +20,6 @@ describe("GameTile", () => {
     expect(screen.getByText("2018")).toBeOnTheScreen();
   });
 
-  it("reads only the title, keeping the subtitle's line, when there is no subtitle", async () => {
-    await render(<GameTile {...props} subtitle={null} />);
-
-    expect(screen.getByRole("button", { name: "Celeste" })).toBeOnTheScreen();
-    expect(screen.getByText("")).toHaveStyle({ height: 17 });
-  });
-
   it("shows the sharper big cover", async () => {
     await render(<GameTile {...props} />);
 

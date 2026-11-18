@@ -17,7 +17,7 @@ export const GameTile = memo(function GameTile({
 }: {
   id: number;
   title: string;
-  subtitle: string | null;
+  subtitle: string;
   coverImageId: string | null;
   onPress: (id: number) => void;
 }) {
@@ -34,7 +34,7 @@ export const GameTile = memo(function GameTile({
       onPress={() => onPress(id)}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
       accessibilityRole="button"
-      accessibilityLabel={subtitle === null ? title : `${title}, ${subtitle}`}
+      accessibilityLabel={`${title}, ${subtitle}`}
     >
       {/* `big`: at 100pt on a 3x screen the small transform's 180px is visibly soft. */}
       <Cover imageId={coverImageId} size="big" width={TILE_WIDTH} />
@@ -43,7 +43,7 @@ export const GameTile = memo(function GameTile({
         {title}
       </Text>
       <Text style={[styles.subtitle, { lineHeight: line, height: line }]} numberOfLines={1}>
-        {subtitle ?? ""}
+        {subtitle}
       </Text>
     </Pressable>
   );

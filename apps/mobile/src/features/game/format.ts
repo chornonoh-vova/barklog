@@ -1,7 +1,14 @@
 import { RATING_MAX, type BacklogStatus, type GameSummaryWire } from "@repo/contracts";
+import { formatReleaseDate, formatReleaseYear } from "@repo/i18n";
+import {
+  releaseDisplay,
+  toReleaseDate,
+  type CalendarDay,
+  type ReleaseDate,
+} from "@repo/release-dates";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-import { formatLocale, i18n } from "@/lib/i18n/instance";
+import { currentLanguage, i18n } from "@/lib/i18n/instance";
 
 const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
   waiting: "clock",
@@ -11,12 +18,6 @@ const STATUS_SYMBOLS: Record<BacklogStatus, SFSymbol> = {
 };
 
 const SEPARATOR = " · ";
-
-function joinParts(parts: (string | null)[]): string | null {
-  const present = parts.filter((part): part is string => part !== null && part !== "");
-
-  return present.length === 0 ? null : present.join(SEPARATOR);
-}
 
 export function namesLine(refs: { name: string }[]): string | null {
   return refs.length === 0 ? null : refs.map((ref) => ref.name).join(", ");
@@ -28,19 +29,39 @@ export function platformNames(
   return platforms.length === 0 ? null : platforms.map((p) => p.abbreviation ?? p.name).join(", ");
 }
 
-export function releaseYear(iso: string | null): string | null {
-  return iso === null ? null : String(new Date(iso).getUTCFullYear());
+/** The wire fields of a release date. A server that predates precision omits it. */
+type Dated = Pick<GameSummaryWire, "firstReleaseDate" | "releaseDatePrecision">;
+
+/** Read only through `@repo/release-dates` (ADR-0010): the app compares no dates. */
+function releaseDateOf(game: Dated): ReleaseDate {
+  return toReleaseDate(game.firstReleaseDate, game.releaseDatePrecision);
 }
 
-export function metaLine(input: {
-  firstReleaseDate: string | null;
-  genres: { name: string }[];
-}): string | null {
-  return joinParts([releaseYear(input.firstReleaseDate), namesLine(input.genres)]);
+/** "2027", true of every precision, or "TBA" when there is no date. */
+export function releaseYear(game: Dated): string {
+  return formatReleaseYear(releaseDateOf(game), currentLanguage());
 }
 
-export function summarySubtitle(game: GameSummaryWire): string | null {
-  return releaseYear(game.firstReleaseDate);
+export function metaLine(game: Dated & { genres: { name: string }[] }): string {
+  const year = releaseYear(game);
+  const genres = namesLine(game.genres);
+
+  return genres === null ? year : `${year}${SEPARATOR}${genres}`;
+}
+
+/**
+ * The detail screen's date row: "Released" only once a precise date has
+ * passed, "Release date" otherwise, a lapsed "Q3 2027" included. The value
+ * never shows a placeholder day: "5 June 2027", "Q3 2027", "2027", "TBA".
+ */
+export function releaseDateRow(game: Dated, today: CalendarDay): { label: string; value: string } {
+  const date = releaseDateOf(game);
+  const released = releaseDisplay(date, today).kind === "released";
+
+  return {
+    label: i18n.t(released ? "game.released" : "game.releaseDate"),
+    value: formatReleaseDate(date, currentLanguage()),
+  };
 }
 
 /** "12,481 ratings" — shared by the visible and spoken rating lines. */
@@ -115,17 +136,4 @@ export function rowSubtitle(entry: { status: BacklogStatus; rating: number | nul
   return entry.rating === null
     ? statusLabel(entry.status)
     : `${statusLabel(entry.status)}${SEPARATOR}★${entry.rating}`;
-}
-
-/** Region-qualified (`en-GB`, not the device's `en-US`): a catalogue date reads
- * day-first wherever the app's language allows it. */
-export function releaseDateLine(iso: string | null): string {
-  if (iso === null) return i18n.t("game.unknownDate");
-
-  return new Date(iso).toLocaleDateString(formatLocale(), {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }

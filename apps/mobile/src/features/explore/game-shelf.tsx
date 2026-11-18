@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { GameTile } from "@/components/game-tile";
-import { summarySubtitle } from "@/features/game/format";
+import { releaseYear } from "@/features/game/format";
 import type { Shelf } from "@/features/explore/shelves";
 import { ShelfTitle } from "@/ui/theme";
 import { useShelfInset } from "@/ui/use-shelf-inset";
@@ -27,7 +27,7 @@ export function GameShelf({
             key={game.id}
             id={game.id}
             title={game.name}
-            subtitle={summarySubtitle(game)}
+            subtitle={releaseYear(game)}
             coverImageId={game.coverImageId}
             onPress={onPressGame}
           />
