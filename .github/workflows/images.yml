@@ -31,15 +31,15 @@ jobs:
       id-token: write
     uses: ./.github/workflows/verify.yml
 
-  # migrate, api and worker all come out of the root Dockerfile, so they are
-  # split by publish order rather than built side by side from scratch.
-  # migrate goes first and alone: it runs the expensive pruner, deps, builder
-  # and prod-deps stages and writes them to the `barklog` cache scope. A
-  # failure partway through — a registry hiccup, a runner OOM, a change that
-  # only breaks one target — leaves the three :main tags at different commits.
-  # Publishing migrate first means that failure mode is a new schema running
-  # old code, which additive Drizzle migrations tolerate; publishing it last
-  # would risk the opposite, old schema against new code, which they do not.
+  # migrate, api and worker all come out of the root Dockerfile, each from a
+  # workspace pruned to its own package (the `app` input), so they share no
+  # build stages and each keeps its own cache scope. migrate still publishes
+  # first and alone. A failure partway through — a registry hiccup, a runner
+  # OOM, a change that only breaks one target — leaves the three :main tags at
+  # different commits. Publishing migrate first means that failure mode is a
+  # new schema running old code, which additive Drizzle migrations tolerate;
+  # publishing it last would risk the opposite, old schema against new code,
+  # which they do not.
   publish-migrate:
     name: Publish migrate
     needs: verify
@@ -51,15 +51,13 @@ jobs:
     with:
       image: barklog-migrate
       target: migrate
-      cache-scope: barklog
+      app: "@repo/db"
+      cache-scope: barklog-migrate
 
-  # api and worker in parallel, once migrate is out. Every stage they share
-  # with migrate is a cache hit from the scope it just wrote, so each runner
-  # adds only its target's final COPY. They read the cache but do not write
-  # it: two jobs exporting the same scope at once would race, and the only
-  # layer they would add is the one that changes on every commit anyway.
-  # fail-fast is off so one target failing still lets the other publish;
-  # either way both sit on top of the new schema.
+  # api and worker in parallel, once migrate is out, each reading and writing
+  # its own scope so the two exports never race. fail-fast is off so one
+  # target failing still lets the other publish; either way both sit on top of
+  # the new schema.
   publish-app:
     name: Publish ${{ matrix.target }}
     needs: publish-migrate
@@ -75,14 +73,13 @@ jobs:
     with:
       image: barklog-${{ matrix.target }}
       target: ${{ matrix.target }}
-      cache-scope: barklog
-      cache-write: false
+      app: ${{ matrix.target }}
+      cache-scope: barklog-${{ matrix.target }}
 
   # landing runs beside the three above rather than after them: it is built
   # from its own Dockerfile, shares no stages with them, and nothing depends on
   # the image, so a failure here only leaves the site at the previous commit.
-  # Its own cache scope keeps it from contending with publish-migrate over
-  # `barklog`.
+  # Its own cache scope keeps it from contending with the other exports.
   publish-landing:
     name: Publish landing
     needs: verify

@@ -14,6 +14,12 @@ on:
         description: Dockerfile stage to build.
         type: string
         required: true
+      app:
+        description: >-
+          Workspace package the root Dockerfile prunes to (its APP build
+          argument), e.g. api or @repo/db. Empty for a Dockerfile without one.
+        type: string
+        default: ""
       file:
         description: Dockerfile path, relative to the repository root.
         type: string
@@ -78,6 +84,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # A package name, not a secret: safe in the builder's metadata.
+          build-args: ${{ inputs.app && format('APP={0}', inputs.app) || '' }}
           cache-from: type=gha,scope=${{ inputs.cache-scope }}
           cache-to: ${{ inputs.cache-write && format('type=gha,scope={0},mode=max', inputs.cache-scope) || '' }}
           # Secrets, not build args: mode=max exports the builder stage, and a

@@ -1,23 +1,33 @@
 # syntax=docker/dockerfile:1
 
-# Three runtime images from one build: `api`, `worker`, and the one-shot
-# `migrate`. Design: docs/superpowers/specs/2026-09-01-container-images-and-deploy-design.md
+# Three runtime images: `api`, `worker`, and the one-shot `migrate`. Each is
+# built from a workspace pruned to its own workspace package, named by the APP
+# build argument, so an image carries only the dependencies it runs.
+# Design: docs/superpowers/specs/2026-09-01-container-images-and-deploy-design.md
 #
-# Build one target at a time:
-#   docker build --target api -t barklog-api .
+# Build one target at a time, with its matching APP:
+#   docker build --target api     --build-arg APP=api      -t barklog-api .
+#   docker build --target worker  --build-arg APP=worker   -t barklog-worker .
+#   docker build --target migrate --build-arg APP=@repo/db -t barklog-migrate .
+# A mismatched pair fails: the api and worker targets copy a dist that only
+# their own APP builds.
 
 # Pinned by digest; Dependabot bumps tag and digest together (dependabot.yml).
-FROM node:24.22.2-alpine3.24@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS base
+# The runtime images start from this stage, so they carry Node but not pnpm.
+FROM node:24.22.2-alpine3.24@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS node
+WORKDIR /app
+
+# The build stages add pnpm and turbo's settings on top of `node`.
+FROM node AS base
 ENV TURBO_TELEMETRY_DISABLED=1 \
     DO_NOT_TRACK=1
 # Node 25 stopped bundling Corepack, so pnpm comes straight from npm. Pinned
 # here as well as in "packageManager" in the root package.json. Keep the two
 # in step.
 RUN npm install --global pnpm@12.3.4
-WORKDIR /app
 
 # ---------------------------------------------------------------------------
-# pruner — cut the workspace down to api, worker, and what they depend on.
+# pruner — cut the workspace down to APP and what it depends on.
 #
 # apps/mobile brings 25 Expo and React Native dependencies that no image needs.
 # Pruning halves the lockfile (13905 -> 6660 lines) and stops a change to the
@@ -27,8 +37,10 @@ WORKDIR /app
 # the two in step.
 # ---------------------------------------------------------------------------
 FROM base AS pruner
+ARG APP
 COPY . .
-RUN pnpm dlx turbo@2.11.10 prune api worker --docker
+RUN test -n "$APP" || { echo "Pass --build-arg APP=api, worker or @repo/db." >&2; exit 1; } \
+    && pnpm dlx turbo@2.11.10 prune "$APP" --docker
 
 # ---------------------------------------------------------------------------
 # deps — full install, dev dependencies included, for the build.
@@ -42,13 +54,14 @@ COPY --from=pruner /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
+ARG APP
 COPY --from=pruner /app/out/full/ .
 # Turborepo remote cache credentials, mounted for this step only and never
 # written to a layer. A build without them (a local `docker build`) runs on
 # turbo's local cache alone. See ADR-0008.
 RUN --mount=type=secret,id=turbo_token,env=TURBO_TOKEN \
     --mount=type=secret,id=turbo_team,env=TURBO_TEAM \
-    pnpm exec turbo run build --filter=api --filter=worker --ui=stream
+    pnpm exec turbo run build --filter="$APP" --ui=stream
 
 # ---------------------------------------------------------------------------
 # prod-deps — a second, independent install rather than a post-build prune of
@@ -68,18 +81,21 @@ RUN pnpm install --prod --frozen-lockfile
 # ../../../../packages/db, and likewise for apps/worker and packages/igdb.
 # There is no /app/node_modules/@repo at all. Copying only /app/node_modules
 # would leave those links behind and every @repo import would fail to resolve.
+#
+# It starts from `node`, not `base`: pnpm (about 40 MB) builds the tree but
+# nothing at runtime uses it.
 # ---------------------------------------------------------------------------
-FROM base AS runtime-base
+FROM node AS runtime-base
 ENV NODE_ENV=production
 COPY --from=prod-deps /app/ .
-COPY --from=builder /app/packages/cache/dist ./packages/cache/dist
-COPY --from=builder /app/packages/contracts/dist ./packages/contracts/dist
-COPY --from=builder /app/packages/db/dist ./packages/db/dist
-COPY --from=builder /app/packages/igdb/dist ./packages/igdb/dist
-COPY --from=builder /app/packages/logging/dist ./packages/logging/dist
+# Every workspace package the build produced, by glob rather than by name, so
+# a package APP starts importing ships without editing this list.
+# The `./` marks where the kept path starts: /app/packages/db/dist lands at
+# ./packages/db/dist.
+COPY --from=builder --parents /app/./packages/*/dist ./
 # runMigrations resolves ../drizzle relative to its own compiled location, so
-# the SQL has to sit beside packages/db/dist. All three targets inherit it;
-# only `migrate` reads it.
+# the SQL has to sit beside packages/db/dist. Every target inherits it; only
+# `migrate` reads it.
 COPY --from=builder /app/packages/db/drizzle ./packages/db/drizzle
 USER node
 
