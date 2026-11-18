@@ -1,3 +1,4 @@
+import { daysBetween, localDay, releaseDisplay, toReleaseDate } from "@repo/release-dates";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
@@ -13,6 +14,7 @@ import {
   upcomingGames,
 } from "../src/queries/games.js";
 import * as schema from "../src/schema/index.js";
+import type { DatePrecisionValue } from "../src/schema/mirror.js";
 import { truncateAll } from "../src/testing.js";
 
 const { db, close } = createDb(inject("databaseUrl"));
@@ -34,6 +36,8 @@ interface Fixture {
   typeId?: number;
   rating?: number | null;
   releaseDate?: Date | null;
+  /** Defaults to `day` for a dated fixture, unclassified otherwise. */
+  precision?: DatePrecisionValue | null;
   cover?: string | null;
   /** Override the name-derived slug, to cover slugs that migrated between games. */
   slug?: string;
@@ -69,6 +73,8 @@ async function seed(fixtures: Fixture[]): Promise<void> {
       totalRating: fixture.rating === undefined ? 85 : fixture.rating,
       totalRatingCount: fixture.count,
       firstReleaseDate: fixture.releaseDate ?? null,
+      releaseDatePrecision:
+        fixture.precision === undefined ? (fixture.releaseDate ? "day" : null) : fixture.precision,
       coverImageId: fixture.cover === undefined ? `co${fixture.id}` : fixture.cover,
       igdbUpdatedAt: UPDATED,
     })),
@@ -265,6 +271,107 @@ test("both release feeds skip non-searchable types and games with no cover art",
   expect(names).not.toContain("Released DLC");
   expect(names).not.toContain("Upcoming Placeholder");
   expect(names).not.toContain("Released Placeholder");
+});
+
+test("recently released lists only exact dates, not a passed placeholder", async () => {
+  await seed([
+    // Q1 2026's placeholder, 31 March, has passed: the game is not out.
+    {
+      id: 50,
+      name: "Lapsed Q1",
+      count: 900,
+      releaseDate: at("2026-03-31T00:00:00Z"),
+      precision: "quarter",
+    },
+    {
+      id: 51,
+      name: "Unclassified Past",
+      count: 800,
+      releaseDate: at("2026-06-01T00:00:00Z"),
+      precision: null,
+    },
+    {
+      id: 52,
+      name: "No Date",
+      count: 700,
+      releaseDate: at("2026-06-01T00:00:00Z"),
+      precision: "none",
+    },
+    { id: 53, name: "Precise Past", count: 10, releaseDate: at("2026-06-01T00:00:00Z") },
+  ]);
+
+  const recent = (await recentGames(db, { limit: 10, now: NOW })).map((row) => row.name);
+  const upcoming = (await upcomingGames(db, { limit: 10, now: NOW })).map((row) => row.name);
+
+  expect(recent).toEqual(["Precise Past"]);
+  expect(upcoming).toEqual([]);
+});
+
+test("a vague game reaches Upcoming once its exact day is announced", async () => {
+  await seed([
+    {
+      id: 60,
+      name: "Q3 Game",
+      count: 0,
+      releaseDate: at("2026-09-30T00:00:00Z"),
+      precision: "quarter",
+    },
+  ]);
+
+  const before = await upcomingGames(db, { limit: 10, now: NOW });
+  await db
+    .update(schema.games)
+    .set({ firstReleaseDate: at("2026-08-20T00:00:00Z"), releaseDatePrecision: "day" })
+    .where(eq(schema.games.id, 60));
+  const after = await upcomingGames(db, { limit: 10, now: NOW });
+
+  expect(before).toEqual([]);
+  expect(after.map((row) => row.name)).toEqual(["Q3 Game"]);
+});
+
+test("the release feeds agree with @repo/release-dates on the same day", async () => {
+  const precisions = ["day", "month", "quarter", "year", "none", null] as const;
+  const offsets = [-400, -91, -90, -89, -1, 0, 1, 30, 400];
+  const fixtures: Fixture[] = precisions.flatMap((precision, p) =>
+    offsets.map((offset, o) => ({
+      id: 1000 + p * offsets.length + o,
+      name: `${precision ?? "unclassified"} ${offset}`,
+      count: 0,
+      releaseDate: new Date(Date.parse("2026-06-15T00:00:00Z") + offset * 86_400_000),
+      precision,
+    })),
+  );
+  await seed(fixtures);
+
+  const today = localDay(NOW, "UTC");
+  type Dated = { firstReleaseDate: Date | null; releaseDatePrecision: DatePrecisionValue | null };
+  const dateOf = (game: Dated) => toReleaseDate(game.firstReleaseDate, game.releaseDatePrecision);
+  const kindOf = (game: Dated) => releaseDisplay(dateOf(game), today).kind;
+
+  const upcoming = await upcomingGames(db, { limit: 500, now: NOW });
+  const recent = await recentGames(db, { limit: 500, now: NOW });
+
+  for (const game of upcoming) expect(["countdown", "releaseDay"]).toContain(kindOf(game));
+  for (const game of recent) expect(kindOf(game)).toBe("released");
+
+  // Nor does either feed miss a game the package would put on it.
+  const rows = fixtures.map((fixture) => ({
+    id: fixture.id,
+    firstReleaseDate: fixture.releaseDate ?? null,
+    releaseDatePrecision: fixture.precision ?? null,
+  }));
+  const ids = (games: { id: number }[]) => games.map((game) => game.id).sort();
+  const inRecentWindow = (game: Dated) => {
+    const { day } = dateOf(game);
+    return day !== null && daysBetween(day, today) <= 90;
+  };
+
+  expect(ids(upcoming)).toEqual(
+    ids(rows.filter((row) => ["countdown", "releaseDay"].includes(kindOf(row)))),
+  );
+  expect(ids(recent)).toEqual(
+    ids(rows.filter((row) => kindOf(row) === "released" && inRecentWindow(row))),
+  );
 });
 
 test("game details gather every child collection and split the companies", async () => {

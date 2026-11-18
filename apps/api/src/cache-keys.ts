@@ -24,10 +24,18 @@ export function searchKey(version: number, query: string, limit: number, offset:
   return `search:v${version}:${sha1(`${query}|${limit}|${offset}`)}`;
 }
 
+/**
+ * Bumped whenever a feed query changes which games it returns, so a deploy
+ * never serves rows the old query picked. 2: the release feeds list exact
+ * dates only (#89).
+ */
+export const FEED_QUERY_VERSION = 2;
+
 /** Day-bucketed: the release windows move at midnight, so a feed cached at
  * 23:59 would otherwise serve yesterday's window for a full TTL. */
 export function feedKey(feed: GameFeed, version: number, limit: number, now: Date): string {
-  return `${feed}:v${version}:${startOfUtcDay(now).toISOString().slice(0, 10)}:${limit}`;
+  const day = startOfUtcDay(now).toISOString().slice(0, 10);
+  return `${feed}:q${FEED_QUERY_VERSION}:v${version}:${day}:${limit}`;
 }
 
 export const SIMILAR_TTL_SECONDS = 3600;

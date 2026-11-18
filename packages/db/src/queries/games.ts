@@ -139,7 +139,18 @@ export function startOfUtcDay(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-const releaseFeedFilter = and(searchableType, isNotNull(games.coverImageId));
+/**
+ * Both release shelves list exact (day) dates only: a vague date is stored as
+ * a placeholder day, and once that passes the game is neither upcoming nor
+ * released (ADR-0010). Filtering in SQL keeps `LIMIT` and the ordering honest;
+ * an agreement test holds these queries to `@repo/release-dates`. "Today" is
+ * the UTC day, because the feeds are cached for every user at once.
+ */
+const releaseFeedFilter = and(
+  searchableType,
+  isNotNull(games.coverImageId),
+  eq(games.releaseDatePrecision, "day"),
+);
 
 export async function upcomingGames(
   db: Queryable,
