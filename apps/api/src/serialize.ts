@@ -31,6 +31,7 @@ export function toGameSummary(row: GameSummary): GameSummaryWire {
     slug: row.slug,
     coverImageId: row.coverImageId,
     firstReleaseDate: iso(row.firstReleaseDate),
+    releaseDatePrecision: row.releaseDatePrecision,
     totalRating: row.totalRating,
     totalRatingCount: row.totalRatingCount,
   };
