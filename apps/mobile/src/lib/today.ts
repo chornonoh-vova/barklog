@@ -6,7 +6,16 @@ export function deviceTimeZone(): string {
   return getCalendars()[0].timeZone ?? "UTC";
 }
 
-/** The device's calendar day: release dates are judged against the user's today. */
+/**
+ * The device's calendar day: release dates are judged against the user's today.
+ * A zone Hermes' Intl does not know (one newer than its tz data) falls back to
+ * the UTC day, as when iOS reports none, instead of crashing the screen.
+ */
 export function localToday(now: Date = new Date()): CalendarDay {
-  return localDay(now, deviceTimeZone());
+  try {
+    return localDay(now, deviceTimeZone());
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return localDay(now, "UTC");
+  }
 }

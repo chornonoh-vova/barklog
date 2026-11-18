@@ -24,7 +24,7 @@
     "signOutMessage": "Your backlog stays saved in your account. Sign in again to pick up where you left off.",
     "deleteAccount": "Delete Account",
     "deleteTitle": "Delete your account?",
-    "deleteMessage": "Your backlog, ratings and release alerts will be permanently deleted. This can't be undone.\n\nDeleting your account doesn't cancel a Barklog Premium subscription. Cancel it in your App Store subscriptions.",
+    "deleteMessage": "Your backlog and ratings will be permanently deleted. This can't be undone.\n\nDeleting your account doesn't cancel a Barklog Premium subscription. Cancel it in your App Store subscriptions.",
     "deleteFailedTitle": "Couldn't delete your account",
     "deleteFailedMessage": "Something went wrong. Try again in a moment.",
     "version": "Version {{version}} ({{build}})",

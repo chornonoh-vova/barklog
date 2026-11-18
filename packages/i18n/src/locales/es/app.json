@@ -24,7 +24,7 @@
     "signOutMessage": "Tu backlog sigue guardado en tu cuenta. Vuelve a iniciar sesión para continuar donde lo dejaste.",
     "deleteAccount": "Eliminar cuenta",
     "deleteTitle": "¿Eliminar tu cuenta?",
-    "deleteMessage": "Tu backlog, tus valoraciones y tus avisos de lanzamiento se eliminarán de forma permanente. Esta acción no se puede deshacer.\n\nEliminar tu cuenta no cancela la suscripción a Barklog Premium. Cancélala en tus suscripciones de la App Store.",
+    "deleteMessage": "Tu backlog y tus valoraciones se eliminarán de forma permanente. Esta acción no se puede deshacer.\n\nEliminar tu cuenta no cancela la suscripción a Barklog Premium. Cancélala en tus suscripciones de la App Store.",
     "deleteFailedTitle": "No se pudo eliminar tu cuenta",
     "deleteFailedMessage": "Algo salió mal. Inténtalo de nuevo en un momento.",
     "version": "Versión {{version}} ({{build}})",

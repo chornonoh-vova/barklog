@@ -32,9 +32,19 @@ export function platformNames(
 /** The wire fields of a release date. A server that predates precision omits it. */
 type Dated = Pick<GameSummaryWire, "firstReleaseDate" | "releaseDatePrecision">;
 
-/** Read only through `@repo/release-dates` (ADR-0010): the app compares no dates. */
+/**
+ * Read only through `@repo/release-dates` (ADR-0010): the app compares no dates.
+ * The package throws on a malformed date; rows render it during layout, so a
+ * bad value from the API or the persisted cache reads as no date ("TBA")
+ * rather than crashing the screen.
+ */
 function releaseDateOf(game: Dated): ReleaseDate {
-  return toReleaseDate(game.firstReleaseDate, game.releaseDatePrecision);
+  try {
+    return toReleaseDate(game.firstReleaseDate, game.releaseDatePrecision);
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return { day: null, precision: null };
+  }
 }
 
 /** "2027", true of every precision, or "TBA" when there is no date. */

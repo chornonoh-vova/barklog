@@ -226,8 +226,9 @@ subscriptions from a settings-like place, as on iOS.
 - Own section, last, `trash.fill` on a red tile, red text (destructive role).
 - Tapping shows an **alert**:
   - title "Delete your account?";
-  - message: the backlog, ratings and release alerts are permanently deleted
-    and cannot be restored; an active Barklog Premium subscription is not
+  - message: the backlog and ratings are permanently deleted and cannot be
+    restored (release alerts join the list once the app offers them, not
+    before); an active Barklog Premium subscription is not
     cancelled by this and must be cancelled in App Store subscriptions
     (shown to everyone, not only known subscribers: the entitlement can be
     unknown or stale, and ADR-0006 records that deletion never cancels it);
