@@ -13,7 +13,14 @@ export const RELEASE_ALERT_MINUTES_DEFAULT = 540;
 export const RELEASE_ALERT_MINUTES_MAX = 1410;
 export const RELEASE_ALERT_MINUTES_STEP = 30;
 
+/**
+ * An IANA time zone name, as iOS reports one. A UTC offset such as `+05:00` is
+ * refused although Intl accepts it: Postgres reads its sign the POSIX way
+ * (`+05:00` is UTC-5), so the same stored value would mean two zones ten hours
+ * apart. The `Etc/GMT±N` names are POSIX-signed in both, so they stay valid.
+ */
 function isTimeZone(value: string): boolean {
+  if (value.startsWith("+") || value.startsWith("-")) return false;
   try {
     new Intl.DateTimeFormat("en", { timeZone: value });
     return true;
