@@ -69,6 +69,7 @@ export async function persistPage(db: Db, page: MappedPage): Promise<void> {
           slug: excluded("slug"),
           summary: excluded("summary"),
           firstReleaseDate: excluded("first_release_date"),
+          releaseDatePrecision: excluded("release_date_precision"),
           gameTypeId: excluded("game_type_id"),
           parentGameId: excluded("parent_game_id"),
           totalRating: excluded("total_rating"),

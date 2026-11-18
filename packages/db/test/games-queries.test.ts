@@ -383,6 +383,7 @@ test("similar games carry the same projection as every other list", async () => 
     "firstReleaseDate",
     "id",
     "name",
+    "releaseDatePrecision",
     "slug",
     "totalRating",
     "totalRatingCount",

@@ -16,6 +16,8 @@ export const GAME_FIELDS = [
   "parent_game",
   "similar_games",
   "themes",
+  "release_dates.date",
+  "release_dates.date_format.format",
   "game_type.id",
   "game_type.type",
   "cover.image_id",

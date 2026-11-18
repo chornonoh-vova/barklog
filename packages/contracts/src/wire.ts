@@ -1,4 +1,5 @@
 import type { BacklogStatus } from "./backlog.js";
+import type { DatePrecision } from "./games.js";
 import type { PeriodType, SubscriptionStore } from "./subscription.js";
 
 export interface NamedRef {
@@ -17,6 +18,12 @@ export interface GameSummaryWire {
   slug: string;
   coverImageId: string | null;
   firstReleaseDate: string | null;
+  /**
+   * How precise `firstReleaseDate` is; `null` is unclassified. Optional because
+   * cached responses and older servers omit it, and older apps ignore it.
+   * Interpret it only through `@repo/release-dates`.
+   */
+  releaseDatePrecision?: DatePrecision | null;
   totalRating: number | null;
   totalRatingCount: number;
 }

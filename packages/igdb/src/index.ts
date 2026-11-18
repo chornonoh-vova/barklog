@@ -8,6 +8,7 @@ export {
   type GamesPageQueryOptions,
 } from "./games-query.js";
 export { mapGameIds, mapGames, type MappedPage } from "./map.js";
+export { classifyReleaseDate, type ReleaseDateEntry } from "./precision.js";
 export { igdbGameIdSchema, igdbGameSchema, type IgdbGame } from "./schemas.js";
 export { createThrottle, type ThrottleOptions } from "./throttle.js";
 export { createTokenSource, type TokenCache, type TokenSource } from "./token.js";

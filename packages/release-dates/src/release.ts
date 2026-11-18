@@ -6,15 +6,31 @@ import { daysBetween, toInstant, utcDay, type CalendarDay } from "./day.js";
 export type VaguePrecision = Exclude<DatePrecision, "day" | "none"> | null;
 
 /**
- * A game's release date as the rest of the codebase sees it. `day` is the UTC
- * calendar day of IGDB's `first_release_date` (a placeholder unless the
- * precision is `day`); `precision` is `null` while the mirror has not
- * classified the date ("unclassified"), which is never guessed. Precision
- * `none` never carries a day.
+ * A game's release date as the rest of the codebase sees it. For precision
+ * `day`, and for an unclassified date, `day` is the UTC calendar day of IGDB's
+ * `first_release_date`. For month, quarter and year it is the **last** day of
+ * that period, whatever placeholder day IGDB stored: IGDB puts months on the
+ * 1st and some old years on 1 January, and a vague date is not over until its
+ * period is. `precision` is `null` while the mirror has not classified the
+ * date ("unclassified"), which is never guessed. Precision `none` never
+ * carries a day.
  */
 export type ReleaseDate =
   | { day: CalendarDay; precision: "day" | VaguePrecision }
   | { day: null; precision: DatePrecision | null };
+
+const MONTHS_IN_PERIOD = { month: 1, quarter: 3, year: 12 } as const;
+
+/** The last UTC calendar day of the month, quarter or year containing `instant`. */
+function endOfPeriod(instant: Date, precision: keyof typeof MONTHS_IN_PERIOD): CalendarDay {
+  const span = MONTHS_IN_PERIOD[precision];
+  const firstMonthAfter = (Math.floor(instant.getUTCMonth() / span) + 1) * span;
+  // Day 0 of the month after the period is its last day. setUTCFullYear, unlike
+  // Date.UTC, does not map years 0–99 onto 1900–1999.
+  const end = new Date(0);
+  end.setUTCFullYear(instant.getUTCFullYear(), firstMonthAfter, 0);
+  return utcDay(end);
+}
 
 /** What the app shows for a release date on a given local day. */
 export type ReleaseDisplay =
@@ -32,7 +48,8 @@ export type ReleaseDisplay =
   | { kind: "lapsed"; precision: VaguePrecision; day: CalendarDay };
 
 /**
- * Normalises the wire/database pair into a {@link ReleaseDate}. An absent
+ * Normalises the wire/database pair into a {@link ReleaseDate}, moving a vague
+ * date to the end of its period. An absent
  * (`undefined`) precision, as sent by servers that predate the field, is
  * unclassified. Precision `none` drops any stray timestamp: it means no date.
  */
@@ -44,7 +61,11 @@ export function toReleaseDate(
   if (firstReleaseDate === null || normalised === "none") {
     return { day: null, precision: normalised };
   }
-  return { day: utcDay(toInstant(firstReleaseDate)), precision: normalised };
+  const instant = toInstant(firstReleaseDate);
+  if (normalised === null || normalised === "day") {
+    return { day: utcDay(instant), precision: normalised };
+  }
+  return { day: endOfPeriod(instant, normalised), precision: normalised };
 }
 
 /** The single display state of a release date on the user's local `today`. */

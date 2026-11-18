@@ -23,6 +23,17 @@ export const igdbGameSchema = v.object({
   parent_game: v.optional(int),
   similar_games: v.optional(v.array(int)),
   themes: v.optional(v.array(int)),
+  // Only what classifying `first_release_date` needs; `category` is deprecated
+  // in favour of `date_format`. TBD entries have no `date`.
+  release_dates: v.optional(
+    v.array(
+      v.object({
+        id: int,
+        date: v.optional(int),
+        date_format: v.optional(v.object({ id: int, format: v.string() })),
+      }),
+    ),
+  ),
   game_type: v.optional(v.object({ id: int, type: v.string() })),
   cover: v.optional(v.object({ id: int, image_id: v.string() })),
   screenshots: v.optional(v.array(v.object({ id: int, image_id: v.string() }))),

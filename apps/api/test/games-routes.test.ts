@@ -361,3 +361,36 @@ test("the similar route is not shadowed by the :id catch-all", async () => {
   expect(body).not.toHaveProperty("backlogEntry");
   expect(body).toHaveProperty("items");
 });
+
+test("game summaries and detail carry the release date precision", async () => {
+  await seedGame(harness.db, {
+    id: 1942,
+    name: "Witcher Sequel",
+    firstReleaseDate: new Date("2027-12-31T00:00:00Z"),
+    releaseDatePrecision: "year",
+  });
+
+  const detail = (await (await callApi(harness.app, "/api/games/1942")).json()) as {
+    releaseDatePrecision: unknown;
+  };
+  expect(detail.releaseDatePrecision).toBe("year");
+
+  const search = (await (await callApi(harness.app, "/api/games/search?q=witcher")).json()) as {
+    items: { releaseDatePrecision: unknown }[];
+  };
+  expect(search.items[0]!.releaseDatePrecision).toBe("year");
+});
+
+test("an unclassified date is sent as an explicit null, not omitted", async () => {
+  await seedGame(harness.db, {
+    id: 1942,
+    name: "Unclassified",
+    firstReleaseDate: new Date("2027-06-01T00:00:00Z"),
+  });
+
+  const detail = (await (await callApi(harness.app, "/api/games/1942")).json()) as Record<
+    string,
+    unknown
+  >;
+  expect(detail).toHaveProperty("releaseDatePrecision", null);
+});

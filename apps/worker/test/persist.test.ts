@@ -184,3 +184,85 @@ test("re-syncing a game that gained the erotic theme purges its stored screensho
   expect(await db.select().from(schema.gameScreenshots)).toHaveLength(0);
   expect(await db.select().from(schema.games)).toHaveLength(2);
 });
+
+const RELEASE_2027 = Date.UTC(2027, 11, 31) / 1000;
+const UPCOMING = {
+  id: 2000,
+  name: "Upcoming",
+  slug: "upcoming",
+  updated_at: 1755000000,
+  first_release_date: RELEASE_2027,
+  release_dates: [{ id: 1, date: RELEASE_2027, date_format: { id: 2, format: "YYYY" } }],
+};
+
+async function precisionOf(id: number) {
+  const [row] = await db
+    .select({ precision: schema.games.releaseDatePrecision })
+    .from(schema.games)
+    .where(eq(schema.games.id, id));
+  return row!.precision;
+}
+
+test("the release date precision is stored with the game", async () => {
+  await persistPage(db, mapGames([UPCOMING, PAGE[0]!]));
+
+  expect(await precisionOf(2000)).toBe("year");
+  // PAGE[0] has no first_release_date at all.
+  expect(await precisionOf(1942)).toBe("none");
+});
+
+test("a date that firms up overwrites the stored precision", async () => {
+  await persistPage(db, mapGames([UPCOMING]));
+
+  const day = Date.UTC(2027, 5, 5) / 1000;
+  await persistPage(
+    db,
+    mapGames([
+      {
+        ...UPCOMING,
+        first_release_date: day,
+        release_dates: [{ id: 1, date: day, date_format: { id: 0, format: "YYYYMMDD" } }],
+      },
+    ]),
+  );
+
+  expect(await precisionOf(2000)).toBe("day");
+});
+
+test("a date that loses its matching entry goes back to unclassified, not a stale guess", async () => {
+  await persistPage(db, mapGames([UPCOMING]));
+  await persistPage(db, mapGames([{ ...UPCOMING, release_dates: [] }]));
+
+  expect(await precisionOf(2000)).toBeNull();
+});
+
+test("re-syncing a game with backlog entries leaves those entries untouched", async () => {
+  await persistPage(db, mapGames([UPCOMING]));
+  await db.insert(schema.users).values([{ id: "user_a" }, { id: "user_b" }]);
+  await db.insert(schema.backlogEntries).values([
+    { userId: "user_a", gameId: 2000, status: "waiting" },
+    { userId: "user_b", gameId: 2000, status: "playing", rating: 8 },
+  ]);
+  const before = await db
+    .select()
+    .from(schema.backlogEntries)
+    .orderBy(schema.backlogEntries.userId);
+
+  const day = Date.UTC(2027, 5, 5) / 1000;
+  await persistPage(
+    db,
+    mapGames([
+      {
+        ...UPCOMING,
+        name: "Upcoming: Renamed",
+        first_release_date: day,
+        release_dates: [{ id: 1, date: day, date_format: { id: 0, format: "YYYYMMDD" } }],
+      },
+    ]),
+  );
+
+  expect(await precisionOf(2000)).toBe("day");
+  const after = await db.select().from(schema.backlogEntries).orderBy(schema.backlogEntries.userId);
+  expect(after).toEqual(before);
+  expect(after).toHaveLength(2);
+});

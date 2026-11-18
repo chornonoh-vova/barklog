@@ -45,7 +45,7 @@ Fill the copied files using their examples and the corresponding environment sch
 
 ```sh
 pnpm deps:up
-pnpm --filter @repo/db db:migrate
+pnpm migrate
 pnpm build
 pnpm --filter api dev
 ```
@@ -61,8 +61,8 @@ Local infrastructure is explicitly `deps.compose.yaml`, managed by `pnpm deps:up
 Configure the worker's IGDB credentials, then run:
 
 ```sh
-pnpm --filter worker sync --full
-pnpm --filter worker sync
+pnpm sync --full
+pnpm sync
 pnpm --filter worker dev
 ```
 

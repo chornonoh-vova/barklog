@@ -1,5 +1,6 @@
 import { createCache, type Cache } from "@repo/cache";
 import { flushAll } from "@repo/cache/testing";
+import type { DatePrecision } from "@repo/contracts";
 import { createDb, schema } from "@repo/db";
 import { truncateAll } from "@repo/db/testing";
 import { configureLogging } from "@repo/logging";
@@ -119,6 +120,7 @@ export async function seedGame(
     rating?: number | null;
     typeId?: number;
     firstReleaseDate?: Date | null;
+    releaseDatePrecision?: DatePrecision | null;
     coverImageId?: string | null;
     /** Override the name-derived slug, for the igdb shortcut's tests. */
     slug?: string;
@@ -142,6 +144,7 @@ export async function seedGame(
     totalRating: game.rating === undefined ? 85 : game.rating,
     totalRatingCount: game.count ?? 100,
     firstReleaseDate: game.firstReleaseDate ?? null,
+    releaseDatePrecision: game.releaseDatePrecision ?? null,
     coverImageId: game.coverImageId === undefined ? `co${game.id}` : game.coverImageId,
     igdbUpdatedAt: new Date("2026-01-01T00:00:00Z"),
   });

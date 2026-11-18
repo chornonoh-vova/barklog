@@ -83,8 +83,8 @@ terms:
 - **Last told**: the release date and precision a release alert last reported
   to the user (or saw at opt-in). Alerts compare the mirror to this, not to
   the previous sync.
-- **Lapsed**: a vague or unclassified date whose placeholder day has passed.
-  Not upcoming, and never shown as released.
+- **Lapsed**: a vague date whose period has ended, or an unclassified date
+  whose day has passed. Not upcoming, and never shown as released.
 
 ## Approaches considered
 
@@ -125,19 +125,20 @@ dates or precisions on its own. Required by ADR-0010.
 
 - **Normalisation.** `toReleaseDate(firstReleaseDate, precision)` turns the
   wire/DB pair into `{ day: CalendarDay | null, precision }`, where
-  `CalendarDay` is the UTC calendar day of the timestamp. A `null`/absent
-  precision stays distinct ("unclassified") rather than being guessed.
+  `CalendarDay` is the UTC calendar day of the timestamp, or for month,
+  quarter and year the last day of that period. A `null`/absent precision
+  stays distinct ("unclassified") rather than being guessed.
 - **Local day.** `localDay(instant, timeZone)` gives a user's calendar day;
   `daysBetween(a, b)` counts calendar days. These are the only day maths.
 - **Display state (app).** `releaseDisplay(date, today)` returns exactly one of:
   - `countdown { days }` — precise, in the future;
   - `releaseDay` — precise, today;
   - `released` — precise, in the past;
-  - `vague { precision, day }` — month/quarter/year/unclassified whose
-    placeholder day is today or later;
+  - `vague { precision, day }` — month/quarter/year whose period has not
+    ended, or unclassified whose day is today or later;
   - `unannounced` — no date at all;
-  - `lapsed` — vague/unclassified whose placeholder day has passed (shown as
-    its vague label, never as released or counted down).
+  - `lapsed` — vague whose period has ended, or unclassified whose day has
+    passed (shown as its vague label, never as released or counted down).
 
   `isUpcoming(display)` is `countdown | releaseDay | vague | unannounced` and
   drives turning the bell on, the Home menu item, both countdowns and the
@@ -243,6 +244,36 @@ app and the backend. Required by ADR-0011.
 - Wire: `GameSummaryWire.releaseDatePrecision?: DatePrecision | null`,
   optional so older clients ignore it. The constant list lives in
   `@repo/contracts`.
+
+#### IGDB placeholder dates (checked 2026-11-18, #75)
+
+Field set: `release_dates.date` and `release_dates.date_format.format`
+(`category` on release dates is deprecated in favour of `date_format`).
+Formats are matched by name: `YYYYMMDD` → day, `YYYYMM` → month,
+`YYYYQ1`–`YYYYQ4` → quarter, `YYYY` → year. `TBD` entries carry no `date`, so
+they never match. If entries sharing the timestamp disagree, the most precise
+wins, because a day-precise entry means some platform really ships that day.
+
+Findings from about 3,000 games across the id range plus 300 upcoming ones:
+
+- **Quarters** sit on the **last** day of the quarter (31 Mar, 30 Jun, 30 Sep,
+  31 Dec), every time.
+- **Years** sit on **31 December**, apart from a few older past entries that
+  use **1 January** (23 of 942 matched year dates, all past).
+- **Months** sit on the **first** day of the month (500 of 500 sampled,
+  future dates included), **not the end**. This is the one case where the
+  assumption "IGDB places vague dates at the end of their period" is false.
+- Every dated game in the sample had exactly one matching format: no
+  unmatched dates and no conflicts. Some games have dated entries but no
+  `first_release_date`; they are `none`, as designed.
+
+**Decided (2026-11-18, #75):** a vague date is always judged against the end of
+its period. Otherwise a "June 2027" game, stored on 1 June, would turn `lapsed`
+on 2 June while it may still ship that month. The mirror stores IGDB's
+timestamp unchanged; `toReleaseDate` in `@repo/release-dates` moves month,
+quarter and year dates to the last day of their period, so old January-placed
+years and December-placed ones normalise to the same day. Unclassified dates
+keep their day: with no known period there is nothing to extend.
 
 ### Release alerts (`packages/db`, `apps/api`)
 
@@ -472,9 +503,9 @@ UTC calendar day of `firstReleaseDate`.
   that the game is **released**.
 - vague (`month|quarter|year`), `none`, or `null`/absent precision (an older
   server or an unclassified game): **never** counted down by day. Upcoming
-  when there is no date, or while the placeholder date is today or later
-  (IGDB places vague dates at the end of their period — confirm during the
-  precision ticket). After that the game is **lapsed**, not released: it
+  when there is no date, or while its period has not ended (`toReleaseDate`
+  moves a vague date to the last day of its period, because IGDB puts month
+  placeholders on the 1st; see _IGDB placeholder dates_). After that the game is **lapsed**, not released: it
   keeps its vague label and the "Release date" caption.
 - Released and lapsed games get no countdown and cannot have an alert turned
   on. An alert that is already on stays visible and can be turned off (see
@@ -611,8 +642,8 @@ Vague dates show "2027" / "Q3 2027" (no day count). All of it is rendered from
   runtime cannot import packages, so the app precomputes each timeline
   entry's `releaseDisplay` and label; the view only renders them and does no
   date arithmetic of its own (ADR-0010).
-- "Soonest upcoming" orders upcoming games by release day, using the
-  placeholder day for vague dates; on the same day a precise date comes
+- "Soonest upcoming" orders upcoming games by release day, using the last
+  day of the period for vague dates; on the same day a precise date comes
   first, and unannounced games come last.
 - Widget picker/gallery strings go through `Localizable.strings`.
 - HIG polish: a placeholder that mirrors the layout (artwork block plus text

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@repo/cache": "workspace:*",
+    "@repo/contracts": "workspace:*",
     "valibot": "catalog:"
   },
   "devDependencies": {

@@ -46,3 +46,9 @@ test("the erotic sweep does not narrow to games that still have screenshots", ()
   // Narrowing would strand our copy of a screenshot IGDB has since removed.
   expect(eroticGameIdsQuery({ afterId: 0, limit: 500 })).not.toContain("screenshots");
 });
+
+test("release dates are classified by date_format, never the deprecated category", () => {
+  expect(GAME_FIELDS).toContain("release_dates.date");
+  expect(GAME_FIELDS).toContain("release_dates.date_format.format");
+  expect(GAME_FIELDS).not.toMatch(/release_dates\.category/);
+});

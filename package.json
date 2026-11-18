@@ -7,6 +7,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "check-types": "turbo run check-types",
+    "migrate": "pnpm --filter @repo/db db:migrate",
+    "sync": "pnpm --filter worker sync",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "deps:up": "docker compose -f deps.compose.yaml up -d",

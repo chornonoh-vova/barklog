@@ -15,7 +15,7 @@ How much of a game's release date is known: day, month, quarter, year or none. O
 _Avoid_: release date confidence
 
 **Upcoming**:
-A game that has not been released yet: a precise date today or later, a vague date whose placeholder day has not passed, or no date at all. A vague date whose placeholder has passed is not upcoming, but it is not released either.
+A game that has not been released yet: a precise date today or later, a vague date whose period (month, quarter or year) has not ended, or no date at all. A vague date whose period has ended is not upcoming, but it is not released either.
 _Avoid_: unreleased (ambiguous for lapsed vague dates), future
 
 **Mirror**:

@@ -3,12 +3,19 @@ import {
   boolean,
   index,
   integer,
+  pgEnum,
   pgTable,
   primaryKey,
   real,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+
+/** Must match `DATE_PRECISIONS` in `@repo/contracts` (enforced by a parity test). */
+export const DATE_PRECISIONS = ["day", "month", "quarter", "year", "none"] as const;
+export type DatePrecisionValue = (typeof DATE_PRECISIONS)[number];
+
+export const datePrecision = pgEnum("date_precision", DATE_PRECISIONS);
 
 export const gameTypes = pgTable("game_types", {
   id: integer("id").primaryKey(),
@@ -43,6 +50,9 @@ export const games = pgTable(
     slug: text("slug").notNull(),
     summary: text("summary"),
     firstReleaseDate: timestamp("first_release_date", { withTimezone: true }),
+    // Null is "unclassified": not synced since the column shipped, or a date no
+    // IGDB release-date entry explains. Distinct from `none` (no date at all).
+    releaseDatePrecision: datePrecision("release_date_precision"),
     gameTypeId: integer("game_type_id").references(() => gameTypes.id),
     // Deliberately no foreign key: the target may not be mirrored yet.
     parentGameId: integer("parent_game_id"),

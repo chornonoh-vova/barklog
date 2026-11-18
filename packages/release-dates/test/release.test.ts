@@ -40,6 +40,30 @@ describe("toReleaseDate", () => {
     expect(toReleaseDate(new Date(Date.UTC(2027, 11, 31, 12)), "year").day).toBe("2027-12-31");
   });
 
+  // IGDB puts month placeholders on the 1st, quarters and most years on the
+  // last day, and some old years on 1 January (design doc, #75). A vague date
+  // is judged against the last day it could fall on, wherever IGDB put it.
+  it.each([
+    ["month on the 1st", "2027-06-01", "month", "2027-06-30"],
+    ["month mid-way", "2027-06-15", "month", "2027-06-30"],
+    ["February in a leap year", "2028-02-01", "month", "2028-02-29"],
+    ["February in a common year", "2027-02-01", "month", "2027-02-28"],
+    ["December", "2027-12-01", "month", "2027-12-31"],
+    ["Q1", "2027-03-31", "quarter", "2027-03-31"],
+    ["Q2 from its first day", "2027-04-01", "quarter", "2027-06-30"],
+    ["Q3", "2027-09-30", "quarter", "2027-09-30"],
+    ["Q4", "2027-10-15", "quarter", "2027-12-31"],
+    ["year on 31 December", "2027-12-31", "year", "2027-12-31"],
+    ["year on 1 January", "1998-01-01", "year", "1998-12-31"],
+  ] as const)("moves a %s placeholder to the end of its period", (_, at, precision, end) => {
+    expect(toReleaseDate(`${at}T00:00:00Z`, precision)).toEqual({ day: end, precision });
+  });
+
+  it("keeps the day of a precise or unclassified date as given", () => {
+    expect(toReleaseDate("2027-06-01T00:00:00Z", "day").day).toBe("2027-06-01");
+    expect(toReleaseDate("2027-06-01T00:00:00Z", null).day).toBe("2027-06-01");
+  });
+
   it("keeps an absent precision as unclassified rather than guessing", () => {
     expect(toReleaseDate("2027-06-05T00:00:00Z", null)).toEqual({
       day: "2027-06-05",
@@ -170,6 +194,21 @@ describe("releaseDisplay properties", () => {
       fc.property(fc.option(instant, { nil: null }), nonDay, calendarDay, (at, p, now) => {
         const { kind } = releaseDisplay(toReleaseDate(at, p), now);
         expect(["countdown", "releaseDay", "released"]).not.toContain(kind);
+      }),
+    );
+  });
+
+  it("never lapses a vague date while today is still inside its period", () => {
+    const vague = fc.constantFrom("month" as const, "quarter" as const, "year" as const);
+    const period = { month: 1, quarter: 3, year: 12 };
+    fc.assert(
+      fc.property(instant, vague, instant, (at, p, then) => {
+        const now = localDay(then, "UTC");
+        const months = (d: Date) => d.getUTCFullYear() * 12 + d.getUTCMonth();
+        const index = (d: Date) => Math.floor(months(d) / period[p]);
+        const display = releaseDisplay(toReleaseDate(at, p), now);
+        if (index(then) <= index(at)) expect(display.kind).toBe("vague");
+        else expect(display.kind).toBe("lapsed");
       }),
     );
   });
