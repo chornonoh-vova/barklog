@@ -7,6 +7,15 @@ describe("localToday", () => {
     // jest-expo's expo-localization reports America/New_York.
     expect(localToday(new Date("2026-11-19T03:00:00.000Z"))).toBe("2026-11-18");
   });
+
+  it("falls back to UTC when the device's time zone is unknown to Intl", () => {
+    const [calendar] = Localization.getCalendars();
+    jest
+      .spyOn(Localization, "getCalendars")
+      .mockReturnValue([{ ...calendar, timeZone: "Not/A_Zone" }]);
+
+    expect(localToday(new Date("2026-11-19T03:00:00.000Z"))).toBe("2026-11-19");
+  });
 });
 
 describe("deviceTimeZone", () => {

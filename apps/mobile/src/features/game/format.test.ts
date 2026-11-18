@@ -33,6 +33,12 @@ describe("releaseYear", () => {
     }
   });
 
+  it("says TBA for a malformed date instead of throwing", () => {
+    for (const firstReleaseDate of ["2027-07-01", "not a date", "2027-13-45T00:00:00.000Z"]) {
+      expect(releaseYear({ firstReleaseDate, releaseDatePrecision: "day" })).toBe("TBA");
+    }
+  });
+
   it("says TBA when there is no date", () => {
     expect(releaseYear({ firstReleaseDate: null })).toBe("TBA");
     expect(
@@ -86,6 +92,10 @@ describe("releaseDateRow", () => {
       label: "Release date",
       value: "Q3 2027",
     });
+  });
+
+  it("shows TBA for a malformed date instead of throwing", () => {
+    expect(row("2027-06-05", "day")).toEqual({ label: "Release date", value: "TBA" });
   });
 
   it("never shows a placeholder day from a server without precision", () => {
