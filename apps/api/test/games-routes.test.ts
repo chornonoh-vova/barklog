@@ -2,7 +2,7 @@ import { schema } from "@repo/db";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test } from "vitest";
 
-import { SEARCH_VERSION_KEY } from "../src/cache-keys.js";
+import { FEED_QUERY_VERSION, feedKey, SEARCH_VERSION_KEY } from "../src/cache-keys.js";
 import { callApi, createTestApp, OTHER_USER, seedGame, seedSimilar, TEST_USER } from "./helpers.js";
 
 const harness = createTestApp();
@@ -131,11 +131,28 @@ test("popular ranks by rating count behind a rating floor", async () => {
 });
 
 const daysFromNow = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+/** An exact release date: the only kind the release feeds list. */
+const exactly = (days: number) => ({
+  releaseDatePrecision: "day" as const,
+  firstReleaseDate: daysFromNow(days),
+});
 
 test("upcoming lists what has not shipped yet, soonest first", async () => {
-  await seedGame(harness.db, { id: 1, name: "Ships Later", firstReleaseDate: daysFromNow(60) });
-  await seedGame(harness.db, { id: 2, name: "Ships Soon", firstReleaseDate: daysFromNow(2) });
-  await seedGame(harness.db, { id: 3, name: "Already Out", firstReleaseDate: daysFromNow(-2) });
+  await seedGame(harness.db, {
+    id: 1,
+    name: "Ships Later",
+    ...exactly(60),
+  });
+  await seedGame(harness.db, {
+    id: 2,
+    name: "Ships Soon",
+    ...exactly(2),
+  });
+  await seedGame(harness.db, {
+    id: 3,
+    name: "Already Out",
+    ...exactly(-2),
+  });
 
   const response = await callApi(harness.app, "/api/games/upcoming");
   const body = (await response.json()) as { items: { id: number }[] };
@@ -150,16 +167,24 @@ test("recent lists the games just out, most rated first", async () => {
     id: 1,
     name: "Out Last Week, Ignored",
     count: 5,
-    firstReleaseDate: daysFromNow(-7),
+    ...exactly(-7),
   });
   await seedGame(harness.db, {
     id: 2,
     name: "Out Last Month, Talked About",
     count: 900,
-    firstReleaseDate: daysFromNow(-30),
+    ...exactly(-30),
   });
-  await seedGame(harness.db, { id: 3, name: "Out Years Ago", firstReleaseDate: daysFromNow(-800) });
-  await seedGame(harness.db, { id: 4, name: "Not Out Yet", firstReleaseDate: daysFromNow(2) });
+  await seedGame(harness.db, {
+    id: 3,
+    name: "Out Years Ago",
+    ...exactly(-800),
+  });
+  await seedGame(harness.db, {
+    id: 4,
+    name: "Not Out Yet",
+    ...exactly(2),
+  });
 
   const response = await callApi(harness.app, "/api/games/recent");
   const body = (await response.json()) as { items: { id: number }[] };
@@ -169,8 +194,40 @@ test("recent lists the games just out, most rated first", async () => {
   expect(body.items.map((item) => item.id)).toEqual([2, 1]);
 });
 
+test("the release feeds leave out a game with only a vague date", async () => {
+  await seedGame(harness.db, {
+    id: 1,
+    name: "Some Time This Year",
+    releaseDatePrecision: "year",
+    firstReleaseDate: daysFromNow(60),
+  });
+  await seedGame(harness.db, {
+    id: 2,
+    name: "Placeholder Passed",
+    releaseDatePrecision: "quarter",
+    firstReleaseDate: daysFromNow(-5),
+  });
+
+  for (const feed of ["upcoming", "recent"]) {
+    const body = (await (await callApi(harness.app, `/api/games/${feed}`)).json()) as {
+      items: unknown[];
+    };
+    expect(body.items).toEqual([]);
+  }
+});
+
+test("feed cache keys name the query version, so a deploy skips rows the old query picked", () => {
+  expect(feedKey("upcoming", 3, 20, new Date("2026-11-18T12:00:00Z"))).toBe(
+    `upcoming:q${FEED_QUERY_VERSION}:v3:2026-11-18:20`,
+  );
+});
+
 test("the release feeds cache, and a hit is byte-identical to the miss", async () => {
-  await seedGame(harness.db, { id: 1, name: "Ships Soon", firstReleaseDate: daysFromNow(2) });
+  await seedGame(harness.db, {
+    id: 1,
+    name: "Ships Soon",
+    ...exactly(2),
+  });
 
   const miss = await (await callApi(harness.app, "/api/games/upcoming")).text();
   await harness.db.delete(schema.games).where(eq(schema.games.id, 1));
