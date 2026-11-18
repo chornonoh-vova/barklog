@@ -85,11 +85,21 @@ USER node
 
 FROM runtime-base AS api
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+# Fail the build, not the deploy, when a workspace package the app imports at
+# runtime is missing from the COPY list in runtime-base. Node links every
+# static import before running any code, so an entrypoint started without its
+# environment must get as far as rejecting that environment; a missing package
+# stops it earlier with ERR_MODULE_NOT_FOUND.
+RUN out=$(node apps/api/dist/index.js 2>&1 </dev/null || true); \
+    case "$out" in *"Invalid API environment"*) ;; *) echo "$out"; exit 1;; esac
 EXPOSE 3000
 CMD ["node", "apps/api/dist/index.js"]
 
 FROM runtime-base AS worker
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
+# The same link check as the api target.
+RUN out=$(node apps/worker/dist/index.js 2>&1 </dev/null || true); \
+    case "$out" in *"Invalid worker environment"*) ;; *) echo "$out"; exit 1;; esac
 CMD ["node", "apps/worker/dist/index.js"]
 
 FROM runtime-base AS migrate
