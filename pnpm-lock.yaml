@@ -645,6 +645,10 @@ importers:
         version: 8.72.2(eslint@10.13.0(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
 
   packages/i18n:
+    dependencies:
+      '@repo/release-dates':
+        specifier: workspace:*
+        version: link:../release-dates
     devDependencies:
       '@repo/contracts':
         specifier: workspace:*

@@ -18,6 +18,9 @@
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
+  "dependencies": {
+    "@repo/release-dates": "workspace:*"
+  },
   "devDependencies": {
     "@repo/contracts": "workspace:*",
     "@repo/eslint-config": "workspace:*",

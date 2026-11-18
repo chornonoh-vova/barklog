@@ -245,5 +245,9 @@
   },
   "widget": {
     "signedOut": "Öffne Barklog, um deinen Backlog zu sehen."
+  },
+  "releaseDate": {
+    "quarter": "Q{{quarter}} {{year}}",
+    "unannounced": "Noch offen"
   }
 }

@@ -253,5 +253,9 @@
   },
   "widget": {
     "signedOut": "Відкрийте Barklog, щоб побачити свій беклог."
+  },
+  "releaseDate": {
+    "quarter": "{{quarter}}-й квартал {{year}}",
+    "unannounced": "Дата невідома"
   }
 }
