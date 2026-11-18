@@ -99,4 +99,9 @@ export interface EntitlementWire {
 export interface MeResponse {
   premium: boolean;
   entitlement: EntitlementWire | null;
+  /**
+   * Release alert time, minutes after local midnight. Only `GET /me` sends it;
+   * optional so a build reading an older server still type-checks.
+   */
+  releaseAlertMinutes?: number;
 }

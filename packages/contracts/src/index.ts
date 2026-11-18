@@ -1,6 +1,7 @@
 export * from "./backlog.js";
 export * from "./coerce.js";
 export * from "./games.js";
+export * from "./me.js";
 export * from "./revenuecat.js";
 export * from "./share.js";
 export * from "./subscription.js";

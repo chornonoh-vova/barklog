@@ -3,11 +3,13 @@ import { afterAll, beforeEach, expect, inject, test } from "vitest";
 
 import { createDb } from "../src/client.js";
 import { ensureUser } from "../src/queries/backlog.js";
+import { registerPushDevice } from "../src/queries/push-devices.js";
 import {
   deleteUser,
   isUserDeleted,
   recordUserDeletion,
   scrubSubscriptionEvents,
+  setReleaseAlertMinutes,
 } from "../src/queries/users.js";
 import * as schema from "../src/schema/index.js";
 import { truncateAll } from "../src/testing.js";
@@ -61,6 +63,13 @@ async function seed(): Promise<void> {
     type: "INITIAL_PURCHASE",
     payload: rawEvent,
   });
+  await registerPushDevice(db, {
+    token: "ExponentPushToken[delete-me]",
+    userId: USER,
+    locale: "en",
+    timeZone: "Europe/London",
+  });
+  await setReleaseAlertMinutes(db, USER, 600);
 }
 
 beforeEach(async () => {
@@ -72,12 +81,14 @@ afterAll(async () => {
   await close();
 });
 
-test("deleteUser cascades the backlog and the subscription", async () => {
+test("deleteUser cascades the backlog, the subscription and the push devices", async () => {
   await expect(deleteUser(db, USER)).resolves.toBe(true);
 
   expect(await db.select().from(schema.users)).toHaveLength(0);
   expect(await db.select().from(schema.backlogEntries)).toHaveLength(0);
   expect(await db.select().from(schema.subscriptions)).toHaveLength(0);
+  // The alert time and time zone live on the `users` row, gone above.
+  expect(await db.select().from(schema.pushDevices)).toHaveLength(0);
 });
 
 test("deleteUser is idempotent for an absent user", async () => {
@@ -183,4 +194,44 @@ test("recordUserDeletion survives a redelivery", async () => {
 
   await expect(recordUserDeletion(db, USER)).resolves.toBeUndefined();
   expect(await db.select().from(schema.deletedUsers)).toHaveLength(1);
+});
+
+test("ensureUser returns true for a live id, new or existing", async () => {
+  await expect(ensureUser(db, USER)).resolves.toBe(true);
+  await expect(ensureUser(db, "user_2freshCCC")).resolves.toBe(true);
+});
+
+test("ensureUser refuses a tombstoned id and creates nothing", async () => {
+  await db.transaction(async (tx) => {
+    await recordUserDeletion(tx, USER);
+    await deleteUser(tx, USER);
+  });
+
+  await expect(ensureUser(db, USER)).resolves.toBe(false);
+  expect(await db.select().from(schema.users)).toHaveLength(0);
+});
+
+test("ensureUser racing an uncommitted deletion does not recreate the account", async () => {
+  let commit!: () => void;
+  const released = new Promise<void>((resolve) => (commit = resolve));
+  let deleted!: () => void;
+  const deletedYet = new Promise<void>((resolve) => (deleted = resolve));
+
+  // The webhook's transaction: user row gone and tombstone written, not yet committed.
+  const deletion = db.transaction(async (tx) => {
+    await recordUserDeletion(tx, USER);
+    await deleteUser(tx, USER);
+    deleted();
+    await released;
+  });
+
+  await deletedYet;
+  // Sees no tombstone yet, then its insert waits on the deleted row's lock.
+  const write = ensureUser(db, USER);
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  commit();
+  await deletion;
+
+  await expect(write).resolves.toBe(false);
+  expect(await db.select().from(schema.users).where(eq(schema.users.id, USER))).toHaveLength(0);
 });

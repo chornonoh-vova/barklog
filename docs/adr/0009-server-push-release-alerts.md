@@ -4,7 +4,7 @@ status: accepted
 
 # Deliver release alerts as server push
 
-Agreed on 2026-11-13; not yet implemented.
+Agreed on 2026-11-13; partially implemented: push device registration and the alert time setting exist; alerts, scheduling and delivery do not.
 
 Release alerts are delivered by the server through the Expo Push Service, not scheduled as local notifications on the device. A "date announced", "delayed" or "moved up" alert is an observation of the mirror changing during a sync; a device that stays closed cannot see it, and local schedules would keep a stale date. Server delivery also keeps one authority for whether an alert exists, consistent with [server-authoritative backlog writes](0002-server-authoritative-backlog-writes.md).
 

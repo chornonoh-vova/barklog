@@ -20,7 +20,11 @@ test("a user who has never subscribed is not premium", async () => {
   const response = await callApi(harness.app, "/api/me");
 
   expect(response.status).toBe(200);
-  expect(await response.json()).toEqual({ premium: false, entitlement: null });
+  expect(await response.json()).toEqual({
+    premium: false,
+    entitlement: null,
+    releaseAlertMinutes: 540,
+  });
 });
 
 test("an active subscription is reported with its product and expiry", async () => {
@@ -47,6 +51,7 @@ test("an active subscription is reported with its product and expiry", async () 
       expiresAt: "2027-09-01T00:00:00.000Z",
       willRenew: true,
     },
+    releaseAlertMinutes: 540,
   });
 });
 
@@ -84,7 +89,11 @@ test("one user's subscription never leaks into another's answer", async () => {
   });
 
   const other = await callApi(harness.app, "/api/me", { user: "user_2testBBB" });
-  expect(await other.json()).toEqual({ premium: false, entitlement: null });
+  expect(await other.json()).toEqual({
+    premium: false,
+    entitlement: null,
+    releaseAlertMinutes: 540,
+  });
 });
 
 test("the route needs a session", async () => {
@@ -95,4 +104,13 @@ test("the route needs a session", async () => {
 test("entitlement is never cached by a shared cache", async () => {
   const response = await callApi(harness.app, "/api/me");
   expect(response.headers.get("cache-control")).toBe("private, no-store");
+});
+
+test("a user with no row yet reports the default alert time without creating one", async () => {
+  const response = await callApi(harness.app, "/api/me", { user: "user_2testNEW" });
+
+  expect(await response.json()).toMatchObject({ releaseAlertMinutes: 540 });
+
+  const rows = await harness.db.execute("select id from users where id = 'user_2testNEW'");
+  expect(rows.rows).toEqual([]);
 });

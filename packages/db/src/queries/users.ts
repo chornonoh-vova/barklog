@@ -98,3 +98,35 @@ export async function isUserDeleted(db: Queryable, userId: string): Promise<bool
 
   return rows.length > 0;
 }
+
+/** Null when the user has no row yet: reads never create one. */
+export async function getReleaseAlertMinutes(
+  db: Queryable,
+  userId: string,
+): Promise<number | null> {
+  const rows = await db
+    .select({ minutes: users.releaseAlertMinutes })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return rows[0]?.minutes ?? null;
+}
+
+/** The caller has already run `ensureUser`; the check constraint guards the grid. */
+export async function setReleaseAlertMinutes(
+  db: Queryable,
+  userId: string,
+  minutes: number,
+): Promise<number> {
+  const rows = await db
+    .update(users)
+    .set({ releaseAlertMinutes: minutes })
+    .where(eq(users.id, userId))
+    .returning({ minutes: users.releaseAlertMinutes });
+
+  const row = rows[0];
+  if (!row) throw new Error(`setReleaseAlertMinutes: no user ${userId}`);
+
+  return row.minutes;
+}
