@@ -16,8 +16,8 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/expo": "^4.15.1",
-    "@clerk/expo-native-components": "^0.4.4",
+    "@clerk/expo": "^4.16.2",
+    "@clerk/expo-native-components": "^0.4.5",
     "@expo/ui": "~58.0.29",
     "@formatjs/intl-pluralrules": "^6.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -57,8 +57,8 @@
     "react-i18next": "^17.1.13",
     "react-native": "0.88.1",
     "react-native-gesture-handler": "~3.3.0",
-    "react-native-purchases": "^11.0.0",
-    "react-native-purchases-ui": "^11.0.0",
+    "react-native-purchases": "^11.0.3",
+    "react-native-purchases-ui": "^11.0.3",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",
