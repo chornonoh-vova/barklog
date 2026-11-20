@@ -14,7 +14,7 @@
 
 # Pinned by digest; Dependabot bumps tag and digest together (dependabot.yml).
 # The runtime images start from this stage, so they carry Node but not pnpm.
-FROM node:24.22.2-alpine3.24@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS node
+FROM node:24.22.3-alpine3.24@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS node
 WORKDIR /app
 
 # The build stages add pnpm and turbo's settings on top of `node`.
