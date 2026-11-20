@@ -294,11 +294,11 @@ importers:
   apps/mobile:
     dependencies:
       '@clerk/expo':
-        specifier: ^4.15.1
-        version: 4.15.1(@clerk/expo-native-components@0.4.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(@types/react@19.3.0)(expo-application@58.1.2(expo@58.0.26))(expo-constants@58.0.16)(expo-secure-store@58.0.3(expo@58.0.26))(expo@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)
+        specifier: ^4.16.2
+        version: 4.16.2(@clerk/expo-native-components@0.4.5(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(@types/react@19.3.0)(expo-application@58.1.2(expo@58.0.26))(expo-constants@58.0.16)(expo-secure-store@58.0.3(expo@58.0.26))(expo@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)
       '@clerk/expo-native-components':
-        specifier: ^0.4.4
-        version: 0.4.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+        specifier: ^0.4.5
+        version: 0.4.5(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       '@expo/ui':
         specifier: ~58.0.29
         version: 58.0.29(@babel/core@7.29.7(supports-color@8.1.1))(expo@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
@@ -318,14 +318,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/release-dates
       '@tanstack/query-async-storage-persister':
-        specifier: ^5.107.1
-        version: 5.107.1
+        specifier: ^5.107.2
+        version: 5.107.2
       '@tanstack/react-query':
-        specifier: ^5.107.1
-        version: 5.107.1(@types/react@19.3.0)(react@19.3.0)
+        specifier: ^5.107.2
+        version: 5.107.2(@types/react@19.3.0)(react@19.3.0)
       '@tanstack/react-query-persist-client':
-        specifier: ^5.107.1
-        version: 5.107.1(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(react@19.3.0)
+        specifier: ^5.107.2
+        version: 5.107.2(@tanstack/react-query@5.107.2(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(react@19.3.0)
       expo:
         specifier: ~58.0.26
         version: 58.0.26(@babel/core@7.29.7(supports-color@8.1.1))(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.17)(expo-router@58.0.32)(expo-widgets@58.0.29)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@6.0.3)
@@ -417,11 +417,11 @@ importers:
         specifier: ~3.3.0
         version: 3.3.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-purchases:
-        specifier: ^11.0.0
-        version: 11.0.1(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+        specifier: ^11.0.3
+        version: 11.0.3(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-purchases-ui:
-        specifier: ^11.0.0
-        version: 11.0.1(react-native-purchases@11.0.1(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+        specifier: ^11.0.3
+        version: 11.0.3(react-native-purchases@11.0.3(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react-native-reanimated:
         specifier: 4.7.1
         version: 4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
@@ -1456,20 +1456,20 @@ packages:
     resolution: {integrity: sha512-3VeYOs0awboLZ3oK0zp3hY9xFVQYd4Yt4FrYmP5jun1Im36v7cyteZgDd1bG2YfYWM1ETKkRymxU2v1rQNMwnA==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/clerk-js@6.42.3':
-    resolution: {integrity: sha512-hjUf0j4Q6mWSEKC5Mg5WuE1uNu5eYPF8NpMJvGCPAxx7GwJKOTb1Pct2FNybEGf4mC14Xau+ic3jk75GB12joA==}
+  '@clerk/clerk-js@6.44.0':
+    resolution: {integrity: sha512-mxaIzoZAWcSoTZ4yGXyDAvQKrLk8FP8jAjMDbaLhPNVa92nQrUcmTxe5H9EGpICXZ/YH2ot7m4z/B8wNzN4D5A==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/expo-native-components@0.4.4':
-    resolution: {integrity: sha512-N3kuURfZqBsh1ux6/2CJO0w+B80GrZpNf6xx2yfnIZPGcxEYFmuiEuZSZvK/AcqEADkN2NCvqbo5+hipOlMX8Q==}
+  '@clerk/expo-native-components@0.4.5':
+    resolution: {integrity: sha512-2e/wuRLO79lKcIfSlN4mM9t3JJdUKOCDnk+Y0AUEcyxNFBWAK5jkS4qVfcfsGv9M2LJSqK1TYVihdNV2BW+zxg==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       expo: '>=54 <59'
       react: ^18.0.0 || ^19.0.0
       react-native: '>=0.75'
 
-  '@clerk/expo@4.15.1':
-    resolution: {integrity: sha512-+HxlXXqo5LWTB+kVIqaeuSw8NVe8aEy19Wr+Le5kIshCAfe3WAf9Ai/iCdpFzFy3LUxc20YMNPRM4FJXJYFIkw==}
+  '@clerk/expo@4.16.2':
+    resolution: {integrity: sha512-03d5SUUOFqT5/HLVRWilXD2FQ24g9re+ydAkcGVfbkaely0P36zIJDM/Cb2Y+jnxSp9wSJophLKvWAfBLgLCQQ==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       '@clerk/expo-biometrics': '>=0.1.0'
@@ -1522,24 +1522,12 @@ packages:
     peerDependencies:
       hono: '>=4'
 
-  '@clerk/react@6.18.6':
-    resolution: {integrity: sha512-vNsg5smbANI7Bf8W+2e6p4hR3LlMZvSKT+lih8tVlBZVAQzkoVCgmD7EmiEwMqLz23y8Z0klDBtejQlcpn9Deg==}
+  '@clerk/react@6.18.9':
+    resolution: {integrity: sha512-39e3XtC5z8/l59c6hMmmO5Hxfjpgq31oNp3qvLo6zTLm6tTOK73TKeE1Ge7mwjl2Lhk60eysTq3r9mubZUTjsQ==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
       react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
-
-  '@clerk/shared@4.44.1':
-    resolution: {integrity: sha512-c06U6GtlLJNOKj900rHDSqjVRz0/0zb3RZXVGKUqTulfQxr4Ym543JE6cbOnZVJZCbm0fGPhdRKvHq6fO/SvVw==}
-    engines: {node: '>=20.9.0'}
-    peerDependencies:
-      react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
-      react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
 
   '@clerk/shared@4.46.0':
     resolution: {integrity: sha512-eb60E6xjOzcBu1B1C3Y1XucVwbo5PtkQI/gbSHEwqDwjsC9G++ePzuyzyINGkGt65ia3w6qMN1iRcdd1w/jzlQ==}
@@ -3310,14 +3298,14 @@ packages:
       '@types/react':
         optional: true
 
-  '@revenuecat/purchases-js-hybrid-mappings@20.4.0':
-    resolution: {integrity: sha512-v6Mju04vi0gvN3BduM2ZxRL+rZmt8+0phWaLcuKjMytaUy7BCYO9CiP+Dp3oSLS8YgcZ3Cd7eXNXhO03FFEUAQ==}
+  '@revenuecat/purchases-js-hybrid-mappings@20.7.0':
+    resolution: {integrity: sha512-XXHPoNz3R3T/6iAQ/KQ8AtxNWBcBORQrKFlFnMINlC1J0+/7sUtyFiQT93TAe7oQbgNhPysOGCtutZucGKmFyg==}
 
-  '@revenuecat/purchases-js@1.73.2':
-    resolution: {integrity: sha512-766pf5jK5hvtnF9S/OR5jOi7Bw6sspkNlo9qOGpLGi95NoqTDSa/ba8BbXhL5y09Pu0TDddE98Nx3mMoK++6Og==}
+  '@revenuecat/purchases-js@1.74.0':
+    resolution: {integrity: sha512-knhHEjVqnPEijdEtEFiIx1gkKHUfnpX+sPgPbPMF+/Vct+Vgya6pJaVg8UqRgdj42zRZygbjGb6ICoT7d/gD/A==}
 
-  '@revenuecat/purchases-typescript-internal@20.4.0':
-    resolution: {integrity: sha512-0yE9fdt7uW+Mr1SBuWONTZ2hFFKki7sltftJtApqomBL4BOa21hDRacqbzQTkP9BktueeZRCWpQ1elrGWotX3w==}
+  '@revenuecat/purchases-typescript-internal@20.7.0':
+    resolution: {integrity: sha512-cO/yYnRFXRMAyALFuun2it6IDiy7rqFib88kAMBaNEsFfi3w5YS+VAvS96axlXFVDkmnJuflzyJW+Lg/hDAPog==}
 
   '@rolldown/binding-android-arm-eabi@1.2.18':
     resolution: {integrity: sha512-ubTG+4KlidvioxjOFdsdEa2F6JVGZb8m2ByJUqQ7fYzUeT1cEn194POcsQ10PKH4p//q0YQn4SB3YpSuzcA1Yg==}
@@ -3582,33 +3570,30 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
 
-  '@tanstack/query-async-storage-persister@5.107.1':
-    resolution: {integrity: sha512-yBUPWoe3mclko1NcjIXXeXyoO3oLwzgQaCppxK5KS73gTDA+bJtRJ1hIRHc5tKwMdD0ZDi9TzWqOCWnLsbrNDQ==}
-
-  '@tanstack/query-core@5.105.0':
-    resolution: {integrity: sha512-7p56vRmT/z4UJ6sctGIdl5WRUQyUv53IUpUwEKi2g97zMbO7zh8ZsCLffGAvCPBR4xD72e3VXsDyLwXHhoNTMQ==}
-
-  '@tanstack/query-core@5.106.1':
-    resolution: {integrity: sha512-erYv/UACddcdgjOL2ixmFdK6tO/AVBeUcTCOtX2N51yZpDQ2U7KJ+xgB/bCNfsF3uoCDTqGHEEbDiFsIO9YUmQ==}
+  '@tanstack/query-async-storage-persister@5.107.2':
+    resolution: {integrity: sha512-6IXXBmDYJk6XgOlGRafS+c5icAtwTQHCDZaq93a5NIpLxO06ytkL1rdLQYB5Wes0q7cghojMhikUWkJ5FZoHHg==}
 
   '@tanstack/query-core@5.107.1':
     resolution: {integrity: sha512-PSyAik11oQBEVOiVy5hjZWHmoUqOXqK1WYy4v55mcxozEfKaQgpUMsgnXhWjuESzSht8JfzqMS1m6M/9CpNgvg==}
 
-  '@tanstack/query-persist-client-core@5.107.1':
-    resolution: {integrity: sha512-/qDxEcKh44xViKKFlf8MUoeITritIn58XcT3YkCOQ0Ovj4Wa2EgZtqvHSlw+tnQQGhtq9+gLVZSeUtSfkIL9Kg==}
+  '@tanstack/query-core@5.107.2':
+    resolution: {integrity: sha512-npIQ9T9CpaEHgwCeqmazMtiBePlaSxfzt5qee2C8KLJnA9Kmiri0Rxls9bCdd0GXu9xCvdWA16t4GWP/bcOXbw==}
 
-  '@tanstack/react-query-persist-client@5.107.1':
-    resolution: {integrity: sha512-kZMaDZ9PU4FXi/3Ci25OC2Dj7gEh5XWMmxw0aiXe8KqFmZ5gHOOWZn/vl8U8k0I+1uWARzjBZDzu2jRHjk1+SQ==}
+  '@tanstack/query-persist-client-core@5.107.2':
+    resolution: {integrity: sha512-XSvqQSA0D64DcDr1/K/iFNyTpVeydeKnARyBvQbUtU1kBU5/ICfxRqlhcrST+G2O5RRXjGSvxYiya+eO0dhrmw==}
+
+  '@tanstack/react-query-persist-client@5.107.2':
+    resolution: {integrity: sha512-5ZVAHgwXROJORmcH16qrWbC6FNJOfysRGCGEzNArNgq2b3nfakKSd2UIKrANWJN27rzsj4oVEXfM4ePquoQm2Q==}
     peerDependencies:
-      '@tanstack/react-query': ^5.107.1
+      '@tanstack/react-query': ^5.107.2
       '@types/react': ^18 || ^19
       react: ^18 || ^19
     peerDependenciesMeta:
       '@types/react':
         optional: true
 
-  '@tanstack/react-query@5.107.1':
-    resolution: {integrity: sha512-udCOOLp3ZAheUrIHLCe+ZZge6nr2ZUrGMSWcCuXsjY1Bf2JeeE09oxst97PILiCY6N8xo/7bIo3Hvz13zh06FA==}
+  '@tanstack/react-query@5.107.2':
+    resolution: {integrity: sha512-3MSu2ORVbZXTSAyatzyksNBpb8RlhyjU7QMNkmxkwvOEYaYo5HfUTnOBQ6+zsbOEpI4HQLeIECd0jcZRKHRI5w==}
     peerDependencies:
       '@types/react': ^18 || ^19
       react: ^18 || ^19
@@ -7607,19 +7592,19 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-purchases-ui@11.0.1:
-    resolution: {integrity: sha512-1Bs3izIorEhZZUl7DYigN4mzq1HW5qFxw4rWwK6lvG1CXaz2aRGferCiDIB1BNc7VBqnMgMHE2JQFY3S7YGQXw==}
+  react-native-purchases-ui@11.0.3:
+    resolution: {integrity: sha512-zIbaKKBG/JCWbw+OyiFfol1NuzXkzyII3nGJ0IduCFf4O5pA7btQfwO4AQTbzQWy7aguUv7qvOXVmyhWGENZWQ==}
     peerDependencies:
       react: '*'
       react-native: '>= 0.80.0'
-      react-native-purchases: 11.0.1
+      react-native-purchases: 11.0.3
       react-native-web: '*'
     peerDependenciesMeta:
       react-native-web:
         optional: true
 
-  react-native-purchases@11.0.1:
-    resolution: {integrity: sha512-j3bzkFrS0nwGNCfOCEKqfnOuGJipc12y9z7bYW7Tqcho02N6IMphDxqbM/PUsoaXeXnU6VbjzbXEw7V22FpJIA==}
+  react-native-purchases@11.0.3:
+    resolution: {integrity: sha512-Khsli6Q51+UWzGXfm578q3BxMSSNOWGoUT1YV3GpY7kWvyrhxEZ0SsIMLCUGoejVmjHzQTGJJsF4iJ68J6Hnaw==}
     peerDependencies:
       react: '>= 16.6.3'
       react-native: '>= 0.80.0'
@@ -9872,14 +9857,14 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/clerk-js@6.42.3(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)':
+  '@clerk/clerk-js@6.44.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)':
     dependencies:
       '@base-org/account': 2.0.1(@types/react@19.3.0)(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)
-      '@clerk/shared': 4.44.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@clerk/shared': 4.46.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@coinbase/wallet-sdk': 4.3.7(typescript@6.0.3)(zod@4.6.7)
       '@stripe/stripe-js': 5.6.0
       '@swc/helpers': 0.5.21
-      '@tanstack/query-core': 5.105.0
+      '@tanstack/query-core': 5.107.1
       '@wallet-standard/core': 1.1.1
       '@zxcvbn-ts/core': 3.0.4
       '@zxcvbn-ts/language-common': 3.0.4
@@ -9900,24 +9885,24 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@clerk/expo-native-components@0.4.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)':
+  '@clerk/expo-native-components@0.4.5(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)':
     dependencies:
       expo: 58.0.26(@babel/core@7.29.7(supports-color@8.1.1))(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.17)(expo-router@58.0.32)(expo-widgets@58.0.29)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@6.0.3)
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
 
-  '@clerk/expo@4.15.1(@clerk/expo-native-components@0.4.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(@types/react@19.3.0)(expo-application@58.1.2(expo@58.0.26))(expo-constants@58.0.16)(expo-secure-store@58.0.3(expo@58.0.26))(expo@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)':
+  '@clerk/expo@4.16.2(@clerk/expo-native-components@0.4.5(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(@types/react@19.3.0)(expo-application@58.1.2(expo@58.0.26))(expo-constants@58.0.16)(expo-secure-store@58.0.3(expo@58.0.26))(expo@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)':
     dependencies:
-      '@clerk/clerk-js': 6.42.3(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)
-      '@clerk/react': 6.18.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@clerk/shared': 4.44.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@clerk/clerk-js': 6.44.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@19.3.0))(zod@4.6.7)
+      '@clerk/react': 6.18.9(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@clerk/shared': 4.46.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       base-64: 1.0.0
       expo: 58.0.26(@babel/core@7.29.7(supports-color@8.1.1))(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.17)(expo-router@58.0.32)(expo-widgets@58.0.29)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@6.0.3)
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
       react-native-url-polyfill: 4.0.0(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
     optionalDependencies:
-      '@clerk/expo-native-components': 0.4.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+      '@clerk/expo-native-components': 0.4.5(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       expo-application: 58.1.2(expo@58.0.26)
       expo-constants: 58.0.16(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
       expo-secure-store: 58.0.3(expo@58.0.26)
@@ -9941,15 +9926,15 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/react@6.18.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@clerk/react@6.18.9(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@clerk/shared': 4.44.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@clerk/shared': 4.46.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
 
-  '@clerk/shared@4.44.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@clerk/shared@4.46.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@tanstack/query-core': 5.106.1
+      '@tanstack/query-core': 5.107.1
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
       js-cookie: 3.0.8
@@ -11738,13 +11723,13 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  '@revenuecat/purchases-js-hybrid-mappings@20.4.0':
+  '@revenuecat/purchases-js-hybrid-mappings@20.7.0':
     dependencies:
-      '@revenuecat/purchases-js': 1.73.2
+      '@revenuecat/purchases-js': 1.74.0
 
-  '@revenuecat/purchases-js@1.73.2': {}
+  '@revenuecat/purchases-js@1.74.0': {}
 
-  '@revenuecat/purchases-typescript-internal@20.4.0': {}
+  '@revenuecat/purchases-typescript-internal@20.7.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.18':
     optional: true
@@ -11942,32 +11927,30 @@ snapshots:
       tailwindcss: 4.3.5
       vite: 8.3.7(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
 
-  '@tanstack/query-async-storage-persister@5.107.1':
+  '@tanstack/query-async-storage-persister@5.107.2':
     dependencies:
-      '@tanstack/query-core': 5.107.1
-      '@tanstack/query-persist-client-core': 5.107.1
-
-  '@tanstack/query-core@5.105.0': {}
-
-  '@tanstack/query-core@5.106.1': {}
+      '@tanstack/query-core': 5.107.2
+      '@tanstack/query-persist-client-core': 5.107.2
 
   '@tanstack/query-core@5.107.1': {}
 
-  '@tanstack/query-persist-client-core@5.107.1':
-    dependencies:
-      '@tanstack/query-core': 5.107.1
+  '@tanstack/query-core@5.107.2': {}
 
-  '@tanstack/react-query-persist-client@5.107.1(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(react@19.3.0)':
+  '@tanstack/query-persist-client-core@5.107.2':
     dependencies:
-      '@tanstack/query-persist-client-core': 5.107.1
-      '@tanstack/react-query': 5.107.1(@types/react@19.3.0)(react@19.3.0)
+      '@tanstack/query-core': 5.107.2
+
+  '@tanstack/react-query-persist-client@5.107.2(@tanstack/react-query@5.107.2(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(react@19.3.0)':
+    dependencies:
+      '@tanstack/query-persist-client-core': 5.107.2
+      '@tanstack/react-query': 5.107.2(@types/react@19.3.0)(react@19.3.0)
       react: 19.3.0
     optionalDependencies:
       '@types/react': 19.3.0
 
-  '@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.0)':
+  '@tanstack/react-query@5.107.2(@types/react@19.3.0)(react@19.3.0)':
     dependencies:
-      '@tanstack/query-core': 5.107.1
+      '@tanstack/query-core': 5.107.2
       react: 19.3.0
     optionalDependencies:
       '@types/react': 19.3.0
@@ -16650,17 +16633,17 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
 
-  react-native-purchases-ui@11.0.1(react-native-purchases@11.0.1(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
+  react-native-purchases-ui@11.0.3(react-native-purchases@11.0.3(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
     dependencies:
-      '@revenuecat/purchases-typescript-internal': 20.4.0
+      '@revenuecat/purchases-typescript-internal': 20.7.0
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
-      react-native-purchases: 11.0.1(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+      react-native-purchases: 11.0.3(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
 
-  react-native-purchases@11.0.1(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
+  react-native-purchases@11.0.3(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
     dependencies:
-      '@revenuecat/purchases-js-hybrid-mappings': 20.4.0
-      '@revenuecat/purchases-typescript-internal': 20.4.0
+      '@revenuecat/purchases-js-hybrid-mappings': 20.7.0
+      '@revenuecat/purchases-typescript-internal': 20.7.0
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
 
