@@ -1,4 +1,4 @@
-import { Button, HStack, Section, Spacer, Text, VStack } from "@expo/ui/swift-ui";
+import { Button, HStack, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import { accessibilityElement, accessibilityLabel, font } from "@expo/ui/swift-ui/modifiers";
 import type { BacklogStatus } from "@repo/contracts";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,8 @@ import {
   statsTitle,
   statusRows,
 } from "@/features/profile/backlog-stats";
-import { PRIMARY, ROW, ROW_SHAPE, SECONDARY } from "@/features/profile/row-styles";
+import { ProfileSection, useRowShape } from "@/features/profile/profile-section";
+import { PRIMARY, ROW, SECONDARY } from "@/features/profile/row-styles";
 import { Chevron, NavigationRow } from "@/features/profile/rows";
 import { SettingsIcon } from "@/features/profile/settings-icon";
 import { useBacklog } from "@/lib/api/hooks";
@@ -27,21 +28,19 @@ export function StatsSection({
 }) {
   const { data } = useBacklog();
   const { t } = useTranslation();
+  const rowShape = useRowShape();
 
   if (data === undefined) return null;
 
   if (data.items.length === 0) {
     return (
-      <Section
-        title={t("profile.stats.title")}
-        footer={<Text>{t("profile.stats.emptyFooter")}</Text>}
-      >
+      <ProfileSection title={t("profile.stats.title")} footer={t("profile.stats.emptyFooter")}>
         <NavigationRow
           title={t("profile.stats.findGames")}
           onPress={onFindGames}
           icon={<SettingsIcon systemName="gamecontroller.fill" color="systemBlue" />}
         />
-      </Section>
+      </ProfileSection>
     );
   }
 
@@ -52,14 +51,14 @@ export function StatsSection({
   // of its own instead of reading as a fifth status.
   return (
     <>
-      <Section title={statsTitle(stats.total)}>
+      <ProfileSection title={statsTitle(stats.total)}>
         {statusRows(stats).map((row) => (
           <Button
             key={row.status}
             onPress={() => onOpenStatus(row.status)}
             modifiers={[...ROW, accessibilityLabel(row.accessibilityLabel)]}
           >
-            <HStack spacing={12} modifiers={[ROW_SHAPE]}>
+            <HStack spacing={12} modifiers={rowShape}>
               <SettingsIcon systemName={row.icon} color={row.color} />
               <Text modifiers={[PRIMARY]}>{row.title}</Text>
               <Spacer />
@@ -68,13 +67,13 @@ export function StatsSection({
             </HStack>
           </Button>
         ))}
-      </Section>
+      </ProfileSection>
       {average === null ? null : (
-        <Section>
+        <ProfileSection>
           <HStack
             spacing={12}
             modifiers={[
-              ROW_SHAPE,
+              ...rowShape,
               accessibilityElement("ignore"),
               accessibilityLabel(average.accessibilityLabel),
             ]}
@@ -89,7 +88,7 @@ export function StatsSection({
             <Spacer />
             <Text modifiers={[SECONDARY]}>{average.value}</Text>
           </HStack>
-        </Section>
+        </ProfileSection>
       )}
     </>
   );

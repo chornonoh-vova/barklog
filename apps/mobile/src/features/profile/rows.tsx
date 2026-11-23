@@ -3,7 +3,8 @@ import { accessibilityLabel, imageScale } from "@expo/ui/swift-ui/modifiers";
 import { openURL } from "expo-linking";
 import type { ReactNode } from "react";
 
-import { PRIMARY, ROW, ROW_SHAPE, TERTIARY } from "@/features/profile/row-styles";
+import { useRowShape } from "@/features/profile/profile-section";
+import { PRIMARY, ROW, TERTIARY } from "@/features/profile/row-styles";
 
 /** Settings' disclosure indicator: small and in the tertiary style. */
 export function Chevron() {
@@ -22,9 +23,11 @@ type RowProps = { title: string; icon?: ReactNode; onPress: () => void };
  * differs. A row that opens a sheet in place, like the mail composer, has none.
  */
 export function ActionRow({ title, icon, onPress, trailing }: RowProps & { trailing?: ReactNode }) {
+  const rowShape = useRowShape();
+
   return (
     <Button onPress={onPress} modifiers={[...ROW, accessibilityLabel(title)]}>
-      <HStack spacing={12} modifiers={[ROW_SHAPE]}>
+      <HStack spacing={12} modifiers={rowShape}>
         {icon}
         <Text modifiers={[PRIMARY]}>{title}</Text>
         <Spacer />

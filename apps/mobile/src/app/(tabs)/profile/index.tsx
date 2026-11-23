@@ -13,8 +13,8 @@ export default function ProfileRoute() {
     <>
       <Stack.Title large>{t("tabs.profile")}</Stack.Title>
       <ProfileScreen
-        onOpenAccount={() => router.push("/profile/account")}
-        onOpenAbout={() => router.push("/profile/about")}
+        onOpenAccount={() => router.push("/account")}
+        onOpenAbout={() => router.push("/about")}
         onOpenStatus={openStatus}
         onFindGames={() => router.navigate("/(tabs)/explore")}
       />

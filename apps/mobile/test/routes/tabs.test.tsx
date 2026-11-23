@@ -2,7 +2,7 @@ import { act, screen, userEvent } from "@testing-library/react-native";
 import { router } from "expo-router";
 
 import { backlogItem, backlogList, gameDetail, gameList } from "@test/fixtures";
-import { navigationBars } from "@test/queries";
+import { navigationBars, pressHeaderButton } from "@test/queries";
 
 import { fakeServer, markOnboardingSeen, renderApp, requests } from "./app";
 
@@ -138,28 +138,42 @@ describe("Profile tab", () => {
     expect(screen).toHaveSegments(["(tabs)", "profile"]);
   });
 
-  it("opens the Clerk account screen from the account row, and goes back from it", async () => {
+  it("opens the Clerk account screen as a modal over the tabs", async () => {
     fakeServer();
     await renderApp("/profile");
     const user = userEvent.setup();
 
     await user.press(await screen.findByRole("button", { name: /^Ada Lovelace/ }));
 
-    expect(screen).toHaveSegments(["(tabs)", "profile", "account"]);
-    await user.press(await screen.findByTestId("clerk-user-profile"));
-
-    expect(screen).toHavePathname("/profile");
+    expect(screen).toHaveSegments(["account"]);
   });
 
-  it("opens About Barklog in the Profile stack", async () => {
+  it("leaves closing the account modal to Clerk's native dismissal", async () => {
+    // Clerk's dismiss button closes the presented modal in UIKit, and the stack
+    // pops it from that. A JS `back()` on top popped twice and landed on Home.
+    fakeServer();
+    await renderApp("/profile");
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: /^Ada Lovelace/ }));
+
+    await user.press(await screen.findByTestId("clerk-user-profile"));
+
+    expect(screen).toHaveSegments(["account"]);
+  });
+
+  it("opens About Barklog as a modal and closes back to Profile", async () => {
     fakeServer();
     await renderApp("/profile");
     const user = userEvent.setup();
 
     await user.press(await screen.findByRole("button", { name: "About" }));
 
-    expect(screen).toHaveSegments(["(tabs)", "profile", "about"]);
+    expect(screen).toHaveSegments(["about"]);
     expect(await screen.findByText("Privacy Policy")).toBeOnTheScreen();
+
+    await act(() => pressHeaderButton("Close"));
+
+    expect(screen).toHaveSegments(["(tabs)", "profile"]);
   });
 
   it("opens Home filtered to the status a Stats row names", async () => {

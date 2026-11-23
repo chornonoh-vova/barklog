@@ -54,6 +54,8 @@ function RootLayout() {
                       <Stack.Screen name="(tabs)" />
                       <Stack.Screen name="shared" options={{ presentation: modal }} />
                       <Stack.Screen name="paywall" options={{ presentation: modal }} />
+                      <Stack.Screen name="about" options={{ presentation: modal }} />
+                      <Stack.Screen name="account" options={{ presentation: modal }} />
                     </Stack>
                     <WidgetSync />
                   </AuthGate>

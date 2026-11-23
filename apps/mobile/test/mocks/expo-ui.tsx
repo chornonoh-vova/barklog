@@ -237,6 +237,7 @@ export const Spacer = container("Spacer");
 export const RoundedRectangle = container("RoundedRectangle");
 export const RNHostView = container("RNHostView");
 export const Form = container("Form");
+export const ScrollView = container("ScrollView");
 export {
   Button,
   Divider,
