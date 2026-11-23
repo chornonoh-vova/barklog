@@ -30,9 +30,8 @@ export function requireAuth(authenticate: Authenticator): MiddlewareHandler<AppE
 }
 
 /**
- * A deleted account answers 401, not 403 or 410: Clerk revoked the session, so
- * only a token issued before the deletion gets here, and the app already
- * treats 401 as "signed out".
+ * Deleted accounts get 401, not 403/410: only a pre-deletion token gets here, and the app
+ * treats 401 as signed out.
  */
 export function ensureUserMiddleware(db: Db): MiddlewareHandler<AppEnv> {
   return async (c, next) => {

@@ -15,8 +15,7 @@ import {
 import { usePremium } from "@/lib/api/hooks";
 import { i18n } from "@/lib/i18n/instance";
 
-/** The system compose sheet, inside the app. `false` when it cannot open or
- * fails, so the caller falls back; a cancelled draft is still `true`. */
+/** `false` so the caller falls back; a cancelled draft is still `true`. */
 async function composeInApp(body: string): Promise<boolean> {
   try {
     if (!(await MailComposer.isAvailableAsync())) return false;
@@ -31,13 +30,8 @@ async function composeInApp(body: string): Promise<boolean> {
   }
 }
 
-/**
- * "Send Feedback": the system compose sheet with the
- * subject, address and debug details filled in. If it cannot open, or fails,
- * `mailto:` hands the draft to whatever mail app the user chose; with no mail
- * app at all the alert gives the address. One sheet at a time: a second tap
- * while one is open would make the composer reject.
- */
+/** Compose sheet, then `mailto:`, then an alert with the address. One sheet at a time:
+ * a second would make the composer reject. */
 export function useSendFeedback(): () => void {
   const { userId } = useAuth();
   const premium = usePremium();

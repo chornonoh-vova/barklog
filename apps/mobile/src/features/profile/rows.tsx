@@ -22,7 +22,6 @@ function ExternalMark() {
 
 type RowProps = { title: string; icon?: ReactNode; onPress: () => void };
 
-/** The Settings-style row the others build on. */
 export function ActionRow({
   title,
   icon,
@@ -33,7 +32,6 @@ export function ActionRow({
   modifiers = [],
 }: RowProps & {
   trailing?: ReactNode;
-  /** VoiceOver label, when the title alone does not say enough. */
   label?: string;
   destructive?: boolean;
   modifiers?: ModifierConfig[];

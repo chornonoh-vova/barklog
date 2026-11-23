@@ -140,11 +140,8 @@ export function startOfUtcDay(now: Date): Date {
 }
 
 /**
- * Both release shelves list exact (day) dates only: a vague date is stored as
- * a placeholder day, and once that passes the game is neither upcoming nor
- * released (ADR-0010). Filtering in SQL keeps `LIMIT` and the ordering honest;
- * an agreement test holds these queries to `@repo/release-dates`. "Today" is
- * the UTC day, because the feeds are cached for every user at once.
+ * Exact (day) dates only: a vague date's placeholder day leaves it neither upcoming nor released
+ * (ADR-0010). Must agree with `@repo/release-dates` (tested); "today" is UTC, as feeds are shared.
  */
 const releaseFeedFilter = and(
   searchableType,

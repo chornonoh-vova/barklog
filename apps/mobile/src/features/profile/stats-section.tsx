@@ -15,10 +15,7 @@ import { Chevron, NavigationRow } from "@/features/profile/rows";
 import { SettingsIcon } from "@/features/profile/settings-icon";
 import { useBacklog } from "@/lib/api/hooks";
 
-/**
- * Backlog stats, derived from the one backlog query (ADR-0003). Absent until
- * the backlog has loaded once: before that it cannot say the backlog is empty.
- */
+/** Derived from the backlog query (ADR-0003); absent until loaded, or it would claim it empty. */
 export function StatsSection({
   onOpenStatus,
   onFindGames,
@@ -47,8 +44,7 @@ export function StatsSection({
   const stats = backlogStats(data.items);
   const average = averageRatingRow(stats);
 
-  // The average is one summary number, not a list to open, so it gets a group
-  // of its own instead of reading as a fifth status.
+  // Its own group, so the average does not read as a fifth status.
   return (
     <>
       <ProfileSection title={statsTitle(stats.total)}>

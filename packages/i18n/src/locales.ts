@@ -7,10 +7,7 @@ import uk from "./locales/uk/app.json" with { type: "json" };
 /** The app's copy, typed from English: the source every language matches. */
 export type AppResources = typeof en;
 
-/**
- * One row per language. `formatLocale` is region-qualified so a date does not
- * drift to `en-US`.
- */
+/** `formatLocale` is region-qualified so dates do not drift to `en-US`. */
 const LOCALES = {
   en: { app: en, formatLocale: "en-GB" },
   uk: { app: uk, formatLocale: "uk-UA" },

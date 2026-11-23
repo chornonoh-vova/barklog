@@ -9,11 +9,7 @@ import { createInstance } from "i18next";
 
 export { isLanguage, LANGUAGES, resources, type Language };
 
-/**
- * Kept free of expo-localization, so a test picks the language: tests call
- * `initI18n` themselves, and `./index.ts` does the same on device with the
- * language iOS picked. The copy itself lives in `@repo/i18n`.
- */
+/** Free of expo-localization so tests pick the language; `./index.ts` passes the one iOS picked. */
 export const i18n = createInstance();
 
 /** Synchronous: the resources are bundled, so the first render already has copy. */
@@ -31,7 +27,6 @@ export function initI18n(lng: Language): void {
   });
 }
 
-/** The language i18next is rendering, English until it is initialised. */
 export function currentLanguage(): Language {
   return isLanguage(i18n.language) ? i18n.language : "en";
 }

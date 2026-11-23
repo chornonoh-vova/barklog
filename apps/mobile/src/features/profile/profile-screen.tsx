@@ -46,10 +46,7 @@ import { usePremium } from "@/lib/api/hooks";
 import { COLUMN_GAP, columnCount, GUTTER } from "@/ui/columns";
 import { useMeasuredWidth } from "@/ui/use-measured-width";
 
-/**
- * The Profile tab, grouped like iOS Settings. A wide window splits it into two
- * columns of cards in one scroll view: two `Form`s would scroll separately.
- */
+/** Wide windows use cards in one scroll view: two `Form`s would scroll separately. */
 export function ProfileScreen({
   onOpenAccount,
   onOpenAbout,
@@ -203,10 +200,9 @@ function AccountRow({ onPress, disabled: isDisabled }: { onPress: () => void; di
   );
 }
 
-/** Same spacing `columnCount` assumes, so what is drawn matches the decision. */
+/** Must match the spacing `columnCount` assumes. */
 const COLUMNS_PADDING = [padding({ horizontal: GUTTER, vertical: GUTTER })];
 const COLUMN = [frame({ maxWidth: Infinity })];
-/** Close to an inset-grouped list's section gap. */
 const SECTION_SPACING = 24;
 const GROUPED_BACKGROUND = [background(PlatformColor("systemGroupedBackground"))];
 

@@ -25,14 +25,11 @@ export const users = pgTable(
     // The Clerk `sub`, verbatim.
     id: text("id").primaryKey(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    // Release alert time: minutes after local midnight, on a 30-minute grid.
-    // 540 is 09:00. Duplicated in `packages/contracts` as the API's default.
+    // Minutes after local midnight on a 30-minute grid; default duplicated in `packages/contracts`.
     releaseAlertMinutes: smallint("release_alert_minutes").notNull().default(540),
-    // IANA name from the most recent push device registration; null until the
-    // first one, which is what keeps a user without devices out of the scheduler.
+    // IANA zone from the latest push registration; null keeps device-less users unscheduled.
     timeZone: text("time_zone"),
-    // The user's local date the alert scheduler last finished. Written only by
-    // the worker.
+    // Local date the alert scheduler last finished; written only by the worker.
     releaseAlertsRunOn: date("release_alerts_run_on", { mode: "string" }),
   },
   (t) => [
@@ -44,12 +41,8 @@ export const users = pgTable(
 );
 
 /**
- * A tombstone, not a soft delete: the `users` row really is gone. It exists
- * because deleting a Barklog account cannot cancel an App Store subscription,
- * so RevenueCat keeps delivering renewals and expirations for the id, and a
- * session issued before the deletion can still send writes. `ensureUser`
- * checks it, so neither recreates the account the deletion removed. The id is
- * all it holds; there is nothing else left to hold.
+ * A tombstone, not a soft delete: RevenueCat events and pre-deletion sessions
+ * keep arriving for the id, and `ensureUser` checks this so neither recreates the account.
  */
 export const deletedUsers = pgTable("deleted_users", {
   id: text("id").primaryKey(),

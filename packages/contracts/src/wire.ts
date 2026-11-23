@@ -18,11 +18,7 @@ export interface GameSummaryWire {
   slug: string;
   coverImageId: string | null;
   firstReleaseDate: string | null;
-  /**
-   * How precise `firstReleaseDate` is; `null` is unclassified. Optional because
-   * cached responses and older servers omit it, and older apps ignore it.
-   * Interpret it only through `@repo/release-dates`.
-   */
+  /** `null` is unclassified; optional for older servers. Interpret via `@repo/release-dates`. */
   releaseDatePrecision?: DatePrecision | null;
   totalRating: number | null;
   totalRatingCount: number;
@@ -106,9 +102,6 @@ export interface EntitlementWire {
 export interface MeResponse {
   premium: boolean;
   entitlement: EntitlementWire | null;
-  /**
-   * Release alert time, minutes after local midnight. Only `GET /me` sends it;
-   * optional so a build reading an older server still type-checks.
-   */
+  /** Minutes after local midnight; only `GET /me` sends it, optional for older servers. */
   releaseAlertMinutes?: number;
 }

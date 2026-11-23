@@ -32,15 +32,13 @@ export function meRoutes(deps: AppDeps) {
           getReleaseAlertMinutes(deps.db, userId),
         ]);
 
-        // Added here rather than in `readEntitlement`, which
-        // `/subscription/refresh` shares and whose answer stays as it was.
+        // Not in `readEntitlement`: `/subscription/refresh` shares it and keeps its shape.
         return c.json({
           ...entitlement,
           releaseAlertMinutes: minutes ?? RELEASE_ALERT_MINUTES_DEFAULT,
         });
       })
-      // The app calls this on every start, so `ensureUserMiddleware` refusing a
-      // deleted account is what stops it from recreating one.
+      // Called on every app start: `ensureUserMiddleware` stops it recreating a deleted account.
       .put("/push-devices", sValidator("json", pushDeviceRegisterSchema, onInvalid), async (c) => {
         const { token, locale, timeZone } = c.req.valid("json");
         const userId = c.get("userId");
@@ -51,8 +49,7 @@ export function meRoutes(deps: AppDeps) {
 
         return c.body(null, 204);
       })
-      // 204 whether or not anything was removed: sign-out is best effort, and
-      // whether another account holds the token is not the caller's business.
+      // Always 204: sign-out is best effort, and who else holds the token is not its business.
       .delete(
         "/push-devices/:token",
         sValidator("param", pushTokenPathSchema, onInvalid),

@@ -12,8 +12,7 @@ export interface PushDeviceRegistration {
 }
 
 /**
- * Upserts by token, so registering a token another account holds moves it to
- * this one: an account switch without a signed-out interval must not leave the
+ * Upserts by token so an account switch moves the device rather than leaving the
  * previous account's alerts arriving. Two statements; pass a transaction.
  */
 export async function registerPushDevice(
@@ -31,10 +30,7 @@ export async function registerPushDevice(
   await db.update(users).set({ timeZone: device.timeZone }).where(eq(users.id, device.userId));
 }
 
-/**
- * Only the caller's own token: a late sign-out from one account must not
- * unregister a phone another account has since registered.
- */
+/** Only the caller's token: a late sign-out must not unregister another account's phone. */
 export async function unregisterPushDevice(
   db: Queryable,
   userId: string,

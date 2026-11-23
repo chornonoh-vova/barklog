@@ -24,11 +24,7 @@ export function searchKey(version: number, query: string, limit: number, offset:
   return `search:v${version}:${sha1(`${query}|${limit}|${offset}`)}`;
 }
 
-/**
- * Bumped whenever a feed query changes which games it returns, so a deploy
- * never serves rows the old query picked. 2: the release feeds list exact
- * dates only (#89).
- */
+/** Bump when a feed query changes which games it returns. 2: exact dates only (#89). */
 export const FEED_QUERY_VERSION = 2;
 
 /** Day-bucketed: the release windows move at midnight, so a feed cached at

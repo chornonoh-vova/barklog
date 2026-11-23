@@ -82,9 +82,8 @@ function Image({
 }
 
 /**
- * The role reads as the hint, and the symbol renders as `symbol-<name>` inside
- * the button, so a test reads both the way it reads an `Image`. Disabled comes
- * from the `disabled` modifier, the only way the real `Button` takes it.
+ * Role reads as the hint; the symbol renders as `symbol-<name>`. Disabled comes from the
+ * `disabled` modifier, as on the real `Button`.
  */
 function Button({
   label,
@@ -120,7 +119,6 @@ function Button({
   );
 }
 
-/** A grouped list's section: its header, its rows, then its footer. */
 function Section({
   title,
   header,

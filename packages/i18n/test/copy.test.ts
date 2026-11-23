@@ -6,7 +6,6 @@ type Tree = { [key: string]: string | Tree };
 
 const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 
-/** Every leaf as `path → value`. */
 function leaves(tree: Tree, prefix = ""): Map<string, string> {
   const out = new Map<string, string>();
 

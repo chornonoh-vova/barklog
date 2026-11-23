@@ -1,7 +1,6 @@
 /**
- * A calendar day as `YYYY-MM-DD`, with no time or zone. Release dates are UTC
- * calendar days; "today" is a user's local calendar day. Build one with
- * {@link toCalendarDay} or {@link localDay}, never by slicing a timestamp.
+ * A zoneless `YYYY-MM-DD` day: release dates are UTC days, "today" is the user's
+ * local day. Build with {@link toCalendarDay} or {@link localDay}, never by slicing.
  */
 export type CalendarDay = string & { readonly __calendarDay: unique symbol };
 
@@ -23,18 +22,10 @@ export function toCalendarDay(value: string): CalendarDay {
   throw new RangeError(`Not a calendar day: ${JSON.stringify(value)}`);
 }
 
-/**
- * An ISO 8601 date-time with an explicit `Z` or `±HH:MM` offset. Without one,
- * `Date` reads the string in the host's time zone, so the same input would
- * give different days on the server and on a device.
- */
+// Offset required: without one `Date` uses the host zone, so server and device would disagree.
 const INSTANT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
 
-/**
- * Parses an instant. A string must be an ISO 8601 date-time with a zone (as
- * `toISOString` produces); anything else, or an invalid `Date`, is a
- * `RangeError`.
- */
+/** Parses a `Date` or zoned ISO 8601 string; anything else throws `RangeError`. */
 export function toInstant(instant: Date | string): Date {
   const date =
     typeof instant === "string"
@@ -56,9 +47,7 @@ const formatters = new Map<string, Intl.DateTimeFormat>();
 function formatterFor(timeZone: string): Intl.DateTimeFormat {
   let formatter = formatters.get(timeZone);
   if (!formatter) {
-    // The day is rebuilt from formatToParts rather than trusting a locale's
-    // pattern; the Gregorian calendar and Latin digits are pinned so a device
-    // locale cannot change the parts.
+    // Gregorian calendar and Latin digits pinned so the device locale cannot change the parts.
     formatter = new Intl.DateTimeFormat("en-CA-u-ca-gregory-nu-latn", {
       timeZone,
       year: "numeric",
@@ -70,11 +59,7 @@ function formatterFor(timeZone: string): Intl.DateTimeFormat {
   return formatter;
 }
 
-/**
- * The calendar day an instant falls on in an IANA time zone. Throws a
- * `RangeError` for an invalid instant or an unknown zone; callers that do not
- * know the user's zone pass `"UTC"`.
- */
+/** The day an instant falls on in an IANA zone (pass `"UTC"` if unknown); throws `RangeError`. */
 export function localDay(instant: Date | string, timeZone: string): CalendarDay {
   const fields: Partial<Record<Intl.DateTimeFormatPartTypes, string>> = {};
   for (const { type, value } of formatterFor(timeZone).formatToParts(toInstant(instant))) {

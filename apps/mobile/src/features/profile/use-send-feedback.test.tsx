@@ -23,8 +23,7 @@ jest.mock("expo-application", () => ({
 
 async function send({ premium }: { premium?: boolean } = {}) {
   const getMe = premium === undefined ? undefined : async () => me({ premium });
-  // Rendered next to `usePremium`, so the press waits for the entitlement the
-  // row would see rather than racing its query.
+  // Waits for the entitlement the row would see rather than racing its query.
   const { result } = await renderHookWithProviders(
     () => ({ sendFeedback: useSendFeedback(), premium: usePremium() }),
     { api: fakeEndpoints(getMe ? { getMe } : {}) },

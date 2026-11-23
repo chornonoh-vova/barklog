@@ -16,8 +16,7 @@ const gameSeven = {
 
 beforeEach(() => markOnboardingSeen());
 
-/** React Navigation reports an action no navigator took (a pop with nothing to
- * pop) as a console error in development, which LogBox shows on device. */
+/** An unhandled navigation action logs a console error, which LogBox shows on device. */
 function expectEveryActionHandled() {
   const calls = jest.mocked(console.error).mock.calls.flat().map(String);
   expect(calls.filter((message) => message.includes("was not handled"))).toEqual([]);
@@ -27,7 +26,6 @@ beforeEach(() => jest.spyOn(console, "error"));
 
 type State = { routes: { name: string; state?: State }[] };
 
-/** The routes in Home's own stack, from the root tabs down. */
 function homeStack(app: { getRouterState(): unknown }): State["routes"] {
   const find = (state: State | undefined): State | undefined => {
     for (const route of state?.routes ?? []) {
@@ -149,8 +147,7 @@ describe("Profile tab", () => {
   });
 
   it("leaves closing the account modal to Clerk's native dismissal", async () => {
-    // Clerk's dismiss button closes the presented modal in UIKit, and the stack
-    // pops it from that. A JS `back()` on top popped twice and landed on Home.
+    // UIKit dismissal already pops the modal; an extra JS `back()` popped twice to Home.
     fakeServer();
     await renderApp("/profile");
     const user = userEvent.setup();
@@ -247,8 +244,7 @@ describe("Profile tab", () => {
     await renderApp(path);
     await screen.findByText(loaded);
 
-    // By symbol, not label: the old labels no longer exist in any locale, so a
-    // returning account button or star would slip past a label check.
+    // By symbol: the old labels exist in no locale, so a label check would always pass.
     const symbols = (navigationBars()[0]?.items ?? []).map((item) => item.sfSymbolName);
     expect(symbols).not.toContain("person.crop.circle");
     expect(symbols).not.toContain("star");
