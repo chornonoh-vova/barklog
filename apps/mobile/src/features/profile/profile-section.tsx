@@ -2,58 +2,35 @@ import { Divider, Section, Text, VStack } from "@expo/ui/swift-ui";
 import {
   background,
   font,
-  frame,
   padding,
   shapes,
   type ModifierConfig,
 } from "@expo/ui/swift-ui/modifiers";
-import { Children, createContext, useContext, type ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import { PlatformColor } from "react-native";
 
-import { ROW_SHAPE, SECONDARY } from "@/features/profile/row-styles";
+import { ROW_INSET, ROW_SPACING, SECONDARY, useCards } from "@/features/profile/row-styles";
+import { TILE } from "@/features/profile/settings-icon";
 
-/**
- * Whether Profile's sections render as hand-built grouped cards instead of
- * native `Form` sections. Wide windows need cards: two columns of `Form`s
- * would be two scroll views, so each side would scroll on its own.
- */
-const CardsContext = createContext(false);
-
-export const ProfileCards = CardsContext.Provider;
-
-/** Insets matching an inset-grouped list's rows and section text. */
-const ROW_INSET = 16;
-const TEXT_INSET = 20;
 /** iOS 26's inset-grouped corner radius. */
 const CARD_RADIUS = 26;
-/** Where a row's title starts: the inset plus a 28pt icon tile and its 12pt gap,
- * so separators start under the title, as in Settings. */
-const SEPARATOR_INSET = ROW_INSET + 28 + 12;
+const CARD = [
+  background(
+    PlatformColor("secondarySystemGroupedBackground"),
+    shapes.roundedRectangle({ cornerRadius: CARD_RADIUS }),
+  ),
+];
+/** Separators start under the title, past the icon tile, as in Settings. */
+const SEPARATOR = [padding({ leading: ROW_INSET + TILE + ROW_SPACING })];
+const CAPTION_INSET = padding({ horizontal: 20 });
+const TITLE = [font({ textStyle: "subheadline", weight: "semibold" }), SECONDARY, CAPTION_INSET];
+const FOOTER = [font({ textStyle: "footnote" }), SECONDARY, CAPTION_INSET];
 
-/**
- * Modifiers for a row's content. In a card, the padding goes inside the row
- * and before its content shape, so the whole padded row stays tappable.
- */
-export function rowShape(cards: boolean): ModifierConfig[] {
-  if (!cards) return [ROW_SHAPE];
-
-  return [
-    padding({ horizontal: ROW_INSET, vertical: 8 }),
-    frame({ maxWidth: Infinity, minHeight: 44, alignment: "leading" }),
-    ROW_SHAPE,
-  ];
+function Caption({ modifiers, text }: { modifiers: ModifierConfig[]; text?: string }) {
+  return text === undefined ? null : <Text modifiers={modifiers}>{text}</Text>;
 }
 
-/** `rowShape` for a row inside `ProfileCards`. */
-export function useRowShape(): ModifierConfig[] {
-  return rowShape(useContext(CardsContext));
-}
-
-/**
- * One group of Profile rows: a native `Section` inside a `Form`, or a grouped
- * card in the wide layout. Null children (a row with nothing to show) are
- * skipped, so they never leave a stray separator.
- */
+/** A native `Section` in a `Form`, or a grouped card when `GroupedCards` is on. */
 export function ProfileSection({
   title,
   footer,
@@ -63,9 +40,7 @@ export function ProfileSection({
   footer?: string;
   children: ReactNode;
 }) {
-  const cards = useContext(CardsContext);
-
-  if (!cards) {
+  if (!useCards()) {
     return (
       <Section title={title} footer={footer === undefined ? undefined : <Text>{footer}</Text>}>
         {children}
@@ -73,54 +48,18 @@ export function ProfileSection({
     );
   }
 
+  // `toArray` drops null rows, so they never leave a stray separator.
   const rows = Children.toArray(children);
 
   return (
     <VStack alignment="leading" spacing={8}>
-      {title === undefined ? null : (
-        <Text
-          modifiers={[
-            font({ textStyle: "subheadline", weight: "semibold" }),
-            SECONDARY,
-            padding({ horizontal: TEXT_INSET }),
-          ]}
-        >
-          {title}
-        </Text>
-      )}
-      <VStack
-        alignment="leading"
-        spacing={0}
-        modifiers={[
-          background(
-            PlatformColor("secondarySystemGroupedBackground"),
-            shapes.roundedRectangle({ cornerRadius: CARD_RADIUS }),
-          ),
-        ]}
-      >
+      <Caption modifiers={TITLE} text={title} />
+      <VStack alignment="leading" spacing={0} modifiers={CARD}>
         {rows.flatMap((row, index) =>
-          index === 0
-            ? [row]
-            : [
-                <Divider
-                  key={`divider-${index}`}
-                  modifiers={[padding({ leading: SEPARATOR_INSET })]}
-                />,
-                row,
-              ],
+          index === 0 ? [row] : [<Divider key={`divider-${index}`} modifiers={SEPARATOR} />, row],
         )}
       </VStack>
-      {footer === undefined ? null : (
-        <Text
-          modifiers={[
-            font({ textStyle: "footnote" }),
-            SECONDARY,
-            padding({ horizontal: TEXT_INSET }),
-          ]}
-        >
-          {footer}
-        </Text>
-      )}
+      <Caption modifiers={FOOTER} text={footer} />
     </VStack>
   );
 }

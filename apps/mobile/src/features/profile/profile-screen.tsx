@@ -27,32 +27,28 @@ import { PlatformColor, StyleSheet, View } from "react-native";
 import { openPaywall } from "@/features/paywall/open-paywall";
 import { AccountAvatar } from "@/features/profile/account-avatar";
 import { accountRowText, premiumRow, type AccountUser } from "@/features/profile/profile-rows";
+import { ProfileSection } from "@/features/profile/profile-section";
 import { appStoreReviewUrl } from "@/features/profile/rate-app";
 import {
-  ProfileCards,
-  ProfileSection,
-  rowShape as rowShapeFor,
-} from "@/features/profile/profile-section";
-import { DESTRUCTIVE, PRIMARY, ROW, SECONDARY } from "@/features/profile/row-styles";
+  GroupedCards,
+  PRIMARY,
+  ROW,
+  ROW_SPACING,
+  SECONDARY,
+  useRowShape,
+} from "@/features/profile/row-styles";
 import { ActionRow, Chevron, ExternalLinkRow, NavigationRow } from "@/features/profile/rows";
 import { SettingsIcon } from "@/features/profile/settings-icon";
 import { StatsSection } from "@/features/profile/stats-section";
 import { useAccountActions } from "@/features/profile/use-account-actions";
 import { useSendFeedback } from "@/features/profile/use-send-feedback";
 import { usePremium } from "@/lib/api/hooks";
-import { columnCount } from "@/ui/columns";
+import { COLUMN_GAP, columnCount, GUTTER } from "@/ui/columns";
 import { useMeasuredWidth } from "@/ui/use-measured-width";
 
 /**
- * The Profile tab: a grouped list like iOS Settings. Section order is fixed
- * (account group; Stats; the Barklog section with Rate, Feedback and About;
- * Sign Out; then Delete Account), and
- * a section with nothing in it yet is absent.
- *
- * On a wide window (iPad, iPhone landscape) one stretched list reads poorly,
- * so the sections split into two lists side by side: who you are and what
- * you have on the left, the app and leaving it on the right. Same order, read
- * left column first.
+ * The Profile tab, grouped like iOS Settings. A wide window splits it into two
+ * columns of cards in one scroll view: two `Form`s would scroll separately.
  */
 export function ProfileScreen({
   onOpenAccount,
@@ -62,12 +58,9 @@ export function ProfileScreen({
 }: {
   onOpenAccount: () => void;
   onOpenAbout: () => void;
-  /** A Stats row: Home, filtered to that status. */
   onOpenStatus: (status: BacklogStatus) => void;
-  /** The empty backlog's Stats row. */
   onFindGames: () => void;
 }) {
-  const { user: clerkUser } = useUser();
   const premium = premiumRow(usePremium());
   const { signOut, deleteAccount, isDeleting } = useAccountActions({
     onReverificationRequired: onOpenAccount,
@@ -75,62 +68,32 @@ export function ProfileScreen({
   const { t } = useTranslation();
   const reviewUrl = appStoreReviewUrl();
   const sendFeedback = useSendFeedback();
-
-  const user: AccountUser = {
-    fullName: clerkUser?.fullName ?? null,
-    primaryEmailAddress: clerkUser?.primaryEmailAddress?.emailAddress ?? null,
-    imageUrl: clerkUser?.imageUrl || null,
-  };
-  const { title, subtitle } = accountRowText(user);
-  const deleteLabel = t("profile.deleteAccount");
-  const deleteA11yLabel = isDeleting ? t("profile.deletingLabel") : deleteLabel;
-  /** A plain button does not dim when disabled; the rows say so themselves. */
-  const busy = opacity(isDeleting ? 0.4 : 1);
   const { width, fontScale, onLayout } = useMeasuredWidth();
   const split = columnCount(width, fontScale) >= 2;
-  // The screen provides `ProfileCards`, so its own rows cannot read it.
-  const rowShape = rowShapeFor(split);
+
+  const deleteLabel = t("profile.deleteAccount");
+  // A plain button does not dim when disabled.
+  const busy = [disabled(isDeleting), opacity(isDeleting ? 0.4 : 1)];
 
   const yours = (
     <>
-      {/* Titled only in columns: it lines this card up with the titled
-          Barklog card opposite. A phone's list leads untitled, as Settings does. */}
+      {/* Titled in columns only, to line up with the Barklog card opposite. */}
       <ProfileSection title={split ? t("profile.account") : undefined}>
-        <Button
-          onPress={onOpenAccount}
-          modifiers={[...ROW, disabled(isDeleting), accessibilityLabel(`${title}, ${subtitle}`)]}
-        >
-          <HStack spacing={12} modifiers={rowShape}>
-            <AccountAvatar imageUrl={user.imageUrl} />
-            <VStack alignment="leading" spacing={2}>
-              <Text modifiers={[font({ textStyle: "title3", weight: "semibold" }), PRIMARY]}>
-                {title}
-              </Text>
-              <Text modifiers={[font({ textStyle: "subheadline" }), SECONDARY]}>{subtitle}</Text>
-            </VStack>
-            <Spacer />
-            <Chevron />
-          </HStack>
-        </Button>
-
+        <AccountRow onPress={onOpenAccount} disabled={isDeleting} />
         {premium === null ? null : (
-          <Button
+          <ActionRow
+            title={premium.title}
+            label={premium.accessibilityLabel}
             onPress={
               premium.action === "customerCenter"
                 ? () => void RevenueCatUI.presentCustomerCenter()
                 : openPaywall
             }
-            modifiers={[...ROW, accessibilityLabel(premium.accessibilityLabel)]}
-          >
-            <HStack spacing={12} modifiers={rowShape}>
-              <SettingsIcon systemName={premium.icon} color="systemOrange" />
-              <Text modifiers={[PRIMARY]}>{premium.title}</Text>
-              <Spacer />
-              {premium.status === null ? null : (
-                <Text modifiers={[SECONDARY]}>{premium.status}</Text>
-              )}
-            </HStack>
-          </Button>
+            icon={<SettingsIcon systemName={premium.icon} color="systemOrange" />}
+            trailing={
+              premium.status === null ? null : <Text modifiers={[SECONDARY]}>{premium.status}</Text>
+            }
+          />
         )}
       </ProfileSection>
 
@@ -161,55 +124,41 @@ export function ProfileScreen({
       </ProfileSection>
 
       <ProfileSection>
-        <Button
+        <ActionRow
+          title={t("profile.signOut")}
           onPress={signOut}
-          modifiers={[...ROW, disabled(isDeleting), busy, accessibilityLabel(t("profile.signOut"))]}
-        >
-          <HStack spacing={12} modifiers={rowShape}>
-            <SettingsIcon systemName="rectangle.portrait.and.arrow.right" color="systemGray" />
-            <Text modifiers={[PRIMARY]}>{t("profile.signOut")}</Text>
-            <Spacer />
-          </HStack>
-        </Button>
+          modifiers={busy}
+          icon={<SettingsIcon systemName="rectangle.portrait.and.arrow.right" color="systemGray" />}
+        />
       </ProfileSection>
 
       <ProfileSection>
-        <Button
-          role="destructive"
+        <ActionRow
+          title={deleteLabel}
+          label={isDeleting ? t("profile.deletingLabel") : deleteLabel}
+          destructive
           onPress={deleteAccount}
-          modifiers={[...ROW, disabled(isDeleting), busy, accessibilityLabel(deleteA11yLabel)]}
-        >
-          <HStack spacing={12} modifiers={rowShape}>
-            <SettingsIcon systemName="trash.fill" color="systemRed" />
-            <Text modifiers={[DESTRUCTIVE]}>{deleteLabel}</Text>
-            <Spacer />
-            {isDeleting ? <ProgressView /> : null}
-          </HStack>
-        </Button>
+          modifiers={busy}
+          icon={<SettingsIcon systemName="trash.fill" color="systemRed" />}
+          trailing={isDeleting ? <ProgressView /> : null}
+        />
       </ProfileSection>
     </>
   );
 
   return (
-    // The wrapper measures the width the tab actually has: an open iPad
-    // sidebar takes part of the window.
+    // Measured here, not from the window: an open iPad sidebar takes part of it.
     <View style={styles.host} onLayout={onLayout}>
-      <ProfileCards value={split}>
+      <GroupedCards value={split}>
         <Host style={styles.host}>
           {split ? (
-            // One scroll view for both columns, so they move together.
-            <ScrollView modifiers={[background(PlatformColor("systemGroupedBackground"))]}>
-              <HStack
-                alignment="top"
-                spacing={COLUMN_SPACING}
-                modifiers={[padding({ horizontal: COLUMN_SPACING, vertical: COLUMN_SPACING })]}
-              >
-                <VStack spacing={SECTION_SPACING} modifiers={[frame({ maxWidth: Infinity })]}>
-                  {yours}
-                </VStack>
-                <VStack spacing={SECTION_SPACING} modifiers={[frame({ maxWidth: Infinity })]}>
-                  {app}
-                </VStack>
+            <ScrollView modifiers={GROUPED_BACKGROUND}>
+              <HStack alignment="top" spacing={COLUMN_GAP} modifiers={COLUMNS_PADDING}>
+                {[yours, app].map((column, index) => (
+                  <VStack key={index} spacing={SECTION_SPACING} modifiers={COLUMN}>
+                    {column}
+                  </VStack>
+                ))}
               </HStack>
             </ScrollView>
           ) : (
@@ -219,15 +168,47 @@ export function ProfileScreen({
             </Form>
           )}
         </Host>
-      </ProfileCards>
+      </GroupedCards>
     </View>
   );
 }
 
-/** Between the two columns and around them. */
-const COLUMN_SPACING = 20;
-/** Between cards in a column, close to an inset-grouped list's section gap. */
+function AccountRow({ onPress, disabled: isDisabled }: { onPress: () => void; disabled: boolean }) {
+  const { user: clerkUser } = useUser();
+  const rowShape = useRowShape();
+  const user: AccountUser = {
+    fullName: clerkUser?.fullName ?? null,
+    primaryEmailAddress: clerkUser?.primaryEmailAddress?.emailAddress ?? null,
+    imageUrl: clerkUser?.imageUrl || null,
+  };
+  const { title, subtitle } = accountRowText(user);
+
+  return (
+    <Button
+      onPress={onPress}
+      modifiers={[...ROW, disabled(isDisabled), accessibilityLabel(`${title}, ${subtitle}`)]}
+    >
+      <HStack spacing={ROW_SPACING} modifiers={rowShape}>
+        <AccountAvatar imageUrl={user.imageUrl} />
+        <VStack alignment="leading" spacing={2}>
+          <Text modifiers={[font({ textStyle: "title3", weight: "semibold" }), PRIMARY]}>
+            {title}
+          </Text>
+          <Text modifiers={[font({ textStyle: "subheadline" }), SECONDARY]}>{subtitle}</Text>
+        </VStack>
+        <Spacer />
+        <Chevron />
+      </HStack>
+    </Button>
+  );
+}
+
+/** Same spacing `columnCount` assumes, so what is drawn matches the decision. */
+const COLUMNS_PADDING = [padding({ horizontal: GUTTER, vertical: GUTTER })];
+const COLUMN = [frame({ maxWidth: Infinity })];
+/** Close to an inset-grouped list's section gap. */
 const SECTION_SPACING = 24;
+const GROUPED_BACKGROUND = [background(PlatformColor("systemGroupedBackground"))];
 
 const styles = StyleSheet.create({
   host: { flex: 1 },

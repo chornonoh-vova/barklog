@@ -9,8 +9,8 @@ import {
   statsTitle,
   statusRows,
 } from "@/features/profile/backlog-stats";
-import { ProfileSection, useRowShape } from "@/features/profile/profile-section";
-import { PRIMARY, ROW, SECONDARY } from "@/features/profile/row-styles";
+import { ProfileSection } from "@/features/profile/profile-section";
+import { PRIMARY, ROW, ROW_SPACING, SECONDARY, useRowShape } from "@/features/profile/row-styles";
 import { Chevron, NavigationRow } from "@/features/profile/rows";
 import { SettingsIcon } from "@/features/profile/settings-icon";
 import { useBacklog } from "@/lib/api/hooks";
@@ -58,7 +58,7 @@ export function StatsSection({
             onPress={() => onOpenStatus(row.status)}
             modifiers={[...ROW, accessibilityLabel(row.accessibilityLabel)]}
           >
-            <HStack spacing={12} modifiers={rowShape}>
+            <HStack spacing={ROW_SPACING} modifiers={rowShape}>
               <SettingsIcon systemName={row.icon} color={row.color} />
               <Text modifiers={[PRIMARY]}>{row.title}</Text>
               <Spacer />
@@ -71,7 +71,7 @@ export function StatsSection({
       {average === null ? null : (
         <ProfileSection>
           <HStack
-            spacing={12}
+            spacing={ROW_SPACING}
             modifiers={[
               ...rowShape,
               accessibilityElement("ignore"),

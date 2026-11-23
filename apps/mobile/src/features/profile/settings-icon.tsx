@@ -15,7 +15,7 @@ export type TileColor =
   | "systemBrown"
   | "systemYellow";
 
-const TILE = 28;
+export const TILE = 28;
 
 /**
  * A Settings-style icon: a white symbol on a rounded, coloured tile.
