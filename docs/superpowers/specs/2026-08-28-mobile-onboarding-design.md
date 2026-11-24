@@ -3,6 +3,8 @@
 Originally designed on 2026-08-28; reconciled with the implementation on 2026-10-29.
 This replaces the original four-page implementation proposal.
 
+> **Screens superseded** on 2026-11-24 by the [onboarding redesign](2026-11-24-onboarding-redesign-design.md): three steps, no Skip, IGDB on the first screen. The gate rules (who sees onboarding, the seen flag, reinstall handling) described here still apply.
+
 ## Purpose and behavior
 
 Explain Barklog before asking a first-time visitor to authenticate. Onboarding is
