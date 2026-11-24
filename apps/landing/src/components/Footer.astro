@@ -1,28 +1,55 @@
 ---
+import type { Language } from "@repo/i18n";
+
 import { CONTACT_EMAIL } from "../config";
+import { copy, homePath, LOCALES, NATIVE_NAMES } from "../i18n";
+
+interface Props {
+  lang: Language;
+}
+
+const { lang } = Astro.props;
+const t = copy(lang).footer;
+const link = "rounded-sm transition-colors hover:text-ink";
 ---
 
 <footer class="border-t border-rule" data-reveal>
   <div
-    class="mx-auto flex max-w-[70rem] flex-col gap-6 px-6 py-12 text-[0.9375rem] text-ink-muted md:px-10 sm:flex-row sm:items-start sm:justify-between"
+    class="mx-auto flex max-w-[70rem] flex-col gap-8 px-6 py-12 text-[0.9375rem] text-ink-muted md:px-10 sm:flex-row sm:items-start sm:justify-between"
   >
     <div>
-      <p>Barklog, made by Volodymyr Chornonoh</p>
+      <p>{t.madeBy}</p>
       {/* OFL 1.1 requires the licence to travel with the fonts this site serves. */}
       <p class="mt-2 text-sm">
-        Set in Geist, under the <a
-          class="rounded-sm underline underline-offset-4 transition-colors hover:text-ink"
-          href="/fonts/OFL.txt">SIL Open Font License</a
-        >.
+        {t.fontBefore}<a class={`${link} underline underline-offset-4`} href="/fonts/OFL.txt"
+          >{t.fontLink}</a
+        >{t.fontAfter}
       </p>
     </div>
-    <nav class="flex flex-wrap items-center gap-x-7 gap-y-2 font-display text-sm font-medium">
-      <a class="rounded-sm transition-colors hover:text-ink" href="/support">Support</a>
-      <a class="rounded-sm transition-colors hover:text-ink" href="/terms">Terms</a>
-      <a class="rounded-sm transition-colors hover:text-ink" href="/privacy">Privacy</a>
-      <a class="rounded-sm transition-colors hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>
-        {CONTACT_EMAIL}
-      </a>
-    </nav>
+    <div class="flex flex-col gap-6">
+      {/* Legal pages are English-only, so every language links to the same routes. */}
+      <nav class="flex flex-wrap items-center gap-x-7 gap-y-2 font-display text-sm font-medium">
+        <a class={link} href="/support" hreflang="en">{t.support}</a>
+        <a class={link} href="/terms" hreflang="en">{t.terms}</a>
+        <a class={link} href="/privacy" hreflang="en">{t.privacy}</a>
+        <a class={link} href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+      </nav>
+      {lang !== "en" && <p class="text-sm">{t.legalNote}</p>}
+      <nav aria-label={t.language} class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+        {
+          LOCALES.map((locale) => (
+            <a
+              class:list={[link, locale === lang && "text-ink"]}
+              href={homePath(locale)}
+              hreflang={locale}
+              lang={locale}
+              aria-current={locale === lang ? "page" : undefined}
+            >
+              {NATIVE_NAMES[locale]}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
   </div>
 </footer>

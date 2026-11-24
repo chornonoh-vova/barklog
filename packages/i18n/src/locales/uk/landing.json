@@ -84,6 +84,12 @@
   "footer": {
     "madeBy": "Barklog, створив Volodymyr Chornonoh",
     "language": "Мова",
-    "legalNote": "Сторінки підтримки, умов і конфіденційності — англійською."
+    "legalNote": "Сторінки підтримки, умов і конфіденційності — англійською.",
+    "support": "Підтримка",
+    "terms": "Умови",
+    "privacy": "Конфіденційність",
+    "fontBefore": "Шрифт Geist, за ліцензією ",
+    "fontLink": "SIL Open Font License",
+    "fontAfter": "."
   }
 }

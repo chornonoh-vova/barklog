@@ -84,6 +84,12 @@
   "footer": {
     "madeBy": "Barklog, made by Volodymyr Chornonoh",
     "language": "Language",
-    "legalNote": "Support, terms and privacy pages are in English."
+    "legalNote": "Support, terms and privacy pages are in English.",
+    "support": "Support",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "fontBefore": "Set in Geist, under the ",
+    "fontLink": "SIL Open Font License",
+    "fontAfter": "."
   }
 }

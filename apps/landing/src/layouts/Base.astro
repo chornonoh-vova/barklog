@@ -1,5 +1,7 @@
 ---
+import type { Language } from "@repo/i18n";
 import geistLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2";
+import { homePath, LOCALES } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
@@ -17,19 +19,41 @@ interface Props {
       pages rely on this staying false: they ship zero JavaScript, and a test
       asserts it. */
   motion?: boolean;
+  /** The page's language; English for everything that is not a localized home page. */
+  lang?: Language;
+  /** On for the localized home pages only: they are the one page in five languages,
+      so each names the others (and x-default, the English root) as alternates. */
+  alternates?: boolean;
 }
 
-const { title, description, preloadFonts = true, canonical = true, motion = false } = Astro.props;
+const {
+  title,
+  description,
+  preloadFonts = true,
+  canonical = true,
+  motion = false,
+  lang = "en",
+  alternates = false,
+} = Astro.props;
+
+const absolute = (pathname: string) => new URL(pathname, Astro.site).href;
 ---
 
 <!doctype html>
-<html lang="en" class="bg-ground text-ink">
+<html lang={lang} class="bg-ground text-ink">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />}
+    {
+      alternates &&
+        LOCALES.map((locale) => (
+          <link rel="alternate" hreflang={locale} href={absolute(homePath(locale))} />
+        ))
+    }
+    {alternates && <link rel="alternate" hreflang="x-default" href={absolute("/")} />}
 
     {/* Generated from the app's own icon (apps/mobile/assets/icon/icon.png),
         so a bookmark or a home-screen tile shows the same thing as the App

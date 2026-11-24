@@ -84,6 +84,12 @@
   "footer": {
     "madeBy": "Barklog, creado por Volodymyr Chornonoh",
     "language": "Idioma",
-    "legalNote": "Las páginas de soporte, condiciones y privacidad están en inglés."
+    "legalNote": "Las páginas de soporte, condiciones y privacidad están en inglés.",
+    "support": "Soporte",
+    "terms": "Condiciones",
+    "privacy": "Privacidad",
+    "fontBefore": "Tipografía Geist, bajo la ",
+    "fontLink": "SIL Open Font License",
+    "fontAfter": "."
   }
 }

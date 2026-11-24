@@ -84,6 +84,12 @@
   "footer": {
     "madeBy": "Barklog, entwickelt von Volodymyr Chornonoh",
     "language": "Sprache",
-    "legalNote": "Support, Nutzungsbedingungen und Datenschutz sind auf Englisch."
+    "legalNote": "Support, Nutzungsbedingungen und Datenschutz sind auf Englisch.",
+    "support": "Support",
+    "terms": "Nutzungsbedingungen",
+    "privacy": "Datenschutz",
+    "fontBefore": "Gesetzt in Geist, unter der ",
+    "fontLink": "SIL Open Font License",
+    "fontAfter": "."
   }
 }
