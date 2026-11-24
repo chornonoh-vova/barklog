@@ -134,3 +134,21 @@ describe.each(LANGUAGES)("%s onboarding copy", (lng) => {
     expect(app.get("onboarding.freeFeaturesDescription")?.toLocaleLowerCase(lng)).toContain(tab);
   });
 });
+
+describe("landing copy about ratings", () => {
+  // The app shows the rating control for any game with a status
+  // (game-detail-screen.tsx), not only completed ones.
+  it.each([
+    ["ru", /Пройденные игры можно/],
+    ["uk", /Пройдені ігри можна/],
+  ] as const)("%s does not limit ratings to completed games", (lng, narrowed) => {
+    expect(landing[lng].statuses.body).not.toMatch(narrowed);
+    expect(landing[lng].faq.items.whatIs.a).not.toMatch(
+      /пройденные игры можно|пройдені ігри можна/i,
+    );
+  });
+
+  it("uk share alt says a link was sent to Barklog, not that Barklog was shared", () => {
+    expect(landing.uk.share.alt).not.toContain("ним поділилися");
+  });
+});

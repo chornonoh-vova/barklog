@@ -50,3 +50,12 @@ test("no standalone page says only YouTube or TikTok videos can be shared", asyn
     );
   }
 });
+
+test("the privacy policy says the share preview image loads from the shared site to the phone", async () => {
+  // apps/mobile/src/features/share/share-header.tsx loads thumbnailUrl (oEmbed
+  // or the page's og:image) straight from the device, so that host sees the IP.
+  const privacy = (await read("privacy")).replace(/\s+/g, " ");
+
+  expect(privacy).toMatch(/preview image/i);
+  expect(privacy).toMatch(/preview image[^.]*straight from[^.]*to your device/i);
+});
