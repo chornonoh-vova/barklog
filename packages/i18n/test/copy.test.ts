@@ -97,3 +97,13 @@ describe("isLanguage", () => {
     expect(isLanguage(code)).toBe(false);
   });
 });
+
+describe.each(LANGUAGES)("%s onboarding copy", (lng) => {
+  const app = copy(lng, "app");
+
+  it("names Explore by its tab label in the free-features line", () => {
+    const tab = app.get("tabs.explore")?.toLocaleLowerCase(lng) ?? "";
+
+    expect(app.get("onboarding.freeFeaturesDescription")?.toLocaleLowerCase(lng)).toContain(tab);
+  });
+});

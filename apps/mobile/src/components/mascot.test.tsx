@@ -16,6 +16,12 @@ describe("Mascot", () => {
     expect(image()).toHaveStyle({ width: 200, height: 200 });
   });
 
+  it("takes a smaller size where the layout needs one", async () => {
+    await render(<Mascot illustration="default" size={96} />);
+
+    expect(image()).toHaveStyle({ width: 96, height: 96 });
+  });
+
   it("lets touches through and stays out of VoiceOver, since the title says the same", async () => {
     await render(<Mascot illustration="backlog" />);
 

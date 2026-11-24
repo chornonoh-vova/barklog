@@ -1,6 +1,4 @@
 import { Image } from "expo-image";
-import { StyleSheet } from "react-native";
-
 import { ILLUSTRATIONS, type IllustrationName } from "@/components/illustrations";
 
 const MASCOT_SIZE = 200;
@@ -16,18 +14,20 @@ const MASCOT_SIZE = 200;
  * after the full decode. expo-image leaves `accessible` false, and the mascot
  * only restates the title, so VoiceOver reads the copy alone.
  */
-export function Mascot({ illustration }: { illustration: IllustrationName }) {
+export function Mascot({
+  illustration,
+  size = MASCOT_SIZE,
+}: {
+  illustration: IllustrationName;
+  size?: number;
+}) {
   return (
     <Image
       source={ILLUSTRATIONS[illustration]}
-      style={styles.image}
+      style={{ width: size, height: size }}
       contentFit="contain"
       enforceEarlyResizing
       pointerEvents="none"
     />
   );
 }
-
-const styles = StyleSheet.create({
-  image: { width: MASCOT_SIZE, height: MASCOT_SIZE },
-});

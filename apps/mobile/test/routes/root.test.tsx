@@ -35,7 +35,10 @@ describe("root layout", () => {
     fakeServer();
     await renderApp("/");
 
-    await userEvent.setup().press(await screen.findByRole("button", { name: "Skip" }));
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Continue" }));
+    await user.press(screen.getByRole("button", { name: "Continue" }));
+    await user.press(screen.getByRole("button", { name: "Get Started" }));
 
     expect(await screen.findByTestId("clerk-auth-view")).toBeOnTheScreen();
     expect(await readHasSeenOnboarding()).toBe(true);
