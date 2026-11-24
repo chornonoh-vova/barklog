@@ -11,6 +11,8 @@
     "ios": "APP_VARIANT=development expo run:ios",
     "ios:device": "APP_VARIANT=development expo run:ios --device",
     "prebuild": "APP_VARIANT=development expo prebuild --platform ios",
+    "build:local": "mkdir -p \"$HOME/Library/Caches/barklog-eas\" && EAS_LOCAL_BUILD_WORKINGDIR=\"$(mktemp -d \"$HOME/Library/Caches/barklog-eas/build.XXXXXX\")\" eas build --platform ios --profile production --local --output ./dist/barklog.ipa",
+    "submit:local": "eas submit --platform ios --profile production --path ./dist/barklog.ipa",
     "postinstall": "cd ../.. && pnpm turbo run build --filter=@repo/contracts --filter=@repo/i18n --filter=@repo/release-dates",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
