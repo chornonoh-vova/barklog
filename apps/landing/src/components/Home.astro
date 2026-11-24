@@ -6,6 +6,7 @@ import gameDetails from "../assets/screenshots/game-details.png";
 import shared from "../assets/screenshots/shared.png";
 import widgets from "../assets/screenshots/widgets.png";
 import { copy } from "../i18n";
+import { homeJsonLd } from "../structured-data";
 import Base from "../layouts/Base.astro";
 import Faq from "./Faq.astro";
 import Feature from "./Feature.astro";
@@ -53,7 +54,14 @@ const STATUSES = [
 ] as const;
 ---
 
-<Base lang={lang} title={t.meta.title} description={t.meta.description} alternates motion>
+<Base
+  lang={lang}
+  title={t.meta.title}
+  description={t.meta.description}
+  jsonLd={homeJsonLd(lang)}
+  alternates
+  motion
+>
   <Masthead />
 
   <main>

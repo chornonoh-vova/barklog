@@ -27,6 +27,8 @@
    height. */
 import type { Language } from "@repo/i18n";
 
+import EnglishBadge from "../assets/app-store-badge.svg";
+
 import { APP_STORE_URL } from "../config";
 import { copy } from "../i18n";
 
@@ -41,12 +43,11 @@ const { lang = "en" } = Astro.props;
    app-store-badge-<lang>.svg, with the same fill conversion. A language whose
    file has not been added yet falls back to the English badge, which the
    guidelines also allow, rather than failing the build. */
-const badges = import.meta.glob<typeof import("*.svg").default>("../assets/app-store-badge*.svg", {
+const localized = import.meta.glob<typeof EnglishBadge>("../assets/app-store-badge-*.svg", {
   eager: true,
   import: "default",
 });
-const Badge =
-  badges[`../assets/app-store-badge-${lang}.svg`] ?? badges["../assets/app-store-badge.svg"]!;
+const Badge = localized[`../assets/app-store-badge-${lang}.svg`] ?? EnglishBadge;
 ---
 
 <a class="inline-block rounded-lg p-2.5" href={APP_STORE_URL} aria-label={copy(lang).badge.label}>
