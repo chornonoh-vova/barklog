@@ -45,3 +45,11 @@ test("the privacy policy describes sharing as the API does it", async () => {
   expect(privacy).toMatch(/the link itself/i);
   expect(privacy).not.toContain("17 November 2026");
 });
+
+test("no standalone page says only YouTube or TikTok videos can be shared", async () => {
+  for (const route of ROUTES) {
+    expect((await read(route)).replace(/\s+/g, " "), `/${route}`).not.toMatch(
+      /Share a YouTube or TikTok video/i,
+    );
+  }
+});
