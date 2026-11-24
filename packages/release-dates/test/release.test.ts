@@ -40,9 +40,7 @@ describe("toReleaseDate", () => {
     expect(toReleaseDate(new Date(Date.UTC(2027, 11, 31, 12)), "year").day).toBe("2027-12-31");
   });
 
-  // IGDB puts month placeholders on the 1st, quarters and most years on the
-  // last day, and some old years on 1 January (design doc, #75). A vague date
-  // is judged against the last day it could fall on, wherever IGDB put it.
+  // IGDB's placeholder day varies (#75); a vague date is judged by its period's last day.
   it.each([
     ["month on the 1st", "2027-06-01", "month", "2027-06-30"],
     ["month mid-way", "2027-06-15", "month", "2027-06-30"],

@@ -217,7 +217,7 @@ test("ensureUser racing an uncommitted deletion does not recreate the account", 
   let deleted!: () => void;
   const deletedYet = new Promise<void>((resolve) => (deleted = resolve));
 
-  // The webhook's transaction: user row gone and tombstone written, not yet committed.
+  // As the webhook does: tombstone written and row deleted, uncommitted.
   const deletion = db.transaction(async (tx) => {
     await recordUserDeletion(tx, USER);
     await deleteUser(tx, USER);

@@ -15,11 +15,7 @@ import { versionLine } from "@/features/profile/profile-rows";
 import { PRIMARY, SECONDARY } from "@/features/profile/row-styles";
 import { ExternalLinkRow } from "@/features/profile/rows";
 
-/**
- * About Barklog: who made it, where, and the pages behind it. The version comes from
- * the installed binary (`expo-application`), not the JS bundle, so an
- * over-the-air update never changes it.
- */
+/** The version is the binary's (`expo-application`), so an OTA update never changes it. */
 export function AboutScreen() {
   const { t } = useTranslation();
   const version = versionLine(nativeApplicationVersion, nativeBuildVersion);

@@ -50,8 +50,7 @@ export const games = pgTable(
     slug: text("slug").notNull(),
     summary: text("summary"),
     firstReleaseDate: timestamp("first_release_date", { withTimezone: true }),
-    // Null is "unclassified": not synced since the column shipped, or a date no
-    // IGDB release-date entry explains. Distinct from `none` (no date at all).
+    // Null is unclassified (not yet synced, or unexplained by IGDB); `none` means no date.
     releaseDatePrecision: datePrecision("release_date_precision"),
     gameTypeId: integer("game_type_id").references(() => gameTypes.id),
     // Deliberately no foreign key: the target may not be mirrored yet.

@@ -20,11 +20,7 @@ export const searchQuerySchema = v.object({
 });
 export type SearchQuery = v.InferOutput<typeof searchQuerySchema>;
 
-/**
- * How much of a game's release date is known. Only `day` is precise; the rest
- * are vague, and `none` means no date at all. A stored `null` (unclassified) is
- * not in this list: it means the mirror has not classified the date yet.
- */
+/** Release-date precision; only `day` is precise. Unclassified is a separate `null`. */
 export const DATE_PRECISIONS = ["day", "month", "quarter", "year", "none"] as const;
 export type DatePrecision = (typeof DATE_PRECISIONS)[number];
 

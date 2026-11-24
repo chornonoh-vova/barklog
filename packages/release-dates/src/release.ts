@@ -6,14 +6,9 @@ import { daysBetween, toInstant, utcDay, type CalendarDay } from "./day.js";
 export type VaguePrecision = Exclude<DatePrecision, "day" | "none"> | null;
 
 /**
- * A game's release date as the rest of the codebase sees it. For precision
- * `day`, and for an unclassified date, `day` is the UTC calendar day of IGDB's
- * `first_release_date`. For month, quarter and year it is the **last** day of
- * that period, whatever placeholder day IGDB stored: IGDB puts months on the
- * 1st and some old years on 1 January, and a vague date is not over until its
- * period is. `precision` is `null` while the mirror has not classified the
- * date ("unclassified"), which is never guessed. Precision `none` never
- * carries a day.
+ * A game's release date. `day` is the UTC day of `first_release_date`, except a
+ * vague date uses the **last** day of its period (IGDB stores placeholders like
+ * the 1st). `precision: null` means unclassified, never guessed; `none` has no day.
  */
 export type ReleaseDate =
   | { day: CalendarDay; precision: "day" | VaguePrecision }
@@ -25,8 +20,7 @@ const MONTHS_IN_PERIOD = { month: 1, quarter: 3, year: 12 } as const;
 function endOfPeriod(instant: Date, precision: keyof typeof MONTHS_IN_PERIOD): CalendarDay {
   const span = MONTHS_IN_PERIOD[precision];
   const firstMonthAfter = (Math.floor(instant.getUTCMonth() / span) + 1) * span;
-  // Day 0 of the month after the period is its last day. setUTCFullYear, unlike
-  // Date.UTC, does not map years 0–99 onto 1900–1999.
+  // Day 0 of the next month is the period's last day; setUTCFullYear keeps years 0–99.
   const end = new Date(0);
   end.setUTCFullYear(instant.getUTCFullYear(), firstMonthAfter, 0);
   return utcDay(end);
@@ -48,10 +42,8 @@ export type ReleaseDisplay =
   | { kind: "lapsed"; precision: VaguePrecision; day: CalendarDay };
 
 /**
- * Normalises the wire/database pair into a {@link ReleaseDate}, moving a vague
- * date to the end of its period. An absent
- * (`undefined`) precision, as sent by servers that predate the field, is
- * unclassified. Precision `none` drops any stray timestamp: it means no date.
+ * Normalises the wire/database pair into a {@link ReleaseDate}. `undefined`
+ * precision (older servers) is unclassified; `none` drops any stray timestamp.
  */
 export function toReleaseDate(
   firstReleaseDate: Date | string | null,
@@ -80,10 +72,7 @@ export function releaseDisplay(date: ReleaseDate, today: CalendarDay): ReleaseDi
   return { kind, precision: date.precision, day: date.day };
 }
 
-/**
- * Whether a game has not been released yet (CONTEXT.md, *upcoming*). A lapsed
- * placeholder is not upcoming, and not released either.
- */
+/** Whether a game is *upcoming* (CONTEXT.md); a lapsed placeholder is not. */
 export function isUpcoming(display: ReleaseDisplay): boolean {
   return display.kind !== "released" && display.kind !== "lapsed";
 }

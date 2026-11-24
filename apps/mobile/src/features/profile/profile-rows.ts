@@ -6,8 +6,6 @@ export type AccountUser = {
   imageUrl: string | null;
 };
 
-/** The account row leads with the name, like Settings' Apple Account row; the
- * email stands in when there is none. The subtitle says what the row manages. */
 export function accountRowText(user: AccountUser): { title: string; subtitle: string } {
   const name = user.fullName?.trim() || null;
   const subtitle = i18n.t("profile.accountSubtitle");
@@ -23,7 +21,7 @@ export type PremiumRow = {
   action: "paywall" | "customerCenter";
 } | null;
 
-/** `undefined` means entitlement has not loaded yet, so no row is shown. */
+/** `undefined`: entitlement has not loaded, so no row. */
 export function premiumRow(premium: boolean | undefined): PremiumRow {
   if (premium === undefined) return null;
 

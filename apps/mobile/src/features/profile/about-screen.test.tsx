@@ -8,7 +8,6 @@ jest.mock("expo-linking", () => ({
   ...jest.requireActual<object>("expo-linking"),
   openURL: jest.fn(async () => true),
 }));
-// The installed binary's version, not the JS bundle's: an update never changes it.
 jest.mock("expo-application", () => ({
   nativeApplicationVersion: "1.4.0",
   nativeBuildVersion: "123",

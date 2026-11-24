@@ -2,7 +2,7 @@ import { act, screen, userEvent } from "@testing-library/react-native";
 import { router } from "expo-router";
 
 import { backlogItem, backlogList, gameDetail, gameList } from "@test/fixtures";
-import { navigationBars } from "@test/queries";
+import { navigationBars, pressHeaderButton } from "@test/queries";
 
 import { fakeServer, markOnboardingSeen, renderApp, requests } from "./app";
 
@@ -16,8 +16,7 @@ const gameSeven = {
 
 beforeEach(() => markOnboardingSeen());
 
-/** React Navigation reports an action no navigator took (a pop with nothing to
- * pop) as a console error in development, which LogBox shows on device. */
+/** An unhandled navigation action logs a console error, which LogBox shows on device. */
 function expectEveryActionHandled() {
   const calls = jest.mocked(console.error).mock.calls.flat().map(String);
   expect(calls.filter((message) => message.includes("was not handled"))).toEqual([]);
@@ -27,7 +26,6 @@ beforeEach(() => jest.spyOn(console, "error"));
 
 type State = { routes: { name: string; state?: State }[] };
 
-/** The routes in Home's own stack, from the root tabs down. */
 function homeStack(app: { getRouterState(): unknown }): State["routes"] {
   const find = (state: State | undefined): State | undefined => {
     for (const route of state?.routes ?? []) {
@@ -138,28 +136,41 @@ describe("Profile tab", () => {
     expect(screen).toHaveSegments(["(tabs)", "profile"]);
   });
 
-  it("opens the Clerk account screen from the account row, and goes back from it", async () => {
+  it("opens the Clerk account screen as a modal over the tabs", async () => {
     fakeServer();
     await renderApp("/profile");
     const user = userEvent.setup();
 
     await user.press(await screen.findByRole("button", { name: /^Ada Lovelace/ }));
 
-    expect(screen).toHaveSegments(["(tabs)", "profile", "account"]);
-    await user.press(await screen.findByTestId("clerk-user-profile"));
-
-    expect(screen).toHavePathname("/profile");
+    expect(screen).toHaveSegments(["account"]);
   });
 
-  it("opens About Barklog in the Profile stack", async () => {
+  it("leaves closing the account modal to Clerk's native dismissal", async () => {
+    // UIKit dismissal already pops the modal; an extra JS `back()` popped twice to Home.
+    fakeServer();
+    await renderApp("/profile");
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: /^Ada Lovelace/ }));
+
+    await user.press(await screen.findByTestId("clerk-user-profile"));
+
+    expect(screen).toHaveSegments(["account"]);
+  });
+
+  it("opens About Barklog as a modal and closes back to Profile", async () => {
     fakeServer();
     await renderApp("/profile");
     const user = userEvent.setup();
 
     await user.press(await screen.findByRole("button", { name: "About" }));
 
-    expect(screen).toHaveSegments(["(tabs)", "profile", "about"]);
+    expect(screen).toHaveSegments(["about"]);
     expect(await screen.findByText("Privacy Policy")).toBeOnTheScreen();
+
+    await act(() => pressHeaderButton("Close"));
+
+    expect(screen).toHaveSegments(["(tabs)", "profile"]);
   });
 
   it("opens Home filtered to the status a Stats row names", async () => {
@@ -233,8 +244,7 @@ describe("Profile tab", () => {
     await renderApp(path);
     await screen.findByText(loaded);
 
-    // By symbol, not label: the old labels no longer exist in any locale, so a
-    // returning account button or star would slip past a label check.
+    // By symbol: the old labels exist in no locale, so a label check would always pass.
     const symbols = (navigationBars()[0]?.items ?? []).map((item) => item.sfSymbolName);
     expect(symbols).not.toContain("person.crop.circle");
     expect(symbols).not.toContain("star");

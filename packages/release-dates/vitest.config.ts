@@ -1,8 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-// ADR-0010: this package is held to full coverage. `pnpm test` runs with
-// --coverage, so CI fails when any threshold drops below 100; a single-file
-// run without the flag is not held to the package-wide thresholds.
+// ADR-0010: full coverage, enforced only when run with --coverage (`pnpm test`).
 export default defineConfig({
   test: {
     name: "@repo/release-dates",

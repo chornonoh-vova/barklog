@@ -18,6 +18,7 @@ import {
   renderWithProviders,
   testQueryClient,
 } from "@test/render";
+import { setWindow, TABLET } from "@test/window";
 
 jest.mock("@/features/profile/use-account-actions");
 jest.mock("@/features/profile/use-send-feedback");
@@ -400,5 +401,33 @@ describe("Stats", () => {
     const headers = screen.getAllByRole("header").map((header) => header.props.children);
     expect(headers.indexOf("Stats · 3 games")).toBeLessThan(headers.indexOf("Barklog"));
     expect(screen.getByRole("button", { name: "Get Barklog Premium" })).toBeOnTheScreen();
+  });
+});
+
+describe("wide window", () => {
+  it("lays the sections out as cards in one scroll view instead of a list", async () => {
+    await setWindow(TABLET);
+    await renderScreen();
+
+    expect(screen.getByTestId("swiftui-ScrollView")).toBeOnTheScreen();
+    expect(screen.queryByTestId("swiftui-Form")).toBeNull();
+    expect(screen.queryByTestId("swiftui-section")).toBeNull();
+    // Lines the account card up with the titled Barklog card opposite.
+    expect(screen.getByText("Account")).toBeOnTheScreen();
+    for (const name of [
+      "Ada Lovelace, Profile, email and security",
+      "Sign Out",
+      "Delete Account",
+    ]) {
+      expect(button(name)).toBeOnTheScreen();
+    }
+  });
+
+  it("keeps the native list on a phone", async () => {
+    await renderScreen();
+
+    expect(screen.getByTestId("swiftui-Form")).toBeOnTheScreen();
+    expect(screen.queryByTestId("swiftui-ScrollView")).toBeNull();
+    expect(screen.queryByText("Account")).toBeNull();
   });
 });

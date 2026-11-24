@@ -1,10 +1,6 @@
 import * as v from "valibot";
 
-/**
- * The app's languages, which a push device reports so its notifications are
- * rendered in its own language. Duplicated from `@repo/i18n`'s `LANGUAGES` so
- * this package stays dependency-free; `packages/i18n` holds the parity test.
- */
+/** Duplicates `@repo/i18n`'s `LANGUAGES` to stay dependency-free; i18n holds the parity test. */
 export const PUSH_LOCALES = ["en", "uk", "ru", "de", "es"] as const;
 export type PushLocale = (typeof PUSH_LOCALES)[number];
 
@@ -14,10 +10,8 @@ export const RELEASE_ALERT_MINUTES_MAX = 1410;
 export const RELEASE_ALERT_MINUTES_STEP = 30;
 
 /**
- * An IANA time zone name, as iOS reports one. A UTC offset such as `+05:00` is
- * refused although Intl accepts it: Postgres reads its sign the POSIX way
- * (`+05:00` is UTC-5), so the same stored value would mean two zones ten hours
- * apart. The `Etc/GMT±N` names are POSIX-signed in both, so they stay valid.
+ * An IANA zone name. Offsets like `+05:00` are refused: Postgres reads their sign POSIX-style
+ * (UTC-5), unlike Intl. `Etc/GMT±N` is POSIX-signed in both, so it stays valid.
  */
 function isTimeZone(value: string): boolean {
   if (value.startsWith("+") || value.startsWith("-")) return false;
@@ -29,8 +23,7 @@ function isTimeZone(value: string): boolean {
   }
 }
 
-// Any non-empty string: the format is Expo's, and a change to it must not
-// silently stop registrations.
+// Expo owns the format; validating it could silently stop registrations.
 const token = v.pipe(v.string(), v.nonEmpty());
 
 export const pushDeviceRegisterSchema = v.strictObject({

@@ -3,8 +3,7 @@ import { background, frame, shapes } from "@expo/ui/swift-ui/modifiers";
 import { PlatformColor } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-/** iOS system colours, so each tile follows the system's light and dark
- * variants the way Settings' tiles do. */
+/** System colours, so tiles follow light and dark like Settings'. */
 export type TileColor =
   | "systemOrange"
   | "systemBlue"
@@ -15,12 +14,9 @@ export type TileColor =
   | "systemBrown"
   | "systemYellow";
 
-const TILE = 28;
+export const TILE = 28;
 
-/**
- * A Settings-style icon: a white symbol on a rounded, coloured tile.
- * Decorative: the row's own label names the action.
- */
+/** Decorative: the row's own label names the action. */
 export function SettingsIcon({ systemName, color }: { systemName: SFSymbol; color: TileColor }) {
   return (
     <Image

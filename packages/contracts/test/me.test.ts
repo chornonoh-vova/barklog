@@ -42,8 +42,7 @@ test("a registration rejects an unknown language, an unknown zone, an empty toke
 });
 
 test("a registration rejects a UTC offset in place of a zone name", () => {
-  // Intl reads "+05:00" as UTC+5 but Postgres reads it as UTC-5 (POSIX sign),
-  // so an offset would put alerts ten hours apart depending on who reads it.
+  // Intl reads "+05:00" as UTC+5, Postgres as UTC-5.
   for (const timeZone of ["+05:00", "-03:30", "+0530", "+05"]) {
     expect(v.safeParse(pushDeviceRegisterSchema, { ...device, timeZone }).success).toBe(false);
   }

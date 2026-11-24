@@ -6,11 +6,7 @@ import { RemoteImage } from "@/components/remote-image";
 
 const SIZE = 40;
 
-/**
- * The account row's picture. Decorative: the row's label already names the
- * person. A remote photo goes through an RN view because SwiftUI's `Image`
- * here takes only symbols, asset names and `file://` URIs.
- */
+/** A remote photo needs an RN view: SwiftUI `Image` takes only symbols, assets and `file://`. */
 export function AccountAvatar({ imageUrl }: { imageUrl: string | null }) {
   if (!imageUrl) {
     return (

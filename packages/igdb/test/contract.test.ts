@@ -41,18 +41,14 @@ describe.runIf(clientId && clientSecret)("IGDB contract", () => {
     expect(types.size).toBeGreaterThan(0);
   });
 
-  /**
-   * The silent failure here is every game coming back unclassified: if IGDB
-   * renamed a date format or stopped expanding `date_format`, nothing would
-   * throw, but no date would ever be treated as precise.
-   */
+  // Silent failure: a renamed format or unexpanded `date_format` leaves every game unclassified.
   test("live release dates classify through date_format", async () => {
     const { games } = mapGames(await client.gamesPage({ since: null, afterId: 0 }));
     const dated = games.filter((game) => game.firstReleaseDate !== null);
 
     expect(dated.length).toBeGreaterThan(0);
     expect(dated.filter((game) => game.releaseDatePrecision === "day").length).toBeGreaterThan(0);
-    // Mostly classified: a 3,000-game sample on 2026-11-18 had no unmatched dates.
+    // A 3,000-game sample on 2026-11-18 had no unmatched dates.
     const unclassified = dated.filter((game) => game.releaseDatePrecision === null);
     expect(unclassified.length / dated.length).toBeLessThan(0.05);
   });

@@ -29,15 +29,11 @@ export function platformNames(
   return platforms.length === 0 ? null : platforms.map((p) => p.abbreviation ?? p.name).join(", ");
 }
 
-/** The wire fields of a release date. A server that predates precision omits it. */
+/** A server that predates precision omits it. */
 type Dated = Pick<GameSummaryWire, "firstReleaseDate" | "releaseDatePrecision">;
 
-/**
- * Read only through `@repo/release-dates` (ADR-0010): the app compares no dates.
- * The package throws on a malformed date; rows render it during layout, so a
- * bad value from the API or the persisted cache reads as no date ("TBA")
- * rather than crashing the screen.
- */
+/** Read only through `@repo/release-dates` (ADR-0010); a malformed date reads as "TBA"
+ * instead of throwing during render. */
 function releaseDateOf(game: Dated): ReleaseDate {
   try {
     return toReleaseDate(game.firstReleaseDate, game.releaseDatePrecision);
@@ -47,7 +43,6 @@ function releaseDateOf(game: Dated): ReleaseDate {
   }
 }
 
-/** "2027", true of every precision, or "TBA" when there is no date. */
 export function releaseYear(game: Dated): string {
   return formatReleaseYear(releaseDateOf(game), currentLanguage());
 }
@@ -59,11 +54,7 @@ export function metaLine(game: Dated & { genres: { name: string }[] }): string {
   return genres === null ? year : `${year}${SEPARATOR}${genres}`;
 }
 
-/**
- * The detail screen's date row: "Released" only once a precise date has
- * passed, "Release date" otherwise, a lapsed "Q3 2027" included. The value
- * never shows a placeholder day: "5 June 2027", "Q3 2027", "2027", "TBA".
- */
+/** "Released" only once a precise date has passed; a lapsed "Q3 2027" stays "Release date". */
 export function releaseDateRow(game: Dated, today: CalendarDay): { label: string; value: string } {
   const date = releaseDateOf(game);
   const released = releaseDisplay(date, today).kind === "released";

@@ -1,8 +1,4 @@
-/**
- * `@repo/release-dates` is the only place that interprets release dates
- * (ADR-0010). The API, worker and app import these functions and never compare
- * release dates or date precisions themselves.
- */
+/** The only interpretation of release dates (ADR-0010); callers never compare them directly. */
 export { daysBetween, localDay, toCalendarDay, type CalendarDay } from "./day.js";
 export {
   isUpcoming,

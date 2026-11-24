@@ -1,10 +1,8 @@
 import type { DatePrecision } from "@repo/contracts";
 
 /**
- * IGDB's `date_formats.format` values (the `date_formats` endpoint, checked on
- * 2026-11-18). Matched by name rather than id so a renumbering cannot silently
- * reclassify every game. `TBD` is absent on purpose: its entries carry no date,
- * so they can never match a `first_release_date`.
+ * IGDB `date_formats.format` values (checked 2026-11-18), matched by name so an id
+ * renumbering cannot reclassify every game. `TBD` is omitted: those entries have no date.
  */
 const FORMAT_PRECISION: Readonly<Record<string, Exclude<DatePrecision, "none">>> = {
   YYYYMMDD: "day",
@@ -16,7 +14,7 @@ const FORMAT_PRECISION: Readonly<Record<string, Exclude<DatePrecision, "none">>>
   YYYY: "year",
 };
 
-/** Most precise first: the order in which conflicting matches are resolved. */
+/** Most precise first; resolves conflicting matches. */
 const RANK: readonly DatePrecision[] = ["day", "month", "quarter", "year"];
 
 export interface ReleaseDateEntry {
@@ -25,12 +23,9 @@ export interface ReleaseDateEntry {
 }
 
 /**
- * How precise a game's `first_release_date` is, from the release-date entry
- * whose timestamp equals it. No date at all is `none`; a date that no entry
- * explains (or whose format we do not know) is `null` — unclassified, never
- * guessed. If several entries share the timestamp with different formats, the
- * most precise wins: a day-precise entry means some platform really launches
- * on that day. (No such conflict appeared in a 3,000-game sample.)
+ * Precision of `first_release_date`, from the entry with the same timestamp: no date
+ * is `none`, no matching known entry is `null` (never guessed). On conflict the most
+ * precise wins, since a day entry means some platform launches that day.
  */
 export function classifyReleaseDate(
   firstReleaseDate: number | undefined,
