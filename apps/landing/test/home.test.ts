@@ -176,3 +176,34 @@ test("each FAQ marker sits right before its question, not at the far edge", asyn
     expect(summary).not.toContain("justify-between");
   }
 });
+
+describe.each(LANGUAGES)("%s category, values and extras", (lang) => {
+  const t = landing[lang];
+
+  it("names the category right above the headline", async () => {
+    const html = decode(await homeHtml(lang));
+    const label = html.indexOf(t.hero.eyebrow);
+
+    expect(label).toBeGreaterThan(-1);
+    expect(html.indexOf("<h1")).toBeGreaterThan(label);
+  });
+
+  it("states each value plainly", async () => {
+    const html = decode(await homeHtml(lang));
+
+    for (const { title, body } of Object.values(t.values.items)) {
+      expect(html).toContain(title);
+      expect(html).toContain(body);
+    }
+  });
+
+  it("lists the smaller features in a grid", async () => {
+    const html = decode(await homeHtml(lang));
+
+    expect(html).toContain(t.extras.title);
+    for (const { title, body } of Object.values(t.extras.items)) {
+      expect(html).toContain(title);
+      expect(html).toContain(body);
+    }
+  });
+});

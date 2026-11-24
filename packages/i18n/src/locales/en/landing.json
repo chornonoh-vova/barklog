@@ -4,9 +4,10 @@
     "description": "Barklog is a video game backlog tracker for iPhone and iPad. Mark games Waiting, Playing, Completed or Abandoned, share a link to find a game, and start free with ten games."
   },
   "hero": {
+    "eyebrow": "Video game backlog tracker",
     "title": "Every game you meant to get back to.",
     "subtitle": "Keep track of what you're playing, what's waiting, what you finished and what you gave up on. No spreadsheet, no shame.",
-    "free": "Free for ten games. Premium is optional."
+    "free": "Free for ten games. Premium supports a solo developer ☺️"
   },
   "badge": {
     "label": "Download Barklog on the App Store"
@@ -42,6 +43,48 @@
     "cap": "Premium takes the cap off, monthly or yearly, with a 7-day free trial. That's the whole difference.",
     "free": "Free",
     "premium": "Premium"
+  },
+  "values": {
+    "title": "What Barklog stands for",
+    "items": {
+      "noShame": {
+        "title": "No shame",
+        "body": "Abandoned is a real answer. Drop a game and the spot comes back."
+      },
+      "noTracking": {
+        "title": "No ads, no tracking",
+        "body": "No advertising, no behavioural tracking, and your data is never sold."
+      },
+      "yours": {
+        "title": "Yours to delete",
+        "body": "Delete your account and backlog from the Profile tab, any time."
+      }
+    }
+  },
+  "extras": {
+    "title": "Also in Barklog",
+    "items": {
+      "ipad": {
+        "title": "iPhone and iPad",
+        "body": "The same backlog on both, laid out for each screen."
+      },
+      "releases": {
+        "title": "Release dates",
+        "body": "Exact dates when known, or the month, quarter or year announced so far."
+      },
+      "similar": {
+        "title": "Similar games",
+        "body": "Every game page suggests others like it."
+      },
+      "ratings": {
+        "title": "Ratings",
+        "body": "Rate what you've played and see your average in Profile."
+      },
+      "languages": {
+        "title": "Five languages",
+        "body": "English, German, Spanish, Ukrainian and Russian."
+      }
+    }
   },
   "faq": {
     "title": "Questions",

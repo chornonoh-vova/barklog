@@ -8,12 +8,14 @@ import widgets from "../assets/screenshots/widgets.png";
 import { copy } from "../i18n";
 import { homeJsonLd } from "../structured-data";
 import Base from "../layouts/Base.astro";
+import Extras from "./Extras.astro";
 import Faq from "./Faq.astro";
 import Feature from "./Feature.astro";
 import Footer from "./Footer.astro";
 import Hero from "./Hero.astro";
 import Masthead from "./Masthead.astro";
 import Pricing from "./Pricing.astro";
+import Values from "./Values.astro";
 
 interface Props {
   lang: Language;
@@ -130,6 +132,10 @@ const STATUSES = [
     >
       <p>{t.widgets.body}</p>
     </Feature>
+
+    <Extras lang={lang} />
+
+    <Values lang={lang} />
 
     <Pricing lang={lang} />
 

@@ -4,9 +4,10 @@
     "description": "Barklog es una app para llevar tu backlog de videojuegos en iPhone y iPad. Marca cada juego como Pendiente, Jugando, Completado o Abandonado, comparte un enlace para encontrar un juego y empieza gratis con diez juegos."
   },
   "hero": {
+    "eyebrow": "App para tu backlog de videojuegos",
     "title": "Todos los juegos a los que pensabas volver.",
     "subtitle": "Lleva la cuenta de lo que estás jugando, lo que tienes pendiente, lo que terminaste y lo que dejaste. Sin hojas de cálculo, sin culpa.",
-    "free": "Gratis para diez juegos. Premium es opcional."
+    "free": "Gratis para diez juegos. Premium apoya a un desarrollador independiente ☺️"
   },
   "badge": {
     "label": "Descarga Barklog en el App Store"
@@ -42,6 +43,48 @@
     "cap": "Premium quita el límite, al mes o al año, con 7 días de prueba gratuita. Esa es toda la diferencia.",
     "free": "Gratis",
     "premium": "Premium"
+  },
+  "values": {
+    "title": "Lo que defiende Barklog",
+    "items": {
+      "noShame": {
+        "title": "Sin culpa",
+        "body": "Abandonado es una respuesta válida. Deja un juego y el hueco vuelve a quedar libre."
+      },
+      "noTracking": {
+        "title": "Sin anuncios ni rastreo",
+        "body": "Sin publicidad, sin rastreo de comportamiento, y tus datos nunca se venden."
+      },
+      "yours": {
+        "title": "Tuyo para borrar",
+        "body": "Elimina tu cuenta y tu backlog desde la pestaña Perfil cuando quieras."
+      }
+    }
+  },
+  "extras": {
+    "title": "También en Barklog",
+    "items": {
+      "ipad": {
+        "title": "iPhone y iPad",
+        "body": "El mismo backlog en ambos, adaptado a cada pantalla."
+      },
+      "releases": {
+        "title": "Fechas de lanzamiento",
+        "body": "La fecha exacta si se conoce, o el mes, trimestre o año anunciado hasta ahora."
+      },
+      "similar": {
+        "title": "Juegos similares",
+        "body": "Cada ficha de juego sugiere otros parecidos."
+      },
+      "ratings": {
+        "title": "Valoraciones",
+        "body": "Valora lo que has jugado y consulta tu media en Perfil."
+      },
+      "languages": {
+        "title": "Cinco idiomas",
+        "body": "Inglés, alemán, español, ucraniano y ruso."
+      }
+    }
   },
   "faq": {
     "title": "Preguntas",

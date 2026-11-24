@@ -72,8 +72,11 @@ const COVERS: { image: ImageMetadata; place: string }[] = [
       }
     </div>
 
+    {/* The category, said plainly before the headline: it is what a search
+        engine or a chatbot needs to file the page under. */}
+    <p class="mt-4 font-display text-sm font-semibold text-accent-bright">{t.eyebrow}</p>
     <h1
-      class="mt-4 max-w-[16ch] font-display text-[clamp(2rem,0.9rem+4.6vw,4.4rem)] leading-[0.98] font-extrabold tracking-[-0.032em] text-balance"
+      class="mt-2 max-w-[16ch] font-display text-[clamp(2rem,0.9rem+4.6vw,4.4rem)] leading-[0.98] font-extrabold tracking-[-0.032em] text-balance"
     >
       {t.title}
     </h1>

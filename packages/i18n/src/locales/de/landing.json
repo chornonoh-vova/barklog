@@ -4,9 +4,10 @@
     "description": "Barklog ist ein Backlog-Tracker für Videospiele auf iPhone und iPad. Markiere Spiele als Wartet, Am Spielen, Durchgespielt oder Abgebrochen, teile einen Link, um ein Spiel zu finden, und starte kostenlos mit zehn Spielen."
   },
   "hero": {
+    "eyebrow": "Backlog-Tracker für Videospiele",
     "title": "Jedes Spiel, das du noch spielen wolltest.",
     "subtitle": "Behalte im Blick, was du gerade spielst, was noch wartet, was du durchgespielt und was du abgebrochen hast. Ohne Tabelle, ohne schlechtes Gewissen.",
-    "free": "Kostenlos für zehn Spiele. Premium ist optional."
+    "free": "Kostenlos für zehn Spiele. Premium unterstützt einen Solo-Entwickler ☺️"
   },
   "badge": {
     "label": "Barklog im App Store laden"
@@ -42,6 +43,48 @@
     "cap": "Premium hebt das Limit auf, monatlich oder jährlich, mit 7 Tagen kostenloser Testphase. Das ist der ganze Unterschied.",
     "free": "Kostenlos",
     "premium": "Premium"
+  },
+  "values": {
+    "title": "Wofür Barklog steht",
+    "items": {
+      "noShame": {
+        "title": "Kein schlechtes Gewissen",
+        "body": "Abgebrochen ist eine echte Antwort. Lass ein Spiel fallen, und der Platz wird wieder frei."
+      },
+      "noTracking": {
+        "title": "Keine Werbung, kein Tracking",
+        "body": "Keine Werbung, kein Verhaltens-Tracking, und deine Daten werden nie verkauft."
+      },
+      "yours": {
+        "title": "Jederzeit löschbar",
+        "body": "Lösche Konto und Backlog jederzeit im Tab „Profil“."
+      }
+    }
+  },
+  "extras": {
+    "title": "Außerdem in Barklog",
+    "items": {
+      "ipad": {
+        "title": "iPhone und iPad",
+        "body": "Derselbe Backlog auf beiden, für jeden Bildschirm angeordnet."
+      },
+      "releases": {
+        "title": "Erscheinungstermine",
+        "body": "Genaue Daten, wenn bekannt, sonst der angekündigte Monat, das Quartal oder Jahr."
+      },
+      "similar": {
+        "title": "Ähnliche Spiele",
+        "body": "Jede Spielseite schlägt ähnliche Spiele vor."
+      },
+      "ratings": {
+        "title": "Bewertungen",
+        "body": "Bewerte, was du gespielt hast, und sieh deinen Durchschnitt im Profil."
+      },
+      "languages": {
+        "title": "Fünf Sprachen",
+        "body": "Englisch, Deutsch, Spanisch, Ukrainisch und Russisch."
+      }
+    }
   },
   "faq": {
     "title": "Fragen",
