@@ -1,13 +1,33 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { Language } from "@repo/i18n";
 
+import { homePath } from "../../src/i18n";
+
 export const DIST = path.resolve(import.meta.dirname, "../../dist");
 
-/** The built home page for a language: `/` for English, `/<lang>/` for the rest. */
-export const homeHtml = (lang: Language) =>
-  readFile(path.join(DIST, lang === "en" ? "" : lang, "index.html"), "utf8");
+const pages = new Map<Language, Promise<string>>();
+
+/** The built home page for a language, read once per test file. */
+export function homeHtml(lang: Language): Promise<string> {
+  let page = pages.get(lang);
+  if (page === undefined) {
+    page = readFile(path.join(DIST, homePath(lang), "index.html"), "utf8");
+    pages.set(lang, page);
+  }
+  return page;
+}
+
+/** Every stylesheet the build emitted, concatenated. */
+export async function builtCss(): Promise<string> {
+  const dir = path.join(DIST, "_astro");
+  const sheets = (await readdir(dir)).filter((name) => name.endsWith(".css"));
+
+  return (await Promise.all(sheets.map((name) => readFile(path.join(dir, name), "utf8")))).join(
+    "\n",
+  );
+}
 
 /** Whether a root-relative href resolves to a file the build emitted. */
 export async function resolves(href: string): Promise<boolean> {

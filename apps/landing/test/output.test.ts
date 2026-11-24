@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "vitest";
 
-const DIST = path.resolve(import.meta.dirname, "../dist");
+import { DIST } from "./support/dist";
 
 async function htmlFiles(dir: string = DIST): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });

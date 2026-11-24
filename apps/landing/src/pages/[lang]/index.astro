@@ -1,13 +1,12 @@
 ---
-import type { Language } from "@repo/i18n";
+import { type Language, LANGUAGES } from "@repo/i18n";
 import type { GetStaticPaths } from "astro";
 
 import Home from "../../components/Home.astro";
-import { LOCALES } from "../../i18n";
 
 /** English is served at the root by ../index.astro, never at /en/. */
 export const getStaticPaths = (() =>
-  LOCALES.filter((lang) => lang !== "en").map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
+  LANGUAGES.filter((lang) => lang !== "en").map((lang) => ({ params: { lang } }))) satisfies GetStaticPaths;
 
 const lang = Astro.params.lang as Language;
 ---

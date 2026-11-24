@@ -1,24 +1,21 @@
+import { LANGUAGES } from "@repo/i18n";
 import type { APIRoute } from "astro";
 
-import { homePath, LOCALES } from "../i18n";
+import { LEGAL_PATHS, SITE } from "../config";
+import { homeAlternates, homePath } from "../i18n";
 
-const SITE = "https://barklog.gg";
-
-/** English-only pages. Trailing slashes match the canonical URLs Astro.url gives them. */
-const LEGAL = ["/support/", "/terms/", "/privacy/"];
-
-const alternates = [
-  ...LOCALES.map(
-    (lang) => `<xhtml:link rel="alternate" hreflang="${lang}" href="${SITE}${homePath(lang)}"/>`,
-  ),
-  `<xhtml:link rel="alternate" hreflang="x-default" href="${SITE}/"/>`,
-].join("");
+const alternates = homeAlternates()
+  .map(
+    ({ hreflang, path }) =>
+      `<xhtml:link rel="alternate" hreflang="${hreflang}" href="${SITE}${path}"/>`,
+  )
+  .join("");
 
 /** Generated from the same locale list as the pages, so a new language cannot be left out. */
 export const GET: APIRoute = () => {
   const urls = [
-    ...LOCALES.map((lang) => `<url><loc>${SITE}${homePath(lang)}</loc>${alternates}</url>`),
-    ...LEGAL.map((pathname) => `<url><loc>${SITE}${pathname}</loc></url>`),
+    ...LANGUAGES.map((lang) => `<url><loc>${SITE}${homePath(lang)}</loc>${alternates}</url>`),
+    ...LEGAL_PATHS.map((pathname) => `<url><loc>${SITE}${pathname}</loc></url>`),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

@@ -5,11 +5,9 @@ import { Image } from "astro:assets";
 interface Props {
   image: ImageMetadata;
   alt: string;
-  /** The hero's device is above the fold, so it opts out of lazy loading. */
-  eager?: boolean;
 }
 
-const { image, alt, eager = false } = Astro.props;
+const { image, alt } = Astro.props;
 ---
 
 {/* A device, not a card: one bezel, one inset highlight, one shadow to lift it
@@ -24,7 +22,7 @@ const { image, alt, eager = false } = Astro.props;
       alt={alt}
       widths={[320, 480, 640]}
       sizes="(min-width: 640px) 17rem, 15.5rem"
-      loading={eager ? "eager" : "lazy"}
+      loading="lazy"
       class="block h-auto w-full"
     />
   </div>

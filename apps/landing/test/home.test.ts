@@ -1,11 +1,12 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { landing, LANGUAGES, resources } from "@repo/i18n";
+import { LANGUAGES, resources } from "@repo/i18n";
+import { landing } from "@repo/i18n/landing";
 import { describe, expect, it, test } from "vitest";
 
 import { decode, homeHtml } from "./support/dist";
 
-const home = () => readFile(path.resolve(import.meta.dirname, "../dist/index.html"), "utf8");
+const home = () => homeHtml("en");
 
 /** From the design's global constraints. Each is a word humans do not use here. */
 const BANNED = [
@@ -21,18 +22,6 @@ const BANNED = [
 
 test("the hero links to the App Store", async () => {
   expect(await home()).toContain("apps.apple.com");
-});
-
-test("exactly one App Store badge, and it is Apple's own artwork", async () => {
-  const html = await home();
-
-  // Apple's guidelines allow one badge per layout, which is why the masthead
-  // carries the app icon and no App Store link. The title comes from the file
-  // in the App Store Marketing Tools bundle; if it is absent, someone has
-  // recreated the badge by hand, which the guidelines forbid outright.
-  const badges = html.match(/Download_on_the_App_Store_Badge/g) ?? [];
-
-  expect(badges, "the page must carry exactly one App Store badge").toHaveLength(1);
 });
 
 test("the masthead does not link to the App Store", async () => {
@@ -148,6 +137,10 @@ test("the footer reaches the support page", async () => {
 
 describe.each(LANGUAGES)("%s App Store badge", (lang) => {
   it("is exactly one, labelled in that language", async () => {
+    // Apple's guidelines allow one badge per layout, which is why the masthead
+    // carries the app icon and no App Store link. The title comes from the file
+    // in the App Store Marketing Tools bundle; if it is absent, someone has
+    // recreated the badge by hand, which the guidelines forbid outright.
     const html = decode(await homeHtml(lang));
 
     expect(html.match(/Download_on_the_App_Store_Badge/g) ?? []).toHaveLength(1);

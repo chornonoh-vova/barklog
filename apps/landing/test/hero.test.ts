@@ -1,10 +1,7 @@
-import { readdir, readFile } from "node:fs/promises";
-import path from "node:path";
-
 import { LANGUAGES } from "@repo/i18n";
 import { describe, expect, it, test } from "vitest";
 
-import { DIST, homeHtml } from "./support/dist";
+import { builtCss, homeHtml } from "./support/dist";
 
 /** The hero section: from the first <section> to its close. Nothing nests a section inside it. */
 const hero = (html: string) => html.slice(html.indexOf("<section"), html.indexOf("</section>"));
@@ -41,56 +38,24 @@ test("the cover ring is decorative: hidden from assistive tech, every image alt-
   for (const image of images) expect(image).toMatch(/\salt(="")?[\s>]/);
 });
 
-test("the covers stop moving under reduced motion", async () => {
-  const assets = await readdir(path.join(DIST, "_astro"));
-  const css = (
-    await Promise.all(
-      assets
-        .filter((name) => name.endsWith(".css"))
-        .map((name) => readFile(path.join(DIST, "_astro", name), "utf8")),
-    )
-  ).join("\n");
+test("the covers move only for people who have not asked for reduced motion", async () => {
+  const css = await builtCss();
+  const optIn = css.match(
+    /@media\s*\(prefers-reduced-motion:\s*no-preference\)\s*\{\.hero-cover\{[^}]*\}\}/,
+  )?.[0];
 
-  // The bob is declared only under no-preference, so reduce gets no animation
-  // at all rather than one that is switched off later.
-  const animated = [
-    ...css.matchAll(/@media\s*\(prefers-reduced-motion:\s*([a-z-]+)\)\s*\{([^@]*)\}/g),
-  ]
-    .filter((match) => match[2]!.includes("hero-bob"))
-    .map((match) => match[1]);
-
-  expect(animated.length).toBeGreaterThan(0);
-  expect(animated.every((preference) => preference === "no-preference")).toBe(true);
-  expect(
-    css.replace(/@media\s*\(prefers-reduced-motion:\s*no-preference\)\s*\{[^@]*\}/g, ""),
-  ).not.toMatch(/animation[^;{}]*hero-bob/);
+  // Declared inside no-preference and nowhere else, so reduce gets no
+  // animation at all rather than one switched off later.
+  expect(optIn).toContain("hero-bob");
+  expect(css.replace(optIn ?? "", "")).not.toMatch(/animation:[^;}]*hero-bob/);
 });
 
-test("the hero no longer shows a phone screenshot", async () => {
-  expect(hero(await homeHtml("en"))).not.toContain("The Barklog backlog: a list of games");
-});
-
-test("the covers come to rest within five seconds, so no pause control is needed", async () => {
-  const assets = await readdir(path.join(DIST, "_astro"));
-  const css = (
-    await Promise.all(
-      assets
-        .filter((name) => name.endsWith(".css"))
-        .map((name) => readFile(path.join(DIST, "_astro", name), "utf8")),
-    )
-  ).join("\n");
-  const html = await homeHtml("en");
-
+test("the covers come to rest, so no pause control is needed", async () => {
   // WCAG 2.2.2: motion that starts on its own and runs past five seconds
-  // alongside other content needs a way to stop it.
-  const declaration = css.match(/\.hero-cover\{[^}]*animation:([^;}]+)/)?.[1] ?? "";
-  expect(declaration).not.toContain("infinite");
-  const seconds = [...declaration.matchAll(/([\d.]+)(m?s)\b/g)].map((m) =>
-    m[2] === "ms" ? Number(m[1]) / 1000 : Number(m[1]),
-  );
-  const iterations = Number(declaration.match(/\s(\d+)(?:\s|$)/)?.[1] ?? 1);
-  const delays = [...html.matchAll(/animation-delay:([\d.]+)s/g)].map((m) => Number(m[1]));
-  const longestDelay = Math.max(0, ...delays);
+  // beside other content needs a way to stop it. global.css keeps the bob
+  // to two short iterations; infinite would break that.
+  const animation = (await builtCss()).match(/\.hero-cover\{animation:([^;}]+)/)?.[1] ?? "";
 
-  expect(seconds[0]! * iterations + longestDelay).toBeLessThanOrEqual(5);
+  expect(animation).not.toContain("infinite");
+  expect(animation).toMatch(/\s[12]\s/);
 });

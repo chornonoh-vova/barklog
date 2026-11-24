@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "vitest";
 
-const DIST = path.resolve(import.meta.dirname, "../dist");
+import { DIST } from "./support/dist";
 
 test("the reveal script is bundled, not inline", async () => {
   const html = await readFile(path.join(DIST, "index.html"), "utf8");

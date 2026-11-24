@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { landing, LANGUAGES } from "@repo/i18n";
+import { LANGUAGES } from "@repo/i18n";
+import { landing } from "@repo/i18n/landing";
 import { expect, test } from "vitest";
 
 import { APP_STORE_URL } from "../src/config";

@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  formatLocale,
-  isLanguage,
-  landing,
-  LANGUAGES,
-  resources,
-  type Language,
-} from "../src/index.js";
+import { formatLocale, isLanguage, LANGUAGES, resources, type Language } from "../src/index.js";
+import { landing } from "../src/landing.js";
 
 type Tree = { [key: string]: string | Tree };
 

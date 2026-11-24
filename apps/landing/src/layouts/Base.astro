@@ -1,8 +1,10 @@
 ---
 import type { Language } from "@repo/i18n";
 import geistLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2";
+import { LANGUAGES } from "@repo/i18n";
+
 import { APP_STORE_ID } from "../config";
-import { homePath, LOCALES, OG_LOCALE } from "../i18n";
+import { homeAlternates, OG_LOCALE } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
@@ -41,6 +43,7 @@ const {
 } = Astro.props;
 
 const absolute = (pathname: string) => new URL(pathname, Astro.site).href;
+const pageUrl = absolute(Astro.url.pathname);
 ---
 
 <!doctype html>
@@ -50,14 +53,13 @@ const absolute = (pathname: string) => new URL(pathname, Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {canonical && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />}
+    {canonical && <link rel="canonical" href={pageUrl} />}
     {
       alternates &&
-        LOCALES.map((locale) => (
-          <link rel="alternate" hreflang={locale} href={absolute(homePath(locale))} />
+        homeAlternates().map(({ hreflang, path }) => (
+          <link rel="alternate" hreflang={hreflang} href={absolute(path)} />
         ))
     }
-    {alternates && <link rel="alternate" hreflang="x-default" href={absolute("/")} />}
 
     {/* Generated from the app's own icon (apps/mobile/assets/icon/icon.png),
         so a bookmark or a home-screen tile shows the same thing as the App
@@ -85,16 +87,16 @@ const absolute = (pathname: string) => new URL(pathname, Astro.site).href;
     {/* Link previews. One text-free image serves every language. */}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site).href} />
+    <meta property="og:url" content={pageUrl} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Barklog" />
-    <meta property="og:image" content={absolute("/og.png")} />
+    <meta property="og:image" content={absolute("/og.jpg")} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content={OG_LOCALE[lang]} />
     {
       alternates &&
-        LOCALES.filter((locale) => locale !== lang).map((locale) => (
+        LANGUAGES.filter((locale) => locale !== lang).map((locale) => (
           <meta property="og:locale:alternate" content={OG_LOCALE[locale]} />
         ))
     }

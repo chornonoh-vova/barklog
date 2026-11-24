@@ -1,10 +1,11 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { landing, LANGUAGES } from "@repo/i18n";
+import { LANGUAGES } from "@repo/i18n";
+import { landing } from "@repo/i18n/landing";
 import { describe, expect, it, test } from "vitest";
 
-import { homePath, OG_LOCALE } from "../src/i18n";
+import { faqEntries, homePath, OG_LOCALE } from "../src/i18n";
 import { decode, DIST, homeHtml } from "./support/dist";
 
 const meta = (html: string, key: string) =>
@@ -27,7 +28,7 @@ describe.each(LANGUAGES)("%s home page metadata", (lang) => {
     expect(meta(html, "og:description")).toEqual([t.meta.description]);
     expect(meta(html, "og:url")).toEqual([`https://barklog.gg${homePath(lang)}`]);
     expect(meta(html, "og:type")).toEqual(["website"]);
-    expect(meta(html, "og:image")).toEqual(["https://barklog.gg/og.png"]);
+    expect(meta(html, "og:image")).toEqual(["https://barklog.gg/og.jpg"]);
     expect(meta(html, "og:locale")).toEqual([OG_LOCALE[lang]]);
     expect(meta(html, "og:locale:alternate").sort()).toEqual(
       LANGUAGES.filter((other) => other !== lang)
@@ -62,31 +63,25 @@ describe.each(LANGUAGES)("%s home page metadata", (lang) => {
     expect(app).not.toHaveProperty("aggregateRating");
   });
 
-  it("gives the FAQ structured data exactly the visible questions and answers", async () => {
-    const html = decode(await homeHtml(lang));
+  it("gives the FAQ structured data the same entries the page shows", async () => {
+    // The visible list is checked in home.test.ts; both render faqEntries().
     const faq = jsonLd(await homeHtml(lang)).find((block) => block["@type"] === "FAQPage")!;
     const entities = faq.mainEntity as { name: string; acceptedAnswer: { text: string } }[];
-    const visible = [
-      ...html.matchAll(
-        /<summary[^>]*>\s*<span[\s\S]*?<\/span>\s*([^<]+?)\s*<\/summary>\s*<p[^>]*>([^<]+)<\/p>/g,
-      ),
-    ].map((match) => ({ q: match[1], a: match[2] }));
 
     expect(entities.map((entity) => ({ q: entity.name, a: entity.acceptedAnswer.text }))).toEqual(
-      visible,
+      faqEntries(lang),
     );
-    expect(visible).toHaveLength(Object.keys(t.faq.items).length);
   });
 });
 
 test("the social image the cards name is in the build", async () => {
-  await expect(access(path.join(DIST, "og.png"))).resolves.toBeUndefined();
+  await expect(access(path.join(DIST, "og.jpg"))).resolves.toBeUndefined();
 });
 
 test("the legal pages carry a card too, in English", async () => {
   const html = await readFile(path.join(DIST, "privacy", "index.html"), "utf8");
 
-  expect(meta(html, "og:image")).toEqual(["https://barklog.gg/og.png"]);
+  expect(meta(html, "og:image")).toEqual(["https://barklog.gg/og.jpg"]);
   expect(meta(html, "og:locale")).toEqual(["en_US"]);
   expect(meta(html, "og:locale:alternate")).toEqual([]);
 });

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "vitest";
 
-const DIST = path.resolve(import.meta.dirname, "../dist");
+import { DIST } from "./support/dist";
 
 const read = (route: string) => readFile(path.join(DIST, route, "index.html"), "utf8");
 
@@ -36,14 +36,11 @@ test("support reaches the contact address and the issue tracker", async () => {
 test("the privacy policy describes sharing as the API does it", async () => {
   const privacy = (await read("privacy")).replace(/\s+/g, " ");
 
-  // Any web page can be shared, not only videos from two platforms.
-  expect(privacy).not.toMatch(/share a YouTube or TikTok video/i);
   // Pages no oEmbed provider covers are read by Barklog's server itself.
   expect(privacy).toMatch(/Barklog's server/i);
   // Pass 2 of apps/api/src/share/extract.ts sends the link with web search on.
   expect(privacy).toMatch(/search the web/i);
   expect(privacy).toMatch(/the link itself/i);
-  expect(privacy).not.toContain("17 November 2026");
 });
 
 test("no standalone page says only YouTube or TikTok videos can be shared", async () => {

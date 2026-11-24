@@ -1,14 +1,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { landing, LANGUAGES } from "@repo/i18n";
+import { LANGUAGES } from "@repo/i18n";
+import { landing } from "@repo/i18n/landing";
 import { describe, expect, it, test } from "vitest";
 
 import { homePath } from "../src/i18n";
-import { DIST, homeHtml, resolves } from "./support/dist";
-
-const decode = (text: string) =>
-  text.replaceAll("&amp;", "&").replaceAll("&#39;", "'").replaceAll("&quot;", '"');
+import { decode, DIST, homeHtml, resolves } from "./support/dist";
 
 describe.each(LANGUAGES)("%s home page", (lang) => {
   it("declares its language", async () => {

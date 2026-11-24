@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./landing": {
+      "types": "./dist/landing.d.ts",
+      "default": "./dist/landing.js"
     }
   },
   "scripts": {

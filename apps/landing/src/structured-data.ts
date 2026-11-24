@@ -1,9 +1,7 @@
 import type { Language } from "@repo/i18n";
 
-import { APP_STORE_URL } from "./config";
+import { APP_STORE_URL, SITE } from "./config";
 import { copy, faqEntries, homePath } from "./i18n";
-
-const SITE = "https://barklog.gg";
 
 /**
  * The facts a search engine or an answer engine should be able to quote
@@ -27,7 +25,7 @@ export function homeJsonLd(lang: Language): object[] {
       applicationCategory: "LifestyleApplication",
       installUrl: APP_STORE_URL,
       sameAs: [APP_STORE_URL],
-      image: `${SITE}/og.png`,
+      image: `${SITE}/og.jpg`,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       author: { "@type": "Person", name: "Volodymyr Chornonoh" },
     },

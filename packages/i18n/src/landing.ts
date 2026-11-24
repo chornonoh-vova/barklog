@@ -8,5 +8,6 @@ import type { Language } from "./locales.js";
 /** The landing site's copy, typed from English like the app's. */
 export type LandingCopy = typeof en;
 
-/** Kept out of `resources` so the app's i18next never loads web-only copy. */
+/** Exported only from `@repo/i18n/landing`, never the package root, so the app's
+    bundle (which imports the root) never carries web-only copy. */
 export const landing: Record<Language, LandingCopy> = { en, uk, ru, de, es };

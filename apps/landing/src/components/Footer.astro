@@ -1,8 +1,8 @@
 ---
-import type { Language } from "@repo/i18n";
+import { type Language, LANGUAGES } from "@repo/i18n";
 
 import { CONTACT_EMAIL } from "../config";
-import { copy, homePath, LOCALES, NATIVE_NAMES } from "../i18n";
+import { copy, homePath, NATIVE_NAMES } from "../i18n";
 
 interface Props {
   lang: Language;
@@ -37,7 +37,7 @@ const link = "rounded-sm transition-colors hover:text-ink";
       {lang !== "en" && <p class="text-sm">{t.legalNote}</p>}
       <nav aria-label={t.language} class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
         {
-          LOCALES.map((locale) => (
+          LANGUAGES.map((locale) => (
             <a
               class:list={[link, locale === lang && "text-ink"]}
               href={homePath(locale)}

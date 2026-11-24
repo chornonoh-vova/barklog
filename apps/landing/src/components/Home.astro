@@ -26,7 +26,8 @@ const app = resources[lang].app;
 /** The four statuses, named and glossed by the app's own strings (status.* and
  * backlog.emptyFilter.*.description) rather than rewritten, so the page and the
  * app say the same thing in every language. The marks echo the SF Symbols in
- * features/game/format.ts: clock, gamecontroller, checkmark.seal, xmark.bin. */
+ * features/game/format.ts: clock, gamecontroller, checkmark.seal, xmark.bin.
+ * Abandoned is lit: it is the status other trackers leave out. */
 const STATUSES = [
   {
     key: "waiting",
@@ -49,7 +50,6 @@ const STATUSES = [
   {
     key: "abandoned",
     marks: ["M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z", "M9.5 9.5 14.5 14.5", "M14.5 9.5 9.5 14.5"],
-    lit: true,
   },
 ] as const;
 ---
@@ -83,7 +83,7 @@ const STATUSES = [
 
       <dl class="mt-8 border-y border-rule">
         {
-          STATUSES.map(({ key, marks, ...rest }) => (
+          STATUSES.map(({ key, marks }) => (
             <div class="grid gap-x-4 gap-y-1 border-t border-rule py-4 first:border-t-0 sm:grid-cols-[9.5rem_1fr] sm:items-baseline">
               <dt class="font-display text-[0.9375rem] leading-[1.55] font-semibold text-ink">
                 {/* Inline, not a flex child: a flex container takes its baseline
@@ -92,7 +92,7 @@ const STATUSES = [
                 <svg
                   class:list={[
                     "mr-2.5 inline-block h-[1.15rem] w-[1.15rem] align-[-0.27em]",
-                    "lit" in rest ? "text-accent-bright" : "text-ink-muted",
+                    key === "abandoned" ? "text-accent-bright" : "text-ink-muted",
                   ]}
                   viewBox="0 0 24 24"
                   fill="none"
@@ -108,7 +108,7 @@ const STATUSES = [
                 </svg>
                 {app.status[key]}
               </dt>
-              <dd class:list={["text-[0.9375rem] leading-[1.55]", "lit" in rest && "text-ink"]}>
+              <dd class:list={["text-[0.9375rem] leading-[1.55]", key === "abandoned" && "text-ink"]}>
                 {app.backlog.emptyFilter[key].description}
               </dd>
             </div>
