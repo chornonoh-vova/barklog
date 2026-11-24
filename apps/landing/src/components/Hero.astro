@@ -83,7 +83,7 @@ const COVERS: { image: ImageMetadata; place: string }[] = [
     {/* The badge's own p-2.5 is Apple's clear space; mt keeps the paragraph
         from crowding it further. */}
     <div class="mt-4">
-      <AppStoreBadge />
+      <AppStoreBadge lang={lang} />
     </div>
     <p class="text-[0.9375rem] text-ink-muted">{t.free}</p>
   </div>

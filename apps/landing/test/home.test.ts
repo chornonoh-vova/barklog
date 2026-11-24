@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { landing, LANGUAGES, resources } from "@repo/i18n";
 import { describe, expect, it, test } from "vitest";
@@ -144,4 +144,32 @@ test("the footer reaches the support page", async () => {
   // The App Store listing's Support URL points at /support, so a footer link
   // dropped here is the only in-site path to it going missing.
   expect(await home()).toContain('href="/support"');
+});
+
+describe.each(LANGUAGES)("%s App Store badge", (lang) => {
+  it("is exactly one, labelled in that language", async () => {
+    const html = decode(await homeHtml(lang));
+
+    expect(html.match(/Download_on_the_App_Store_Badge/g) ?? []).toHaveLength(1);
+    expect(html).toContain(`aria-label="${landing[lang].badge.label}"`);
+  });
+
+  it("is Apple's artwork for that language, or the English badge until it is added", async () => {
+    const files = await readdir(path.resolve(import.meta.dirname, "../src/assets"));
+    const own = files.includes(`app-store-badge-${lang}.svg`)
+      ? `app-store-badge-${lang}.svg`
+      : "app-store-badge.svg";
+    const svg = await readFile(path.resolve(import.meta.dirname, "../src/assets", own), "utf8");
+    const title = svg.match(/<title>([^<]+)<\/title>/)?.[1];
+
+    expect(await homeHtml(lang)).toContain(`<title>${title}</title>`);
+  });
+});
+
+test("no badge file colours itself with a style attribute the CSP would block", async () => {
+  const dir = path.resolve(import.meta.dirname, "../src/assets");
+  const badges = (await readdir(dir)).filter((name) => name.startsWith("app-store-badge"));
+
+  for (const name of badges)
+    expect(await readFile(path.join(dir, name), "utf8"), name).not.toContain('style="');
 });
