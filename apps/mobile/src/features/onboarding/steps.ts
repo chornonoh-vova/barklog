@@ -10,8 +10,7 @@ export function nextStep(step: OnboardingStep): OnboardingStep | undefined {
   return ONBOARDING_STEPS[ONBOARDING_STEPS.indexOf(step) + 1];
 }
 
-/** One icon-title-description row, Apple welcome-sheet style. Keys, not copy:
- * read at render, after i18n is set up. */
+/** Keys, not copy: read at render, after i18n is set up. */
 export interface FeatureRow {
   id: string;
   systemImage: SFSymbol;

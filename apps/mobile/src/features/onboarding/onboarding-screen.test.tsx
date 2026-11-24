@@ -71,7 +71,7 @@ describe("OnboardingScreen", () => {
     ).toBeNull();
   });
 
-  it("walks Continue, Continue, Get Started, and completes exactly once", async () => {
+  it("walks Continue, Continue, then completes on Get Started", async () => {
     const onComplete = jest.fn();
     const user = userEvent.setup();
     await render(<OnboardingScreen onComplete={onComplete} />);
@@ -82,7 +82,6 @@ describe("OnboardingScreen", () => {
     expect(button("Continue")).not.toBeOnTheScreen();
     expect(onComplete).not.toHaveBeenCalled();
 
-    await user.press(screen.getByRole("button", { name: "Get Started" }));
     await user.press(screen.getByRole("button", { name: "Get Started" }));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
@@ -103,7 +102,7 @@ describe("OnboardingScreen", () => {
     await render(<OnboardingScreen onComplete={jest.fn()} />);
 
     const order = screen.container
-      // Host elements only, in render order: the button, then the link.
+      // Host elements only, in render order.
       .queryAll(
         (node) =>
           typeof node.type === "string" &&

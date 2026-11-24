@@ -2,10 +2,11 @@ import { PlatformColor, StyleSheet, useWindowDimensions, View } from "react-nati
 
 import { Cover } from "@/components/cover";
 import { Mascot } from "@/components/mascot";
+import { COVER_ASPECT } from "@/ui/theme";
 
 import type { OnboardingCover } from "./covers";
 
-/** Where each cover's centre sits, as fractions of the hero, and its tilt. */
+/** Cover centres as fractions of the hero, with their tilt. */
 const PLACEMENTS = [
   { x: 0.2, y: 0.2, rotate: "-9deg" },
   { x: 0.8, y: 0.16, rotate: "7deg" },
@@ -13,22 +14,16 @@ const PLACEMENTS = [
   { x: 0.9, y: 0.7, rotate: "-8deg" },
 ] as const;
 
-/** Wide enough for the layout on any iPhone, capped so iPad keeps the
- * phone composition instead of stretching it. */
+/** Capped so iPad keeps the phone composition. */
 const MAX_WIDTH = 360;
 
-/**
- * The welcome screen's art: the mascot on a tile, with game covers tilted
- * around it. Height follows the window, so a short phone gives up hero before
- * the feature rows below it run out of room. A cover that never loads stays
- * `Cover`'s same-shaped placeholder.
- */
+/** Height follows the window, so short phones shrink the hero before the rows. */
 export function CoverHero({ covers }: { covers: readonly OnboardingCover[] }) {
   const window = useWindowDimensions();
   const width = Math.min(window.width - 32, MAX_WIDTH);
   const height = Math.round(Math.min(Math.max(window.height * 0.27, 150), 240));
   const coverWidth = Math.round(height * 0.27);
-  const coverHeight = (coverWidth * 4) / 3;
+  const coverHeight = coverWidth / COVER_ASPECT;
   const tile = Math.round(height * 0.5);
 
   return (
@@ -71,9 +66,8 @@ export function CoverHero({ covers }: { covers: readonly OnboardingCover[] }) {
 }
 
 const styles = StyleSheet.create({
-  // Opaque, not a translucent fill: a cover that has not loaded reads as a
-  // placeholder on a white background, and iOS can only draw the shadow from
-  // the shape (no per-frame offscreen pass, no LogBox advice) over a solid one.
+  // Opaque: iOS can only shadow a solid shape cheaply, and an unloaded cover
+  // still shows as a placeholder on white.
   cover: {
     position: "absolute",
     borderRadius: 6,

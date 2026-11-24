@@ -3,11 +3,9 @@ import { PlatformColor, StyleSheet, View } from "react-native";
 
 import { Brand } from "@/ui/theme";
 
-/** How many segments the picture fills: an example, not the user's count. */
 const FILLED = 4;
 const WIDTH = 200;
 
-/** A picture of the free-tier cap: one segment per slot, a few in use. */
 export function SlotMeter() {
   return (
     <View

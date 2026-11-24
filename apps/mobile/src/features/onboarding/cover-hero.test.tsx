@@ -6,9 +6,7 @@ import { ONBOARDING_COVERS } from "@/features/onboarding/covers";
 import { coverUrl } from "@/lib/igdb/image";
 import { ancestor, nativeViews } from "@test/queries";
 
-/** Whether a source URI is served by IGDB's image CDN: the parsed host, not a
- * substring, which `https://example.com/?images.igdb.com` would also contain.
- * The mascot's bundled source has no `uri` at all. */
+/** By parsed host, not substring: `https://example.com/?images.igdb.com` contains it too. */
 function isIgdbImage(uri: unknown): boolean {
   if (typeof uri !== "string") return false;
 
@@ -19,7 +17,7 @@ function isIgdbImage(uri: unknown): boolean {
   }
 }
 
-/** The cover images only: the mascot is an expo-image too. */
+/** The mascot is an expo-image too. */
 function coverImages() {
   return nativeViews("ViewManagerAdapter_ExpoImage").filter((image) =>
     isIgdbImage(image.props.source?.[0]?.uri),

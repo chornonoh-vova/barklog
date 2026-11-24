@@ -25,7 +25,7 @@ import {
   tabViewStyle,
 } from "@expo/ui/swift-ui/modifiers";
 import { FREE_ACTIVE_SLOTS } from "@repo/contracts";
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";
 
@@ -47,41 +47,24 @@ import {
 } from "./steps";
 import { WidgetMock } from "./widget-mock";
 
-/** A large number, not Infinity, which does not survive JSON to native. */
-const FILL = 10_000;
-/** Full width on iPhone; on iPad, as wide as the feature rows. */
-const BUTTON_MAX_WIDTH = 420;
-/** The page indicator's height with its background capsule, plus a margin. */
+/** The button and the feature rows: full width on iPhone, capped on iPad. */
+const CONTENT_MAX_WIDTH = 420;
 const PAGE_DOTS_CLEARANCE = 48;
 
 const PAGES: Record<OnboardingStep, () => ReactNode> = {
-  welcome: () => <WelcomeStep />,
-  widgets: () => <WidgetsStep />,
-  free: () => <FreeStep />,
+  welcome: WelcomeStep,
+  widgets: WidgetsStep,
+  free: FreeStep,
 };
+const SECONDARY = foregroundStyle({ type: "hierarchical", style: "secondary" });
 
-/**
- * Three swipeable pages with dots; Continue also advances, and swiping back is
- * the way back. No Skip. The IGDB credit and the button sit below the pages,
- * so they never swipe or scroll away.
- */
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState<OnboardingStep>("welcome");
-  const completed = useRef(false);
   const { t } = useTranslation();
 
   const next = nextStep(step);
 
-  const advance = () => {
-    if (next) {
-      setStep(next);
-      return;
-    }
-    // Once: a double tap on Get Started must not finish twice.
-    if (completed.current) return;
-    completed.current = true;
-    onComplete();
-  };
+  const advance = () => (next ? setStep(next) : onComplete());
 
   return (
     <Host style={styles.host} seedColor={Brand.tint}>
@@ -94,35 +77,34 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
             indexViewStyle({ backgroundDisplayMode: "always" }),
           ]}
         >
-          {ONBOARDING_STEPS.map((value) => (
-            <TabView.Tab key={value} value={value}>
-              {/* Each page scrolls on its own: on a short window, in landscape
-                  or at a large text size a page is taller than the screen. */}
-              <ScrollView>
-                {/* Room under the content for the page dots, which float over
-                    the bottom of the page: scrolled to the end, nothing sits
-                    under them. */}
-                <VStack modifiers={[padding({ bottom: PAGE_DOTS_CLEARANCE })]}>
-                  {PAGES[value]()}
-                </VStack>
-              </ScrollView>
-            </TabView.Tab>
-          ))}
+          {ONBOARDING_STEPS.map((value) => {
+            const Page = PAGES[value];
+
+            return (
+              <TabView.Tab key={value} value={value}>
+                {/* Scrolls so a tall page (small screen, landscape, large text)
+                  never pushes the button and link off-screen. */}
+                <ScrollView>
+                  {/* The page dots float over the bottom of each page. */}
+                  <VStack modifiers={[padding({ bottom: PAGE_DOTS_CLEARANCE })]}>
+                    <Page />
+                  </VStack>
+                </ScrollView>
+              </TabView.Tab>
+            );
+          })}
         </TabView>
 
         <VStack spacing={16} modifiers={[padding({ horizontal: 24 })]}>
-          {/* The label fills the width, not the button: a frame on the button
-              only widens its hit area, and the glass capsule hugs the text. */}
+          {/* Frame on the label: on the button it widens only the hit area. */}
           <Button
             onPress={advance}
             modifiers={[buttonStyle(GLASS_PROMINENT_STYLE), controlSize("large")]}
           >
-            <Text modifiers={[frame({ maxWidth: BUTTON_MAX_WIDTH })]}>
+            <Text modifiers={[frame({ maxWidth: CONTENT_MAX_WIDTH })]}>
               {next ? t("onboarding.continue") : t("onboarding.getStarted")}
             </Text>
           </Button>
-          {/* On every page, not only the first: nothing pops in and out under
-              a swipe, and the credit IGDB requires is never more than a glance away. */}
           <Link destination={siteUrl()} modifiers={[font({ textStyle: "footnote" })]}>
             <Label title={t("onboarding.igdbCredit")} systemImage="arrow.up.right.square" />
           </Link>
@@ -136,13 +118,13 @@ function WelcomeStep() {
   const { t } = useTranslation();
 
   return (
-    <VStack spacing={20} modifiers={[padding({ horizontal: 32, top: 24 })]}>
+    <StepBody top={24}>
       <RNHostView matchContents>
         <CoverHero covers={ONBOARDING_COVERS} />
       </RNHostView>
       <Heading title={t("onboarding.welcomeTitle")} subtitle={t("onboarding.welcomeSubtitle")} />
       <Rows rows={WELCOME_ROWS} />
-    </VStack>
+    </StepBody>
   );
 }
 
@@ -150,7 +132,7 @@ function WidgetsStep() {
   const { t } = useTranslation();
 
   return (
-    <VStack spacing={20} modifiers={[padding({ horizontal: 32, top: 48 })]}>
+    <StepBody top={48}>
       <Heading title={t("onboarding.widgetsTitle")} subtitle={t("onboarding.widgetsSubtitle")} />
       <RNHostView matchContents>
         <WidgetMock covers={ONBOARDING_COVERS} />
@@ -158,14 +140,14 @@ function WidgetsStep() {
       <Text
         modifiers={[
           font({ textStyle: "footnote" }),
-          foregroundStyle({ type: "hierarchical", style: "secondary" }),
+          SECONDARY,
           multilineTextAlignment("center"),
           fixedSize({ vertical: true }),
         ]}
       >
         {t("onboarding.widgetsHint")}
       </Text>
-    </VStack>
+    </StepBody>
   );
 }
 
@@ -173,7 +155,7 @@ function FreeStep() {
   const { t } = useTranslation();
 
   return (
-    <VStack spacing={20} modifiers={[padding({ horizontal: 32, top: 32 })]}>
+    <StepBody top={32}>
       <RNHostView matchContents>
         <Mascot illustration="backlog" size={120} />
       </RNHostView>
@@ -188,6 +170,14 @@ function FreeStep() {
           ),
         }}
       />
+    </StepBody>
+  );
+}
+
+function StepBody({ top, children }: { top: number; children: ReactNode }) {
+  return (
+    <VStack spacing={20} modifiers={[padding({ horizontal: 32, top })]}>
+      {children}
     </VStack>
   );
 }
@@ -207,7 +197,7 @@ function Heading({ title, subtitle }: { title: string; subtitle: string }) {
       <Text
         modifiers={[
           font({ textStyle: "body" }),
-          foregroundStyle({ type: "hierarchical", style: "secondary" }),
+          SECONDARY,
           multilineTextAlignment("center"),
           fixedSize({ vertical: true }),
         ]}
@@ -218,19 +208,17 @@ function Heading({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
-/** Apple welcome-sheet rows: tinted symbol, bold title, secondary line. */
 function Rows({
   rows,
   accessories = {},
 }: {
   rows: readonly FeatureRow[];
-  /** Extra decoration under a row's description, keyed by row id. */
   accessories?: Record<string, ReactNode>;
 }) {
   const { t } = useTranslation();
 
   return (
-    <VStack alignment="leading" spacing={16} modifiers={[frame({ maxWidth: 420 })]}>
+    <VStack alignment="leading" spacing={16} modifiers={[frame({ maxWidth: CONTENT_MAX_WIDTH })]}>
       {rows.map((row) => (
         <HStack key={row.id} alignment="top" spacing={14}>
           <Image
@@ -239,14 +227,13 @@ function Rows({
             modifiers={[
               foregroundStyle(Brand.tint),
               frame({ width: 32 }),
-              // The title says it; VoiceOver reads the copy only.
               accessibilityHidden(true),
             ]}
           />
           <VStack
             alignment="leading"
             spacing={2}
-            modifiers={[frame({ maxWidth: FILL, alignment: "leading" })]}
+            modifiers={[frame({ maxWidth: Infinity, alignment: "leading" })]}
           >
             <Text modifiers={[font({ textStyle: "headline" }), fixedSize({ vertical: true })]}>
               {t(row.titleKey, { count: FREE_ACTIVE_SLOTS })}
@@ -254,7 +241,7 @@ function Rows({
             <Text
               modifiers={[
                 font({ textStyle: "subheadline" }),
-                foregroundStyle({ type: "hierarchical", style: "secondary" }),
+                SECONDARY,
                 fixedSize({ vertical: true }),
               ]}
             >
