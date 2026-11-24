@@ -23,16 +23,17 @@ const { lang } = Astro.props;
       {
         faqEntries(lang).map(({ q, a }) => (
           <details class="group border-t border-rule first:border-t-0">
-            <summary class="flex cursor-pointer list-none items-baseline justify-between gap-6 rounded-sm py-5 font-display text-[1.0625rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
-              {q}
+            <summary class="flex cursor-pointer list-none items-baseline gap-3 rounded-sm py-5 font-display text-[1.0625rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+              {/* Right before the question, where a magnifier user still sees it. */}
               <span
-                class="shrink-0 text-accent-bright transition-transform group-open:rotate-45"
+                class="w-4 shrink-0 text-accent-bright group-open:rotate-45 motion-safe:transition-transform"
                 aria-hidden="true"
               >
                 +
               </span>
+              {q}
             </summary>
-            <p class="max-w-[60ch] pb-6 text-[1rem] leading-[1.65] text-ink-muted">{a}</p>
+            <p class="max-w-[60ch] pb-6 pl-7 text-[1rem] leading-[1.65] text-ink-muted">{a}</p>
           </details>
         ))
       }

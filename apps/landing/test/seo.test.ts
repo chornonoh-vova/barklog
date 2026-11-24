@@ -68,7 +68,7 @@ describe.each(LANGUAGES)("%s home page metadata", (lang) => {
     const entities = faq.mainEntity as { name: string; acceptedAnswer: { text: string } }[];
     const visible = [
       ...html.matchAll(
-        /<summary[^>]*>\s*([^<]+?)\s*<span[\s\S]*?<\/summary>\s*<p[^>]*>([^<]+)<\/p>/g,
+        /<summary[^>]*>\s*<span[\s\S]*?<\/span>\s*([^<]+?)\s*<\/summary>\s*<p[^>]*>([^<]+)<\/p>/g,
       ),
     ].map((match) => ({ q: match[1], a: match[2] }));
 

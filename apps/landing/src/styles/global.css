@@ -62,13 +62,15 @@
     width: min(100%, 34rem, calc(31svh * 360 / 260));
   }
 
-  /* A slow bob, a few pixels, declared only for people who have not asked
-     for reduced motion -- so for them there is no animation to switch off.
-     It moves `translate`, which composes with the wrapper's transform
-     rather than replacing its tilt. */
+  /* Two gentle bobs, a few pixels, then the covers rest. Finite on purpose:
+     motion that runs past five seconds beside other content needs a pause
+     control (WCAG 2.2.2), and the longest delay plus 2 x 2.2s stays under
+     that. Declared only for people who have not asked for reduced motion, so
+     for them there is no animation to switch off. It moves `translate`, which
+     composes with the wrapper's transform rather than replacing its tilt. */
   @media (prefers-reduced-motion: no-preference) {
     .hero-cover {
-      animation: hero-bob 7s ease-in-out infinite;
+      animation: hero-bob 2.2s ease-in-out 2;
     }
   }
 

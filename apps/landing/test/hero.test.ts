@@ -69,3 +69,28 @@ test("the covers stop moving under reduced motion", async () => {
 test("the hero no longer shows a phone screenshot", async () => {
   expect(hero(await homeHtml("en"))).not.toContain("The Barklog backlog: a list of games");
 });
+
+test("the covers come to rest within five seconds, so no pause control is needed", async () => {
+  const assets = await readdir(path.join(DIST, "_astro"));
+  const css = (
+    await Promise.all(
+      assets
+        .filter((name) => name.endsWith(".css"))
+        .map((name) => readFile(path.join(DIST, "_astro", name), "utf8")),
+    )
+  ).join("\n");
+  const html = await homeHtml("en");
+
+  // WCAG 2.2.2: motion that starts on its own and runs past five seconds
+  // alongside other content needs a way to stop it.
+  const declaration = css.match(/\.hero-cover\{[^}]*animation:([^;}]+)/)?.[1] ?? "";
+  expect(declaration).not.toContain("infinite");
+  const seconds = [...declaration.matchAll(/([\d.]+)(m?s)\b/g)].map((m) =>
+    m[2] === "ms" ? Number(m[1]) / 1000 : Number(m[1]),
+  );
+  const iterations = Number(declaration.match(/\s(\d+)(?:\s|$)/)?.[1] ?? 1);
+  const delays = [...html.matchAll(/animation-delay:([\d.]+)s/g)].map((m) => Number(m[1]));
+  const longestDelay = Math.max(0, ...delays);
+
+  expect(seconds[0]! * iterations + longestDelay).toBeLessThanOrEqual(5);
+});

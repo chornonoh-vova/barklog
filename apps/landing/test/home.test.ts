@@ -173,3 +173,13 @@ test("no badge file colours itself with a style attribute the CSP would block", 
   for (const name of badges)
     expect(await readFile(path.join(dir, name), "utf8"), name).not.toContain('style="');
 });
+
+test("each FAQ marker sits right before its question, not at the far edge", async () => {
+  const summaries = (await homeHtml("en")).match(/<summary[^>]*>[\s\S]*?<\/summary>/g) ?? [];
+
+  expect(summaries.length).toBeGreaterThan(0);
+  for (const summary of summaries) {
+    expect(summary).toMatch(/^<summary[^>]*>\s*<span[^>]*aria-hidden="true"/);
+    expect(summary).not.toContain("justify-between");
+  }
+});

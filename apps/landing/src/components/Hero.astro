@@ -25,14 +25,14 @@ const t = copy(lang).hero;
    t_cover_big and committed, since the site makes no third-party requests),
    at the same centres and tilts. Written out as whole class names rather than
    built from numbers, because Tailwind only generates classes it can read in
-   the source. The delays stagger the bob so the ring never moves in step. */
+   the source. The small delays stagger the bob so the ring never moves in step. */
 const COVERS: { image: ImageMetadata; place: string }[] = [
   { image: gta, place: "left-[17%] top-[17%] rotate-[-10deg]" },
-  { image: eldenRing, place: "left-[83%] top-[15%] rotate-[9deg] [&>img]:[animation-delay:-2.3s]" },
-  { image: clairObscur, place: "left-[7%] top-[52%] rotate-[7deg] [&>img]:[animation-delay:-4.1s]" },
-  { image: baldursGate, place: "left-[93%] top-[50%] rotate-[-7deg] [&>img]:[animation-delay:-1.2s]" },
-  { image: godOfWar, place: "left-[20%] top-[86%] rotate-[-6deg] [&>img]:[animation-delay:-3.4s]" },
-  { image: astroBot, place: "left-[80%] top-[84%] rotate-[5deg] [&>img]:[animation-delay:-5.6s]" },
+  { image: eldenRing, place: "left-[83%] top-[15%] rotate-[9deg] [&>img]:[animation-delay:0.2s]" },
+  { image: clairObscur, place: "left-[7%] top-[52%] rotate-[7deg] [&>img]:[animation-delay:0.4s]" },
+  { image: baldursGate, place: "left-[93%] top-[50%] rotate-[-7deg] [&>img]:[animation-delay:0.1s]" },
+  { image: godOfWar, place: "left-[20%] top-[86%] rotate-[-6deg] [&>img]:[animation-delay:0.5s]" },
+  { image: astroBot, place: "left-[80%] top-[84%] rotate-[5deg] [&>img]:[animation-delay:0.3s]" },
 ];
 ---
 
@@ -73,7 +73,7 @@ const COVERS: { image: ImageMetadata; place: string }[] = [
     </div>
 
     <h1
-      class="mt-4 max-w-[16ch] font-display text-[clamp(2rem,6.4vw,4.4rem)] leading-[0.98] font-extrabold tracking-[-0.032em] text-balance"
+      class="mt-4 max-w-[16ch] font-display text-[clamp(2rem,0.9rem+4.6vw,4.4rem)] leading-[0.98] font-extrabold tracking-[-0.032em] text-balance"
     >
       {t.title}
     </h1>
