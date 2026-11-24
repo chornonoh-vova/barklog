@@ -1,8 +1,10 @@
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 
+import { SITE } from "./src/config.ts";
+
 export default defineConfig({
-  site: "https://barklog.gg",
+  site: SITE,
   output: "static",
   build: {
     // NOT the default of "auto", which inlines stylesheets under ~4KB into a

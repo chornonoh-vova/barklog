@@ -1,46 +1,93 @@
 ---
-import backlog from "../assets/screenshots/backlog.png";
+import type { Language } from "@repo/i18n";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+import astroBot from "../assets/hero-covers/astro-bot.jpg";
+import baldursGate from "../assets/covers/baldurs-gate-iii.jpg";
+import clairObscur from "../assets/hero-covers/clair-obscur-expedition-33.jpg";
+import eldenRing from "../assets/hero-covers/elden-ring.jpg";
+import godOfWar from "../assets/hero-covers/god-of-war.jpg";
+import gta from "../assets/hero-covers/grand-theft-auto-vi.jpg";
+import mascot from "../assets/mascot.webp";
+import { copy } from "../i18n";
 import AppStoreBadge from "./AppStoreBadge.astro";
-import Screenshot from "./Screenshot.astro";
+
+interface Props {
+  lang: Language;
+}
+
+const { lang } = Astro.props;
+const t = copy(lang).hero;
+
+/* The onboarding screen's composition (apps/mobile/src/features/onboarding/
+   cover-hero.tsx): the same six covers (covers.ts, fetched once from IGDB at
+   t_cover_big and committed, since the site makes no third-party requests),
+   at the same centres and tilts. Written out as whole class names rather than
+   built from numbers, because Tailwind only generates classes it can read in
+   the source. The small delays stagger the bob so the ring never moves in step. */
+const COVERS: { image: ImageMetadata; place: string }[] = [
+  { image: gta, place: "left-[17%] top-[17%] rotate-[-10deg]" },
+  { image: eldenRing, place: "left-[83%] top-[15%] rotate-[9deg] [&>img]:[animation-delay:0.2s]" },
+  { image: clairObscur, place: "left-[7%] top-[52%] rotate-[7deg] [&>img]:[animation-delay:0.4s]" },
+  { image: baldursGate, place: "left-[93%] top-[50%] rotate-[-7deg] [&>img]:[animation-delay:0.1s]" },
+  { image: godOfWar, place: "left-[20%] top-[86%] rotate-[-6deg] [&>img]:[animation-delay:0.5s]" },
+  { image: astroBot, place: "left-[80%] top-[84%] rotate-[5deg] [&>img]:[animation-delay:0.3s]" },
+];
 ---
 
 <section class="relative isolate">
-  {/* Clipped by its own box rather than the section, so the device below can
-      still overhang on wide screens without being cut off. The box starts a
-      masthead's height above the section so the glow reaches the top of the
-      page rather than stopping in a hard line under the wordmark. */}
-  <div class="pointer-events-none absolute inset-x-0 -top-30 -z-10 h-[50rem] overflow-hidden">
-    <div class="hero-glow absolute -top-52 left-1/2 h-[50rem] w-[78rem] -translate-x-1/2"></div>
+  {/* Clipped by its own box so the glow reaches the top of the page without
+      the section having to hide overflow. */}
+  <div class="pointer-events-none absolute inset-x-0 -top-30 -z-10 h-[46rem] overflow-hidden">
+    <div class="hero-glow absolute -top-40 left-1/2 h-[46rem] w-[70rem] -translate-x-1/2"></div>
   </div>
 
-  <div class="mx-auto max-w-[70rem] px-6 md:px-10">
-    <div class="grid gap-14 pt-8 pb-20 lg:grid-cols-12 lg:items-end lg:gap-8 lg:pt-16 lg:pb-24">
-      <div class="lg:col-span-7 lg:pb-6">
-        <h1
-          class="max-w-[15ch] font-display text-[clamp(2.65rem,7.4vw,4.9rem)] leading-[0.94] font-extrabold tracking-[-0.032em] text-balance"
-        >
-          Every game you meant to get back to.
-        </h1>
-        <p class="mt-8 max-w-[52ch] text-[1.1875rem] leading-[1.62] text-ink-muted">
-          Barklog keeps your backlog in one place: what you're playing, what's waiting, what you
-          finished, and what you gave up on. No spreadsheet, no shame.
-        </p>
-        {/* -ml-2.5 pulls the badge's own clear-space padding back to the text
-            grid, so the badge edge lines up with the copy above it rather than
-            the padding doing it. */}
-        <div class="mt-8 -ml-2.5 flex flex-wrap items-center gap-x-4 gap-y-3">
-          <AppStoreBadge />
-          <p class="text-[0.9375rem] text-ink-muted">Free. Premium is optional.</p>
-        </div>
-      </div>
-
-      <div class="flex justify-center lg:col-span-5 lg:justify-end">
-        <Screenshot
-          image={backlog}
-          alt="The Barklog backlog: a list of games, each row showing its cover, title and current status, with the games in progress at the top."
-          eager
-        />
-      </div>
+  <div class="mx-auto flex max-w-[70rem] flex-col items-center px-4 pt-2 pb-16 text-center sm:px-6 md:px-10 lg:pt-6 lg:pb-24">
+    {/* Decorative: the headline below says what the page is. The ring is
+        sized in global.css so short phones shrink it before the text. */}
+    <div class="hero-ring relative" data-hero-ring aria-hidden="true">
+      <Image
+        class="absolute top-[40%] left-1/2 w-[43%] -translate-1/2"
+        src={mascot}
+        alt=""
+        widths={[200, 320, 480]}
+        sizes="(min-width: 1024px) 13rem, 43vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+      {
+        COVERS.map(({ image, place }) => (
+          <span class:list={["absolute w-[14.5%] -translate-1/2", place]}>
+            <Image
+              class="hero-cover block aspect-[3/4] w-full rounded-[0.4rem] object-cover shadow-[0_10px_24px_-6px_rgba(0,0,0,0.7)] ring-1 ring-white/10"
+              src={image}
+              alt=""
+              widths={[96, 160]}
+              sizes="(min-width: 1024px) 5rem, 15vw"
+              loading="eager"
+            />
+          </span>
+        ))
+      }
     </div>
+
+    {/* The category, said plainly before the headline: it is what a search
+        engine or a chatbot needs to file the page under. */}
+    <p class="mt-4 font-display text-sm font-semibold text-accent-bright">{t.eyebrow}</p>
+    <h1
+      class="mt-2 max-w-[16ch] font-display text-[clamp(2rem,0.9rem+4.6vw,4.4rem)] leading-[0.98] font-extrabold tracking-[-0.032em] text-balance"
+    >
+      {t.title}
+    </h1>
+    <p class="mt-4 max-w-[46ch] text-[1rem] leading-[1.5] text-ink-muted sm:text-[1.1875rem]">
+      {t.subtitle}
+    </p>
+    {/* The badge's own p-2.5 is Apple's clear space; mt keeps the paragraph
+        from crowding it further. */}
+    <div class="mt-4">
+      <AppStoreBadge lang={lang} />
+    </div>
+    <p class="text-[0.9375rem] text-ink-muted">{t.free}</p>
   </div>
 </section>

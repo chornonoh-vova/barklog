@@ -1,0 +1,33 @@
+# Everyone is welcome to read and index barklog.gg.
+User-agent: *
+Allow: /
+
+# AI search and assistant crawlers, named so there is no doubt they may read it too.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://barklog.gg/sitemap.xml

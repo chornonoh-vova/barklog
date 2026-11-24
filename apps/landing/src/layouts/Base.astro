@@ -1,5 +1,10 @@
 ---
+import type { Language } from "@repo/i18n";
 import geistLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2";
+import { LANGUAGES } from "@repo/i18n";
+
+import { APP_STORE_ID } from "../config";
+import { homeAlternates, OG_LOCALE } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
@@ -17,19 +22,44 @@ interface Props {
       pages rely on this staying false: they ship zero JavaScript, and a test
       asserts it. */
   motion?: boolean;
+  /** The page's language; English for everything that is not a localized home page. */
+  lang?: Language;
+  /** On for the localized home pages only: they are the one page in five languages,
+      so each names the others (and x-default, the English root) as alternates. */
+  alternates?: boolean;
+  /** JSON-LD objects, each written as a data block browsers never execute. */
+  jsonLd?: object[];
 }
 
-const { title, description, preloadFonts = true, canonical = true, motion = false } = Astro.props;
+const {
+  title,
+  description,
+  preloadFonts = true,
+  canonical = true,
+  motion = false,
+  lang = "en",
+  alternates = false,
+  jsonLd = [],
+} = Astro.props;
+
+const absolute = (pathname: string) => new URL(pathname, Astro.site).href;
+const pageUrl = absolute(Astro.url.pathname);
 ---
 
 <!doctype html>
-<html lang="en" class="bg-ground text-ink">
+<html lang={lang} class="bg-ground text-ink">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {canonical && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />}
+    {canonical && <link rel="canonical" href={pageUrl} />}
+    {
+      alternates &&
+        homeAlternates().map(({ hreflang, path }) => (
+          <link rel="alternate" hreflang={hreflang} href={absolute(path)} />
+        ))
+    }
 
     {/* Generated from the app's own icon (apps/mobile/assets/icon/icon.png),
         so a bookmark or a home-screen tile shows the same thing as the App
@@ -53,6 +83,34 @@ const { title, description, preloadFonts = true, canonical = true, motion = fals
         required even same-origin: a font request is always CORS-mode, and
         without it the browser preloads the file twice. */}
     {preloadFonts && <link rel="preload" as="font" type="font/woff2" href={geistLatin} crossorigin />}
+
+    {/* Link previews. One text-free image serves every language. */}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Barklog" />
+    <meta property="og:image" content={absolute("/og.jpg")} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={OG_LOCALE[lang]} />
+    {
+      alternates &&
+        LANGUAGES.filter((locale) => locale !== lang).map((locale) => (
+          <meta property="og:locale:alternate" content={OG_LOCALE[locale]} />
+        ))
+    }
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {/* Safari on iOS draws its own GET/OPEN strip from this. It is Apple's
+        UI, not a second badge. */}
+    <meta name="apple-itunes-app" content={`app-id=${APP_STORE_ID}`} />
+
+    {
+      jsonLd.map((item) => (
+        <script type="application/ld+json" is:inline set:html={JSON.stringify(item).replaceAll("<", "\\u003c")} />
+      ))
+    }
   </head>
   <body class="font-body antialiased">
     <slot />

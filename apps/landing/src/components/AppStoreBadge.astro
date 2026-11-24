@@ -25,14 +25,31 @@
    Rendered at its native 40px -- Apple's stated onscreen minimum. The
    wrapper's padding is the required clear space, one quarter of the badge
    height. */
-import Badge from "../assets/app-store-badge.svg";
+import type { Language } from "@repo/i18n";
+
+import EnglishBadge from "../assets/app-store-badge.svg";
+
 import { APP_STORE_URL } from "../config";
+import { copy } from "../i18n";
+
+interface Props {
+  lang?: Language;
+}
+
+const { lang = "en" } = Astro.props;
+
+/* Apple publishes the badge in each language, and its guidelines want the
+   localized one on a localized page. Each lives beside the English file as
+   app-store-badge-<lang>.svg, with the same fill conversion. A language whose
+   file has not been added yet falls back to the English badge, which the
+   guidelines also allow, rather than failing the build. */
+const localized = import.meta.glob<typeof EnglishBadge>("../assets/app-store-badge-*.svg", {
+  eager: true,
+  import: "default",
+});
+const Badge = localized[`../assets/app-store-badge-${lang}.svg`] ?? EnglishBadge;
 ---
 
-<a
-  class="inline-block rounded-lg p-2.5"
-  href={APP_STORE_URL}
-  aria-label="Download Barklog on the App Store"
->
+<a class="inline-block rounded-lg p-2.5" href={APP_STORE_URL} aria-label={copy(lang).badge.label}>
   <Badge />
 </a>

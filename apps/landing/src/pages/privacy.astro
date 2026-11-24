@@ -6,7 +6,7 @@ import { CONTACT_EMAIL } from "../config";
 <Legal
   title="Privacy policy"
   description="What Barklog collects, who it shares it with, and how to get rid of it."
-  updated="17 November 2026"
+  updated="24 November 2026"
 >
   <p>
     Barklog is made and run by Volodymyr Chornonoh, an individual developer based in Ukraine.
@@ -42,21 +42,33 @@ import { CONTACT_EMAIL } from "../config";
     behavioural tracking.
   </p>
 
-  <h2>Sharing a video</h2>
+  <h2>Sharing a link</h2>
   <p>
-    When you share a YouTube or TikTok video to Barklog, the API asks that platform's own
-    oEmbed service for the video's public title and channel name, passing nothing but the
-    video's URL — no cookie, account, or device information rides along. It sends
-    <em>only the title and channel name</em> to OpenAI, which guesses which game it's about.
-    The video itself never leaves the platform it's on, and nothing identifying you is included
-    in either request.
+    You can share a link to any web page to Barklog: a video, a review, a store page. To find
+    out what the page is called, the API first asks the site's own oEmbed service, if it has
+    one (YouTube and TikTok do). If it doesn't, Barklog's server opens the page itself and reads
+    its title from the page. Either way the request carries nothing but the link — no cookie,
+    account, or device information rides along, and it comes from Barklog's server, not your
+    phone.
   </p>
   <p>
-    OpenAI keeps that request for 30 days. I read those back to see what the guess was and
+    It then sends the page's title, its author or channel, and the site's name to OpenAI, which
+    guesses which game it's about. If that isn't enough, it sends those again together with
+    <em>the link itself</em>, and OpenAI may search the web for that link to work out the game.
+    Nothing identifying you is included in any of these requests.
+  </p>
+  <p>
+    If the page has a preview image, the app shows it while you pick the game. That preview
+    image loads straight from the shared site's image server to your device, so that server
+    sees your IP address and which image was asked for, the same as opening the page would.
+  </p>
+  <p>
+    OpenAI keeps those requests for 30 days. I read them back to see what the guess was and
     whether the feature is getting better or worse — there's no other way to tell a change I've
-    made from a change in the model. It is <em>not</em> used to train OpenAI's models: that's a
-    separate setting on my account, and it's switched off. A video title and a channel name is
-    all the stored request holds, so there's nothing in it that points back to you.
+    made from a change in the model. They are <em>not</em> used to train OpenAI's models: that's
+    a separate setting on my account, and it's switched off. A page title, an author, a site
+    name and sometimes the link are all a stored request holds, so there's nothing in it that
+    points back to you.
   </p>
 
   <h2>Sending feedback</h2>
@@ -78,7 +90,10 @@ import { CONTACT_EMAIL } from "../config";
     <li><strong>Clerk</strong> — accounts and sign-in.</li>
     <li><strong>RevenueCat</strong> — subscription state.</li>
     <li><strong>Apple</strong> — the purchase itself, and billing.</li>
-    <li><strong>OpenAI</strong> — the video title and channel name described above.</li>
+    <li>
+      <strong>OpenAI</strong> — the page title, author, site name and, when needed, the shared link
+      described above.
+    </li>
     <li><strong>PlanetScale</strong> — the database your backlog lives in.</li>
     <li>
       <strong>IGDB and Twitch</strong> — game data, and the cover art and screenshots

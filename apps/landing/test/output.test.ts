@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "vitest";
 
-const DIST = path.resolve(import.meta.dirname, "../dist");
+import { DIST } from "./support/dist";
 
 async function htmlFiles(dir: string = DIST): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -18,8 +18,11 @@ async function htmlFiles(dir: string = DIST): Promise<string[]> {
   return found.flat();
 }
 
-/** A <script> with no src= and a non-empty body — what 'unsafe-inline' would be for. */
-const INLINE_SCRIPT = /<script(?![^>]*\ssrc=)[^>]*>[\s\S]*?<\/script>/i;
+/** A <script> with no src= and a non-empty body — what 'unsafe-inline' would be for.
+ * The one exemption is a JSON-LD data block: browsers never execute
+ * type="application/ld+json", so script-src does not apply to it. */
+const INLINE_SCRIPT =
+  /<script(?![^>]*\ssrc=)(?![^>]*\stype="application\/ld\+json")[^>]*>[\s\S]*?<\/script>/i;
 const INLINE_STYLE = /<style[^>]*>[\s\S]*?<\/style>/i;
 // style-src has no 'unsafe-inline', and without a style-src-attr of its own
 // that blocks the style ATTRIBUTE too -- not just <style>. A blocked
@@ -56,6 +59,12 @@ test("no element carries a style attribute", async () => {
       `${path.relative(DIST, file)} has a style="" attribute, which style-src 'self' blocks. On an SVG, use presentation attributes (fill="#fff") instead.`,
     ).toBe(false);
   }
+});
+
+test("the inline-script guard exempts JSON-LD and nothing else", () => {
+  expect(INLINE_SCRIPT.test('<script type="application/ld+json">{}</script>')).toBe(false);
+  expect(INLINE_SCRIPT.test("<script>alert(1)</script>")).toBe(true);
+  expect(INLINE_SCRIPT.test('<script type="module">import "x";</script>')).toBe(true);
 });
 
 test("no page carries an inline <script>", async () => {
