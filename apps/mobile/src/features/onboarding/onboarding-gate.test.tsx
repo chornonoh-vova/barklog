@@ -28,7 +28,10 @@ describe("OnboardingGate", () => {
     clerk.userId = null;
     await renderGate();
 
-    await userEvent.setup().press(await screen.findByRole("button", { name: "Skip" }));
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Continue" }));
+    await user.press(screen.getByRole("button", { name: "Continue" }));
+    await user.press(screen.getByRole("button", { name: "Get Started" }));
 
     expect(screen.getByText("The app")).toBeOnTheScreen();
     await waitFor(async () => expect(await readHasSeenOnboarding()).toBe(true));
