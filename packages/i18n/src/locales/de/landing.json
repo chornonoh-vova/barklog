@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "title": "Barklog: Spiele-Tracker – Dein Gaming-Backlog",
+    "description": "Barklog ist ein Backlog-Tracker für Videospiele auf iPhone und iPad. Markiere Spiele als Wartet, Am Spielen, Durchgespielt oder Abgebrochen, teile einen Link, um ein Spiel zu finden, und starte kostenlos mit zehn Spielen."
+  },
+  "hero": {
+    "title": "Jedes Spiel, das du noch spielen wolltest.",
+    "subtitle": "Behalte im Blick, was du gerade spielst, was noch wartet, was du durchgespielt und was du abgebrochen hast. Ohne Tabelle, ohne schlechtes Gewissen.",
+    "free": "Kostenlos für zehn Spiele. Premium ist optional."
+  },
+  "badge": {
+    "label": "Barklog im App Store laden"
+  },
+  "share": {
+    "eyebrow": "Link teilen",
+    "title": "Irgendwo ein Spiel gesehen? Teile es.",
+    "body": "Ein Spiel in einem Clip, einem Test oder auf einer Shopseite entdeckt, aber du kennst den Namen nicht? Teile den Link mit Barklog. Die App findet heraus, welches Spiel das ist, zeigt dir die Treffer, und du merkst dir das richtige für später.",
+    "alt": "Barklog, nachdem ein Link geteilt wurde: oben das geteilte Video, darunter die Spiele, die es sein könnten, jeweils mit Cover und Erscheinungsjahr zur Auswahl."
+  },
+  "statuses": {
+    "eyebrow": "Dein Backlog",
+    "title": "Vier ehrliche Status",
+    "body": "Die meisten Tracker gehen davon aus, dass du alles durchspielst. Barklog nicht. Abgebrochen ist eine echte Antwort, nur einen Tipp entfernt. Spiele, die du gespielt hast, kannst du auch bewerten.",
+    "alt": "Die Seite eines Spiels in Barklog: Cover, Plattformen, Erscheinungsdatum und Beschreibung über einer Auswahl für den Status und einer Bewertung."
+  },
+  "explore": {
+    "eyebrow": "Entdecken",
+    "title": "Finde das nächste Spiel",
+    "body": "Sieh dir an, was beliebt ist und was bald erscheint, oder suche ein Spiel nach Namen. Tippe auf ein Spiel für Plattformen, Erscheinungsdatum, Beschreibung und ähnliche Spiele.",
+    "alt": "Der Tab „Entdecken“ in Barklog: Reihen von Spielecovern unter Überschriften für beliebte und kommende Spiele."
+  },
+  "widgets": {
+    "eyebrow": "Widgets und Statistik",
+    "title": "Deine Spiele auf dem Home-Bildschirm",
+    "body": "Füge ein Widget für einen beliebigen Status hinzu und öffne Spiele mit einem Tipp. Dein Profil zeigt, wie viele Spiele in jedem Status sind, und deine Durchschnittsbewertung.",
+    "alt": "Ein iPhone-Home-Bildschirm mit Barklog-Widgets, die die Cover der angefangenen Spiele zeigen."
+  },
+  "pricing": {
+    "eyebrow": "Preise",
+    "title": "Zehn auf einmal, kostenlos",
+    "body": "Barklog ist kostenlos für zehn unfertige Spiele: die wartenden und die, die du gerade spielst. Spiel eins durch oder gib zu, dass du damit fertig bist, und der Platz wird wieder frei.",
+    "cap": "Premium hebt das Limit auf, monatlich oder jährlich, mit 7 Tagen kostenloser Testphase. Das ist der ganze Unterschied.",
+    "free": "Kostenlos",
+    "premium": "Premium"
+  },
+  "faq": {
+    "title": "Fragen",
+    "items": {
+      "whatIs": {
+        "q": "Was ist Barklog?",
+        "a": "Barklog ist eine App für iPhone und iPad, mit der du deinen Videospiel-Backlog führst. Jedes Spiel hat einen Status – Wartet, Am Spielen, Durchgespielt oder Abgebrochen –, und gespielte Spiele kannst du bewerten."
+      },
+      "free": {
+        "q": "Ist Barklog kostenlos?",
+        "a": "Ja. Du kannst bis zu zehn wartende oder angefangene Spiele kostenlos speichern und beliebig viele durchgespielte und abgebrochene."
+      },
+      "premium": {
+        "q": "Was ändert Premium?",
+        "a": "Barklog Premium hebt das Limit von zehn Spielen auf und ändert sonst nichts. Es ist ein monatliches oder jährliches Abo über den App Store, beide mit 7 Tagen kostenloser Testphase."
+      },
+      "android": {
+        "q": "Gibt es eine Android-Version?",
+        "a": "Nein. Barklog läuft auf iPhone und iPad."
+      },
+      "data": {
+        "q": "Woher kommen die Spieleinfos?",
+        "a": "Alle Cover, Erscheinungsdaten, Plattformen, Genres und Beschreibungen stammen von IGDB, einer von der Community gepflegten Spieledatenbank."
+      },
+      "sharing": {
+        "q": "Wie funktioniert das Teilen eines Links?",
+        "a": "Teile aus einer beliebigen App einen Link zu einem Clip, einem Test oder einer Shopseite. Barklog liest Titel, Autor und Website der Seite und fragt ein KI-Modell, um welches Spiel es geht; reicht das nicht, sucht das Modell den Link im Web. Über dich wird dabei nichts gesendet."
+      },
+      "deleteAccount": {
+        "q": "Wie lösche ich mein Konto?",
+        "a": "Öffne den Tab „Profil“, tippe auf „Konto löschen“ und bestätige. Konto und Backlog werden sofort gelöscht. Ein App-Store-Abo wird dadurch nicht gekündigt; das kündigst du in deinen Apple-Abo-Einstellungen."
+      }
+    }
+  },
+  "credit": {
+    "before": "Alle Cover, Erscheinungsdaten, Plattformen und Beschreibungen stammen von ",
+    "link": "IGDB",
+    "after": ", einer von der Community gepflegten Spieledatenbank."
+  },
+  "footer": {
+    "madeBy": "Barklog, entwickelt von Volodymyr Chornonoh",
+    "language": "Sprache",
+    "legalNote": "Support, Nutzungsbedingungen und Datenschutz sind auf Englisch."
+  }
+}

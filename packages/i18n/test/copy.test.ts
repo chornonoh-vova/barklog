@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatLocale, isLanguage, LANGUAGES, resources, type Language } from "../src/index.js";
+import {
+  formatLocale,
+  isLanguage,
+  landing,
+  LANGUAGES,
+  resources,
+  type Language,
+} from "../src/index.js";
 
 type Tree = { [key: string]: string | Tree };
 
@@ -79,6 +86,32 @@ describe.each(LANGUAGES)("%s copy", (lng) => {
         expect({ [key]: tokens(text) }).toEqual({ [key]: tokens(englishText ?? "") });
       }
     });
+  });
+});
+
+describe.each(LANGUAGES)("%s landing copy", (lng) => {
+  const english = leaves(landing.en as Tree);
+  const translated = leaves(landing[lng] as Tree);
+
+  it("has every key English has, and no others", () => {
+    expect([...translated.keys()].sort()).toEqual([...english.keys()].sort());
+  });
+
+  it("has no empty string", () => {
+    for (const [key, text] of translated) expect({ [key]: text.trim() }).not.toEqual({ [key]: "" });
+  });
+
+  it("keeps every placeholder and tag of the English copy", () => {
+    for (const [key, text] of translated) {
+      expect({ [key]: tokens(text) }).toEqual({ [key]: tokens(english.get(key) ?? "") });
+    }
+  });
+});
+
+describe("landing page titles", () => {
+  it("are the store title and subtitle", () => {
+    expect(landing.en.meta.title).toBe("Barklog: Video Game Tracker – Organize Your Backlog");
+    expect(landing.de.meta.title).toBe("Barklog: Spiele-Tracker – Dein Gaming-Backlog");
   });
 });
 

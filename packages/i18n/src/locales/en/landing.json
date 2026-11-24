@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "title": "Barklog: Video Game Tracker – Organize Your Backlog",
+    "description": "Barklog is a video game backlog tracker for iPhone and iPad. Mark games Waiting, Playing, Completed or Abandoned, share a link to find a game, and start free with ten games."
+  },
+  "hero": {
+    "title": "Every game you meant to get back to.",
+    "subtitle": "Keep track of what you're playing, what's waiting, what you finished and what you gave up on. No spreadsheet, no shame.",
+    "free": "Free for ten games. Premium is optional."
+  },
+  "badge": {
+    "label": "Download Barklog on the App Store"
+  },
+  "share": {
+    "eyebrow": "Share a link",
+    "title": "Saw a game somewhere? Share it.",
+    "body": "Spotted a game in a clip, a review or a store page and can't name it? Share the link to Barklog. It works out which game that is, hands you the matches, and you save the right one for later.",
+    "alt": "Barklog after a link was shared to it: the shared video at the top and, under it, the games it might be, each with its cover and release year, ready to pick."
+  },
+  "statuses": {
+    "eyebrow": "Your backlog",
+    "title": "Four honest statuses",
+    "body": "Most trackers assume you'll finish everything. Barklog doesn't. Abandoned is a real answer, and it's one tap away. Rate the games you've played, too.",
+    "alt": "A game's page in Barklog: its cover, platforms, release date and summary above a control for setting the game's status and a rating."
+  },
+  "explore": {
+    "eyebrow": "Explore",
+    "title": "Find the next one",
+    "body": "See what's popular and what's coming soon, or look up a game by name. Tap one for its platforms, release date, summary and similar games.",
+    "alt": "Barklog's Explore tab: rows of game covers under headings for popular and upcoming games."
+  },
+  "widgets": {
+    "eyebrow": "Widgets and stats",
+    "title": "Your games, on your Home Screen",
+    "body": "Add a widget for any status and tap a game to open it. Your Profile shows how many games sit in each status and your average rating.",
+    "alt": "An iPhone Home Screen with Barklog widgets showing the covers of the games in progress."
+  },
+  "pricing": {
+    "eyebrow": "Pricing",
+    "title": "Ten at a time, free",
+    "body": "Barklog is free for ten unfinished games: the ones waiting, and the ones you're in the middle of. Finish one, or admit you're done with it, and the spot comes back.",
+    "cap": "Premium takes the cap off, monthly or yearly, with a 7-day free trial. That's the whole difference.",
+    "free": "Free",
+    "premium": "Premium"
+  },
+  "faq": {
+    "title": "Questions",
+    "items": {
+      "whatIs": {
+        "q": "What is Barklog?",
+        "a": "Barklog is an iPhone and iPad app for keeping a video game backlog. Every game you add is Waiting, Playing, Completed or Abandoned, and you can rate the ones you've played."
+      },
+      "free": {
+        "q": "Is Barklog free?",
+        "a": "Yes. You can keep up to ten Waiting or Playing games for free, and as many Completed and Abandoned games as you like."
+      },
+      "premium": {
+        "q": "What does Premium change?",
+        "a": "Barklog Premium removes the ten-game cap and nothing else. It's a monthly or yearly subscription through the App Store, and both start with a 7-day free trial."
+      },
+      "android": {
+        "q": "Is there an Android version?",
+        "a": "No. Barklog runs on iPhone and iPad."
+      },
+      "data": {
+        "q": "Where does the game information come from?",
+        "a": "Every cover, release date, platform, genre and summary comes from IGDB, a games database its community maintains."
+      },
+      "sharing": {
+        "q": "How does sharing a link work?",
+        "a": "Share a link to a clip, review or store page from any app. Barklog reads the page's title, author and site and asks an AI model which game it's about; if that isn't enough, the model looks the link up on the web. Nothing about you is sent with it."
+      },
+      "deleteAccount": {
+        "q": "How do I delete my account?",
+        "a": "Open the Profile tab, tap Delete Account and confirm. Your account and backlog are deleted right away. Deleting your account does not cancel an App Store subscription; cancel that in your Apple subscription settings."
+      }
+    }
+  },
+  "credit": {
+    "before": "Every cover, release date, platform and summary comes from ",
+    "link": "IGDB",
+    "after": ", a games database maintained by its community."
+  },
+  "footer": {
+    "madeBy": "Barklog, made by Volodymyr Chornonoh",
+    "language": "Language",
+    "legalNote": "Support, terms and privacy pages are in English."
+  }
+}
