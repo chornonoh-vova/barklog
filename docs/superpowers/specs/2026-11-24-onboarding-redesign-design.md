@@ -114,10 +114,10 @@ Completing screen 3 calls the existing `onComplete` (marks
 
 ### Screen 1: Welcome
 
-- **Hero:** the default mascot centred on a rounded tile, with the hand-picked
-  covers (3:4, rounded corners, slight rotations) floating around it, as in
-  the Oyelo welcome screen. Four or six covers, whichever fits (see Left to
-  the builder).
+- **Hero:** the default mascot on its own (no tile behind it), with all six
+  hand-picked covers (3:4, rounded corners, slight rotations) in two arcs of
+  three around it, as in the Oyelo welcome screen, and a tilted brand-tinted
+  gamepad floating just below the mascot, above the title.
 - **Title:** "Welcome to Barklog". **Subtitle:** "Every game you mean to play,
   in one place."
 - **Feature rows** (SF Symbol in brand tint, bold title, secondary
