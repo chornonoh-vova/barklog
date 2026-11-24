@@ -28,3 +28,8 @@ export const OG_LOCALE: Record<Language, string> = {
   de: "de_DE",
   es: "es_ES",
 };
+
+/** The FAQ in display order, shared by the visible list and the FAQPage structured data. */
+export function faqEntries(lang: Language): { q: string; a: string }[] {
+  return Object.values(copy(lang).faq.items);
+}

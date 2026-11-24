@@ -1,0 +1,41 @@
+---
+import type { Language } from "@repo/i18n";
+
+import { copy, faqEntries } from "../i18n";
+
+interface Props {
+  lang: Language;
+}
+
+const { lang } = Astro.props;
+---
+
+{/* Plain <details>: every answer is in the HTML, readable without JavaScript
+    and by any crawler, and the same entries feed the FAQPage structured data. */}
+<section class="border-t border-rule py-20 md:py-28" data-reveal>
+  <div class="mx-auto max-w-[70rem] px-6 md:px-10">
+    <h2
+      class="font-display text-[clamp(1.9rem,3.7vw,2.9rem)] leading-[1.04] font-bold tracking-[-0.022em]"
+    >
+      {copy(lang).faq.title}
+    </h2>
+    <div class="mt-8 max-w-[46rem] border-y border-rule">
+      {
+        faqEntries(lang).map(({ q, a }) => (
+          <details class="group border-t border-rule first:border-t-0">
+            <summary class="flex cursor-pointer list-none items-baseline justify-between gap-6 rounded-sm py-5 font-display text-[1.0625rem] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+              {q}
+              <span
+                class="shrink-0 text-accent-bright transition-transform group-open:rotate-45"
+                aria-hidden="true"
+              >
+                +
+              </span>
+            </summary>
+            <p class="max-w-[60ch] pb-6 text-[1rem] leading-[1.65] text-ink-muted">{a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

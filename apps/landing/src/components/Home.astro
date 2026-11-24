@@ -1,11 +1,13 @@
 ---
-import explore from "../assets/screenshots/explore.png";
-import game from "../assets/screenshots/game.png";
-import share from "../assets/screenshots/share.png";
-import type { Language } from "@repo/i18n";
+import { resources, type Language } from "@repo/i18n";
 
+import explore from "../assets/screenshots/explore.png";
+import gameDetails from "../assets/screenshots/game-details.png";
+import shared from "../assets/screenshots/shared.png";
+import widgets from "../assets/screenshots/widgets.png";
 import { copy } from "../i18n";
 import Base from "../layouts/Base.astro";
+import Faq from "./Faq.astro";
 import Feature from "./Feature.astro";
 import Footer from "./Footer.astro";
 import Hero from "./Hero.astro";
@@ -18,20 +20,19 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = copy(lang);
+const app = resources[lang].app;
 
-/** The four statuses, glossed in the app's own words — these lines are lifted
- * from apps/mobile/src/features/backlog/empty-states.ts rather than rewritten,
- * so the page and the app say the same thing. The marks echo the SF Symbols in
+/** The four statuses, named and glossed by the app's own strings (status.* and
+ * backlog.emptyFilter.*.description) rather than rewritten, so the page and the
+ * app say the same thing in every language. The marks echo the SF Symbols in
  * features/game/format.ts: clock, gamecontroller, checkmark.seal, xmark.bin. */
 const STATUSES = [
   {
-    name: "Waiting",
-    gloss: "Games you mean to play, but haven't started.",
+    key: "waiting",
     marks: ["M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z", "M12 7.5V12l3 1.9"],
   },
   {
-    name: "Playing",
-    gloss: "Games you're in the middle of.",
+    key: "playing",
     marks: [
       "M8.8 8.5h6.4a4.8 4.8 0 0 1 4.7 5.8l-.4 1.9a2.5 2.5 0 0 1-4.4.9l-1.2-1.5h-3.8l-1.2 1.5a2.5 2.5 0 0 1-4.4-.9l-.4-1.9a4.8 4.8 0 0 1 4.7-5.8Z",
       "M7.9 11.6v2.5",
@@ -41,17 +42,15 @@ const STATUSES = [
     ],
   },
   {
-    name: "Completed",
-    gloss: "Games you saw all the way through.",
+    key: "completed",
     marks: ["M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z", "M8.5 12.1 11 14.6l4.5-4.9"],
   },
   {
-    name: "Abandoned",
-    gloss: "Games you gave up on. No judgement.",
+    key: "abandoned",
     marks: ["M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z", "M9.5 9.5 14.5 14.5", "M14.5 9.5 9.5 14.5"],
     lit: true,
   },
-];
+] as const;
 ---
 
 <Base lang={lang} title={t.meta.title} description={t.meta.description} alternates motion>
@@ -60,20 +59,23 @@ const STATUSES = [
   <main>
     <Hero lang={lang} />
 
+    {/* Share leads, as it leads the App Store listing. */}
+    <Feature eyebrow={t.share.eyebrow} title={t.share.title} image={shared} alt={t.share.alt}>
+      <p>{t.share.body}</p>
+    </Feature>
+
     <Feature
-      eyebrow="Your backlog"
-      title="Four honest statuses"
-      image={game}
-      alt="A game's detail screen in Barklog, showing its cover, platforms and summary above a control for setting the game's status."
+      eyebrow={t.statuses.eyebrow}
+      title={t.statuses.title}
+      image={gameDetails}
+      alt={t.statuses.alt}
+      flip
     >
-      <p>
-        Waiting, playing, completed, abandoned. Most trackers assume you'll finish everything.
-        Barklog doesn't. Abandoned is a real answer, and it's one tap away.
-      </p>
+      <p>{t.statuses.body}</p>
 
       <dl class="mt-8 border-y border-rule">
         {
-          STATUSES.map(({ name, gloss, marks, lit }) => (
+          STATUSES.map(({ key, marks, ...rest }) => (
             <div class="grid gap-x-4 gap-y-1 border-t border-rule py-4 first:border-t-0 sm:grid-cols-[9.5rem_1fr] sm:items-baseline">
               <dt class="font-display text-[0.9375rem] leading-[1.55] font-semibold text-ink">
                 {/* Inline, not a flex child: a flex container takes its baseline
@@ -82,7 +84,7 @@ const STATUSES = [
                 <svg
                   class:list={[
                     "mr-2.5 inline-block h-[1.15rem] w-[1.15rem] align-[-0.27em]",
-                    lit ? "text-accent-bright" : "text-ink-muted",
+                    "lit" in rest ? "text-accent-bright" : "text-ink-muted",
                   ]}
                   viewBox="0 0 24 24"
                   fill="none"
@@ -96,51 +98,43 @@ const STATUSES = [
                     <path d={mark} />
                   ))}
                 </svg>
-                {name}
+                {app.status[key]}
               </dt>
-              <dd class:list={["text-[0.9375rem] leading-[1.55]", lit && "text-ink"]}>{gloss}</dd>
+              <dd class:list={["text-[0.9375rem] leading-[1.55]", "lit" in rest && "text-ink"]}>
+                {app.backlog.emptyFilter[key].description}
+              </dd>
             </div>
           ))
         }
       </dl>
     </Feature>
 
+    <Feature eyebrow={t.explore.eyebrow} title={t.explore.title} image={explore} alt={t.explore.alt}>
+      <p>{t.explore.body}</p>
+    </Feature>
+
     <Feature
-      eyebrow="Explore"
-      title="Find the next one"
-      image={explore}
-      alt="Barklog's explore screen: rows of game covers under headings for what's popular, what's coming, and what just landed, with a search field at the top."
+      eyebrow={t.widgets.eyebrow}
+      title={t.widgets.title}
+      image={widgets}
+      alt={t.widgets.alt}
       flip
     >
-      <p>
-        See what's popular, what's coming, and what just landed. Or search by name, when you already
-        know. Tap a game for its platforms, its summary, and what it's similar to.
-      </p>
+      <p>{t.widgets.body}</p>
     </Feature>
 
-    <Feature
-      eyebrow="Share a video"
-      title="Share a video, get the game"
-      image={share}
-      alt="Barklog's share sheet result: a shared video at the top and, under it, the games it might be, each with its cover and release year, ready to pick."
-    >
-      <p>
-        You're watching a clip of some game you can't name. Share it to Barklog and it works out
-        which game that is, then hands you the matches to pick from. All it reads is the video's
-        title and the channel name.
-      </p>
-    </Feature>
+    <Pricing lang={lang} />
 
-    <Pricing />
+    <Faq lang={lang} />
 
     <section class="border-t border-rule" data-reveal>
       <div class="mx-auto max-w-[70rem] px-6 py-10 md:px-10">
         <p class="max-w-[58ch] text-[0.9375rem] leading-[1.6] text-ink-muted">
-          Every cover, release date, platform and summary comes from <a
+          {t.credit.before}<a
             class="rounded-sm text-accent-bright underline underline-offset-4"
             href="https://www.igdb.com"
-            rel="noreferrer">IGDB</a
-          >, a games database maintained by its community.
+            rel="noreferrer">{t.credit.link}</a
+          >{t.credit.after}
         </p>
       </div>
     </section>

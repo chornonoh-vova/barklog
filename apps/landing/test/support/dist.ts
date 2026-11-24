@@ -28,3 +28,12 @@ export async function resolves(href: string): Promise<boolean> {
 
   return false;
 }
+
+/** The few entities Astro writes into text and attributes, turned back into characters. */
+export const decode = (html: string) =>
+  html
+    .replaceAll("&#39;", "'")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");

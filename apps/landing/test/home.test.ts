@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { expect, test } from "vitest";
+import { landing, LANGUAGES, resources } from "@repo/i18n";
+import { describe, expect, it, test } from "vitest";
+
+import { decode, homeHtml } from "./support/dist";
 
 const home = () => readFile(path.resolve(import.meta.dirname, "../dist/index.html"), "utf8");
 
@@ -54,18 +57,55 @@ test("the free tier is described with the real number", async () => {
   expect(await home()).toMatch(/ten unfinished games|10 unfinished games/i);
 });
 
-test("the copy avoids marketing filler", async () => {
-  const text = (await home()).toLowerCase();
+describe.each(LANGUAGES)("%s copy", (lang) => {
+  const t = landing[lang];
+  const app = resources[lang].app;
 
-  for (const word of BANNED) {
-    expect(text, `the copy contains "${word}"`).not.toContain(word);
-  }
-});
+  it("states the free tier in that language", async () => {
+    expect(decode(await homeHtml(lang))).toContain(t.pricing.body);
+  });
 
-test("the copy claims no dog feature", async () => {
-  // The README says "a cute dog companion keeping score". No such feature
-  // exists in the app — the dog is the mark. See the spec, section 5.2.
-  expect(await home()).not.toMatch(/keeping score|your companion|streak/i);
+  it("avoids marketing filler", async () => {
+    // The banned list is English; the translations are drafted from the same
+    // plain store copy, so English is where filler would creep in first.
+    const text = (await homeHtml(lang)).toLowerCase();
+
+    for (const word of BANNED) expect(text, `the copy contains "${word}"`).not.toContain(word);
+  });
+
+  it("claims no dog feature", async () => {
+    // The README says "a cute dog companion keeping score". No such feature
+    // exists in the app — the dog is the mark. See the spec, section 5.2.
+    expect(await homeHtml(lang)).not.toMatch(/keeping score|your companion|streak/i);
+  });
+
+  it("names the statuses as the app does", async () => {
+    const html = decode(await homeHtml(lang));
+
+    for (const status of ["waiting", "playing", "completed", "abandoned"] as const) {
+      expect(html).toContain(app.status[status]);
+      expect(html).toContain(app.backlog.emptyFilter[status].description);
+    }
+  });
+
+  it("describes every screenshot in that language", async () => {
+    const alts = [...(await homeHtml(lang)).matchAll(/<img[^>]*\salt="([^"]+)"/g)].map((match) =>
+      decode(match[1]!),
+    );
+
+    expect(alts).toEqual([t.share.alt, t.statuses.alt, t.explore.alt, t.widgets.alt]);
+  });
+
+  it("answers every question in the FAQ, visibly", async () => {
+    const html = decode(await homeHtml(lang));
+    const questions = Object.values(t.faq.items);
+
+    expect(html.match(/<details/g) ?? []).toHaveLength(questions.length);
+    for (const { q, a } of questions) {
+      expect(html).toContain(q);
+      expect(html).toContain(a);
+    }
+  });
 });
 
 test("every image is either described or explicitly decorative", async () => {
@@ -90,7 +130,7 @@ test("the screenshots describe the screen, not the file", async () => {
   // One per feature section; the hero's covers and mascot are decorative. A screenshot that lost its alt
   // would drop out of this list rather than fail the check above, since an
   // empty alt is legal for decoration.
-  expect(described.length, "expected three described screenshots").toBe(3);
+  expect(described.length, "expected four described screenshots").toBe(4);
 
   for (const alt of described) {
     expect(alt, `alt text should describe the screen: "${alt}"`).not.toMatch(

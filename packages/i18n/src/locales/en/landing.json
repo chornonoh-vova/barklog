@@ -21,7 +21,7 @@
     "eyebrow": "Your backlog",
     "title": "Four honest statuses",
     "body": "Most trackers assume you'll finish everything. Barklog doesn't. Abandoned is a real answer, and it's one tap away. Rate the games you've played, too.",
-    "alt": "A game's page in Barklog: its cover, platforms, release date and summary above a control for setting the game's status and a rating."
+    "alt": "A game's page in Barklog: its cover, studio, year and genres above its rating and status buttons, then its summary and images from the game."
   },
   "explore": {
     "eyebrow": "Explore",
@@ -33,7 +33,7 @@
     "eyebrow": "Widgets and stats",
     "title": "Your games, on your Home Screen",
     "body": "Add a widget for any status and tap a game to open it. Your Profile shows how many games sit in each status and your average rating.",
-    "alt": "An iPhone Home Screen with Barklog widgets showing the covers of the games in progress."
+    "alt": "An iPhone Home Screen with Barklog widgets for the Playing, Completed and Waiting lists, each showing game covers."
   },
   "pricing": {
     "eyebrow": "Pricing",

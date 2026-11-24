@@ -21,7 +21,7 @@
     "eyebrow": "Tu backlog",
     "title": "Cuatro estados sinceros",
     "body": "La mayoría de las apps dan por hecho que lo terminarás todo. Barklog no. Abandonado es una respuesta válida y está a un toque. También puedes valorar los juegos que has jugado.",
-    "alt": "La ficha de un juego en Barklog: portada, plataformas, fecha de lanzamiento y descripción sobre un control para elegir su estado y una valoración."
+    "alt": "La ficha de un juego en Barklog: portada, estudio, año y géneros sobre los botones de valoración y estado, y debajo la descripción y capturas."
   },
   "explore": {
     "eyebrow": "Explorar",
@@ -33,7 +33,7 @@
     "eyebrow": "Widgets y estadísticas",
     "title": "Tus juegos en la pantalla de inicio",
     "body": "Añade un widget para el estado que quieras y toca un juego para abrirlo. Tu perfil muestra cuántos juegos hay en cada estado y tu valoración media.",
-    "alt": "La pantalla de inicio de un iPhone con widgets de Barklog que muestran las portadas de los juegos en curso."
+    "alt": "La pantalla de inicio de un iPhone con widgets de Barklog para las listas Jugando, Completado y Pendiente, cada uno con portadas de juegos."
   },
   "pricing": {
     "eyebrow": "Precio",

@@ -21,7 +21,7 @@
     "eyebrow": "Dein Backlog",
     "title": "Vier ehrliche Status",
     "body": "Die meisten Tracker gehen davon aus, dass du alles durchspielst. Barklog nicht. Abgebrochen ist eine echte Antwort, nur einen Tipp entfernt. Spiele, die du gespielt hast, kannst du auch bewerten.",
-    "alt": "Die Seite eines Spiels in Barklog: Cover, Plattformen, Erscheinungsdatum und Beschreibung über einer Auswahl für den Status und einer Bewertung."
+    "alt": "Die Seite eines Spiels in Barklog: Cover, Studio, Jahr und Genres über den Schaltflächen für Bewertung und Status, darunter Beschreibung und Bilder aus dem Spiel."
   },
   "explore": {
     "eyebrow": "Entdecken",
@@ -33,7 +33,7 @@
     "eyebrow": "Widgets und Statistik",
     "title": "Deine Spiele auf dem Home-Bildschirm",
     "body": "Füge ein Widget für einen beliebigen Status hinzu und öffne Spiele mit einem Tipp. Dein Profil zeigt, wie viele Spiele in jedem Status sind, und deine Durchschnittsbewertung.",
-    "alt": "Ein iPhone-Home-Bildschirm mit Barklog-Widgets, die die Cover der angefangenen Spiele zeigen."
+    "alt": "Ein iPhone-Home-Bildschirm mit Barklog-Widgets für die Listen „Am Spielen“, „Durchgespielt“ und „Wartet“, jeweils mit Spielecovern."
   },
   "pricing": {
     "eyebrow": "Preise",
