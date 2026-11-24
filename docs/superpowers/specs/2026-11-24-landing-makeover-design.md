@@ -1,6 +1,6 @@
 # Landing makeover: discoverability, localization and the cover hero
 
-Status: proposed design, 2026-11-24. Not yet implemented. The current-behavior reference for the site remains [Landing site](2026-09-03-landing-site-design.md); update it when this lands, marking which of its statements this work replaces.
+Status: implemented on `feat/landing-makeover`, 2026-11-24; deploys after App Store version 1.3.3 is approved. Localized App Store badge files for de, es, uk and ru are still to be added (English fallback in the meantime). The current-behavior reference for the site remains [Landing site](2026-09-03-landing-site-design.md); update it when this lands, marking which of its statements this work replaces.
 
 ## Intent
 
