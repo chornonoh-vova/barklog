@@ -25,12 +25,44 @@ function coverImages() {
 }
 
 describe("CoverHero", () => {
-  it("floats the first four covers around the mascot", async () => {
+  it("floats all six covers around the mascot", async () => {
     await render(<CoverHero covers={ONBOARDING_COVERS} />);
 
     expect(coverImages().map((image) => image.props.source[0].uri)).toEqual(
-      ONBOARDING_COVERS.slice(0, 4).map((cover) => coverUrl(cover.coverImageId, "big")),
+      ONBOARDING_COVERS.map((cover) => coverUrl(cover.coverImageId, "big")),
     );
+  });
+
+  it("shows the mascot on its own, with no tile behind it", async () => {
+    await render(<CoverHero covers={ONBOARDING_COVERS} />);
+
+    const mascot = nativeViews("ViewManagerAdapter_ExpoImage").find(
+      (image) => !isIgdbImage(image.props.source?.[0]?.uri),
+    );
+    expect(mascot).toBeDefined();
+    const holder = ancestor(
+      mascot!,
+      (node) => StyleSheet.flatten(node.props.style)?.position === "absolute",
+    );
+    expect(StyleSheet.flatten(holder.props.style).backgroundColor).toBeUndefined();
+  });
+
+  it("floats a gamepad below the mascot", async () => {
+    await render(<CoverHero covers={ONBOARDING_COVERS} />);
+
+    const top = (node: Parameters<typeof ancestor>[0]) =>
+      StyleSheet.flatten(
+        ancestor(node, (n) => StyleSheet.flatten(n.props.style)?.position === "absolute").props
+          .style,
+      ).top as number;
+    const gamepad = nativeViews("ViewManagerAdapter_SymbolModule").find(
+      (view) => view.props.name === "gamecontroller.fill",
+    );
+    const mascot = nativeViews("ViewManagerAdapter_ExpoImage").find(
+      (image) => !isIgdbImage(image.props.source?.[0]?.uri),
+    );
+    expect(gamepad).toBeDefined();
+    expect(top(gamepad!)).toBeGreaterThan(top(mascot!));
   });
 
   it("gives every tile the same size, so a cover that never loads leaves a same-shaped placeholder", async () => {
