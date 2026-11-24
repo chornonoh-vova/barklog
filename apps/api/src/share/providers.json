@@ -138,6 +138,23 @@
         ]
     },
     {
+        "provider_name": "AIStockRadars",
+        "provider_url": "https://www.aistockradars.com/",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://www.aistockradars.com/company/*",
+                    "https://aistockradars.com/company/*"
+                ],
+                "url": "https://www.aistockradars.com/api/oembed",
+                "discovery": true,
+                "formats": [
+                    "json"
+                ]
+            }
+        ]
+    },
+    {
         "provider_name": "Altium LLC",
         "provider_url": "https://altium.com",
         "endpoints": [
@@ -310,6 +327,22 @@
                     "https://*.assemblrworld.com/Creation/*"
                 ],
                 "url": "https://studio.assemblrworld.com/api/oembed",
+                "discovery": true
+            }
+        ]
+    },
+    {
+        "provider_name": "AssistLoop",
+        "provider_url": "https://assistloop.ai",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://assistloop.ai/embed/canva/*"
+                ],
+                "url": "https://assistloop.ai/api/oembed",
+                "formats": [
+                    "json"
+                ],
                 "discovery": true
             }
         ]
@@ -802,6 +835,24 @@
         ]
     },
     {
+        "provider_name": "Canvastera",
+        "provider_url": "https://canvastera.com",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://canvastera.com/s/*",
+                    "https://www.canvastera.com/s/*"
+                ],
+                "url": "https://canvastera.com/oembed",
+                "discovery": true,
+                "formats": [
+                    "json",
+                    "xml"
+                ]
+            }
+        ]
+    },
+    {
         "provider_name": "Carbon",
         "provider_url": "https://carbon.music/",
         "endpoints": [
@@ -830,6 +881,23 @@
                 ],
                 "url": "https://carbonvoice.app/api/oembed",
                 "discovery": true
+            }
+        ]
+    },
+    {
+        "provider_name": "Cassetta",
+        "provider_url": "https://www.cassetta.fm",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://www.cassetta.fm/post/*",
+                    "https://cassetta.fm/post/*"
+                ],
+                "url": "https://www.cassetta.fm/api/oembed",
+                "discovery": true,
+                "formats": [
+                    "json"
+                ]
             }
         ]
     },
@@ -1664,6 +1732,19 @@
         ]
     },
     {
+        "provider_name": "Faxo",
+        "provider_url": "https://faxo.com/",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://faxo.com/*"
+                ],
+                "url": "https://faxo.com/oembed",
+                "discovery": true
+            }
+        ]
+    },
+    {
         "provider_name": "FazenHaus",
         "provider_url": "https://haus.fazen.co/",
         "endpoints": [
@@ -1769,6 +1850,19 @@
                     "http://*.*.flickr.com/*/*"
                 ],
                 "url": "https://www.flickr.com/services/oembed/",
+                "discovery": true
+            }
+        ]
+    },
+    {
+        "provider_name": "FlipbookMaker",
+        "provider_url": "https://flipbookmaker.co",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://flipbookmaker.co/v/*"
+                ],
+                "url": "https://flipbookmaker.co/oembed",
                 "discovery": true
             }
         ]
@@ -2373,12 +2467,16 @@
     },
     {
         "provider_name": "Ignite",
-        "provider_url": "https://ignite.video/",
+        "provider_url": "https://www.ignite.video/",
         "endpoints": [
             {
                 "schemes": [
                     "https://*.videocdn.net/player/*",
-                    "https://*.euvideocdn.com/player/*"
+                    "https://*.videocdn.net/watch/video/*",
+                    "https://*.videocdn.net/watch/live/*",
+                    "https://*.euvideocdn.com/player/*",
+                    "https://*.euvideocdn.com/watch/video/*",
+                    "https://*.euvideocdn.com/watch/live/*"
                 ],
                 "url": "https://app.ignitevideo.cloud/api/oembed",
                 "discovery": true
@@ -2391,7 +2489,11 @@
         "endpoints": [
             {
                 "schemes": [
-                    "https://www.iheart.com/podcast/*/*"
+                    "https://www.iheart.com/podcast/*",
+                    "https://www.iheart.com/live/*",
+                    "https://www.iheart.com/artist/*",
+                    "https://www.iheart.com/playlist/*",
+                    "https://www.iheart.com/favorites/*"
                 ],
                 "url": "https://www.iheart.com/oembed",
                 "discovery": true
@@ -2924,6 +3026,24 @@
         ]
     },
     {
+        "provider_name": "Long Play",
+        "provider_url": "https://longplayplatform.com/",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://longplayplatform.com/browse/*",
+                    "https://longplayplatform.com/embed/*",
+                    "https://longplayplatform.com/u/*/c/*"
+                ],
+                "url": "https://longplayplatform.com/oembed",
+                "formats": [
+                    "json"
+                ],
+                "discovery": true
+            }
+        ]
+    },
+    {
         "provider_name": "Loom",
         "provider_url": "https://www.loom.com/",
         "endpoints": [
@@ -3411,6 +3531,23 @@
                     "https://*.neetorecord.com/watch/*"
                 ],
                 "url": "https://api.neetorecord.com/api/v1/oembed"
+            }
+        ]
+    },
+    {
+        "provider_name": "Netforge.ai",
+        "provider_url": "https://netforge.ai",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://netforge.ai/b/*",
+                    "https://www.netforge.ai/b/*"
+                ],
+                "url": "https://netforge.ai/oembed",
+                "formats": [
+                    "json"
+                ],
+                "discovery": true
             }
         ]
     },
@@ -4611,6 +4748,23 @@
         ]
     },
     {
+        "provider_name": "SocialCast",
+        "provider_url": "https://socialcast.se/",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://*.socialcast.se/b/*",
+                    "https://*.socialcast.se/embed/*"
+                ],
+                "url": "https://api.socialcast.se/v2/public/oembed",
+                "discovery": true,
+                "formats": [
+                    "json"
+                ]
+            }
+        ]
+    },
+    {
         "provider_name": "SocialExplorer",
         "provider_url": "https://www.socialexplorer.com/",
         "endpoints": [
@@ -4838,7 +4992,7 @@
                 "schemes": [
                     "https://streetartcities.com/markers/*"
                 ],
-                "url": "https://oembed.streetartcities.com/oembed"
+                "url": "https://streetartcities.com/oembed"
             }
         ]
     },
@@ -5002,10 +5156,12 @@
     },
     {
         "provider_name": "Tella",
-        "provider_url": "https://www.tella.tv/",
+        "provider_url": "https://www.tella.com/",
         "endpoints": [
             {
                 "schemes": [
+                    "https://www.tella.com/video/*",
+                    "https://tella.com/video/*",
                     "https://www.tella.tv/video/*",
                     "https://tella.video/*"
                 ],
@@ -5086,6 +5242,29 @@
                 ],
                 "url": "https://theysaidso.com/extensions/oembed/",
                 "discovery": true
+            }
+        ]
+    },
+    {
+        "provider_name": "Threads",
+        "provider_url": "https://www.threads.com/",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://www.threads.com/*/post/*",
+                    "https://threads.com/*/post/*",
+                    "https://www.threads.com/t/*",
+                    "https://threads.com/t/*",
+                    "https://www.threads.net/*/post/*",
+                    "https://threads.net/*/post/*",
+                    "https://www.threads.net/t/*",
+                    "https://threads.net/t/*"
+                ],
+                "url": "https://graph.threads.com/v1.0/oembed",
+                "discovery": true,
+                "formats": [
+                    "json"
+                ]
             }
         ]
     },
@@ -5874,6 +6053,25 @@
                 "formats": [
                     "json",
                     "xml"
+                ]
+            }
+        ]
+    },
+    {
+        "provider_name": "WIMSTA",
+        "provider_url": "https://wimsta.com/",
+        "endpoints": [
+            {
+                "schemes": [
+                    "https://wimsta.com/*-calculator/",
+                    "https://wimsta.com/*-formula/",
+                    "https://wimsta.com/220-minus-age/",
+                    "https://wimsta.com/max-heart-rate-women/",
+                    "https://wimsta.com/embed/*/"
+                ],
+                "url": "https://wimsta.com/oembed",
+                "formats": [
+                    "json"
                 ]
             }
         ]
