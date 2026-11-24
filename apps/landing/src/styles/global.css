@@ -53,14 +53,43 @@
     mask-image: linear-gradient(to right, #000 55%, transparent 96%);
   }
 
-  /* The page's only gradient, used once, behind the hero device. Written here
+  /* The onboarding hero's 360x260 box. Its width is the smallest of the
+     column, 34rem, and whatever keeps its height under a third of the
+     viewport, so on a short phone the ring shrinks before the headline and
+     the badge are pushed below the fold. */
+  .hero-ring {
+    aspect-ratio: 360 / 260;
+    width: min(100%, 34rem, calc(31svh * 360 / 260));
+  }
+
+  /* A slow bob, a few pixels, declared only for people who have not asked
+     for reduced motion -- so for them there is no animation to switch off.
+     It moves `translate`, which composes with the wrapper's transform
+     rather than replacing its tilt. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-cover {
+      animation: hero-bob 7s ease-in-out infinite;
+    }
+  }
+
+  /* The page's only gradient, used once, behind the hero ring. Written here
      rather than as an arbitrary Tailwind value because a radial-gradient in a
      class name is unreadable. */
   .hero-glow {
     background: radial-gradient(
-      55% 50% at 62% 38%,
+      45% 45% at 50% 34%,
       color-mix(in oklab, var(--color-accent) 30%, transparent),
       transparent 72%
     );
+  }
+}
+
+@keyframes hero-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -0.45rem;
   }
 }

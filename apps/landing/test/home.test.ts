@@ -87,10 +87,10 @@ test("the screenshots describe the screen, not the file", async () => {
     .map((match) => match[1])
     .filter((alt): alt is string => alt !== undefined);
 
-  // One per feature section plus the hero. A screenshot that lost its alt
+  // One per feature section; the hero's covers and mascot are decorative. A screenshot that lost its alt
   // would drop out of this list rather than fail the check above, since an
   // empty alt is legal for decoration.
-  expect(described.length, "expected four described screenshots").toBe(4);
+  expect(described.length, "expected three described screenshots").toBe(3);
 
   for (const alt of described) {
     expect(alt, `alt text should describe the screen: "${alt}"`).not.toMatch(
