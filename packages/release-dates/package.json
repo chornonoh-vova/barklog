@@ -26,7 +26,7 @@
     "@repo/typescript-config": "workspace:*",
     "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
-    "fast-check": "^4.10.2",
+    "fast-check": "^4.11.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

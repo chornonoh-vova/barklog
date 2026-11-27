@@ -29,7 +29,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@testcontainers/redis": "^12.2.0",
+    "@testcontainers/redis": "^12.2.2",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
