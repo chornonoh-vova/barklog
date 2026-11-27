@@ -5,7 +5,7 @@ name: barklog
 # Tests do NOT use this stack — they start their own via Testcontainers.
 services:
   postgres:
-    image: postgres:18.6-alpine3.24@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b
+    image: postgres:19.0-alpine3.24@sha256:cac45fb483caee3668946088a1c0532db89d5285c28dbfeac889b4068296e06f
     environment:
       POSTGRES_USER: barklog
       POSTGRES_PASSWORD: barklog
@@ -25,7 +25,7 @@ services:
       retries: 10
 
   valkey:
-    image: valkey/valkey:9.1.3-alpine3.24@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    image: valkey/valkey:9.2.0-alpine3.24@sha256:c8e2d17498838af5d91e12eb7c11220b3434a7b7131a333e3af52ad5e0b80882
     # Persistence off: this holds a cache and rate-limit counters, all of which
     # are reconstructible.
     command: ["valkey-server", "--save", "", "--appendonly", "no"]
