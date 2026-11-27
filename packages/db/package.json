@@ -37,7 +37,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/release-dates": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@testcontainers/postgresql": "^12.2.0",
+    "@testcontainers/postgresql": "^12.2.2",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "drizzle-kit": "^0.31.11",
